@@ -1,0 +1,24 @@
+tara:
+  hydra-service:
+    login-url: https://localhost:9877/oauth2/auth/requests/login
+    accept-login-url: https://localhost:9877/oauth2/auth/requests/login/accept
+    accept-consent-url: https://localhost:9877/oauth2/auth/requests/consent/accept
+    request-timeout: 3
+
+  default-locale: et
+
+  auth-methods:
+    id-card:
+      enabled: true
+      level-of-assurance: HIGH
+    mobile-id:
+      enabled: true
+      level-of-assurance: HIGH
+      truststore-path: file:src/test/resources/mobileid-truststore-test.p12
+      host-url: https://localhost:9877/mid-api
+      relying-party-uuid: 00000000-0000-0000-0000-000000000000
+      relying-party-name: DEMO
+      truststore-type: PKCS12
+      truststore-password: changeit
+      connection-timeout-milliseconds: 1000
+      read-timeout-milliseconds: 1000

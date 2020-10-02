@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.w3.org/1999/xhtml" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="layout" th:with="hideHeaderLanguageSelection=true">
+<head th:replace="~{fragments/head}"></head>
+<body>
+<div layout:fragment="content" th:with="hideHeaderLanguageSelection=true" th:remove="tag">
+    <div class="container">
+        <div class="alert alert-error" role="alert">
+            <p><strong><span th:text="#{message.error.auth.title}" th:remove="tag"></span></strong></p>
+            <p th:if="${TARA_ERROR_MESSAGE != null}" th:utext="#{__${TARA_ERROR_MESSAGE}__}"></p>
+            <p th:unless="${TARA_ERROR_MESSAGE != null}" th:utext="#{message.error.auth.error}"></p>
+        </div>
+        <p th:if="${@thymeleafSupport.getBackUrl() != '#'}" class="link-back">
+            <a th:href="${@thymeleafSupport.getBackUrl()}" th:text="#{label.common.back}">Back</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>
