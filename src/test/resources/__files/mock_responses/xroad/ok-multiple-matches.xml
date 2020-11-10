@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ZSI="http://www.zolera.com/schemas/ZSI/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <SOAP-ENV:Header xmlns:ns1="http://x-road.eu/xsd/xroad.xsd">
+        <ns1:protocolVersion>4.0</ns1:protocolVersion>
+        <ns1:userId>EE11111111111</ns1:userId>
+        <ns1:id>111111111111111123</ns1:id>
+        <ns1:requestHash algorithmId="http://www.w3.org/2001/04/xmlenc#sha512">fUqSuYOQ6Qez+hLr5KgQc27iAnXCOTVIww5S1HmtuMJRhIH/iIRLbdwWV/nipj/Ng7ujP2aL343O2CF0LI9Bbw==</ns1:requestHash>
+        <ns1:service ns2:objectType="SERVICE" xmlns:ns2="http://x-road.eu/xsd/identifiers">
+            <ns2:xRoadInstance>ee-dev</ns2:xRoadInstance>
+            <ns2:memberClass>GOV</ns2:memberClass>
+            <ns2:memberCode>70000310</ns2:memberCode>
+            <ns2:subsystemCode>arireg</ns2:subsystemCode>
+            <ns2:serviceCode>esindus_v2</ns2:serviceCode>
+            <ns2:serviceVersion>v1</ns2:serviceVersion>
+        </ns1:service>
+        <ns1:client ns2:objectType="SUBSYSTEM" xmlns:ns2="http://x-road.eu/xsd/identifiers">
+            <ns2:xRoadInstance>ee-dev</ns2:xRoadInstance>
+            <ns2:memberClass>GOV</ns2:memberClass>
+            <ns2:memberCode>70006317</ns2:memberCode>
+            <ns2:subsystemCode>idp</ns2:subsystemCode>
+        </ns1:client>
+    </SOAP-ENV:Header>
+    <SOAP-ENV:Body xmlns:ns1="http://arireg.x-road.eu/producer/">
+        <ns1:esindus_v2Response>
+            <ns1:paring>
+                <ns1:fyysilise_isiku_kood>47101010033</ns1:fyysilise_isiku_kood>
+                <ns1:fyysilise_isiku_koodi_riik>EST</ns1:fyysilise_isiku_koodi_riik>
+            </ns1:paring>
+            <ns1:keha>
+                <ns1:ettevotjad>
+                    <ns1:item>
+                        <ns1:ariregistri_kood>12341234-1</ns1:ariregistri_kood>
+                        <ns1:arinimi>Acme INC OÜ 1</ns1:arinimi>
+                        <ns1:staatus>R</ns1:staatus>
+                        <ns1:staatus_tekstina>Registrisse kantud</ns1:staatus_tekstina>
+                        <ns1:isikud>
+                            <ns1:item>
+                                <ns1:fyysilise_isiku_eesnimi>Mari-Liis</ns1:fyysilise_isiku_eesnimi>
+                                <ns1:fyysilise_isiku_perenimi>Männik</ns1:fyysilise_isiku_perenimi>
+                                <ns1:fyysilise_isiku_kood>47101010033</ns1:fyysilise_isiku_kood>
+                                <ns1:isikukood_riik>EST</ns1:isikukood_riik>
+                                <ns1:isikukoodi_riik_tekstina>Eesti</ns1:isikukoodi_riik_tekstina>
+                                <ns1:fyysilise_isiku_roll>JUHL</ns1:fyysilise_isiku_roll>
+                                <ns1:fyysilise_isiku_roll_tekstina>Juhatuse liige</ns1:fyysilise_isiku_roll_tekstina>
+                                <ns1:ainuesindusoigus_olemas>JAH</ns1:ainuesindusoigus_olemas>
+                            </ns1:item>
+                        </ns1:isikud>
+                        <ns1:esindusoiguse_eritingimused/>
+                        <ns1:esindusoiguse_grupid/>
+                        <ns1:oiguslik_vorm>OÜ</ns1:oiguslik_vorm>
+                        <ns1:oiguslik_vorm_tekstina>Osaühing</ns1:oiguslik_vorm_tekstina>
+                    </ns1:item>
+                    <ns1:item>
+                        <ns1:ariregistri_kood>12341234-2</ns1:ariregistri_kood>
+                        <ns1:arinimi>Acme INC UÜ 2</ns1:arinimi>
+                        <ns1:staatus>R</ns1:staatus>
+                        <ns1:staatus_tekstina>Registrisse kantud</ns1:staatus_tekstina>
+                        <ns1:isikud>
+                            <ns1:item>
+                                <ns1:fyysilise_isiku_eesnimi>Mari-Liis</ns1:fyysilise_isiku_eesnimi>
+                                <ns1:fyysilise_isiku_perenimi>Männik</ns1:fyysilise_isiku_perenimi>
+                                <ns1:fyysilise_isiku_kood>47101010033</ns1:fyysilise_isiku_kood>
+                                <ns1:isikukood_riik>EST</ns1:isikukood_riik>
+                                <ns1:isikukoodi_riik_tekstina>Eesti</ns1:isikukoodi_riik_tekstina>
+                                <ns1:fyysilise_isiku_roll>JUHL</ns1:fyysilise_isiku_roll>
+                                <ns1:fyysilise_isiku_roll_tekstina>Juhatuse liige</ns1:fyysilise_isiku_roll_tekstina>
+                                <ns1:ainuesindusoigus_olemas>JAH</ns1:ainuesindusoigus_olemas>
+                            </ns1:item>
+                        </ns1:isikud>
+                        <ns1:esindusoiguse_eritingimused/>
+                        <ns1:esindusoiguse_grupid/>
+                        <ns1:oiguslik_vorm>UÜ</ns1:oiguslik_vorm>
+                        <ns1:oiguslik_vorm_tekstina>Usaldusühing</ns1:oiguslik_vorm_tekstina>
+                    </ns1:item>
+                    <ns1:item>
+                        <ns1:ariregistri_kood>12341234-3</ns1:ariregistri_kood>
+                        <ns1:arinimi>Acme INC TÜ 3</ns1:arinimi>
+                        <ns1:staatus>R</ns1:staatus>
+                        <ns1:staatus_tekstina>Registrisse kantud</ns1:staatus_tekstina>
+                        <ns1:isikud>
+                            <ns1:item>
+                                <ns1:fyysilise_isiku_eesnimi>Mari-Liis</ns1:fyysilise_isiku_eesnimi>
+                                <ns1:fyysilise_isiku_perenimi>Männik</ns1:fyysilise_isiku_perenimi>
+                                <ns1:fyysilise_isiku_kood>47101010033</ns1:fyysilise_isiku_kood>
+                                <ns1:isikukood_riik>EST</ns1:isikukood_riik>
+                                <ns1:isikukoodi_riik_tekstina>Eesti</ns1:isikukoodi_riik_tekstina>
+                                <ns1:fyysilise_isiku_roll>JUHL</ns1:fyysilise_isiku_roll>
+                                <ns1:fyysilise_isiku_roll_tekstina>Juhatuse liige</ns1:fyysilise_isiku_roll_tekstina>
+                                <ns1:ainuesindusoigus_olemas>JAH</ns1:ainuesindusoigus_olemas>
+                            </ns1:item>
+                        </ns1:isikud>
+                        <ns1:esindusoiguse_eritingimused/>
+                        <ns1:esindusoiguse_grupid/>
+                        <ns1:oiguslik_vorm>TÜ</ns1:oiguslik_vorm>
+                        <ns1:oiguslik_vorm_tekstina>Täisühing</ns1:oiguslik_vorm_tekstina>
+                    </ns1:item>
+                    <ns1:item>
+                        <ns1:ariregistri_kood>12341234-4</ns1:ariregistri_kood>
+                        <ns1:arinimi>Acme INC AS 4</ns1:arinimi>
+                        <ns1:staatus>R</ns1:staatus>
+                        <ns1:staatus_tekstina>Registrisse kantud</ns1:staatus_tekstina>
+                        <ns1:isikud>
+                            <ns1:item>
+                                <ns1:fyysilise_isiku_eesnimi>Mari-Liis</ns1:fyysilise_isiku_eesnimi>
+                                <ns1:fyysilise_isiku_perenimi>Männik</ns1:fyysilise_isiku_perenimi>
+                                <ns1:fyysilise_isiku_kood>47101010033</ns1:fyysilise_isiku_kood>
+                                <ns1:isikukood_riik>EST</ns1:isikukood_riik>
+                                <ns1:isikukoodi_riik_tekstina>Eesti</ns1:isikukoodi_riik_tekstina>
+                                <ns1:fyysilise_isiku_roll>JUHL</ns1:fyysilise_isiku_roll>
+                                <ns1:fyysilise_isiku_roll_tekstina>Juhatuse liige</ns1:fyysilise_isiku_roll_tekstina>
+                                <ns1:ainuesindusoigus_olemas>JAH</ns1:ainuesindusoigus_olemas>
+                            </ns1:item>
+                        </ns1:isikud>
+                        <ns1:esindusoiguse_eritingimused/>
+                        <ns1:esindusoiguse_grupid/>
+                        <ns1:oiguslik_vorm>AS</ns1:oiguslik_vorm>
+                        <ns1:oiguslik_vorm_tekstina>Aktsiaselts</ns1:oiguslik_vorm_tekstina>
+                    </ns1:item>
+                    <ns1:item>
+                        <ns1:ariregistri_kood>12341234-5</ns1:ariregistri_kood>
+                        <ns1:arinimi>Acme INC TÜH 5</ns1:arinimi>
+                        <ns1:staatus>R</ns1:staatus>
+                        <ns1:staatus_tekstina>Registrisse kantud</ns1:staatus_tekstina>
+                        <ns1:isikud>
+                            <ns1:item>
+                                <ns1:fyysilise_isiku_eesnimi>Mari-Liis</ns1:fyysilise_isiku_eesnimi>
+                                <ns1:fyysilise_isiku_perenimi>Männik</ns1:fyysilise_isiku_perenimi>
+                                <ns1:fyysilise_isiku_kood>47101010033</ns1:fyysilise_isiku_kood>
+                                <ns1:isikukood_riik>EST</ns1:isikukood_riik>
+                                <ns1:isikukoodi_riik_tekstina>Eesti</ns1:isikukoodi_riik_tekstina>
+                                <ns1:fyysilise_isiku_roll>JUHL</ns1:fyysilise_isiku_roll>
+                                <ns1:fyysilise_isiku_roll_tekstina>Juhatuse liige</ns1:fyysilise_isiku_roll_tekstina>
+                                <ns1:ainuesindusoigus_olemas>JAH</ns1:ainuesindusoigus_olemas>
+                            </ns1:item>
+                        </ns1:isikud>
+                        <ns1:esindusoiguse_eritingimused/>
+                        <ns1:esindusoiguse_grupid/>
+                        <ns1:oiguslik_vorm>TÜH</ns1:oiguslik_vorm>
+                        <ns1:oiguslik_vorm_tekstina>Täisühing</ns1:oiguslik_vorm_tekstina>
+                    </ns1:item>
+                    <ns1:item>
+                        <ns1:ariregistri_kood>12341234-6</ns1:ariregistri_kood>
+                        <ns1:arinimi>Acme INC SA 6</ns1:arinimi>
+                        <ns1:staatus>R</ns1:staatus>
+                        <ns1:staatus_tekstina>Registrisse kantud</ns1:staatus_tekstina>
+                        <ns1:isikud>
+                            <ns1:item>
+                                <ns1:fyysilise_isiku_eesnimi>Mari-Liis</ns1:fyysilise_isiku_eesnimi>
+                                <ns1:fyysilise_isiku_perenimi>Männik</ns1:fyysilise_isiku_perenimi>
+                                <ns1:fyysilise_isiku_kood>47101010033</ns1:fyysilise_isiku_kood>
+                                <ns1:isikukood_riik>EST</ns1:isikukood_riik>
+                                <ns1:isikukoodi_riik_tekstina>Eesti</ns1:isikukoodi_riik_tekstina>
+                                <ns1:fyysilise_isiku_roll>JUHL</ns1:fyysilise_isiku_roll>
+                                <ns1:fyysilise_isiku_roll_tekstina>Juhatuse liige</ns1:fyysilise_isiku_roll_tekstina>
+                                <ns1:ainuesindusoigus_olemas>JAH</ns1:ainuesindusoigus_olemas>
+                            </ns1:item>
+                        </ns1:isikud>
+                        <ns1:esindusoiguse_eritingimused/>
+                        <ns1:esindusoiguse_grupid/>
+                        <ns1:oiguslik_vorm>SA</ns1:oiguslik_vorm>
+                        <ns1:oiguslik_vorm_tekstina>Sihtasutus</ns1:oiguslik_vorm_tekstina>
+                    </ns1:item>
+                    <ns1:item>
+                        <ns1:ariregistri_kood>12341234-7</ns1:ariregistri_kood>
+                        <ns1:arinimi>Acme INC MTÜ 7</ns1:arinimi>
+                        <ns1:staatus>R</ns1:staatus>
+                        <ns1:staatus_tekstina>Registrisse kantud</ns1:staatus_tekstina>
+                        <ns1:isikud>
+                            <ns1:item>
+                                <ns1:fyysilise_isiku_eesnimi>Mari-Liis</ns1:fyysilise_isiku_eesnimi>
+                                <ns1:fyysilise_isiku_perenimi>Männik</ns1:fyysilise_isiku_perenimi>
+                                <ns1:fyysilise_isiku_kood>47101010033</ns1:fyysilise_isiku_kood>
+                                <ns1:isikukood_riik>EST</ns1:isikukood_riik>
+                                <ns1:isikukoodi_riik_tekstina>Eesti</ns1:isikukoodi_riik_tekstina>
+                                <ns1:fyysilise_isiku_roll>JUHL</ns1:fyysilise_isiku_roll>
+                                <ns1:fyysilise_isiku_roll_tekstina>Juhatuse liige</ns1:fyysilise_isiku_roll_tekstina>
+                                <ns1:ainuesindusoigus_olemas>JAH</ns1:ainuesindusoigus_olemas>
+                            </ns1:item>
+                        </ns1:isikud>
+                        <ns1:esindusoiguse_eritingimused/>
+                        <ns1:esindusoiguse_grupid/>
+                        <ns1:oiguslik_vorm>MTÜ</ns1:oiguslik_vorm>
+                        <ns1:oiguslik_vorm_tekstina>Mittetulundusühing</ns1:oiguslik_vorm_tekstina>
+                    </ns1:item>
+                    <ns1:item>
+                        <ns1:ariregistri_kood>12341234-8</ns1:ariregistri_kood>
+                        <ns1:arinimi>Acme INC MTÜ 8</ns1:arinimi>
+                        <ns1:staatus>X</ns1:staatus>
+                        <ns1:staatus_tekstina>Tundmatu staatus</ns1:staatus_tekstina>
+                        <ns1:isikud>
+                            <ns1:item>
+                                <ns1:fyysilise_isiku_eesnimi>Mari-Liis</ns1:fyysilise_isiku_eesnimi>
+                                <ns1:fyysilise_isiku_perenimi>Männik</ns1:fyysilise_isiku_perenimi>
+                                <ns1:fyysilise_isiku_kood>47101010033</ns1:fyysilise_isiku_kood>
+                                <ns1:isikukood_riik>EST</ns1:isikukood_riik>
+                                <ns1:isikukoodi_riik_tekstina>Eesti</ns1:isikukoodi_riik_tekstina>
+                                <ns1:fyysilise_isiku_roll>JUHL</ns1:fyysilise_isiku_roll>
+                                <ns1:fyysilise_isiku_roll_tekstina>Juhatuse liige</ns1:fyysilise_isiku_roll_tekstina>
+                                <ns1:ainuesindusoigus_olemas>JAH</ns1:ainuesindusoigus_olemas>
+                            </ns1:item>
+                        </ns1:isikud>
+                        <ns1:esindusoiguse_eritingimused/>
+                        <ns1:esindusoiguse_grupid/>
+                        <ns1:oiguslik_vorm>MTÜ</ns1:oiguslik_vorm>
+                        <ns1:oiguslik_vorm_tekstina>Mittetulundusühing</ns1:oiguslik_vorm_tekstina>
+                    </ns1:item>
+                    <ns1:item>
+                        <ns1:ariregistri_kood>12341234-9</ns1:ariregistri_kood>
+                        <ns1:arinimi>Acme INC MTÜ 9</ns1:arinimi>
+                        <ns1:staatus>X</ns1:staatus>
+                        <ns1:staatus_tekstina>Tundmatu staatus</ns1:staatus_tekstina>
+                        <ns1:isikud>
+                            <ns1:item>
+                                <ns1:fyysilise_isiku_eesnimi>Jaak-Kristjan</ns1:fyysilise_isiku_eesnimi>
+                                <ns1:fyysilise_isiku_perenimi>Jõeorg</ns1:fyysilise_isiku_perenimi>
+                                <ns1:fyysilise_isiku_kood>38001085718</ns1:fyysilise_isiku_kood>
+                                <ns1:isikukood_riik>EST</ns1:isikukood_riik>
+                                <ns1:isikukoodi_riik_tekstina>Eesti</ns1:isikukoodi_riik_tekstina>
+                                <ns1:fyysilise_isiku_roll>JUHL</ns1:fyysilise_isiku_roll>
+                                <ns1:fyysilise_isiku_roll_tekstina>Juhatuse liige</ns1:fyysilise_isiku_roll_tekstina>
+                                <ns1:ainuesindusoigus_olemas>JAH</ns1:ainuesindusoigus_olemas>
+                            </ns1:item>
+                        </ns1:isikud>
+                        <ns1:esindusoiguse_eritingimused/>
+                        <ns1:esindusoiguse_grupid/>
+                        <ns1:oiguslik_vorm>MTÜ</ns1:oiguslik_vorm>
+                        <ns1:oiguslik_vorm_tekstina>Mittetulundusühing</ns1:oiguslik_vorm_tekstina>
+                    </ns1:item>
+                    <ns1:item>
+                        <ns1:ariregistri_kood>12341234-10</ns1:ariregistri_kood>
+                        <ns1:arinimi>Acme INC MTÜ 10</ns1:arinimi>
+                        <ns1:staatus>R</ns1:staatus>
+                        <ns1:staatus_tekstina>Registreeritud</ns1:staatus_tekstina>
+                        <ns1:isikud>
+                            <ns1:item>
+                                <ns1:fyysilise_isiku_eesnimi>Mari-Liis</ns1:fyysilise_isiku_eesnimi>
+                                <ns1:fyysilise_isiku_perenimi>Männik</ns1:fyysilise_isiku_perenimi>
+                                <ns1:fyysilise_isiku_kood>47101010033</ns1:fyysilise_isiku_kood>
+                                <ns1:isikukood_riik>EST</ns1:isikukood_riik>
+                                <ns1:isikukoodi_riik_tekstina>Eesti</ns1:isikukoodi_riik_tekstina>
+                                <ns1:fyysilise_isiku_roll>JUHL</ns1:fyysilise_isiku_roll>
+                                <ns1:fyysilise_isiku_roll_tekstina>Juhatuse liige</ns1:fyysilise_isiku_roll_tekstina>
+                                <ns1:ainuesindusoigus_olemas>EI</ns1:ainuesindusoigus_olemas>
+                            </ns1:item>
+                        </ns1:isikud>
+                        <ns1:esindusoiguse_eritingimused/>
+                        <ns1:esindusoiguse_grupid/>
+                        <ns1:oiguslik_vorm>MTÜ</ns1:oiguslik_vorm>
+                        <ns1:oiguslik_vorm_tekstina>Mittetulundusühing</ns1:oiguslik_vorm_tekstina>
+                    </ns1:item>
+                </ns1:ettevotjad>
+            </ns1:keha>
+        </ns1:esindus_v2Response>
+    </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

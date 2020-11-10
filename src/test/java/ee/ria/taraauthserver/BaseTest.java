@@ -7,6 +7,7 @@ import ch.qos.logback.core.read.ListAppender;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import ee.ria.taraauthserver.error.ErrorHandler;
 import io.restassured.RestAssured;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
@@ -23,6 +24,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.test.web.servlet.setup.StandaloneMockMvcBuilder;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.util.List;
@@ -44,11 +46,13 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 public abstract class BaseTest {
 
     protected MockMvc mock;
-
     protected static WireMockServer wireMockServer;
 
     @Autowired
     private WebApplicationContext webApplicationContext;
+
+    @Autowired
+    ErrorHandler errorHandler;
 
     @LocalServerPort
     protected int port;
@@ -136,8 +140,8 @@ public abstract class BaseTest {
                         || e.getLoggerName().equals(loggerClass.getCanonicalName())))
                 .map(ILoggingEvent::getFormattedMessage)
                 .collect(toList());
-
-        assertThat(events, containsInRelativeOrder(stream(messagesInRelativeOrder)
+        
+        assertThat("Expected log messages not found in output.\n\tExpected log messages: " + List.of(messagesInRelativeOrder) + ",\n\tActual log messages: " + events, events, containsInRelativeOrder(stream(messagesInRelativeOrder)
                 .map(CoreMatchers::startsWith).toArray(Matcher[]::new)));
     }
 

@@ -151,6 +151,7 @@ class AuthInitControllerTest extends BaseTest {
     @Test
     void authInit_Ok_session_status_is_correct() throws Exception {
 
+
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)

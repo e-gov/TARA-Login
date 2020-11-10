@@ -22,6 +22,7 @@
     "build:css": "gulp build:css",
     "build:js_main": "gulp build:js_main",
     "build:js_form": "gulp build:js_form",
+    "build:js_legalperson": "gulp build:js_legalperson",
     "build": "gulp build"
   }
 }

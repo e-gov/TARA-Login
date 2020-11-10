@@ -50,6 +50,20 @@ class ErrorHandler {
         return new ModelAndView();
     }
 
+    @ExceptionHandler({ServiceNotAvailableException.class})
+    public ModelAndView handleDownstreamServiceErrors(Exception ex, HttpServletResponse response) throws Exception {
+        log.error("Service not available: {}", ex.getMessage(), ex);
+        response.sendError(HttpServletResponse.SC_BAD_GATEWAY);
+        return new ModelAndView();
+    }
+
+    @ExceptionHandler({NotFoundException.class})
+    public ModelAndView handleNotFound(Exception ex, HttpServletResponse response) throws Exception {
+        log.error("Results not found: {}", ex.getMessage(), ex);
+        response.sendError(HttpServletResponse.SC_NOT_FOUND);
+        return new ModelAndView();
+    }
+
     @ExceptionHandler({Exception.class})
     public ModelAndView handleAll(Exception ex, HttpServletResponse response) throws Exception {
         log.error("Server encountered an unexpected error: {}", ex.getMessage(), ex);
