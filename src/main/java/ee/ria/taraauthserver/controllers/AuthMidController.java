@@ -74,7 +74,7 @@ public class AuthMidController {
     public String authMidInit(@Validated @ModelAttribute(value = "credential") MidRequestBody requestParameters, Model model, @CookieValue(value = "SESSION", required = false) String sessionId) throws ExecutionException, InterruptedException {
 
         if (sessionId == null)
-            throw new BadRequestException("message.mid-rest.error.internal-error");
+            throw new BadRequestException(ErrorMessages.MID_INTERNAL_ERROR, "message.mid-rest.error.internal-error");
 
         requestParameters.telephoneNumber = "+372" + requestParameters.telephoneNumber;
 
@@ -96,7 +96,7 @@ public class AuthMidController {
                     try {
                         MidAuthenticationResult midAuthenticationResult = getMidAuthenticationResult(authenticationHash, future);
                         String idCode = midAuthenticationResult.getAuthenticationIdentity().getIdentityCode();
-                        authSession.setState(AUTHENTICATION_SUCCESS);
+                        authSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
                         AuthSession.MidAuthenticationResult authenticationResult = new AuthSession.MidAuthenticationResult();
 
                         authenticationResult.setIdCode(midAuthenticationResult.getAuthenticationIdentity().getIdentityCode());
@@ -210,7 +210,7 @@ public class AuthMidController {
     private void validateAuthSession(AuthSession authSession) {
 
         if (authSession == null || authSession.getState() != INIT_AUTH_PROCESS || !authSession.getAllowedAuthMethods().contains(AuthenticationType.MobileID))
-            throw new BadRequestException("message.mid-rest.error.internal-error");
+            throw new BadRequestException(ErrorMessages.MID_INTERNAL_ERROR, "message.mid-rest.error.internal-error"); // TODO
         authSession.setState(INIT_MID);
     }
 
@@ -290,13 +290,13 @@ public class AuthMidController {
     @ToString
     public static class MidRequestBody {
 
-        @NotBlank(message = "message.mid-rest.error.invalid-identity-code")
-        @Size(max = 11, message = "message.mid-rest.error.invalid-identity-code")
-        @ValidNationalIdNumber(message = "message.mid-rest.error.invalid-identity-code")
+        @NotBlank(message = "{message.mid-rest.error.invalid-identity-code}")
+        @Size(max = 11, message = "{message.mid-rest.error.invalid-identity-code}")
+        @ValidNationalIdNumber(message = "{message.mid-rest.error.invalid-identity-code}")
         @JsonProperty("id_code")
         private String idCode;
-        @NotBlank(message = "message.mid-rest.error.invalid-phone-number")
-        @Pattern(regexp = "\\d{8,15}", message = "message.mid-rest.error.invalid-phone-number")
+        @NotBlank(message = "{message.mid-rest.error.invalid-phone-number}")
+        @Pattern(regexp = "\\d{8,15}", message = "{message.mid-rest.error.invalid-phone-number}")
         private String telephoneNumber;
     }
 }

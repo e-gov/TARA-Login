@@ -1,8 +1,7 @@
 package ee.ria.taraauthserver.config;
 
 import ee.ria.taraauthserver.config.properties.LegalPersonProperties;
-import ee.ria.taraauthserver.controllers.LegalpersonController;
-import ee.ria.taraauthserver.xroad.EBusinessRegistryService;
+import ee.ria.taraauthserver.xroad.BusinessRegistryService;
 import freemarker.template.TemplateExceptionHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,8 +33,8 @@ public class LegalPersonConfiguration {
     }
 
     @Bean
-    public EBusinessRegistryService eBusinessRegistryService(freemarker.template.Configuration freemarkerConfiguration,
-                                                             LegalPersonProperties legalPersonProperties) {
-        return new EBusinessRegistryService(freemarkerConfiguration, legalPersonProperties);
+    public BusinessRegistryService eBusinessRegistryService(freemarker.template.Configuration freemarkerConfiguration,
+                                                            LegalPersonProperties legalPersonProperties) {
+        return new BusinessRegistryService(freemarkerConfiguration, legalPersonProperties);
     }
 }

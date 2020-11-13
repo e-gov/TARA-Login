@@ -8,6 +8,7 @@ import ee.ria.taraauthserver.session.AuthState;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.util.Assert;
@@ -23,6 +24,7 @@ import javax.servlet.http.HttpSession;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Validated
@@ -48,7 +50,7 @@ public class MockAuthController {
         authResult.setLastName("Lastname");
         authResult.setDateOfBirth(LocalDate.now());
         authSession.setAuthenticationResult(authResult);
-        authSession.setState(AuthState.AUTHENTICATION_SUCCESS);
+        authSession.setState(AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
         session.setAttribute("session", authSession);
         log.info("edited session " + session.getAttribute("session"));
         log.info("with id " + session.getId());
@@ -65,6 +67,7 @@ public class MockAuthController {
         return "{\"ok\":true}";
     }
 
+    // TODO invalidate session
     @GetMapping(value = "/consent", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> mockConsent(@RequestParam String consent_challenge, HttpSession session) {
         AuthSession authSession = (AuthSession) session.getAttribute("session");
@@ -73,22 +76,43 @@ public class MockAuthController {
         AcceptConsentRequest acceptConsentRequest = new AcceptConsentRequest();
         HttpEntity<AcceptConsentRequest> request = new HttpEntity<>(acceptConsentRequest);
 
+        Map<String, Object> profileAttributes =new LinkedHashMap<>();
+
+        addProfile_attributes(profileAttributes, authSession);
+
         acceptConsentRequest.setSession(new AcceptConsentRequest.LoginSession(
-                Map.of("profile_attributes", Map.of(
-                        "family_name", authSession.getAuthenticationResult().getLastName(),
-                        "given_name", authSession.getAuthenticationResult().getFirstName(),
-                        "date_of_birth", authSession.getAuthenticationResult().getDateOfBirth().toString()
-                        ),
-                        "state", getStateParameterValue(authSession),
-                        "amr", new String[]{"mid"}
-                )
+                profileAttributes
         ));
+
+        profileAttributes.put("state", getStateParameterValue(authSession));
+        profileAttributes.put("amr", new String[]{"mid"});
 
         ResponseEntity<Map> response = hydraService.exchange(url, HttpMethod.PUT, request, Map.class);
 
         HttpHeaders headers = new HttpHeaders();
         headers.add("location", response.getBody().get("redirect_to").toString());
         return new ResponseEntity<>(headers, HttpStatus.FOUND);
+    }
+
+    private void addLegalPersonAttributes(Map<String, Object> attributes, AuthSession.LegalPerson legalPerson) {
+        Map<String, Object> legalPersonAttributes = Map.of(
+                "name", legalPerson.getLegalName(),
+                "registry_code", legalPerson.getLegalPersonIdentifier()
+        );
+        attributes.put("represents_legal_person", legalPersonAttributes);
+    }
+
+    @NotNull
+    private void addProfile_attributes(Map<String, Object> attributes, AuthSession authSession) {
+        Map<String, Object> profileAttributes = new LinkedHashMap<>();
+        profileAttributes.put("family_name", authSession.getAuthenticationResult().getLastName());
+        profileAttributes.put("given_name", authSession.getAuthenticationResult().getFirstName());
+        profileAttributes.put("date_of_birth", authSession.getAuthenticationResult().getDateOfBirth().toString());
+        AuthSession.LegalPerson legalPerson = authSession.getSelectedLegalPerson();
+        if (legalPerson != null) {
+            addLegalPersonAttributes(profileAttributes, legalPerson);
+        }
+        attributes.put("profile_attributes", profileAttributes);
     }
 
     private String getStateParameterValue(AuthSession authSession) {

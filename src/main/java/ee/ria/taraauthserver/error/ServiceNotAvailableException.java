@@ -25,8 +25,13 @@
 
 package ee.ria.taraauthserver.error;
 
-public class ServiceNotAvailableException extends RuntimeException {
-    public ServiceNotAvailableException(String message, Exception cause) {
-        super(message,cause);
+public class ServiceNotAvailableException extends TaraException {
+
+    public ServiceNotAvailableException(String debugMessage) {
+        super(null, debugMessage, null);
+    }
+
+    public ServiceNotAvailableException(ErrorMessages messageCode, String debugMessage, Exception exception) {
+        super(messageCode, debugMessage, exception);
     }
 }

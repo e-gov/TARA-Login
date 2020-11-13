@@ -627,7 +627,7 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .body("message", equalTo("Something went wrong internally. Please consult server logs for further details."));
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
 
         assertErrorIsLogged("Server encountered an unexpected error: java.net.SocketTimeoutException: Read timed out");
     }

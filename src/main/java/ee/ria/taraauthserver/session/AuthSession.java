@@ -3,9 +3,7 @@ package ee.ria.taraauthserver.session;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.AuthenticationType;
 import ee.ria.taraauthserver.config.LevelOfAssurance;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -27,6 +25,8 @@ public class AuthSession implements Serializable {
     private LoginRequestInfo loginRequestInfo;
     private List<AuthenticationType> allowedAuthMethods;
     private AuthenticationResult authenticationResult;
+    private List<LegalPerson> legalPersonList;
+    private LegalPerson selectedLegalPerson;
 
     @Data
     @ToString
@@ -129,5 +129,14 @@ public class AuthSession implements Serializable {
         @Pattern(regexp = "(private|public)", message = "invalid sector value, accepted values are: private, public")
         @JsonProperty("sector")
         String sector;
+    }
+
+    @ToString
+    @EqualsAndHashCode
+    @RequiredArgsConstructor
+    @Getter
+    public static class LegalPerson implements Serializable {
+        private final String legalName;
+        private final String legalPersonIdentifier;
     }
 }

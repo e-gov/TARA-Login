@@ -8,6 +8,7 @@ import ee.ria.taraauthserver.config.TaraScope;
 import ee.ria.taraauthserver.error.BadRequestException;
 import ee.ria.taraauthserver.session.AuthSession;
 import ee.ria.taraauthserver.session.AuthState;
+import ee.ria.taraauthserver.utils.RequestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
@@ -58,7 +59,7 @@ public class AuthInitController {
             @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed")
             String loginChallenge,
             @RequestParam(name = "lang", required = false)
-            @Pattern(regexp = "(et|en|ru)", message = "supported values are: 'et', 'en', 'ru'")
+            @Pattern(regexp = "(et|en|ru)", message = "{invalidLang}")
             String language) {
 
         AuthSession authSession = initAuthSession(loginChallenge);
@@ -81,7 +82,7 @@ public class AuthInitController {
 
     private void setLocale(String language, AuthSession authSession) {
         String locale = getUiLanguage(language, authSession);
-        setLocale(locale);
+        RequestUtils.setLocale(locale);
     }
 
     private AuthSession getAuthSession(AuthSession.LoginRequestInfo loginRequestInfo) {
@@ -218,14 +219,4 @@ public class AuthInitController {
                 .collect(Collectors.joining(", "));
     }
 
-    private void setLocale(String requestedLocale) {
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-        HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
-
-        log.info("requested locale is: " + requestedLocale);
-        Locale locale = StringUtils.parseLocaleString(requestedLocale);
-        LocaleResolver localeResolver = RequestContextUtils.getLocaleResolver(request);
-        Assert.notNull(localeResolver, "No LocaleResolver found in request: not in a DispatcherServlet request?");
-        localeResolver.setLocale(request, response, locale);
-    }
 }

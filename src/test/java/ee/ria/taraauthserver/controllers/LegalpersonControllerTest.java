@@ -1,35 +1,28 @@
 package ee.ria.taraauthserver.controllers;
 
+import com.github.tomakehurst.wiremock.client.WireMock;
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.session.AuthSession;
 import ee.ria.taraauthserver.session.AuthState;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpSession;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.ResultHandler;
 
-import javax.servlet.RequestDispatcher;
-
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Date;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static ee.ria.taraauthserver.session.MockSessionUtils.*;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-
 @Slf4j
 public class LegalpersonControllerTest extends BaseTest {
-
 
     @Test
     void getAuthLegalPersonInit_noSession() throws Exception {
@@ -42,10 +35,10 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.status", is(400)))
                 .andExpect(jsonPath("$.error", is("Bad Request")))
-                .andExpect(jsonPath("$.message", is("Session was not found! Either the user session has expired, server has been restarted in the middle of user transaction or corrupt/invalid cookie value was sent from the browser")))
+                .andExpect(jsonPath("$.message", is("Your session was not found! Either your session expired or the cookie usage is limited in your browser.")))
                 .andExpect(jsonPath("$.path", is("/auth/legal_person/init")));
 
-        assertErrorIsLogged("User exception: Session was not found! Either the user session has expired, server has been restarted in the middle of user transaction or corrupt/invalid cookie value was sent from the browser");
+        assertErrorIsLogged("User exception: The attribute 'session' was not found in session");
     }
 
     @Test
@@ -61,22 +54,66 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.status", is(400)))
                 .andExpect(jsonPath("$.error", is("Bad Request")))
-                .andExpect(jsonPath("$.message", is("Invalid authentication state: INIT_AUTH_PROCESS, expected: NATURAL_PERSON_AUTHENTICATION_COMPLETED")))
+                .andExpect(jsonPath("$.message", is("Invalid request - invalid session.")))
                 .andExpect(jsonPath("$.path", is("/auth/legal_person/init")));
 
-        assertErrorIsLogged("User exception: Invalid authentication state: INIT_AUTH_PROCESS, expected: NATURAL_PERSON_AUTHENTICATION_COMPLETED");
+
+        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected: 'NATURAL_PERSON_AUTHENTICATION_COMPLETED'");
     }
 
     @Test
-    void getAuthLegalPersonInit_Ok() throws Exception {
+    void getAuthLegalPersonInit_invalidRequest_noLegalpersonScopeInOidcRequest() throws Exception {
         MockHttpSession mockHttpSession = getMockHttpSession(AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, getMockCredential());
+        ((AuthSession)mockHttpSession.getAttribute("session")).getLoginRequestInfo().setRequestedScopes(new ArrayList<>());
 
         ResultActions resultActions = mock.perform(get("/auth/legal_person/init").session(mockHttpSession))
                 .andDo(print()).andDo(forwardErrorsToSpringErrorhandler(mock));
 
-        // TODO validate user data
+        resultActions
+                .andExpect(jsonPath("$.status", is(400)))
+                .andExpect(jsonPath("$.error", is("Bad Request")))
+                .andExpect(jsonPath("$.message", is("Invalid request.")))
+                .andExpect(jsonPath("$.path", is("/auth/legal_person/init")));
 
-        resultActions.andExpect(status().is(200));
+        assertErrorIsLogged("User exception: scope 'legalperson' was not requested in the initial OIDC authentication request");
+    }
+
+    @Test
+    void getAuthLegalPersonInit_invalidRequest_scopeNotAllowed() throws Exception {
+        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, getMockCredential());
+        ((AuthSession)mockHttpSession.getAttribute("session")).getLoginRequestInfo().getClient().setScope("");
+
+        ResultActions resultActions = mock.perform(get("/auth/legal_person/init").session(mockHttpSession))
+                .andDo(print()).andDo(forwardErrorsToSpringErrorhandler(mock));
+
+        resultActions
+                .andExpect(jsonPath("$.status", is(400)))
+                .andExpect(jsonPath("$.error", is("Bad Request")))
+                .andExpect(jsonPath("$.message", is("Invalid request.")))
+                .andExpect(jsonPath("$.path", is("/auth/legal_person/init")));
+
+        assertErrorIsLogged(String.format("User exception: client '%s' is not authorized to use scope 'legalperson'", MOCK_CLIENT_ID));
+    }
+
+    @Test
+    void getAuthLegalPersonInit_Ok() throws Exception {
+        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, getMockCredential(), List.of("legalperson"));
+
+        ResultActions resultActions = mock.perform(get("/auth/legal_person/init").session(mockHttpSession))
+                .andDo(print()).andDo(forwardErrorsToSpringErrorhandler(mock));
+
+        resultActions
+                .andExpect(status().is(200))
+                .andExpect(model().attribute("idCode", is(MOCK_NATURAL_PERSON_ID_CODE)))
+                .andExpect(model().attribute("firstName", is(MOCK_NATURAL_PERSON_FIRSTNAME)))
+                .andExpect(model().attribute("lastName", is(MOCK_NATURAL_PERSON_LASTNAME)))
+                .andExpect(model().attribute("dateOfBirth", is(MOCK_NATURAL_PERSON_DATE_OF_BIRTH)))
+                .andExpect(content().string(containsString(MOCK_NATURAL_PERSON_ID_CODE)))
+                .andExpect(content().string(containsString(MOCK_NATURAL_PERSON_FIRSTNAME)))
+                .andExpect(content().string(containsString(MOCK_NATURAL_PERSON_LASTNAME)))
+                .andExpect(content().string(containsString(
+                        MOCK_NATURAL_PERSON_DATE_OF_BIRTH.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))))
+                ).andReturn();
     }
 
     @Test
@@ -88,10 +125,10 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.status", is(400)))
                 .andExpect(jsonPath("$.error", is("Bad Request")))
-                .andExpect(jsonPath("$.message", is("Session was not found! Either the user session has expired, server has been restarted in the middle of user transaction or corrupt/invalid cookie value was sent from the browser")))
+                .andExpect(jsonPath("$.message", is("Your session was not found! Either your session expired or the cookie usage is limited in your browser.")))
                 .andExpect(jsonPath("$.path", is("/auth/legal_person")));
 
-        assertErrorIsLogged("User exception: Session was not found! Either the user session has expired, server has been restarted in the middle of user transaction or corrupt/invalid cookie value was sent from the browser");
+        assertErrorIsLogged("User exception: The attribute 'session' was not found in session");
     }
 
     @Test
@@ -105,16 +142,16 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.status", is(400)))
                 .andExpect(jsonPath("$.error", is("Bad Request")))
-                .andExpect(jsonPath("$.message", is("Invalid authentication state: INIT_AUTH_PROCESS, expected: LEGAL_PERSON_AUTHENTICATION_INIT")))
+                .andExpect(jsonPath("$.message", is("Invalid request - invalid session.")))
                 .andExpect(jsonPath("$.path", is("/auth/legal_person")));
 
-        assertErrorIsLogged("User exception: Invalid authentication state: INIT_AUTH_PROCESS, expected: LEGAL_PERSON_AUTHENTICATION_INIT");
+        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected: 'LEGAL_PERSON_AUTHENTICATION_INIT'");
     }
 
     @Test
     void getAuthLegalPerson_xroadError_SoapFaultInResponse() throws Exception {
 
-        wireMockServer.stubFor(post(urlEqualTo("/cgi-bin/consumer_proxy"))
+        wireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/xml; charset=UTF-8")
@@ -129,7 +166,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andExpect(status().is(500))
                 .andExpect(jsonPath("$.status", is(500)))
                 .andExpect(jsonPath("$.error", is("Internal Server Error")))
-                .andExpect(jsonPath("$.message", is("Something went wrong internally. Please consult server logs for further details.")))
+                .andExpect(jsonPath("$.message", is("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti.")))
                 .andExpect(jsonPath("$.path", is("/auth/legal_person")));
 
         assertErrorIsLogged("Server encountered an unexpected error: XRoad service returned a soap fault: faultcode = 'SOAP-ENV:Server', faultstring = 'Sisendparameetrid vigased: palun sisestage kas äriregistri kood, isikukood või isiku ees- ja perekonnanimi.'");
@@ -138,7 +175,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Test
     void getAuthLegalPerson_xroadError_InvalidResponse() throws Exception {
 
-        wireMockServer.stubFor(post(urlEqualTo("/cgi-bin/consumer_proxy"))
+        wireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
                 .willReturn(aResponse()
                         .withStatus(404)
                         .withHeader("Content-Type", "text/html; charset=UTF-8")
@@ -153,7 +190,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andExpect(status().is(500))
                 .andExpect(jsonPath("$.status", is(500)))
                 .andExpect(jsonPath("$.error", is("Internal Server Error")))
-                .andExpect(jsonPath("$.message", is("Something went wrong internally. Please consult server logs for further details.")))
+                .andExpect(jsonPath("$.message", is("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti.")))
                 .andExpect(jsonPath("$.path", is("/auth/legal_person")));
 
         assertErrorIsLogged("Server encountered an unexpected error: Failed to extract data from response: https://localhost:9877/cgi-bin/consumer_proxy");
@@ -162,7 +199,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Test
     void getAuthLegalPerson_xroadError_RequestTimesOut() throws Exception {
 
-        wireMockServer.stubFor(post(urlEqualTo("/cgi-bin/consumer_proxy"))
+        wireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/xml; charset=UTF-8")
@@ -178,7 +215,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andExpect(status().is(502))
                 .andExpect(jsonPath("$.status", is(502)))
                 .andExpect(jsonPath("$.error", is("Bad Gateway")))
-                .andExpect(jsonPath("$.message", is("Something went wrong internally. Please consult server logs for further details.")))
+                .andExpect(jsonPath("$.message", is("Could not connect to business registry! Please try again later.")))
                 .andExpect(jsonPath("$.path", is("/auth/legal_person")));
 
         assertErrorIsLogged("Service not available: Could not connect to business registry. Connection failed: Read timed out");
@@ -187,7 +224,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Test
     void getAuthLegalPerson_noValidLegalPersonsFound() throws Exception {
 
-        wireMockServer.stubFor(post(urlEqualTo("/cgi-bin/consumer_proxy"))
+        wireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/xml; charset=UTF-8")
@@ -211,7 +248,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Test
     void getAuthLegalPerson_validLegalPersons_singleLegalPersonFound() throws Exception {
 
-        wireMockServer.stubFor(post(urlEqualTo("/cgi-bin/consumer_proxy"))
+        wireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/xml; charset=UTF-8")
@@ -230,7 +267,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Test
     void getAuthLegalPerson_validLegalPersons_multipleLegalPersonFound() throws Exception {
 
-        wireMockServer.stubFor(post(urlEqualTo("/cgi-bin/consumer_proxy"))
+        wireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/xml; charset=UTF-8")
@@ -254,57 +291,119 @@ public class LegalpersonControllerTest extends BaseTest {
                         "]}"));
     }
 
-    @NotNull
-    private AuthSession.AuthenticationResult getMockCredential() {
-        return getMockCredential("47101010033", "Mari-Liis", "Männik", LocalDate.of(1971, 1, 1));
-    }
+    @Test
+    void postAuthLegalPersonConfirm_NoSession() throws Exception {
 
-    private AuthSession.AuthenticationResult getMockCredential(String idCode, String firstName, String lastName, LocalDate dateOfBirth) {
-        AuthSession.AuthenticationResult credential = new AuthSession.AuthenticationResult();
-        credential.setIdCode(idCode);
-        credential.setFirstName(firstName);
-        credential.setLastName(lastName);
-        credential.setDateOfBirth(dateOfBirth);
-        return credential;
-    }
-
-    @NotNull
-    private MockHttpSession getMockHttpSession(AuthState authSessionStatus, AuthSession.AuthenticationResult credential) {
         MockHttpSession mockHttpSession = new MockHttpSession();
-        AuthSession mockAuthSession = new AuthSession();
-        mockAuthSession.setAuthenticationResult(credential);
-        mockAuthSession.setState(authSessionStatus);
-        mockHttpSession.setAttribute("session", mockAuthSession);
-        return mockHttpSession;
+
+        ResultActions resultActions = mock.perform(post("/auth/legal_person/confirm")
+                .param("legal_person_identifier", "1234")
+                .session(mockHttpSession))
+                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+
+        resultActions
+                .andExpect(status().is(400))
+                .andExpect(jsonPath("$.status", is(400)))
+                .andExpect(jsonPath("$.error", is("Bad Request")))
+                .andExpect(jsonPath("$.message", is("Your session was not found! Either your session expired or the cookie usage is limited in your browser.")))
+                .andExpect(jsonPath("$.path", is("/auth/legal_person/confirm")));
+
+        assertErrorIsLogged("User exception: The attribute 'session' was not found in session");
     }
 
-    public static ResultHandler forwardErrorsToSpringErrorhandler(MockMvc mvc) {
-        return new ErrorForwardResultHandler(mvc);
+    @Test
+    void postAuthLegalPersonConfirm_InvalidSession() throws Exception {
+
+        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
+
+        ResultActions resultActions = mock.perform(post("/auth/legal_person/confirm").param("legal_person_identifier", "1234").session(mockHttpSession))
+                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+
+        resultActions
+                .andExpect(status().is(400))
+                .andExpect(jsonPath("$.status", is(400)))
+                .andExpect(jsonPath("$.error", is("Bad Request")))
+                .andExpect(jsonPath("$.message", is("Invalid request - invalid session.")))
+                .andExpect(jsonPath("$.path", is("/auth/legal_person/confirm")));
+
+        assertErrorIsLogged("User exception: Invalid authentication state: 'LEGAL_PERSON_AUTHENTICATION_INIT', expected: 'GET_LEGAL_PERSON_LIST'");
     }
 
-    @RequiredArgsConstructor
-    private static class ErrorForwardResultHandler implements ResultHandler{
+    @Test
+    void postAuthLegalPersonConfirm_MissingRequiredParam() throws Exception {
 
-        private final MockMvc mock;
+        MockHttpSession mockHttpSession = new MockHttpSession();
 
-        public final void handle(MvcResult result) throws Exception {
-            if (result.getResolvedException() != null) {
-                byte[] response = mock.perform(get("/error").requestAttr(RequestDispatcher.ERROR_STATUS_CODE, result.getResponse()
-                        .getStatus())
-                        .requestAttr(RequestDispatcher.ERROR_REQUEST_URI, result.getRequest().getRequestURI())
-                        .requestAttr(RequestDispatcher.ERROR_EXCEPTION, result.getResolvedException())
-                        .requestAttr(RequestDispatcher.ERROR_MESSAGE, String.valueOf(result.getResolvedException().getMessage())))
-                        .andReturn()
-                        .getResponse()
-                        .getContentAsByteArray();
+        ResultActions resultActions = mock.perform(post("/auth/legal_person/confirm")
+                .session(mockHttpSession))
+                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
 
-                log.info("Response: {}", new String(result.getResponse().getContentAsByteArray(), StandardCharsets.UTF_8));
+        resultActions
+                .andExpect(status().is(400))
+                .andExpect(jsonPath("$.status", is(400)))
+                .andExpect(jsonPath("$.error", is("Bad Request")))
+                .andExpect(jsonPath("$.message", is("Required String parameter 'legal_person_identifier' is not present")))
+                .andExpect(jsonPath("$.path", is("/auth/legal_person/confirm")));
 
-                result.getResponse()
-                        .getOutputStream()
-                        .write(response);
-            }
-        }
+        assertErrorIsLogged("User exception: Required String parameter 'legal_person_identifier' is not present");
     }
 
+    @Test
+    void postAuthLegalPersonConfirm_InvalidParameter_InvalidInput() throws Exception {
+
+        MockHttpSession mockHttpSession = new MockHttpSession();
+
+        ResultActions resultActions = mock.perform(post("/auth/legal_person/confirm")
+                .param("legal_person_identifier", "<>?=`*,.")
+                .session(mockHttpSession))
+                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+
+        resultActions
+                .andExpect(status().is(400))
+                .andExpect(jsonPath("$.status", is(400)))
+                .andExpect(jsonPath("$.error", is("Bad Request")))
+                .andExpect(jsonPath("$.message", is("confirmLegalPerson.legalPersonIdentifier: only characters and numbers allowed")))
+                .andExpect(jsonPath("$.path", is("/auth/legal_person/confirm")));
+
+        assertErrorIsLogged("User exception: confirmLegalPerson.legalPersonIdentifier: only characters and numbers allowed");
+    }
+
+    @Test
+    void postAuthLegalPersonConfirm_InvalidParameter_notListed() throws Exception {
+
+        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.GET_LEGAL_PERSON_LIST, getMockCredential());
+        ((AuthSession)mockHttpSession.getAttribute("session")).setLegalPersonList(List.of(new AuthSession.LegalPerson("Acme OÜ", "123456abcd")));
+
+        ResultActions resultActions = mock.perform(post("/auth/legal_person/confirm")
+                .param("legal_person_identifier", "9876543210")
+                .session(mockHttpSession))
+                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+
+        resultActions
+                .andExpect(status().is(400))
+                .andExpect(jsonPath("$.status", is(400)))
+                .andExpect(jsonPath("$.error", is("Bad Request")))
+                .andExpect(jsonPath("$.message", is("Invalid request.")))
+                .andExpect(jsonPath("$.path", is("/auth/legal_person/confirm")));
+
+        assertErrorIsLogged("User exception: Attempted to select invalid legal person with id: '9876543210'");
+    }
+
+    @Test
+    void postAuthLegalPersonConfirm_validLegalPersonIdentifier() throws Exception {
+
+        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.GET_LEGAL_PERSON_LIST, getMockCredential());
+        ((AuthSession)mockHttpSession.getAttribute("session")).setLegalPersonList(List.of(new AuthSession.LegalPerson("Acme OÜ", "123456abcd")));
+
+        ResultActions resultActions = mock.perform(post("/auth/legal_person/confirm")
+                .param("legal_person_identifier", "123456abcd")
+                .session(mockHttpSession))
+                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+
+        resultActions
+                .andExpect(status().is(302))
+                .andExpect(header().string("Location", "/auth/accept"));
+
+        assertInfoIsLogged("Legal person selected: 123456abcd");
+    }
 }

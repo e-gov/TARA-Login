@@ -40,7 +40,7 @@ jQuery(function ($) {
 
         if (length == 1) {
             $('#' + json.legalPersons[0].legalPersonIdentifier).prop("checked", true);
-            $('input[name="legalPersonId"]').val(json.legalPersons[0].legalPersonIdentifier);
+            $('input[name="legal_person_identifier"]').val(json.legalPersons[0].legalPersonIdentifier);
             $('#legalperson-count').text(length);
             $('#btn-select-legal-person').show();
         } else {
@@ -66,7 +66,7 @@ jQuery(function ($) {
     }
 
     function setSelectedLegalPerson() {
-        $('input[name="legalPersonId"]').val($("input[name='legalperson']:checked").val());
+        $('input[name="legal_person_identifier"]').val($("input[name='legalperson']:checked").val());
         $('#btn-select-legal-person').show();
     }
 });

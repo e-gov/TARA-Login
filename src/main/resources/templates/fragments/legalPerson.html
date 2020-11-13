@@ -24,7 +24,7 @@
             </tr>
             <tr>
                 <th th:utext="#{label.natural-person.date-of-birth}"></th>
-                <td th:text="${#temporals.format(dateOfBirth, 'dd-MM-yyyy HH:mm')}">Date of birth</td>
+                <td th:text="${#temporals.format(dateOfBirth, 'dd.MM.yyyy')}">Date of birth</td>
 
             </tr>
         </table>
@@ -51,7 +51,7 @@
                 <p id="error-service-not-available" class="hidden" th:utext="#{label.legal-person.error.service-not-available}"></p>
                 <p id="error-technical-problem" class="hidden" th:utext="#{label.legal-person.error.internal-service-error}"></p>
             </div>
-            <form method="put" action="/auth/legalperson/confirm" class="c-form" id="selectLegalPerson">
+            <form method="post" action="/auth/legal_person/confirm" class="c-form" id="selectLegalPerson">
                 <input type="hidden" name="legal_person_identifier" value=""/>
                 <button type="submit" class="c-btn c-btn--primary hidden" id="btn-select-legal-person" th:utext="#{label.common.login}"></button>
             </form>
@@ -60,16 +60,15 @@
         <br>
 
         <div id="error-controls-container" class="hidden">
-            <form method="post" action="auth">
+            <form method="get" action="/auth/init">
                 <p class="link-back">
-                    <input type="hidden" name="lang" value="${lang}"/>
-                    <input type="hidden" name="SAMLRequest" value="${SAMLRequest}"/>
+                    <input type="hidden" name="login_challenge" th:value="${login_challenge}"/>
                     <button type="submit" class="as-link" th:utext="#{label.common.back}"></button>
                 </p>
             </form>
-            <form method="post" action="${responseCallback}">
+            <form method="post" action="/auth/reject">
                 <p class="link-back">
-                    <input type="hidden" name="SAMLResponse" value="${SAMLResponse}"/>
+                    <input type="hidden" name="error_code" value="user_cancel"/>
                     <button type="submit" class="as-link" th:utext="#{label.common.cancel}"></button>
                 </p>
             </form>

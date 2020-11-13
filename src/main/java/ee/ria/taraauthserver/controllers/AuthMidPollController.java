@@ -25,10 +25,10 @@ public class AuthMidPollController {
         if (authSession.getState() == AuthState.AUTHENTICATION_FAILED) {
             throw new BadRequestException(((AuthSession.MidAuthenticationResult) authSession.getAuthenticationResult()).getErrorMessage());
         }
-        if (authSession == null || (authSession.getState() != AuthState.AUTHENTICATION_SUCCESS && authSession.getState() != AuthState.POLL_MID_STATUS))
+        if (authSession == null || (authSession.getState() != AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED && authSession.getState() != AuthState.POLL_MID_STATUS))
             throw new BadRequestException("Polling failed");
         HashMap<String, String> map = new HashMap<>();
-        if (authSession.getState() == AuthState.AUTHENTICATION_SUCCESS) {
+        if (authSession.getState() == AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED) {
             map.put("status", "COMPLETED");
         } else
             map.put("status", "PENDING");

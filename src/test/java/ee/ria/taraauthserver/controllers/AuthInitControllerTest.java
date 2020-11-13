@@ -7,6 +7,7 @@ import ee.ria.taraauthserver.config.AuthenticationType;
 import ee.ria.taraauthserver.config.LevelOfAssurance;
 import ee.ria.taraauthserver.session.AuthSession;
 import ee.ria.taraauthserver.session.AuthState;
+import io.restassured.http.ContentType;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,7 +108,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Duplicate request parameter 'login_challenge'"))
+                .body("message", equalTo("Multiple request parameters with the same name not allowed"))
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
     }
@@ -190,7 +191,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .body("message", equalTo("Something went wrong internally. Please consult server logs for further details."));
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
     }
 
     @Test
@@ -208,7 +209,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .body("message", equalTo("Something went wrong internally. Please consult server logs for further details."));
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
     }
 
     @Test
@@ -464,7 +465,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .body("message", equalTo("Something went wrong internally. Please consult server logs for further details."));
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
 
         assertErrorIsLogged("Server encountered an unexpected error: Unsupported acr value requested by client: 'wrongvalue'");
     }
@@ -484,7 +485,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .body("message", equalTo("Something went wrong internally. Please consult server logs for further details."));
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
     }
 
     @Test
@@ -502,7 +503,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .body("message", equalTo("Something went wrong internally. Please consult server logs for further details."));
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
     }
 
     @Test
@@ -520,7 +521,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .body("message", equalTo("Something went wrong internally. Please consult server logs for further details."));
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
 
     }
 }

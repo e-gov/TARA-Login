@@ -16,7 +16,12 @@ public enum ErrorMessages {
     MID_SIM_ERROR("message.mid-rest.error.sim-error"),
     MID_TRANSACTION_EXPIRED("message.mid-rest.error.expired-transaction"),
     MID_ERROR_GENERAL("message.error.general"),
-    NOT_MID_CLIENT("message.mid-rest.error.not-mid-client");
+    NOT_MID_CLIENT("message.mid-rest.error.not-mid-client"),
+
+    SESSION_NOT_FOUND("message.error.sessionNotFound"),
+    SESSION_STATE_INVALID("message.error.sessionStateInvalid"),
+    INVALID_REQUEST("message.error.invalidRequest"),
+    LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE("label.legal-person.error.service-not-available");
 
     private final String message;
 }

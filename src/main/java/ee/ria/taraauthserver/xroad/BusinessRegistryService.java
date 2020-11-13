@@ -1,8 +1,9 @@
 package ee.ria.taraauthserver.xroad;
 
 import ee.ria.taraauthserver.config.properties.LegalPersonProperties;
-import ee.ria.taraauthserver.controllers.LegalpersonController;
+import ee.ria.taraauthserver.error.ErrorMessages;
 import ee.ria.taraauthserver.error.ServiceNotAvailableException;
+import ee.ria.taraauthserver.session.AuthSession;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -31,11 +32,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
-import static org.apache.commons.lang3.StringEscapeUtils.escapeXml;
+import static java.util.Collections.emptyMap;
 import static org.unbescape.xml.XmlEscape.escapeXml11;
 
 @Slf4j
-public class EBusinessRegistryService {
+public class BusinessRegistryService {
 
     private static final String SOAP_REQUEST_TEMPLATE = "xtee-arireg.esindus_v2.v1.ftl";
 
@@ -46,7 +47,7 @@ public class EBusinessRegistryService {
 
     private final String xpathFilterForEttevotjad;
 
-    public EBusinessRegistryService(@NonNull Configuration templateConfiguration, @NonNull LegalPersonProperties legalPersonProperties) {
+    public BusinessRegistryService(@NonNull Configuration templateConfiguration, @NonNull LegalPersonProperties legalPersonProperties) {
         this.templateConfiguration = templateConfiguration;
         this.legalPersonProperties = legalPersonProperties;
         this.xpathFilterForEttevotjad = "//ettevotjad/item[" +
@@ -60,7 +61,7 @@ public class EBusinessRegistryService {
             "]";
     }
 
-    public List<LegalpersonController.EELegalPerson> executeEsindusV2Service(String idCode) {
+    public List<AuthSession.LegalPerson> executeEsindusV2Service(String idCode) {
         Assert.notNull(idCode, "idCode is required!");
         Assert.isTrue(idCode.matches("^[0-9]{11,11}$"), "idCode has invalid format! Must contain only numbers");
 
@@ -74,13 +75,13 @@ public class EBusinessRegistryService {
     }
 
     @SneakyThrows
-    private List<LegalpersonController.EELegalPerson> extractResults(NodeList response)  {
-        List<LegalpersonController.EELegalPerson> legalPersons = new ArrayList<>();
+    private List<AuthSession.LegalPerson> extractResults(NodeList response)  {
+        List<AuthSession.LegalPerson> legalPersons = new ArrayList<>();
         for (int i = 0; i < response.getLength(); i++) {
             XPath xPath = XPathFactory.newInstance().newXPath();
             String idCode = (String)xPath.compile("ariregistri_kood/text()").evaluate(response.item(i), XPathConstants.STRING);
             String name = (String)xPath.compile("arinimi/text()").evaluate(response.item(i), XPathConstants.STRING);
-            legalPersons.add(new LegalpersonController.EELegalPerson(name, idCode));
+            legalPersons.add(new AuthSession.LegalPerson(name, idCode));
         }
         return legalPersons;
     }
@@ -149,7 +150,7 @@ public class EBusinessRegistryService {
             }
 
         } catch (SocketTimeoutException | ConnectException | UnknownHostException | SSLException e) {
-            throw new ServiceNotAvailableException("Could not connect to business registry. Connection failed: " + e.getMessage(), e);
+            throw new ServiceNotAvailableException(ErrorMessages.LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE, "Could not connect to business registry. Connection failed: " + e.getMessage(), e);
         } catch (XPathExpressionException | IOException | SAXException | ParserConfigurationException e) {
             throw new IllegalStateException("Failed to extract data from response: " + e.getMessage(), e);
         }

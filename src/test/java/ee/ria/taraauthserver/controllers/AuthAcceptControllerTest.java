@@ -4,60 +4,36 @@ import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.LevelOfAssurance;
 import ee.ria.taraauthserver.session.AuthSession;
 import ee.ria.taraauthserver.session.AuthState;
+import ee.ria.taraauthserver.session.MockSessionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.util.List;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static ee.ria.taraauthserver.session.MockSessionUtils.*;
 import static io.restassured.RestAssured.given;
 import static java.lang.Integer.parseInt;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+
+// Using MockMvc instead of RestAssuredMockMvc because of session mocking bug in RestAssured (see https://github.com/rest-assured/rest-assured/issues/780)
 
 @Slf4j
 public class AuthAcceptControllerTest extends BaseTest {
 
-    private static final String TEST_LOGIN_CHALLENGE = "abcdefg098AAdsCC";
-
-
-    @Test
-    void authAccept_wrongOidcServerResponseCode() throws Exception {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + TEST_LOGIN_CHALLENGE))
-                .willReturn(aResponse()
-                        .withStatus(400)
-                        .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
-
-        AuthSession testSession = createTestSession();
-
-        mock.perform(MockMvcRequestBuilders.get("/auth/accept")
-                .sessionAttr("session", testSession))
-                .andDo(print())
-                .andExpect(status().is(500));
-    }
-
-    @Test
-    void authAccept_missingRedirectUrl() throws Exception {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + TEST_LOGIN_CHALLENGE))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/incorrectMockLoginAcceptResponse.json")));
-
-        AuthSession testSession = createTestSession();
-
-        mock.perform(MockMvcRequestBuilders.get("/auth/accept")
-                .sessionAttr("session", testSession))
-                .andDo(print())
-                .andExpect(status().is(500));
-    }
-
     @Test
     void authAccept_missingSession() {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + TEST_LOGIN_CHALLENGE))
+        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
@@ -68,59 +44,119 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .get("/auth/accept")
                 .then()
                 .assertThat()
-                .statusCode(500)
-                .body("message", equalTo("Something went wrong internally. Please consult server logs for further details."));
+                .statusCode(400)
+                .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."));
     }
 
     @Test
-    void authAccept_incorrectSession() throws Exception {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + TEST_LOGIN_CHALLENGE))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
+    void authAccept_incorrectSessionState() throws Exception {
+        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.INIT_AUTH_PROCESS, getMockCredential());
 
-        AuthSession testSession = createTestSession();
-        testSession.setState(AuthState.INIT_AUTH_PROCESS);
+        ResultActions resultActions = mock.perform(get("/auth/accept").session(mockHttpSession))
+                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
 
-        MvcResult result = mock.perform(MockMvcRequestBuilders.get("/auth/accept")
-                .sessionAttr("session", testSession))
-                .andDo(print())
+        resultActions
                 .andExpect(status().is(400))
-                .andReturn();
+                .andExpect(jsonPath("$.status", is(400)))
+                .andExpect(jsonPath("$.error", is("Bad Request")))
+                .andExpect(jsonPath("$.message", is("Invalid request - invalid session.")))
+                .andExpect(jsonPath("$.path", is("/auth/accept")));
 
-        assertEquals("Authentication state must be AUTHENTICATION_SUCCESS", result.getResolvedException().getMessage());
+        assertErrorIsLogged("User exception: Session in invalid state: 'INIT_AUTH_PROCESS'. Expected state: [LEGAL_PERSON_AUTHENTICATION_COMPLETED, NATURAL_PERSON_AUTHENTICATION_COMPLETED]");
     }
 
+    @Test
+    void authAccept_OidcServerInvalidResponse_BadRequest() throws Exception {
+        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(400)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
 
-    // Using MockMvc instead of RestAssuredMockMvc because of session mocking bug in RestAssured (see https://github.com/rest-assured/rest-assured/issues/780)
+        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
+
+        ResultActions resultActions = mock.perform(get("/auth/accept").session(mockHttpSession))
+                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+
+        resultActions
+                .andExpect(status().is(500))
+                .andExpect(jsonPath("$.status", is(500)))
+                .andExpect(jsonPath("$.error", is("Internal Server Error")))
+                .andExpect(jsonPath("$.message", is("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti.")))
+                .andExpect(jsonPath("$.path", is("/auth/accept")));
+    }
 
     @Test
-    void authAccept_isSuccessful() throws Exception {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + TEST_LOGIN_CHALLENGE))
+    void authAccept_OidcServerInvalidResponse_MissingRedirectUrl() throws Exception {
+        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/incorrectMockLoginAcceptResponse.json")));
+
+        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
+
+        ResultActions resultActions = mock.perform(get("/auth/accept").session(mockHttpSession))
+                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+
+        resultActions
+                .andExpect(status().is(500))
+                .andExpect(jsonPath("$.status", is(500)))
+                .andExpect(jsonPath("$.error", is("Internal Server Error")))
+                .andExpect(jsonPath("$.message", is("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti.")))
+                .andExpect(jsonPath("$.path", is("/auth/accept")));
+    }
+
+    @Test
+    void authAccept_NaturalPersonAuthenticationComplete_ok() throws Exception {
+        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
 
-        AuthSession testSession = createTestSession();
+        MockHttpSession testSession = MockSessionUtils.getMockHttpSession(AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 
         mock.perform(MockMvcRequestBuilders.get("/auth/accept")
-                .sessionAttr("session", testSession))
+                .session(testSession))
                 .andDo(print())
-                .andExpect(status().is(302));
+                .andExpect(status().is(302))
+                .andExpect(header().string("Location", "some/test/url"));
     }
 
-    private AuthSession createTestSession() {
-        AuthSession testSession = new AuthSession();
-        testSession.setState(AuthState.AUTHENTICATION_SUCCESS);
-        AuthSession.AuthenticationResult authResult = new AuthSession.AuthenticationResult();
-        authResult.setAcr(LevelOfAssurance.HIGH);
-        testSession.setAuthenticationResult(authResult);
+    @Test
+    void authAccept_NaturalPersonAuthenticationCompleteWithLegalPersonAuthenticationRequest_Redirected() throws Exception {
+        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
 
-        AuthSession.LoginRequestInfo loginRequestInfo = new AuthSession.LoginRequestInfo();
-        loginRequestInfo.setChallenge(TEST_LOGIN_CHALLENGE);
-        testSession.setLoginRequestInfo(loginRequestInfo);
-        return testSession;
+        MockHttpSession testSession = MockSessionUtils.getMockHttpSession(AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
+        ((AuthSession)testSession.getAttribute("session")).getLoginRequestInfo().setRequestedScopes(List.of("legalperson"));
+
+        mock.perform(MockMvcRequestBuilders.get("/auth/accept")
+                .session(testSession))
+                .andDo(print())
+                .andExpect(status().is(302))
+                .andExpect(header().string("Location", "/auth/legal_person/init"));
+    }
+
+    @Test
+    void authAccept_legalPersonAuthenticationComplete_ok() throws Exception {
+        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
+
+        MockHttpSession testSession = MockSessionUtils.getMockHttpSession(AuthState.LEGAL_PERSON_AUTHENTICATION_COMPLETED);
+        ((AuthSession)testSession.getAttribute("session")).getLoginRequestInfo().setRequestedScopes(List.of("legalperson"));
+
+        mock.perform(MockMvcRequestBuilders.get("/auth/accept")
+                .session(testSession))
+                .andDo(print())
+                .andExpect(status().is(302))
+                .andExpect(header().string("Location", "some/test/url"));
     }
 }
