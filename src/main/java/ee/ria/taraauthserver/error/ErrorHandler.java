@@ -24,10 +24,8 @@ class ErrorHandler {
     @ExceptionHandler({BadRequestException.class, ConstraintViolationException.class, MissingServletRequestParameterException.class})
     public ModelAndView handleBadRequestException(Exception ex, HttpServletResponse response) throws IOException {
         log.error("User exception: {}", ex.getMessage(), ex);
-        if (isValidMessage(ex.getMessage())) {
-            response.setContentType(MediaType.TEXT_HTML_VALUE);
+        if (isValidMessage(ex.getMessage()))
             return new ModelAndView("error", Collections.singletonMap("TARA_ERROR_MESSAGE", ex.getMessage()), HttpStatus.BAD_REQUEST);
-        }
         response.sendError(HttpServletResponse.SC_BAD_REQUEST);
         return new ModelAndView();
     }

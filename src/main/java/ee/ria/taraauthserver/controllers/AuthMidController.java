@@ -25,10 +25,10 @@ import org.springframework.session.SessionRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import javax.servlet.http.HttpSession;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -40,14 +40,12 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.util.Date;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.util.regex.Matcher;
 
 import static ee.ria.taraauthserver.session.AuthState.*;
 
@@ -74,14 +72,13 @@ public class AuthMidController {
             "ru", MidLanguage.RUS);
 
     @PostMapping(value = "/auth/mid/init", produces = MediaType.TEXT_HTML_VALUE)
-    public String authMidInit(@Validated @ModelAttribute(value = "credential") MidRequestBody requestParameters, Model model, @CookieValue(value = "SESSION", required = false) String sessionId) throws ExecutionException, InterruptedException {
-
-        if (sessionId == null)
-            throw new BadRequestException("message.mid-rest.error.internal-error");
+    public String authMidInit(@Validated @ModelAttribute(value = "credential") MidRequestBody requestParameters, Model model, HttpSession httpSession) {
 
         requestParameters.telephoneNumber = "+372" + requestParameters.telephoneNumber;
 
-        Session session = sessionRepository.findById(sessionId);
+        Session session = sessionRepository.findById(httpSession.getId());
+        if (session == null)
+            throw new BadRequestException("message.mid-rest.error.internal-error");
         AuthSession authSession = session.getAttribute("session");
         validateAuthSession(authSession);
         log.info("AuthSession: " + authSession);
@@ -93,7 +90,6 @@ public class AuthMidController {
 
         CompletableFuture<MidSessionStatus> future = startPollingForMidSessionStatus(response);
         future.thenApply(midSessionStatus -> {
-            log.info("mid session status is: " + midSessionStatus);
             if (StringUtils.equalsIgnoreCase("COMPLETE", midSessionStatus.getState())) {
                 if (StringUtils.equalsIgnoreCase("OK", midSessionStatus.getResult())) {
                     try {
@@ -176,7 +172,8 @@ public class AuthMidController {
                 setSessionStateFailed(session, authSession, e.getMessage());
             }
             return null;
-        }).thenAcceptAsync(s -> System.out.println("CORRECT value: " + s));
+        }).thenAcceptAsync(s -> {
+        });
 
         session.setAttribute("session", authSession);
         sessionRepository.save(session);
@@ -234,7 +231,7 @@ public class AuthMidController {
                 .withHashToSign(authenticationHash)
                 .withLanguage(getMidLanguage(authSession))
                 .withDisplayText(translatedShortName)
-                .withDisplayTextFormat(MidDisplayTextFormat.GSM7)
+                .withDisplayTextFormat(isServiceNameUsingSpecialCharacters(translatedShortName) ? MidDisplayTextFormat.UCS2 : MidDisplayTextFormat.GSM7)
                 .build();
 
         try {
@@ -255,6 +252,14 @@ public class AuthMidController {
         }
     }
 
+    private static boolean isServiceNameUsingSpecialCharacters(String serviceName) {
+        java.util.regex.Pattern p = java.util.regex.Pattern.compile("[а-яА-ЯЁё]", java.util.regex.Pattern.CASE_INSENSITIVE);
+        String[] specialCharacters = {"Õ", "Š", "Ž", "š", "ž", "õ", "Ą", "Č", "Ę", "Ė", "Į", "Š", "Ų", "Ū", "Ž", "ą", "č", "ę", "ė", "į", "š", "ų", "ū", "ž"};
+        Matcher m = p.matcher(serviceName);
+        boolean isSpecialCharacterIncluded = m.find();
+        return Arrays.stream(specialCharacters).anyMatch(serviceName::contains) || isSpecialCharacterIncluded;
+    }
+
     @NotNull
     private CompletableFuture<MidSessionStatus> startPollingForMidSessionStatus(MidAuthenticationResponse response) {
         CompletableFuture<MidSessionStatus> future
@@ -268,11 +273,10 @@ public class AuthMidController {
         try {
             MidAuthentication authentication = midClient.createMobileIdAuthentication(future.get(), authenticationHash);
             MidAuthenticationResponseValidator validator = new MidAuthenticationResponseValidator(getMidTrustStore());
-            MidAuthenticationResult authenticationResult = validator.validate(authentication);
-            return authenticationResult;
+            return validator.validate(authentication);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new IllegalStateException("Internal server error when getting mid authentication result.", e);
+            throw new IllegalStateException("Internal server error when validating mid authentication result.", e);
         }
     }
 

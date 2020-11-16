@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.controllers;
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.AuthenticationType;
+import ee.ria.taraauthserver.config.LevelOfAssurance;
 import ee.ria.taraauthserver.error.ErrorMessages;
 import ee.ria.taraauthserver.session.AuthSession;
 import ee.ria.taraauthserver.session.AuthState;
@@ -15,7 +16,6 @@ import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static io.restassured.RestAssured.given;
@@ -158,19 +158,38 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
-    void phoneNumberAndIdCodeValid() {  //TODO test all info logs
+    void phoneNumberAndIdCodeValid() throws InterruptedException {
         createAuthenticationStubWithResponse("mock_responses/mid_authenticate_response.json", 200);
         createPollStubWithResponse("mock_responses/mid_poll_response.json", 200);
 
+        String sessionId = createCorrectSession();
+
         given()
                 .when()
-                .formParam("idCode", "60001019906")
-                .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", createCorrectSession())
+                .formParam("idCode", "60001019939")
+                .formParam("telephoneNumber", "00000266")
+                .sessionId("SESSION", sessionId)
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
                 .statusCode(200);
+
+        Thread.sleep(1000);
+
+        assertInfoIsLogged("mid request: ee.sk.mid.rest.dao.request.MidAuthenticationRequest");
+        assertInfoIsLogged("mid response: MidAbstractResponse{sessionID='de305d54-75b4-431b-adb2-eb6b9e546015'}");
+
+        AuthSession authSession = sessionRepository.findById(sessionId).getAttribute("session");
+        AuthSession.MidAuthenticationResult result = (AuthSession.MidAuthenticationResult) authSession.getAuthenticationResult();
+        assertEquals("60001019906", result.getIdCode());
+        assertEquals("EE", result.getCountry());
+        assertEquals("MARY ÄNN", result.getFirstName());
+        assertEquals("O’CONNEŽ-ŠUSLIK TESTNUMBER", result.getLastName());
+        assertEquals("+37200000266", result.getPhoneNumber());
+        assertEquals("+37200000266", result.getSubject());
+        assertEquals("2000-01-01", result.getDateOfBirth().toString());
+        assertEquals(AuthenticationType.MobileID, result.getAmr());
+        assertEquals(LevelOfAssurance.HIGH, result.getAcr());
     }
 
     @Test
@@ -203,6 +222,7 @@ class AuthMidControllerTest extends BaseTest {
                 .when()
                 .formParam("idCode", "60001019906")
                 .formParam("telephoneNumber", "00000766")
+                .sessionId("SESSION", session.getId())
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
