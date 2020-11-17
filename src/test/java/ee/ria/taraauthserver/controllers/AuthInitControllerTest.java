@@ -133,7 +133,7 @@ class AuthInitControllerTest extends BaseTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mock_response-ok_ui_locales-not-set.json")));
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_ui_locales-not-set.json")));
 
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
@@ -155,7 +155,7 @@ class AuthInitControllerTest extends BaseTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mock_response-ok_ui_locales-not-set.json")));
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_ui_locales-not-set.json")));
 
         HttpSession result = mock.perform(MockMvcRequestBuilders.get("/auth/init").param("login_challenge", TEST_LOGIN_CHALLENGE))
                 .andDo(print())
@@ -180,7 +180,7 @@ class AuthInitControllerTest extends BaseTest {
                         .withStatus(200)
                         .withFixedDelay(2000)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mock_response-ok_ui_locales-not-set.json")));
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_ui_locales-not-set.json")));
 
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
@@ -198,7 +198,7 @@ class AuthInitControllerTest extends BaseTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mock_response-nok_client_id-invalid.json")));
+                        .withBodyFile("mock_responses/oidc/mock_response-nok_client_id-invalid.json")));
 
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
@@ -216,7 +216,7 @@ class AuthInitControllerTest extends BaseTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mock_response-ok_ui_locales-not-set.json")));
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_ui_locales-not-set.json")));
 
         log.info("is running? " + wireMockServer.isRunning());
         log.info("is running? " + wireMockServer.getSingleStubMapping(test.getUuid()).toString());
@@ -235,7 +235,7 @@ class AuthInitControllerTest extends BaseTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mock_response.json")));
+                        .withBodyFile("mock_responses/oidc/mock_response.json")));
 
         String cookie = given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
@@ -264,7 +264,7 @@ class AuthInitControllerTest extends BaseTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mock_response.json")));
+                        .withBodyFile("mock_responses/oidc/mock_response.json")));
 
         mock.perform(MockMvcRequestBuilders.get("/auth/init").param("login_challenge", TEST_LOGIN_CHALLENGE))
                 .andDo(print())
@@ -279,7 +279,7 @@ class AuthInitControllerTest extends BaseTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mock_response.json")));
+                        .withBodyFile("mock_responses/oidc/mock_response.json")));
 
         mock.perform(MockMvcRequestBuilders.get("/auth/init")
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
@@ -297,7 +297,7 @@ class AuthInitControllerTest extends BaseTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mock_response-ok_ui_locales-incorrect.json")));
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_ui_locales-incorrect.json")));
 
         mock.perform(MockMvcRequestBuilders.get("/auth/init").param("login_challenge", TEST_LOGIN_CHALLENGE))
                 .andDo(print())
@@ -312,7 +312,7 @@ class AuthInitControllerTest extends BaseTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mock_response-ok_ui_locales-not-set.json")));
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_ui_locales-not-set.json")));
 
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.IDCard).setEnabled(false);
 
@@ -335,7 +335,7 @@ class AuthInitControllerTest extends BaseTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mock_response.json")));
+                        .withBodyFile("mock_responses/oidc/mock_response.json")));
 
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
@@ -356,7 +356,7 @@ class AuthInitControllerTest extends BaseTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mock_response.json")));
+                        .withBodyFile("mock_responses/oidc/mock_response.json")));
 
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.IDCard).setLevelOfAssurance(LevelOfAssurance.HIGH);
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.MobileID).setLevelOfAssurance(LevelOfAssurance.LOW);
@@ -380,7 +380,7 @@ class AuthInitControllerTest extends BaseTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mock_response-ok_acr-not-set.json")));
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_acr-not-set.json")));
 
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.IDCard).setLevelOfAssurance(LevelOfAssurance.LOW);
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.MobileID).setLevelOfAssurance(LevelOfAssurance.HIGH);
@@ -405,7 +405,7 @@ class AuthInitControllerTest extends BaseTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mock_response-ok_scope-unknown.json")));
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_scope-unknown.json")));
 
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.MobileID).setLevelOfAssurance(LevelOfAssurance.HIGH);
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.IDCard).setLevelOfAssurance(LevelOfAssurance.HIGH);
@@ -430,7 +430,7 @@ class AuthInitControllerTest extends BaseTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mock_response-ok_scope-unknown.json")));
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_scope-unknown.json")));
 
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.MobileID).setLevelOfAssurance(LevelOfAssurance.LOW);
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.IDCard).setLevelOfAssurance(LevelOfAssurance.LOW);
@@ -454,7 +454,7 @@ class AuthInitControllerTest extends BaseTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mock_response-ok_acr-incorrect.json")));
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_acr-incorrect.json")));
 
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
@@ -474,7 +474,7 @@ class AuthInitControllerTest extends BaseTest {
                 .willReturn(aResponse()
                         .withStatus(404)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mock_response.json")));
+                        .withBodyFile("mock_responses/oidc/mock_response.json")));
 
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
@@ -492,7 +492,7 @@ class AuthInitControllerTest extends BaseTest {
                 .willReturn(aResponse()
                         .withStatus(500)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mock_response.json")));
+                        .withBodyFile("mock_responses/oidc/mock_response.json")));
 
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
@@ -510,7 +510,7 @@ class AuthInitControllerTest extends BaseTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mock_response-nok_invalid_parameters.json")));
+                        .withBodyFile("mock_responses/oidc/mock_response-nok_invalid_parameters.json")));
 
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)

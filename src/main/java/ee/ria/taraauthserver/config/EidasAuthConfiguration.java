@@ -6,21 +6,14 @@ import com.hazelcast.config.MapIndexConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import ee.ria.taraauthserver.utils.ThymeleafSupport;
-import ee.sk.mid.MidClient;
-import ee.sk.mid.rest.MidLoggingFilter;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.ClientProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.session.hazelcast.HazelcastIndexedSessionRepository;
 import org.springframework.session.hazelcast.PrincipalNameExtractor;
 import org.springframework.session.hazelcast.config.annotation.web.http.EnableHazelcastHttpSession;
@@ -33,12 +26,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 import org.springframework.web.servlet.i18n.SessionLocaleResolver;
 
-import javax.net.ssl.SSLContext;
-import java.io.IOException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
 import java.time.Duration;
 import java.util.Locale;
 
@@ -82,36 +69,6 @@ public class EidasAuthConfiguration implements WebMvcConfigurer {
         serializer.setUseBase64Encoding(false);
         serializer.setCookieName("SESSION");
         return serializer;
-    }
-
-    @Bean
-    public KeyStore midTrustStore(AuthConfigurationProperties.MidAuthConfigurationProperties midAuthConfigurationProperties, ResourceLoader loader) throws KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException {
-        Resource resource = loader.getResource(midAuthConfigurationProperties.getTruststorePath());
-        KeyStore trustStore = KeyStore.getInstance(midAuthConfigurationProperties.getTruststoreType());
-        trustStore.load(resource.getInputStream(), midAuthConfigurationProperties.getTruststorePassword().toCharArray());
-        return trustStore;
-    }
-
-    @Bean
-    @SneakyThrows
-    public MidClient midClient(KeyStore midTrustStore, AuthConfigurationProperties.MidAuthConfigurationProperties midAuthConfigurationProperties) {
-
-        return MidClient.newBuilder()
-                .withHostUrl(midAuthConfigurationProperties.getHostUrl())
-                .withRelyingPartyUUID(midAuthConfigurationProperties.getRelyingPartyUuid())
-                .withRelyingPartyName(midAuthConfigurationProperties.getRelyingPartyName())
-                .withTrustSslContext(SSLContext.getDefault())
-                .withNetworkConnectionConfig(clientConfig(midAuthConfigurationProperties))
-                .withLongPollingTimeoutSeconds(30)
-                .build();
-    }
-
-    private ClientConfig clientConfig(AuthConfigurationProperties.MidAuthConfigurationProperties midAuthConfigurationProperties) {
-        ClientConfig clientConfig = new ClientConfig();
-        clientConfig.property(ClientProperties.CONNECT_TIMEOUT, midAuthConfigurationProperties.getConnectionTimeoutMilliseconds());
-        clientConfig.property(ClientProperties.READ_TIMEOUT, midAuthConfigurationProperties.getReadTimeoutMilliseconds());
-        clientConfig.register(new MidLoggingFilter());
-        return clientConfig;
     }
 
     @Bean

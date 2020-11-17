@@ -18,9 +18,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static ee.ria.taraauthserver.session.AuthState.AUTHENTICATION_SUCCESS;
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
@@ -43,7 +43,7 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body(containsString("Isikukood ei ole korrektne"));
+                .body("html.body.div.div.div[2].", hasItem("Kasutaja tuvastamine ebaõnnestus.Isikukood ei ole korrektne."));
 
         assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 2 errors");
     }
@@ -58,7 +58,7 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body(containsString("Isikukood ei ole korrektne"));
+                .body("html.body.div.div.div[2].", hasItem("Kasutaja tuvastamine ebaõnnestus.Isikukood ei ole korrektne."));
 
         assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 2 errors");
     }
@@ -73,7 +73,7 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body(containsString("Isikukood ei ole korrektne"));
+                .body("html.body.div.div.div[2].", hasItem("Kasutaja tuvastamine ebaõnnestus.Isikukood ei ole korrektne."));
 
         assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 2 errors");
     }
@@ -88,7 +88,7 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body(containsString("Isikukood ei ole korrektne"));
+                .body("html.body.div.div.div[2].", hasItem("Kasutaja tuvastamine ebaõnnestus.Isikukood ei ole korrektne."));
 
         assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
     }
@@ -102,7 +102,7 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body(containsString("Telefoninumber ei ole korrektne"));
+                .body("html.body.div.div.div[2].", hasItem("Kasutaja tuvastamine ebaõnnestus.Telefoninumber ei ole korrektne."));
     }
 
     @Test
@@ -115,7 +115,7 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body(containsString("Telefoninumber ei ole korrektne"));
+                .body("html.body.div.div.div[2].", hasItem("Kasutaja tuvastamine ebaõnnestus.Telefoninumber ei ole korrektne."));
     }
 
     @Test
@@ -128,7 +128,7 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body(containsString("Telefoninumber ei ole korrektne"));
+                .body("html.body.div.div.div[2].", hasItem("Kasutaja tuvastamine ebaõnnestus.Telefoninumber ei ole korrektne."));
     }
 
     @Test
@@ -141,7 +141,7 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body(containsString("Telefoninumber ei ole korrektne"));
+                .body("html.body.div.div.div[2].", hasItem("Kasutaja tuvastamine ebaõnnestus.Telefoninumber ei ole korrektne."));
     }
 
     @Test
@@ -154,13 +154,13 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body(containsString("Telefoninumber ei ole korrektne"));
+                .body("html.body.div.div.div[2].", hasItem("Kasutaja tuvastamine ebaõnnestus.Telefoninumber ei ole korrektne."));
     }
 
     @Test
     void phoneNumberAndIdCodeValid() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid_poll_response.json", 200);
+        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
+        createPollStubWithResponse("mock_responses/mid/mid_poll_response.json", 200);
 
         String sessionId = createCorrectSession();
 
@@ -176,8 +176,8 @@ class AuthMidControllerTest extends BaseTest {
 
         Thread.sleep(1000);
 
-        assertInfoIsLogged("mid request: ee.sk.mid.rest.dao.request.MidAuthenticationRequest");
-        assertInfoIsLogged("mid response: MidAbstractResponse{sessionID='de305d54-75b4-431b-adb2-eb6b9e546015'}");
+        assertInfoIsLogged("Mid request: ee.sk.mid.rest.dao.request.MidAuthenticationRequest");
+        assertInfoIsLogged("Mid response: MidAbstractResponse{sessionID='de305d54-75b4-431b-adb2-eb6b9e546015'}");
 
         AuthSession authSession = sessionRepository.findById(sessionId).getAttribute("session");
         AuthSession.MidAuthenticationResult result = (AuthSession.MidAuthenticationResult) authSession.getAuthenticationResult();
@@ -190,6 +190,29 @@ class AuthMidControllerTest extends BaseTest {
         assertEquals("2000-01-01", result.getDateOfBirth().toString());
         assertEquals(AuthenticationType.MobileID, result.getAmr());
         assertEquals(LevelOfAssurance.HIGH, result.getAcr());
+        assertEquals(AUTHENTICATION_SUCCESS, authSession.getState());
+    }
+
+    @Test
+    void midAuthInit_request_language_is_correct() {
+        wireMockServer.stubFor(any(urlPathEqualTo("/mid-api/authentication"))
+                .withRequestBody(matchingJsonPath("$.language", equalTo("ENG")))
+                .willReturn(aResponse()
+                        .withBodyFile("mock_responses/mid/mid_authenticate_response.json")
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withStatus(200)));
+
+        String sessionId = createCorrectSession();
+
+        given()
+                .when()
+                .formParam("idCode", "60001019939")
+                .formParam("telephoneNumber", "00000266")
+                .sessionId("SESSION", sessionId)
+                .post("/auth/mid/init?lang=en")
+                .then()
+                .assertThat()
+                .statusCode(200);
     }
 
     @Test
@@ -203,7 +226,7 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body(containsString("Sisendparameetrid ei ole korrektsel kujul."));
+                .body("html.body.div.div.div[2].", hasItem("Kasutaja tuvastamine ebaõnnestus.Sisendparameetrid ei ole korrektsel kujul."));
 
         assertErrorIsLogged("User exception: message.mid-rest.error.internal-error");
     }
@@ -227,7 +250,7 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body(containsString("Sisendparameetrid ei ole korrektsel kujul."));
+                .body("html.body.div.div.div[2].", hasItem("Kasutaja tuvastamine ebaõnnestus.Sisendparameetrid ei ole korrektsel kujul."));
 
         assertErrorIsLogged("User exception: message.mid-rest.error.internal-error");
     }
@@ -253,14 +276,14 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body(containsString("Sisendparameetrid ei ole korrektsel kujul."));
+                .body("html.body.div.div.div[2].", hasItem("Kasutaja tuvastamine ebaõnnestus.Sisendparameetrid ei ole korrektsel kujul."));
 
         assertErrorIsLogged("User exception: message.mid-rest.error.internal-error");
     }
 
     @Test
     void midAuthInit_response_400() {
-        createAuthenticationStubWithResponse("mock_responses/mid_authenticate_response.json", 400);
+        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 400);
 
         given()
                 .when()
@@ -278,7 +301,7 @@ class AuthMidControllerTest extends BaseTest {
 
     @Test
     void midAuthInit_response_401() {
-        createAuthenticationStubWithResponse("mock_responses/mid_authenticate_response.json", 401);
+        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 401);
 
         given()
                 .when()
@@ -296,7 +319,7 @@ class AuthMidControllerTest extends BaseTest {
 
     @Test
     void midAuthInit_response_405() {
-        createAuthenticationStubWithResponse("mock_responses/mid_authenticate_response.json", 405);
+        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 405);
 
         given()
                 .when()
@@ -314,7 +337,25 @@ class AuthMidControllerTest extends BaseTest {
 
     @Test
     void midAuthInit_response_500() {
-        createAuthenticationStubWithResponse("mock_responses/mid_authenticate_response.json", 500);
+        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 500);
+
+        given()
+                .when()
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "00000766")
+                .sessionId("SESSION", createCorrectSession())
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(500);
+
+        assertErrorIsLogged("Mid authentication failed: Error getting response from cert-store/MSSP for URI https://localhost:9877/mid-api/authentication: HTTP 500 Server Error");
+        assertErrorIsLogged("Server encountered an unexpected error: message.mid-rest.error.internal-error");
+    }
+
+    @Test
+    void midAuthInit_response_no_certificate() {
+        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 500);
 
         given()
                 .when()
@@ -332,8 +373,8 @@ class AuthMidControllerTest extends BaseTest {
 
     @Test
     void midAuthPoll_response_400() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid_poll_empty_response.json", 400);
+        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
+        createPollStubWithResponse("mock_responses/mid/mid_poll_empty_response.json", 400);
 
         String sessionId = createCorrectSession();
 
@@ -356,8 +397,8 @@ class AuthMidControllerTest extends BaseTest {
 
     @Test
     void midAuthPoll_response_401() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid_poll_empty_response.json", 401);
+        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
+        createPollStubWithResponse("mock_responses/mid/mid_poll_empty_response.json", 401);
 
         String sessionId = createCorrectSession();
 
@@ -380,8 +421,8 @@ class AuthMidControllerTest extends BaseTest {
 
     @Test
     void midAuthPoll_response_404() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid_poll_empty_response.json", 404);
+        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
+        createPollStubWithResponse("mock_responses/mid/mid_poll_empty_response.json", 404);
 
         String sessionId = createCorrectSession();
 
@@ -404,8 +445,8 @@ class AuthMidControllerTest extends BaseTest {
 
     @Test
     void midAuthPoll_response_405() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid_poll_empty_response.json", 405);
+        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
+        createPollStubWithResponse("mock_responses/mid/mid_poll_empty_response.json", 405);
 
         String sessionId = createCorrectSession();
 
@@ -428,8 +469,8 @@ class AuthMidControllerTest extends BaseTest {
 
     @Test
     void midAuthPoll_response_500() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid_poll_empty_response.json", 500);
+        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
+        createPollStubWithResponse("mock_responses/mid/mid_poll_empty_response.json", 500);
 
         String sessionId = createCorrectSession();
 
@@ -453,8 +494,8 @@ class AuthMidControllerTest extends BaseTest {
 
     @Test
     void midAuthPoll_response_user_cancelled() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid_poll_response_user_cancelled.json", 200);
+        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
+        createPollStubWithResponse("mock_responses/mid/mid_poll_response_user_cancelled.json", 200);
 
         String sessionId = createCorrectSession();
 
@@ -479,8 +520,8 @@ class AuthMidControllerTest extends BaseTest {
 
     @Test
     void midAuthPoll_response_not_mid_client() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid_poll_response_not_mid_client.json", 200);
+        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
+        createPollStubWithResponse("mock_responses/mid/mid_poll_response_not_mid_client.json", 200);
 
         String sessionId = createCorrectSession();
 
@@ -505,8 +546,8 @@ class AuthMidControllerTest extends BaseTest {
 
     @Test
     void midAuthPoll_response_timeout() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid_poll_response_timeout.json", 200);
+        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
+        createPollStubWithResponse("mock_responses/mid/mid_poll_response_timeout.json", 200);
 
         String sessionId = createCorrectSession();
 
@@ -531,8 +572,8 @@ class AuthMidControllerTest extends BaseTest {
 
     @Test
     void midAuthPoll_response_signature_hash_mismatch() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid_poll_response_signature_hash_mismatch.json", 200);
+        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
+        createPollStubWithResponse("mock_responses/mid/mid_poll_response_signature_hash_mismatch.json", 200);
 
         String sessionId = createCorrectSession();
 
@@ -557,8 +598,8 @@ class AuthMidControllerTest extends BaseTest {
 
     @Test
     void midAuthPoll_response_phone_absent() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid_poll_response_phone_absent.json", 200);
+        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
+        createPollStubWithResponse("mock_responses/mid/mid_poll_response_phone_absent.json", 200);
 
         String sessionId = createCorrectSession();
 
@@ -583,8 +624,8 @@ class AuthMidControllerTest extends BaseTest {
 
     @Test
     void midAuthPoll_response_delivery_error() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid_poll_response_delivery_error.json", 200);
+        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
+        createPollStubWithResponse("mock_responses/mid/mid_poll_response_delivery_error.json", 200);
 
         String sessionId = createCorrectSession();
 
@@ -609,8 +650,8 @@ class AuthMidControllerTest extends BaseTest {
 
     @Test
     void midAuthPoll_response_sim_error() {
-        createAuthenticationStubWithResponse("mock_responses/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid_poll_response_sim_error.json", 200);
+        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
+        createPollStubWithResponse("mock_responses/mid/mid_poll_response_sim_error.json", 200);
 
         String sessionId = createCorrectSession();
 
@@ -634,7 +675,7 @@ class AuthMidControllerTest extends BaseTest {
     @Test
     @DirtiesContext
     void midAuthInit_response_timeout() {
-        createAuthenticationStubWithResponse("mock_responses/mid_authenticate_response.json", 200, 2000);
+        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200, 2000);
 
         String sessionId = createCorrectSession();
 
@@ -647,7 +688,7 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .body("message", equalTo("Something went wrong internally. Please consult server logs for further details."));
+                .body("message", org.hamcrest.Matchers.equalTo("Something went wrong internally. Please consult server logs for further details."));
 
         assertErrorIsLogged("Server encountered an unexpected error: java.net.SocketTimeoutException: Read timed out");
     }
@@ -658,6 +699,7 @@ class AuthMidControllerTest extends BaseTest {
 
     private void createAuthenticationStubWithResponse(String response, int status, int delayInMilliseconds) {
         wireMockServer.stubFor(any(urlPathEqualTo("/mid-api/authentication"))
+                .withRequestBody(matchingJsonPath("$.language", equalTo("EST")))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withStatus(status)
