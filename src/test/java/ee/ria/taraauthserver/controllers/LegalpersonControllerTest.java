@@ -24,6 +24,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Slf4j
 public class LegalpersonControllerTest extends BaseTest {
 
+    public static final String MOCK_LEGAL_PERSON_IDENTIFIER = "ABC-00000000-_abc";
+    public static final String MOCK_LEGAL_PERSON_NAME = "Acme & sons OÜ";
+
     @Test
     void getAuthLegalPersonInit_noSession() throws Exception {
         ResultActions resultActions = mock.perform(
@@ -113,7 +116,8 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andExpect(content().string(containsString(MOCK_NATURAL_PERSON_LASTNAME)))
                 .andExpect(content().string(containsString(
                         MOCK_NATURAL_PERSON_DATE_OF_BIRTH.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))))
-                ).andReturn();
+
+                ).andExpect(content().string(containsString("<a href=\"/auth/init?login_challenge=" + MOCK_LOGIN_CHALLENGE + "\">Tagasi tuvastamismeetodite valiku juurde</a>")));
     }
 
     @Test
@@ -281,13 +285,13 @@ public class LegalpersonControllerTest extends BaseTest {
         resultActions
                 .andExpect(status().is(200))
                 .andExpect(content().json("{'legalPersons':[" +
-                        "{'legalName':'Acme INC OÜ 1','legalPersonIdentifier':'12341234-1'}," +
-                        "{'legalName':'Acme INC UÜ 2','legalPersonIdentifier':'12341234-2'}," +
-                        "{'legalName':'Acme INC TÜ 3','legalPersonIdentifier':'12341234-3'}," +
-                        "{'legalName':'Acme INC AS 4','legalPersonIdentifier':'12341234-4'}," +
-                        "{'legalName':'Acme INC TÜH 5','legalPersonIdentifier':'12341234-5'}," +
-                        "{'legalName':'Acme INC SA 6','legalPersonIdentifier':'12341234-6'}," +
-                        "{'legalName':'Acme INC MTÜ 7','legalPersonIdentifier':'12341234-7'}" +
+                        "{'legalName':'Acme INC OÜ 1','legalPersonIdentifier':'11111111'}," +
+                        "{'legalName':'Acme INC UÜ 2','legalPersonIdentifier':'22222222'}," +
+                        "{'legalName':'Acme INC TÜ 3','legalPersonIdentifier':'33333333'}," +
+                        "{'legalName':'Acme INC AS 4','legalPersonIdentifier':'44444444'}," +
+                        "{'legalName':'Acme INC TÜH 5','legalPersonIdentifier':'55555555'}," +
+                        "{'legalName':'Acme INC SA 6','legalPersonIdentifier':'66666666'}," +
+                        "{'legalName':'Acme INC MTÜ 7','legalPersonIdentifier':'77777777'}" +
                         "]}"));
     }
 
@@ -362,10 +366,10 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.status", is(400)))
                 .andExpect(jsonPath("$.error", is("Bad Request")))
-                .andExpect(jsonPath("$.message", is("confirmLegalPerson.legalPersonIdentifier: only characters and numbers allowed")))
+                .andExpect(jsonPath("$.message", is("confirmLegalPerson.legalPersonIdentifier: invalid legal person identifier")))
                 .andExpect(jsonPath("$.path", is("/auth/legal_person/confirm")));
 
-        assertErrorIsLogged("User exception: confirmLegalPerson.legalPersonIdentifier: only characters and numbers allowed");
+        assertErrorIsLogged("User exception: confirmLegalPerson.legalPersonIdentifier: invalid legal person identifier");
     }
 
     @Test
@@ -393,10 +397,10 @@ public class LegalpersonControllerTest extends BaseTest {
     void postAuthLegalPersonConfirm_validLegalPersonIdentifier() throws Exception {
 
         MockHttpSession mockHttpSession = getMockHttpSession(AuthState.GET_LEGAL_PERSON_LIST, getMockCredential());
-        ((AuthSession)mockHttpSession.getAttribute("session")).setLegalPersonList(List.of(new AuthSession.LegalPerson("Acme OÜ", "123456abcd")));
+        ((AuthSession)mockHttpSession.getAttribute("session")).setLegalPersonList(List.of(new AuthSession.LegalPerson(MOCK_LEGAL_PERSON_NAME, MOCK_LEGAL_PERSON_IDENTIFIER)));
 
         ResultActions resultActions = mock.perform(post("/auth/legal_person/confirm")
-                .param("legal_person_identifier", "123456abcd")
+                .param("legal_person_identifier", MOCK_LEGAL_PERSON_IDENTIFIER)
                 .session(mockHttpSession))
                 .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
 
@@ -404,6 +408,6 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andExpect(status().is(302))
                 .andExpect(header().string("Location", "/auth/accept"));
 
-        assertInfoIsLogged("Legal person selected: 123456abcd");
+        assertInfoIsLogged("Legal person selected: " + MOCK_LEGAL_PERSON_IDENTIFIER);
     }
 }

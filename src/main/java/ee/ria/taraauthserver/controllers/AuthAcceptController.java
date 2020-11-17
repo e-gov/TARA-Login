@@ -2,12 +2,12 @@ package ee.ria.taraauthserver.controllers;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.AuthConfigurationProperties;
+import ee.ria.taraauthserver.config.TaraScope;
 import ee.ria.taraauthserver.error.BadRequestException;
-import ee.ria.taraauthserver.error.ErrorMessages;
 import ee.ria.taraauthserver.session.AuthSession;
-import ee.ria.taraauthserver.session.AuthState;
 import ee.ria.taraauthserver.utils.SessionUtils;
-import lombok.*;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
@@ -18,14 +18,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.View;
 import org.springframework.web.servlet.view.RedirectView;
 
 import javax.servlet.http.HttpSession;
 import java.util.List;
+
+import static ee.ria.taraauthserver.error.ErrorMessages.SESSION_STATE_INVALID;
+import static ee.ria.taraauthserver.session.AuthState.*;
 
 @Slf4j
 @Validated
@@ -43,19 +43,18 @@ class AuthAcceptController {
 
         AuthSession authSession = SessionUtils.getAuthSession();
 
-        // TODO forward instead redirect?
-        if (authSession.getState() == AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED && authSession.getLoginRequestInfo().getRequestedScopes().contains("legalperson")) {
+        if (isLegalPersonAttributesRequested(authSession)) {
             return new RedirectView("/auth/legal_person/init");
         }
 
-        if (!List.of(AuthState.LEGAL_PERSON_AUTHENTICATION_COMPLETED, AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED).contains(authSession.getState()))
-            throw new BadRequestException(ErrorMessages.SESSION_STATE_INVALID, String.format("Session in invalid state: '%s'. Expected state: %s", authSession.getState(), List.of(AuthState.LEGAL_PERSON_AUTHENTICATION_COMPLETED, AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
+        if (!List.of(LEGAL_PERSON_AUTHENTICATION_COMPLETED, NATURAL_PERSON_AUTHENTICATION_COMPLETED).contains(authSession.getState()))
+            throw new BadRequestException(SESSION_STATE_INVALID, String.format("Session in invalid state: '%s'. Expected state: %s", authSession.getState(), List.of(LEGAL_PERSON_AUTHENTICATION_COMPLETED, NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
 
         String url = authConfigurationProperties.getHydraService().getAcceptLoginUrl() + "?login_challenge=" + authSession.getLoginRequestInfo().getChallenge();
         ResponseEntity<LoginAcceptResponseBody> response = hydraService.exchange(url, HttpMethod.PUT, createRequestBody(authSession), LoginAcceptResponseBody.class);
 
         if (response.getStatusCode() == HttpStatus.OK && response.getBody().getRedirectUrl() != null) {
-            authSession.setState(AuthState.AUTHENTICATION_SUCCESS);
+            authSession.setState(AUTHENTICATION_SUCCESS);
             SessionUtils.updateSession(authSession);
             log.info("accepted session: " + authSession);
             return new RedirectView(response.getBody().getRedirectUrl());
@@ -73,6 +72,10 @@ class AuthAcceptController {
                 false,
                 authenticationResult.getAcr().getAcrName(),
                 authenticationResult.getSubject()));
+    }
+
+    private boolean isLegalPersonAttributesRequested(AuthSession authSession) {
+        return authSession.getState() == NATURAL_PERSON_AUTHENTICATION_COMPLETED && authSession.getLoginRequestInfo().getRequestedScopes().contains(TaraScope.LEGALPERSON.getFormalName());
     }
 
     @RequiredArgsConstructor

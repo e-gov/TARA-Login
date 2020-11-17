@@ -19,7 +19,8 @@ public enum TaraScope {
     SMARTID("smartid"),
     EIDASONLY("eidasonly"),
     EMAIL("email"),
-    PHONE("phone");
+    PHONE("phone"),
+    LEGALPERSON("legalperson");
 
     public static final List<TaraScope> SUPPORTS_AUTHENTICATION_METHOD_SELECTION = Collections.unmodifiableList(Arrays.asList(IDCARD, MID, BANKLINK, EIDAS, SMARTID, EIDASONLY));
 

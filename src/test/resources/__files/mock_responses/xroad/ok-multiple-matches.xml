@@ -29,7 +29,7 @@
             <ns1:keha>
                 <ns1:ettevotjad>
                     <ns1:item>
-                        <ns1:ariregistri_kood>12341234-1</ns1:ariregistri_kood>
+                        <ns1:ariregistri_kood>11111111</ns1:ariregistri_kood>
                         <ns1:arinimi>Acme INC OÜ 1</ns1:arinimi>
                         <ns1:staatus>R</ns1:staatus>
                         <ns1:staatus_tekstina>Registrisse kantud</ns1:staatus_tekstina>
@@ -51,7 +51,7 @@
                         <ns1:oiguslik_vorm_tekstina>Osaühing</ns1:oiguslik_vorm_tekstina>
                     </ns1:item>
                     <ns1:item>
-                        <ns1:ariregistri_kood>12341234-2</ns1:ariregistri_kood>
+                        <ns1:ariregistri_kood>22222222</ns1:ariregistri_kood>
                         <ns1:arinimi>Acme INC UÜ 2</ns1:arinimi>
                         <ns1:staatus>R</ns1:staatus>
                         <ns1:staatus_tekstina>Registrisse kantud</ns1:staatus_tekstina>
@@ -73,7 +73,7 @@
                         <ns1:oiguslik_vorm_tekstina>Usaldusühing</ns1:oiguslik_vorm_tekstina>
                     </ns1:item>
                     <ns1:item>
-                        <ns1:ariregistri_kood>12341234-3</ns1:ariregistri_kood>
+                        <ns1:ariregistri_kood>33333333</ns1:ariregistri_kood>
                         <ns1:arinimi>Acme INC TÜ 3</ns1:arinimi>
                         <ns1:staatus>R</ns1:staatus>
                         <ns1:staatus_tekstina>Registrisse kantud</ns1:staatus_tekstina>
@@ -95,7 +95,7 @@
                         <ns1:oiguslik_vorm_tekstina>Täisühing</ns1:oiguslik_vorm_tekstina>
                     </ns1:item>
                     <ns1:item>
-                        <ns1:ariregistri_kood>12341234-4</ns1:ariregistri_kood>
+                        <ns1:ariregistri_kood>44444444</ns1:ariregistri_kood>
                         <ns1:arinimi>Acme INC AS 4</ns1:arinimi>
                         <ns1:staatus>R</ns1:staatus>
                         <ns1:staatus_tekstina>Registrisse kantud</ns1:staatus_tekstina>
@@ -117,7 +117,7 @@
                         <ns1:oiguslik_vorm_tekstina>Aktsiaselts</ns1:oiguslik_vorm_tekstina>
                     </ns1:item>
                     <ns1:item>
-                        <ns1:ariregistri_kood>12341234-5</ns1:ariregistri_kood>
+                        <ns1:ariregistri_kood>55555555</ns1:ariregistri_kood>
                         <ns1:arinimi>Acme INC TÜH 5</ns1:arinimi>
                         <ns1:staatus>R</ns1:staatus>
                         <ns1:staatus_tekstina>Registrisse kantud</ns1:staatus_tekstina>
@@ -139,7 +139,7 @@
                         <ns1:oiguslik_vorm_tekstina>Täisühing</ns1:oiguslik_vorm_tekstina>
                     </ns1:item>
                     <ns1:item>
-                        <ns1:ariregistri_kood>12341234-6</ns1:ariregistri_kood>
+                        <ns1:ariregistri_kood>66666666</ns1:ariregistri_kood>
                         <ns1:arinimi>Acme INC SA 6</ns1:arinimi>
                         <ns1:staatus>R</ns1:staatus>
                         <ns1:staatus_tekstina>Registrisse kantud</ns1:staatus_tekstina>
@@ -161,7 +161,7 @@
                         <ns1:oiguslik_vorm_tekstina>Sihtasutus</ns1:oiguslik_vorm_tekstina>
                     </ns1:item>
                     <ns1:item>
-                        <ns1:ariregistri_kood>12341234-7</ns1:ariregistri_kood>
+                        <ns1:ariregistri_kood>77777777</ns1:ariregistri_kood>
                         <ns1:arinimi>Acme INC MTÜ 7</ns1:arinimi>
                         <ns1:staatus>R</ns1:staatus>
                         <ns1:staatus_tekstina>Registrisse kantud</ns1:staatus_tekstina>
@@ -227,7 +227,7 @@
                         <ns1:oiguslik_vorm_tekstina>Mittetulundusühing</ns1:oiguslik_vorm_tekstina>
                     </ns1:item>
                     <ns1:item>
-                        <ns1:ariregistri_kood>12341234-10</ns1:ariregistri_kood>
+                        <ns1:ariregistri_kood>111111110</ns1:ariregistri_kood>
                         <ns1:arinimi>Acme INC MTÜ 10</ns1:arinimi>
                         <ns1:staatus>R</ns1:staatus>
                         <ns1:staatus_tekstina>Registreeritud</ns1:staatus_tekstina>

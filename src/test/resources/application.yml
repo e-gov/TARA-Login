@@ -27,8 +27,8 @@ tara:
   legal-person-authentication:
     x-road-server-url: https://localhost:9877/cgi-bin/consumer_proxy
 
-    x-road-service-member-class: GOV
     x-road-service-instance: ee-dev
+    x-road-service-member-class: GOV
     x-road-service-member-code: 70000310
     x-road-service-subsystem-code: arireg
 

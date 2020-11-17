@@ -6,73 +6,65 @@
         </div>
         <br>
     </noscript>
-    <div class="alert alert-neutral">
+    <div class="c-tab-login__content is-active" data-tab="legalperson" aria-hidden="false">
+        <div class="alert alert-neutral">
 
-        <h2 th:utext="#{label.legalperson-representative}">Header</h2>
-        <table>
-            <tr>
-                <th th:utext="#{label.natural-person.id-code}"></th>
-                <td th:text="${idCode}">Personal ID-code</td>
-            </tr>
-            <tr>
-                <th th:utext="#{label.natural-person.surname}"></th>
-                <td th:text="${lastName}">Surname</td>
-            </tr>
-            <tr>
-                <th th:utext="#{label.natural-person.given-name}"></th>
-                <td th:text="${firstName}">Givenname</td>
-            </tr>
-            <tr>
-                <th th:utext="#{label.natural-person.date-of-birth}"></th>
-                <td th:text="${#temporals.format(dateOfBirth, 'dd.MM.yyyy')}">Date of birth</td>
+            <h2 th:utext="#{label.legalperson-representative}">Header</h2>
+            <table>
+                <tr>
+                    <th th:utext="#{label.natural-person.id-code}"></th>
+                    <td th:text="${idCode}">Personal ID-code</td>
+                </tr>
+                <tr>
+                    <th th:utext="#{label.natural-person.surname}"></th>
+                    <td th:text="${lastName}">Surname</td>
+                </tr>
+                <tr>
+                    <th th:utext="#{label.natural-person.given-name}"></th>
+                    <td th:text="${firstName}">Givenname</td>
+                </tr>
+                <tr>
+                    <th th:utext="#{label.natural-person.date-of-birth}"></th>
+                    <td th:text="${#temporals.format(dateOfBirth, 'dd.MM.yyyy')}">Date of birth</td>
+                </tr>
+            </table>
 
-            </tr>
-        </table>
+            <hr>
 
-        <hr>
-
-        <h2 th:utext="#{label.legal-person.h2}"></h2>
+            <h2 th:utext="#{label.legal-person.h2}"></h2>
 
 
-        <div th:if="${session.containsKey('authentication')}">
-            <div id="results-container" class="alert alert-neutral">
-                            <span id="results-loading" class="hidden">
-                                <div class="loadersmall"></div>
-                                <div th:utext="#{label.legal-person.loading}"></div>
-                            </span>
-                <span id="results-summary" class="hidden">
-                                <div th:utext="#{label.legal-person.loading-result}"></div>
-                                <br>
-                            </span>
-                <ul id="results-legal-person-list"></ul>
+            <div th:if="${session.containsKey('authentication')}">
+                <div id="results-container" class="alert alert-neutral">
+                                <span id="results-loading" class="hidden">
+                                    <div class="loadersmall"></div>
+                                    <div th:utext="#{label.legal-person.loading}"></div>
+                                </span>
+                    <span id="results-summary" class="hidden">
+                                    <div th:utext="#{label.legal-person.loading-result}"></div>
+                                    <br>
+                                </span>
+                    <ul id="results-legal-person-list"></ul>
+                </div>
+                <div id="error-results-container" class="alert alert-error hidden">
+                    <p id="error-no-results" class="hidden" th:utext="#{label.legal-person.error.no-results}"></p>
+                    <p id="error-service-not-available" class="hidden" th:utext="#{label.legal-person.error.service-not-available}"></p>
+                    <p id="error-technical-problem" class="hidden" th:utext="#{label.legal-person.error.internal-service-error}"></p>
+                </div>
+                <form method="post" action="/auth/legal_person/confirm" class="c-form" id="selectLegalPerson">
+                    <input type="hidden" name="legal_person_identifier" value=""/>
+                    <button type="submit" class="c-btn c-btn--primary hidden" id="btn-select-legal-person" th:utext="#{label.common.login}"></button>
+                </form>
             </div>
-            <div id="error-results-container" class="alert alert-error hidden">
-                <p id="error-no-results" class="hidden" th:utext="#{label.legal-person.error.no-results}"></p>
-                <p id="error-service-not-available" class="hidden" th:utext="#{label.legal-person.error.service-not-available}"></p>
-                <p id="error-technical-problem" class="hidden" th:utext="#{label.legal-person.error.internal-service-error}"></p>
+
+            <br>
+
+            <div id="error-controls-container" class="hidden">
+                <p class="link-back"><a th:href="${'/auth/init?login_challenge=' + login_challenge}" th:utext="#{label.common.back}"></a></p>
             </div>
-            <form method="post" action="/auth/legal_person/confirm" class="c-form" id="selectLegalPerson">
-                <input type="hidden" name="legal_person_identifier" value=""/>
-                <button type="submit" class="c-btn c-btn--primary hidden" id="btn-select-legal-person" th:utext="#{label.common.login}"></button>
-            </form>
         </div>
-
-        <br>
-
-        <div id="error-controls-container" class="hidden">
-            <form method="get" action="/auth/init">
-                <p class="link-back">
-                    <input type="hidden" name="login_challenge" th:value="${login_challenge}"/>
-                    <button type="submit" class="as-link" th:utext="#{label.common.back}"></button>
-                </p>
-            </form>
-            <form method="post" action="/auth/reject">
-                <p class="link-back">
-                    <input type="hidden" name="error_code" value="user_cancel"/>
-                    <button type="submit" class="as-link" th:utext="#{label.common.cancel}"></button>
-                </p>
-            </form>
+        <div class="c-tab-login__footer">
+            <p><a th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a></p>
         </div>
-
     </div>
 </div>
