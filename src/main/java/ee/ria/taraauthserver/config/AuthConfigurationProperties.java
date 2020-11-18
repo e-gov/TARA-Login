@@ -29,6 +29,8 @@ public class AuthConfigurationProperties {
 
     HydraConfigurationProperties hydraService = new HydraConfigurationProperties();
 
+    TruststoreProperties tls = new TruststoreProperties();
+
     Map<AuthenticationType, AuthMethodProperties> authMethods = new HashMap<>();
 
     @Data
@@ -45,6 +47,19 @@ public class AuthConfigurationProperties {
         String acceptConsentUrl;
         @NotNull
         int requestTimeoutInSeconds = 3;
+    }
+
+    @Data
+    @ToString
+    @Validated
+    @ConfigurationProperties(prefix = "tara.tls")
+    public static class TruststoreProperties {
+        @NotBlank
+        String truststoreLocation;
+        @NotBlank
+        String truststorePassword;
+        @NotBlank
+        String trustStoreType;
     }
 
     @Data

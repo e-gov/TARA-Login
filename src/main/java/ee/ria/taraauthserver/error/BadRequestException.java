@@ -9,4 +9,8 @@ public class BadRequestException extends TaraException {
     public BadRequestException(ErrorMessages messageCode, String debugMessage) {
         super(messageCode, debugMessage, null);
     }
+
+    public BadRequestException(ErrorMessages messageCode, String debugMessage, Exception exception) {
+        super(messageCode, debugMessage, exception);
+    }
 }

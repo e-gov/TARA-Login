@@ -13,17 +13,17 @@
 | :---------------- | :---------- | :----------------|
 | `tara.legal-person-authentication.enabled` | No | Enables or disables the legalperson authentication functionality and endpoints. Defaults to `true` if not specified.  |
 | `tara.legal-person-authentication.x-road-server-url` | Yes | X-Road security request URL. Example `https://localhost:9877/cgi-bin/consumer_proxy`  |
-| `x-road-service-member-class` | Yes | X-Road service member class. Example `GOV`  |
-| `x-road-service-instance` | Yes | X-Road service instance. Example `ee-dev`  |
-| `x-road-service-member-code` | Yes | X-Road service member code. Example `70000310`  |
-| `x-road-service-subsystem-code` | Yes | X-Road service subsystem code. Example `arireg`  |
-| `x-road-client-member-class` | Yes | X-Road client member class. Example `GOV`  |
-| `x-road-client-instance` | Yes | X-Road client instance. Example `ee-dev`  |
-| `x-road-client-member-code` | Yes | X-Road client member code. Example `70006317`  |
-| `x-road-client-subsystem-code` | Yes | X-Road client subsystem code. Example `idp`  |
-| `x-road-server-read-timeout-in-milliseconds` | No | X-Road security server response read timeout in milliseconds. Defaults to 3000 if not specified.  |
-| `x-road-server-connect-timeout-in-milliseconds` | No | X-Road security server connect timeout in milliseconds. Defaults to 3000 if not specified.  |
-| `x-road-query-esindus-v2-allowed-types` | No | List of legal person types in arireg.esindus_v2 service response that are considered valid for authentication. Defaults to `TÜ,UÜ, OÜ,AS,TÜH,SA,MTÜ` if not specified.  |
+| `tara.legal-person-authentication.x-road-service-member-class` | Yes | X-Road service member class. Example `GOV`  |
+| `tara.legal-person-authentication.x-road-service-instance` | Yes | X-Road service instance. Example `ee-dev`  |
+| `tara.legal-person-authentication.x-road-service-member-code` | Yes | X-Road service member code. Example `70000310`  |
+| `tara.legal-person-authentication.x-road-service-subsystem-code` | Yes | X-Road service subsystem code. Example `arireg`  |
+| `tara.legal-person-authentication.x-road-client-member-class` | Yes | X-Road client member class. Example `GOV`  |
+| `tara.legal-person-authentication.x-road-client-instance` | Yes | X-Road client instance. Example `ee-dev`  |
+| `tara.legal-person-authentication.x-road-client-member-code` | Yes | X-Road client member code. Example `70006317`  |
+| `tara.legal-person-authentication.x-road-client-subsystem-code` | Yes | X-Road client subsystem code. Example `idp`  |
+| `tara.legal-person-authentication.x-road-server-read-timeout-in-milliseconds` | No | X-Road security server response read timeout in milliseconds. Defaults to 3000 if not specified.  |
+| `tara.legal-person-authentication.x-road-server-connect-timeout-in-milliseconds` | No | X-Road security server connect timeout in milliseconds. Defaults to 3000 if not specified.  |
+| `tara.legal-person-authentication.x-road-query-esindus-v2-allowed-types` | No | List of legal person types in arireg.esindus_v2 service response that are considered valid for authentication. Defaults to `TÜ,UÜ, OÜ,AS,TÜH,SA,MTÜ` if not specified.  |
 
 
 ## 2 TARA login server endpoints

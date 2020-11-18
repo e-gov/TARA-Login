@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.session;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.AuthenticationType;
 import ee.ria.taraauthserver.config.LevelOfAssurance;
+import ee.ria.taraauthserver.error.ErrorMessages;
 import lombok.*;
 
 import javax.validation.Valid;
@@ -46,7 +47,7 @@ public class AuthSession implements Serializable {
     @ToString
     public static class MidAuthenticationResult extends AuthenticationResult {
         private String midSessionId;
-        private String errorMessage;
+        private ErrorMessages errorMessage;
         private int errorStatus;
     }
 

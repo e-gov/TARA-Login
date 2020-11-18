@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.controllers;
 
 import ee.ria.taraauthserver.BaseTest;
+import ee.ria.taraauthserver.error.ErrorMessages;
 import ee.ria.taraauthserver.session.AuthSession;
 import ee.ria.taraauthserver.session.AuthState;
 import org.junit.jupiter.api.Test;
@@ -24,10 +25,10 @@ class AuthMidPollControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Bad request"))
+                .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("AuthSession is null");
+        assertErrorIsLogged("User exception: The attribute 'session' was not found in session");
     }
 
     @Test
@@ -47,10 +48,10 @@ class AuthMidPollControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Bad request"))
+                .body("message", equalTo("Ebakorrektne päring."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("AuthSession state is incorrect");
+        assertErrorIsLogged("User exception: Session not in expected status. Expected one of: [NATURAL_PERSON_AUTHENTICATION_COMPLETED, POLL_MID_STATUS], but was INIT_AUTH_PROCESS");
     }
 
     @Test
@@ -78,7 +79,7 @@ class AuthMidPollControllerTest extends BaseTest {
         Session session = sessionRepository.createSession();
 
         AuthSession testSession = new AuthSession();
-        testSession.setState(AuthState.AUTHENTICATION_SUCCESS);
+        testSession.setState(AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 
         session.setAttribute("session", testSession);
         sessionRepository.save(session);
@@ -101,7 +102,7 @@ class AuthMidPollControllerTest extends BaseTest {
         AuthSession testSession = new AuthSession();
         testSession.setState(AuthState.AUTHENTICATION_FAILED);
         AuthSession.MidAuthenticationResult authResult = new AuthSession.MidAuthenticationResult();
-        authResult.setErrorMessage("mid authentication has failed for some reason");
+        authResult.setErrorMessage(ErrorMessages.INVALID_REQUEST);
         testSession.setAuthenticationResult(authResult);
 
         session.setAttribute("session", testSession);
@@ -114,10 +115,10 @@ class AuthMidPollControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("mid authentication has failed for some reason"))
+                .body("message", equalTo("Ebakorrektne päring."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("AuthSession state is: AUTHENTICATION_FAILED");
+        assertErrorIsLogged("User exception: AuthSession state is: AUTHENTICATION_FAILED");
     }
 
 }

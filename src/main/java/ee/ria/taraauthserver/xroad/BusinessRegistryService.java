@@ -17,6 +17,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -44,12 +46,16 @@ public class BusinessRegistryService {
     private final Configuration templateConfiguration;
     @NonNull
     private final LegalPersonProperties legalPersonProperties;
+    @NonNull
+    private final SSLContext sslContext;
 
     private final String xpathFilterForEttevotjad;
 
-    public BusinessRegistryService(@NonNull Configuration templateConfiguration, @NonNull LegalPersonProperties legalPersonProperties) {
+    public BusinessRegistryService(@NonNull Configuration templateConfiguration,
+                                   @NonNull LegalPersonProperties legalPersonProperties, @NonNull SSLContext sslContext) {
         this.templateConfiguration = templateConfiguration;
         this.legalPersonProperties = legalPersonProperties;
+        this.sslContext = sslContext;
         this.xpathFilterForEttevotjad = "//ettevotjad/item[" +
                 "staatus = 'R' " +
                 "and (" + getConditionList(legalPersonProperties.getEsindusv2AllowedTypes(), "oiguslik_vorm = '%s'") + ") " +
@@ -116,7 +122,7 @@ public class BusinessRegistryService {
         try {
             log.info("Sending 'POST' request to URL: {}, body: {}  ", legalPersonProperties.getXRoadServerUrl(), request);
             URL obj = new URL(legalPersonProperties.getXRoadServerUrl());
-            HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+            HttpURLConnection con = (HttpURLConnection) getHttpURLConnection(obj);
             con.setReadTimeout(legalPersonProperties.getXRoadServerReadTimeoutInMilliseconds());
             con.setConnectTimeout(legalPersonProperties.getXRoadServerConnectTimeoutInMilliseconds());
             con.setRequestMethod("POST");
@@ -154,6 +160,19 @@ public class BusinessRegistryService {
         } catch (XPathExpressionException | IOException | SAXException | ParserConfigurationException e) {
             throw new IllegalStateException("Failed to extract data from response: " + e.getMessage(), e);
         }
+    }
+
+    private URLConnection getHttpURLConnection(URL obj) throws IOException {
+        if (obj.getProtocol().equals("https"))
+            return getHttpsURLConnection(obj);
+        else
+            return obj.openConnection();
+    }
+
+    private HttpsURLConnection getHttpsURLConnection(URL obj) throws IOException {
+        HttpsURLConnection httpsURLConnection = (HttpsURLConnection) obj.openConnection();
+        httpsURLConnection.setSSLSocketFactory(sslContext.getSocketFactory());
+        return httpsURLConnection;
     }
 
     private String getConditionList(String[] type, String parameter) {

@@ -34,13 +34,13 @@ public class MidConfiguration {
 
     @Bean
     @SneakyThrows
-    public MidClient midClient(KeyStore midTrustStore, AuthConfigurationProperties.MidAuthConfigurationProperties midAuthConfigurationProperties) {
+    public MidClient midClient(SSLContext tlsTrustStore, AuthConfigurationProperties.MidAuthConfigurationProperties midAuthConfigurationProperties) {
 
         return MidClient.newBuilder()
                 .withHostUrl(midAuthConfigurationProperties.getHostUrl())
                 .withRelyingPartyUUID(midAuthConfigurationProperties.getRelyingPartyUuid())
                 .withRelyingPartyName(midAuthConfigurationProperties.getRelyingPartyName())
-                .withTrustSslContext(SSLContext.getDefault())
+                .withTrustSslContext(tlsTrustStore)
                 .withNetworkConnectionConfig(clientConfig(midAuthConfigurationProperties))
                 .withLongPollingTimeoutSeconds(30)
                 .build();

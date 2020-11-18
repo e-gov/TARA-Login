@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ResourceLoader;
 
 
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
 
 import static freemarker.template.Configuration.VERSION_2_3_28;
@@ -34,7 +35,7 @@ public class LegalPersonConfiguration {
 
     @Bean
     public BusinessRegistryService eBusinessRegistryService(freemarker.template.Configuration freemarkerConfiguration,
-                                                            LegalPersonProperties legalPersonProperties) {
-        return new BusinessRegistryService(freemarkerConfiguration, legalPersonProperties);
+                                                            LegalPersonProperties legalPersonProperties, SSLContext sslContext) {
+        return new BusinessRegistryService(freemarkerConfiguration, legalPersonProperties, sslContext);
     }
 }

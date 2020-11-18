@@ -59,7 +59,7 @@ public class AuthInitController {
             @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed")
             String loginChallenge,
             @RequestParam(name = "lang", required = false)
-            @Pattern(regexp = "(et|en|ru)", message = "{invalidLang}")
+            @Pattern(regexp = "(et|en|ru)", message = "supported values are: 'et', 'en', 'ru'")
             String language) {
 
         AuthSession authSession = initAuthSession(loginChallenge);
