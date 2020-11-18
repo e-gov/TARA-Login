@@ -22,15 +22,22 @@ public class AuthMidPollController {
 
         AuthSession authSession = (AuthSession) httpSession.getAttribute("session");
         log.info("authSession in authMidPollController: " + authSession);
+        if (authSession == null) {
+            log.error("AuthSession is null");
+            throw new BadRequestException("Bad request");
+        }
         if (authSession.getState() == AuthState.AUTHENTICATION_FAILED) {
+            log.error("AuthSession state is: " + AuthState.AUTHENTICATION_FAILED);
             throw new BadRequestException(((AuthSession.MidAuthenticationResult) authSession.getAuthenticationResult()).getErrorMessage());
         }
-        if (authSession == null || (authSession.getState() != AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED && authSession.getState() != AuthState.POLL_MID_STATUS))
-            throw new BadRequestException("Polling failed");
+        if (authSession.getState() != AuthState.AUTHENTICATION_SUCCESS && authSession.getState() != AuthState.POLL_MID_STATUS) {
+            log.error("AuthSession state is incorrect");
+            throw new BadRequestException("Bad request");
+        }
         HashMap<String, String> map = new HashMap<>();
-        if (authSession.getState() == AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED) {
+        if (authSession.getState() == AuthState.AUTHENTICATION_SUCCESS)
             map.put("status", "COMPLETED");
-        } else
+        else
             map.put("status", "PENDING");
         return map;
     }
