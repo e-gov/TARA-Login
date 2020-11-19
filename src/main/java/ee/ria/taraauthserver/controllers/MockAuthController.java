@@ -21,7 +21,6 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import javax.servlet.http.HttpSession;
 import java.net.URL;
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,10 +43,6 @@ public class MockAuthController {
         AuthSession.AuthenticationResult authResult = new AuthSession.AuthenticationResult();
         authResult.setAcr(LevelOfAssurance.HIGH);
         authResult.setSubject("EE60001019906");
-        authResult.setFirstName("Firstname");
-        authResult.setLastName("Lastname");
-        authResult.setDateOfBirth(LocalDate.now());
-        authSession.setAuthenticationResult(authResult);
         authSession.setState(AuthState.AUTHENTICATION_SUCCESS);
         session.setAttribute("session", authSession);
         log.info("edited session " + session.getAttribute("session"));
@@ -58,11 +53,6 @@ public class MockAuthController {
     @GetMapping(value = "/heartbeat", produces = MediaType.TEXT_HTML_VALUE)
     public String heartbeat() {
         return "it just works";
-    }
-
-    @GetMapping("/auth/id")
-    public String mockAuthId() {
-        return "{\"ok\":true}";
     }
 
     @GetMapping(value = "/consent", produces = MediaType.APPLICATION_JSON_VALUE)

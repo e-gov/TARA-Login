@@ -2,14 +2,14 @@ package ee.ria.taraauthserver.config;
 
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
+import javax.validation.Valid;
+import javax.validation.constraints.*;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -81,6 +81,58 @@ public class AuthConfigurationProperties {
         int connectionTimeoutMilliseconds = 5000;
         @NotNull
         int readTimeoutMilliseconds = 30000;
+    }
+
+    @Data
+    @ToString
+    @Component
+    @Validated
+    @ConfigurationProperties(prefix = "tara.auth-methods.id-card")
+    public static class IdCardAuthConfigurationProperties {
+        public static final long DEFAULT_ACCEPTED_CLOCK_SKEW_IN_SECONDS = 2L;
+        public static final long DEFAULT_RESPONSE_LIFETIME_IN_SECONDS = 900L;
+        public static final int DEFAULT_CONNECT_TIMEOUT_IN_MILLISECONDS = 3 * 1000;
+        public static final int DEFAULT_READ_TIMEOUT_IN_MILLISECONDS = 3 * 1000;
+
+        @NotNull
+        private String truststore;
+        private String truststoreType = "PKCS12";
+        @NotNull
+        private String truststorePassword;
+        private boolean ocspEnabled = true;
+
+        @Valid
+        private List<Ocsp> ocsp;
+
+        @Valid
+        private List<Ocsp> fallbackOcsp;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @ToString
+    public static class Ocsp {
+        public static final long DEFAULT_ACCEPTED_CLOCK_SKEW_IN_SECONDS = 2L;
+        public static final long DEFAULT_RESPONSE_LIFETIME_IN_SECONDS = 900L;
+        public static final int DEFAULT_CONNECT_TIMEOUT_IN_MILLISECONDS = 3 * 1000;
+        public static final int DEFAULT_READ_TIMEOUT_IN_MILLISECONDS = 3 * 1000;
+
+        @NotEmpty
+        private List<String> issuerCn;
+        @NotEmpty
+        private String url;
+
+        private boolean nonceDisabled = false;
+        @Min(0L)
+        private long acceptedClockSkewInSeconds = DEFAULT_ACCEPTED_CLOCK_SKEW_IN_SECONDS;
+        @Min(0L)
+        private long responseLifetimeInSeconds = DEFAULT_RESPONSE_LIFETIME_IN_SECONDS;
+        @Min(0L)
+        private int connectTimeoutInMilliseconds = DEFAULT_CONNECT_TIMEOUT_IN_MILLISECONDS;
+        @Min(0L)
+        private int readTimeoutInMilliseconds = DEFAULT_READ_TIMEOUT_IN_MILLISECONDS;
+
+        private String responderCertificateCn;
     }
 }
 
