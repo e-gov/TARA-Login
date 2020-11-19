@@ -10,7 +10,15 @@
 | `tara.hydra-service.accept-consent-url` | Yes | Url to accept Hydra OIDC server consent |
 | `tara.hydra-service.request-timeout` | Yes | Hydra service request timeout |
 
-### 1.2 mobile id auth method
+### 1.2 trusted TLS certificates
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.tls.trust-store-location` | Yes | Location of the truststore. Path to the location of the trusted CA certificates. In case the certificate files are to be loaded from classpath, this path should be prefixed with `classpath:` (example: `classpath:tls-truststore.p12`). In case the certificate files are to be loaded from disk, this path should be prefixed with `file:` (exaple ``file:/etc/tara/tls-truststore.p12``).  |
+| `tara.tls.trust-store-password` | Yes | Truststore password |
+| `tara.tls.trust-store-location` | No | Truststore type (jks, pkcs12). Defaults to PKCS12 if not specified |
+
+### 1.3 mobile id auth method
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
@@ -27,7 +35,7 @@
 | `tara.auth-methods.mobile-id.read-timeout-milliseconds` | Yes | Read timeout of mobile id requests |
 
 
-## Legal person authentication configuration properties
+## 1.4 Legal person authentication configuration properties
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|

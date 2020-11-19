@@ -58,8 +58,8 @@ public class AuthConfigurationProperties {
         String truststoreLocation;
         @NotBlank
         String truststorePassword;
-        @NotBlank
-        String trustStoreType;
+
+        String trustStoreType = "PKCS12";
     }
 
     @Data
