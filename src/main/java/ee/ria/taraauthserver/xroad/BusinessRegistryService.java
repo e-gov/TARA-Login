@@ -3,7 +3,7 @@ package ee.ria.taraauthserver.xroad;
 import ee.ria.taraauthserver.config.properties.LegalPersonProperties;
 import ee.ria.taraauthserver.error.ErrorMessages;
 import ee.ria.taraauthserver.error.ServiceNotAvailableException;
-import ee.ria.taraauthserver.session.AuthSession;
+import ee.ria.taraauthserver.session.TaraSession;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -34,7 +34,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
-import static java.util.Collections.emptyMap;
 import static org.unbescape.xml.XmlEscape.escapeXml11;
 
 @Slf4j
@@ -67,7 +66,7 @@ public class BusinessRegistryService {
             "]";
     }
 
-    public List<AuthSession.LegalPerson> executeEsindusV2Service(String idCode) {
+    public List<TaraSession.LegalPerson> executeEsindusV2Service(String idCode) {
         Assert.notNull(idCode, "idCode is required!");
         Assert.isTrue(idCode.matches("^[0-9]{11,11}$"), "idCode has invalid format! Must contain only numbers");
 
@@ -81,13 +80,13 @@ public class BusinessRegistryService {
     }
 
     @SneakyThrows
-    private List<AuthSession.LegalPerson> extractResults(NodeList response)  {
-        List<AuthSession.LegalPerson> legalPersons = new ArrayList<>();
+    private List<TaraSession.LegalPerson> extractResults(NodeList response) {
+        List<TaraSession.LegalPerson> legalPersons = new ArrayList<>();
         for (int i = 0; i < response.getLength(); i++) {
             XPath xPath = XPathFactory.newInstance().newXPath();
-            String idCode = (String)xPath.compile("ariregistri_kood/text()").evaluate(response.item(i), XPathConstants.STRING);
-            String name = (String)xPath.compile("arinimi/text()").evaluate(response.item(i), XPathConstants.STRING);
-            legalPersons.add(new AuthSession.LegalPerson(name, idCode));
+            String idCode = (String) xPath.compile("ariregistri_kood/text()").evaluate(response.item(i), XPathConstants.STRING);
+            String name = (String) xPath.compile("arinimi/text()").evaluate(response.item(i), XPathConstants.STRING);
+            legalPersons.add(new TaraSession.LegalPerson(name, idCode));
         }
         return legalPersons;
     }

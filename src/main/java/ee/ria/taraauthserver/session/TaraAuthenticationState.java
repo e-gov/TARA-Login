@@ -1,6 +1,6 @@
 package ee.ria.taraauthserver.session;
 
-public enum AuthState {
+public enum TaraAuthenticationState {
     INIT_AUTH_PROCESS,
     AUTHENTICATION_SUCCESS,
     INIT_MID,

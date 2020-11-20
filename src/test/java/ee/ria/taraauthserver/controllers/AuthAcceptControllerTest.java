@@ -1,14 +1,12 @@
 package ee.ria.taraauthserver.controllers;
 
 import ee.ria.taraauthserver.BaseTest;
-import ee.ria.taraauthserver.config.LevelOfAssurance;
-import ee.ria.taraauthserver.session.AuthSession;
-import ee.ria.taraauthserver.session.AuthState;
+import ee.ria.taraauthserver.session.TaraSession;
+import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.MockSessionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpSession;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
@@ -16,6 +14,7 @@ import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static ee.ria.taraauthserver.session.MockSessionUtils.*;
+import static ee.ria.taraauthserver.utils.Constants.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static java.lang.Integer.parseInt;
 import static org.hamcrest.Matchers.equalTo;
@@ -50,7 +49,7 @@ public class AuthAcceptControllerTest extends BaseTest {
 
     @Test
     void authAccept_incorrectSessionState() throws Exception {
-        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.INIT_AUTH_PROCESS, getMockCredential());
+        MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.INIT_AUTH_PROCESS, getMockCredential());
 
         ResultActions resultActions = mock.perform(get("/auth/accept").session(mockHttpSession))
                 .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
@@ -73,7 +72,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
 
-        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
+        MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 
         ResultActions resultActions = mock.perform(get("/auth/accept").session(mockHttpSession))
                 .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
@@ -94,7 +93,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/incorrectMockLoginAcceptResponse.json")));
 
-        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
+        MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 
         ResultActions resultActions = mock.perform(get("/auth/accept").session(mockHttpSession))
                 .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
@@ -115,7 +114,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
 
-        MockHttpSession testSession = MockSessionUtils.getMockHttpSession(AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
+        MockHttpSession testSession = MockSessionUtils.getMockHttpSession(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 
         mock.perform(MockMvcRequestBuilders.get("/auth/accept")
                 .session(testSession))
@@ -132,8 +131,8 @@ public class AuthAcceptControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
 
-        MockHttpSession testSession = MockSessionUtils.getMockHttpSession(AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
-        ((AuthSession)testSession.getAttribute("session")).getLoginRequestInfo().setRequestedScopes(List.of("legalperson"));
+        MockHttpSession testSession = MockSessionUtils.getMockHttpSession(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
+        ((TaraSession) testSession.getAttribute(TARA_SESSION)).getLoginRequestInfo().setRequestedScopes(List.of("legalperson"));
 
         mock.perform(MockMvcRequestBuilders.get("/auth/accept")
                 .session(testSession))
@@ -150,8 +149,8 @@ public class AuthAcceptControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
 
-        MockHttpSession testSession = MockSessionUtils.getMockHttpSession(AuthState.LEGAL_PERSON_AUTHENTICATION_COMPLETED);
-        ((AuthSession)testSession.getAttribute("session")).getLoginRequestInfo().setRequestedScopes(List.of("legalperson"));
+        MockHttpSession testSession = MockSessionUtils.getMockHttpSession(TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_COMPLETED);
+        ((TaraSession) testSession.getAttribute(TARA_SESSION)).getLoginRequestInfo().setRequestedScopes(List.of("legalperson"));
 
         mock.perform(MockMvcRequestBuilders.get("/auth/accept")
                 .session(testSession))

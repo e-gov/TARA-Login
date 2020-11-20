@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.TaraScope;
 import ee.ria.taraauthserver.error.BadRequestException;
-import ee.ria.taraauthserver.session.AuthSession;
+import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.SessionUtils;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ import javax.servlet.http.HttpSession;
 import java.util.List;
 
 import static ee.ria.taraauthserver.error.ErrorMessages.SESSION_STATE_INVALID;
-import static ee.ria.taraauthserver.session.AuthState.*;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 
 @Slf4j
 @Validated
@@ -41,31 +41,31 @@ class AuthAcceptController {
     @GetMapping("/auth/accept")
     public RedirectView authAccept(HttpSession session) {
 
-        AuthSession authSession = SessionUtils.getAuthSession();
+        TaraSession taraSession = SessionUtils.getAuthSession();
 
-        if (isLegalPersonAttributesRequested(authSession)) {
+        if (isLegalPersonAttributesRequested(taraSession)) {
             return new RedirectView("/auth/legal_person/init");
         }
 
-        if (!List.of(LEGAL_PERSON_AUTHENTICATION_COMPLETED, NATURAL_PERSON_AUTHENTICATION_COMPLETED).contains(authSession.getState()))
-            throw new BadRequestException(SESSION_STATE_INVALID, String.format("Session in invalid state: '%s'. Expected state: %s", authSession.getState(), List.of(LEGAL_PERSON_AUTHENTICATION_COMPLETED, NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
+        if (!List.of(LEGAL_PERSON_AUTHENTICATION_COMPLETED, NATURAL_PERSON_AUTHENTICATION_COMPLETED).contains(taraSession.getState()))
+            throw new BadRequestException(SESSION_STATE_INVALID, String.format("Session in invalid state: '%s'. Expected state: %s", taraSession.getState(), List.of(LEGAL_PERSON_AUTHENTICATION_COMPLETED, NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
 
-        String url = authConfigurationProperties.getHydraService().getAcceptLoginUrl() + "?login_challenge=" + authSession.getLoginRequestInfo().getChallenge();
-        ResponseEntity<LoginAcceptResponseBody> response = hydraService.exchange(url, HttpMethod.PUT, createRequestBody(authSession), LoginAcceptResponseBody.class);
+        String url = authConfigurationProperties.getHydraService().getAcceptLoginUrl() + "?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge();
+        ResponseEntity<LoginAcceptResponseBody> response = hydraService.exchange(url, HttpMethod.PUT, createRequestBody(taraSession), LoginAcceptResponseBody.class);
 
         if (response.getStatusCode() == HttpStatus.OK && response.getBody().getRedirectUrl() != null) {
-            authSession.setState(AUTHENTICATION_SUCCESS);
-            SessionUtils.updateSession(authSession);
-            log.info("accepted session: " + authSession);
+            taraSession.setState(AUTHENTICATION_SUCCESS);
+            SessionUtils.updateSession(taraSession);
+            log.info("accepted session: " + taraSession);
             return new RedirectView(response.getBody().getRedirectUrl());
         } else {
             throw new IllegalStateException("Internal server error");
         }
     }
 
-    private HttpEntity<LoginAcceptRequestBody> createRequestBody(AuthSession authSession) {
-        log.info("authsession: " + authSession.toString());
-        AuthSession.AuthenticationResult authenticationResult = authSession.getAuthenticationResult();
+    private HttpEntity<LoginAcceptRequestBody> createRequestBody(TaraSession taraSession) {
+        log.info("authsession: " + taraSession.toString());
+        TaraSession.AuthenticationResult authenticationResult = taraSession.getAuthenticationResult();
         Assert.notNull(authenticationResult.getAcr(), "Mandatory 'acr' value is missing from authentication!");
         Assert.notNull(authenticationResult.getSubject(), "Mandatory 'subject' value is missing from authentication!");
         return new HttpEntity<>(new LoginAcceptRequestBody(
@@ -74,8 +74,8 @@ class AuthAcceptController {
                 authenticationResult.getSubject()));
     }
 
-    private boolean isLegalPersonAttributesRequested(AuthSession authSession) {
-        return authSession.getState() == NATURAL_PERSON_AUTHENTICATION_COMPLETED && authSession.getLoginRequestInfo().getRequestedScopes().contains(TaraScope.LEGALPERSON.getFormalName());
+    private boolean isLegalPersonAttributesRequested(TaraSession taraSession) {
+        return taraSession.getState() == NATURAL_PERSON_AUTHENTICATION_COMPLETED && taraSession.getLoginRequestInfo().getRequestedScopes().contains(TaraScope.LEGALPERSON.getFormalName());
     }
 
     @RequiredArgsConstructor

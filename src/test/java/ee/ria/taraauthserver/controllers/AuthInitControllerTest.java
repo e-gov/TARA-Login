@@ -5,9 +5,8 @@ import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.AuthenticationType;
 import ee.ria.taraauthserver.config.LevelOfAssurance;
-import ee.ria.taraauthserver.session.AuthSession;
-import ee.ria.taraauthserver.session.AuthState;
-import io.restassured.http.ContentType;
+import ee.ria.taraauthserver.session.TaraSession;
+import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +18,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import javax.servlet.http.HttpSession;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static ee.ria.taraauthserver.utils.Constants.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.*;
@@ -162,12 +162,12 @@ class AuthInitControllerTest extends BaseTest {
         HttpSession result = mock.perform(MockMvcRequestBuilders.get("/auth/init").param("login_challenge", TEST_LOGIN_CHALLENGE))
                 .andDo(print())
                 .andExpect(status().is(200))
-                .andExpect(request().sessionAttribute("session", is(notNullValue())))
+                .andExpect(request().sessionAttribute(TARA_SESSION, is(notNullValue())))
                 .andReturn().getRequest().getSession();
 
-        AuthSession authSession = (AuthSession) result.getAttribute("session");
+        TaraSession taraSession = (TaraSession) result.getAttribute(TARA_SESSION);
 
-        assertEquals(AuthState.INIT_AUTH_PROCESS, authSession.getState());
+        assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
     }
 
     @Test

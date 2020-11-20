@@ -3,8 +3,8 @@ package ee.ria.taraauthserver.controllers;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.LevelOfAssurance;
-import ee.ria.taraauthserver.session.AuthSession;
-import ee.ria.taraauthserver.session.AuthState;
+import ee.ria.taraauthserver.session.TaraSession;
+import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +27,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static ee.ria.taraauthserver.utils.Constants.TARA_SESSION;
+
 @Validated
 @RestController
 @Slf4j
@@ -40,19 +42,19 @@ public class MockAuthController {
 
     @PostMapping(value = "/mockauth", produces = MediaType.APPLICATION_JSON_VALUE)
     public RedirectView mockAuth(HttpSession session) {
-        AuthSession authSession = (AuthSession) session.getAttribute("session");
-        log.info("current state: " + authSession.getState());
+        TaraSession taraSession = (TaraSession) session.getAttribute(TARA_SESSION);
+        log.info("current state: " + taraSession.getState());
         log.info("session id in AUTH_MOCK: " + session.getId());
-        AuthSession.AuthenticationResult authResult = new AuthSession.AuthenticationResult();
+        TaraSession.AuthenticationResult authResult = new TaraSession.AuthenticationResult();
         authResult.setAcr(LevelOfAssurance.HIGH);
         authResult.setSubject("EE60001019906");
         authResult.setFirstName("Firstname");
         authResult.setLastName("Lastname");
         authResult.setDateOfBirth(LocalDate.now());
-        authSession.setAuthenticationResult(authResult);
-        authSession.setState(AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
-        session.setAttribute("session", authSession);
-        log.info("edited session " + session.getAttribute("session"));
+        taraSession.setAuthenticationResult(authResult);
+        taraSession.setState(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
+        session.setAttribute(TARA_SESSION, taraSession);
+        log.info("edited session " + session.getAttribute(TARA_SESSION));
         log.info("with id " + session.getId());
         return new RedirectView("/auth/accept");
     }
@@ -70,7 +72,7 @@ public class MockAuthController {
     // TODO invalidate session
     @GetMapping(value = "/consent", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> mockConsent(@RequestParam String consent_challenge, HttpSession session) {
-        AuthSession authSession = (AuthSession) session.getAttribute("session");
+        TaraSession taraSession = (TaraSession) session.getAttribute(TARA_SESSION);
 
         String url = authConfigurationProperties.getHydraService().getAcceptConsentUrl() + "?consent_challenge=" + consent_challenge;
         AcceptConsentRequest acceptConsentRequest = new AcceptConsentRequest();
@@ -78,13 +80,13 @@ public class MockAuthController {
 
         Map<String, Object> profileAttributes =new LinkedHashMap<>();
 
-        addProfile_attributes(profileAttributes, authSession);
+        addProfile_attributes(profileAttributes, taraSession);
 
         acceptConsentRequest.setSession(new AcceptConsentRequest.LoginSession(
                 profileAttributes
         ));
 
-        profileAttributes.put("state", getStateParameterValue(authSession));
+        profileAttributes.put("state", getStateParameterValue(taraSession));
         profileAttributes.put("amr", new String[]{"mid"});
 
         ResponseEntity<Map> response = hydraService.exchange(url, HttpMethod.PUT, request, Map.class);
@@ -94,7 +96,7 @@ public class MockAuthController {
         return new ResponseEntity<>(headers, HttpStatus.FOUND);
     }
 
-    private void addLegalPersonAttributes(Map<String, Object> attributes, AuthSession.LegalPerson legalPerson) {
+    private void addLegalPersonAttributes(Map<String, Object> attributes, TaraSession.LegalPerson legalPerson) {
         Map<String, Object> legalPersonAttributes = Map.of(
                 "name", legalPerson.getLegalName(),
                 "registry_code", legalPerson.getLegalPersonIdentifier()
@@ -103,20 +105,20 @@ public class MockAuthController {
     }
 
     @NotNull
-    private void addProfile_attributes(Map<String, Object> attributes, AuthSession authSession) {
+    private void addProfile_attributes(Map<String, Object> attributes, TaraSession taraSession) {
         Map<String, Object> profileAttributes = new LinkedHashMap<>();
-        profileAttributes.put("family_name", authSession.getAuthenticationResult().getLastName());
-        profileAttributes.put("given_name", authSession.getAuthenticationResult().getFirstName());
-        profileAttributes.put("date_of_birth", authSession.getAuthenticationResult().getDateOfBirth().toString());
-        AuthSession.LegalPerson legalPerson = authSession.getSelectedLegalPerson();
+        profileAttributes.put("family_name", taraSession.getAuthenticationResult().getLastName());
+        profileAttributes.put("given_name", taraSession.getAuthenticationResult().getFirstName());
+        profileAttributes.put("date_of_birth", taraSession.getAuthenticationResult().getDateOfBirth().toString());
+        TaraSession.LegalPerson legalPerson = taraSession.getSelectedLegalPerson();
         if (legalPerson != null) {
             addLegalPersonAttributes(profileAttributes, legalPerson);
         }
         attributes.put("profile_attributes", profileAttributes);
     }
 
-    private String getStateParameterValue(AuthSession authSession) {
-        URL oidcAuthRequestUrl = (authSession).getLoginRequestInfo().getUrl();
+    private String getStateParameterValue(TaraSession taraSession) {
+        URL oidcAuthRequestUrl = (taraSession).getLoginRequestInfo().getUrl();
         Assert.notNull(oidcAuthRequestUrl, "OIDC authentication URL cannot be null!");
         String state = getQueryMap(oidcAuthRequestUrl.getQuery()).get("state");
         Assert.notNull(state, "State paremeter is mandatory and cannot be null!");

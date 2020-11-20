@@ -2,45 +2,36 @@ package ee.ria.taraauthserver.utils;
 
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.AuthenticationType;
-import ee.ria.taraauthserver.session.AuthSession;
+import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import static ee.ria.taraauthserver.session.MockSessionUtils.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
-import static org.springframework.web.context.request.RequestAttributes.SCOPE_REQUEST;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 class ThymeleafSupportTest extends BaseTest {
 
     private ThymeleafSupport thymeleafSupport;
-    private AuthSession testSession;
+    private TaraSession testSession;
 
     @BeforeEach
     public void setUp() {
         thymeleafSupport = new ThymeleafSupport();
-        testSession = new AuthSession();
+        testSession = new TaraSession();
         testSession.setLoginRequestInfo(getMockLoginRequestInfo());
         LocaleContextHolder.setLocale(Locale.ENGLISH);
         createMockHttpSession(testSession);
@@ -78,7 +69,7 @@ class ThymeleafSupportTest extends BaseTest {
 
     @Test
     void getServiceName_returnsNullWhenNoClientNameSet() {
-        AuthSession.LoginRequestInfo mockLoginRequestInfo = getMockLoginRequestInfo();
+        TaraSession.LoginRequestInfo mockLoginRequestInfo = getMockLoginRequestInfo();
         mockLoginRequestInfo.getClient().getMetaData().getOidcClient().setName(null);
         testSession.setLoginRequestInfo(mockLoginRequestInfo);
         createMockHttpSession(testSession);
@@ -88,7 +79,7 @@ class ThymeleafSupportTest extends BaseTest {
 
     @Test
     void getServiceName_returnsClientNameWhenClientNameSetWithoutTranslations() {
-        AuthSession.LoginRequestInfo mockLoginRequestInfo = getMockLoginRequestInfo();
+        TaraSession.LoginRequestInfo mockLoginRequestInfo = getMockLoginRequestInfo();
         mockLoginRequestInfo.getClient().getMetaData().getOidcClient().setName(MOCK_CLIENT_NAME);
         mockLoginRequestInfo.getClient().getMetaData().getOidcClient().setNameTranslations(new HashMap<>());
         testSession.setLoginRequestInfo(mockLoginRequestInfo);
@@ -99,7 +90,7 @@ class ThymeleafSupportTest extends BaseTest {
 
     @Test
     void getServiceName_returnsClientNameWithTranslationWhenTranslationExists() {
-        AuthSession.LoginRequestInfo mockLoginRequestInfo = getMockLoginRequestInfo();
+        TaraSession.LoginRequestInfo mockLoginRequestInfo = getMockLoginRequestInfo();
         mockLoginRequestInfo.getClient().getMetaData().getOidcClient().setName(MOCK_CLIENT_NAME);
         testSession.setLoginRequestInfo(mockLoginRequestInfo);
         createMockHttpSession(testSession);
@@ -124,7 +115,7 @@ class ThymeleafSupportTest extends BaseTest {
 
     @Test
     void getBackUrl_returnsNoUrlWhenSessionMissing() {
-        createMockHttpSession(new AuthSession());
+        createMockHttpSession(new TaraSession());
 
         assertEquals("#", thymeleafSupport.getBackUrl());
     }
@@ -139,7 +130,7 @@ class ThymeleafSupportTest extends BaseTest {
 
     @Test
     void getHomeUrl_returnsLegacyReturnsUserCancelLinkWhenLegacyNotPresent() {
-        AuthSession.LoginRequestInfo mockLoginRequestInfo = getMockLoginRequestInfo();
+        TaraSession.LoginRequestInfo mockLoginRequestInfo = getMockLoginRequestInfo();
         mockLoginRequestInfo.getClient().getMetaData().getOidcClient().setLegacyReturnUrl(null);
         testSession.setLoginRequestInfo(mockLoginRequestInfo);
         createMockHttpSession(testSession);

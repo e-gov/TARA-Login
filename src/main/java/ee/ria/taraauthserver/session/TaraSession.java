@@ -21,8 +21,8 @@ import java.util.Map;
 @Data
 @ToString
 @NoArgsConstructor
-public class AuthSession implements Serializable {
-    private AuthState state;
+public class TaraSession implements Serializable {
+    private TaraAuthenticationState state;
     private LoginRequestInfo loginRequestInfo;
     private List<AuthenticationType> allowedAuthMethods;
     private AuthenticationResult authenticationResult;

@@ -2,8 +2,8 @@ package ee.ria.taraauthserver.controllers;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import ee.ria.taraauthserver.BaseTest;
-import ee.ria.taraauthserver.session.AuthSession;
-import ee.ria.taraauthserver.session.AuthState;
+import ee.ria.taraauthserver.session.TaraSession;
+import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpSession;
@@ -15,6 +15,7 @@ import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static ee.ria.taraauthserver.session.MockSessionUtils.*;
+import static ee.ria.taraauthserver.utils.Constants.TARA_SESSION;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -41,12 +42,12 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andExpect(jsonPath("$.message", is("Your session was not found! Either your session expired or the cookie usage is limited in your browser.")))
                 .andExpect(jsonPath("$.path", is("/auth/legal_person/init")));
 
-        assertErrorIsLogged("User exception: The attribute 'session' was not found in session");
+        assertErrorIsLogged(String.format("User exception: The attribute '%s' was not found in session", TARA_SESSION));
     }
 
     @Test
     void getAuthLegalPersonInit_invalidSessionStatus() throws Exception {
-        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.INIT_AUTH_PROCESS, getMockCredential());
+        MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.INIT_AUTH_PROCESS, getMockCredential());
 
         ResultActions resultActions = mock.perform(
                 get("/auth/legal_person/init").session(mockHttpSession)
@@ -66,8 +67,8 @@ public class LegalpersonControllerTest extends BaseTest {
 
     @Test
     void getAuthLegalPersonInit_invalidRequest_noLegalpersonScopeInOidcRequest() throws Exception {
-        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, getMockCredential());
-        ((AuthSession)mockHttpSession.getAttribute("session")).getLoginRequestInfo().setRequestedScopes(new ArrayList<>());
+        MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, getMockCredential());
+        ((TaraSession) mockHttpSession.getAttribute(TARA_SESSION)).getLoginRequestInfo().setRequestedScopes(new ArrayList<>());
 
         ResultActions resultActions = mock.perform(get("/auth/legal_person/init").session(mockHttpSession))
                 .andDo(print()).andDo(forwardErrorsToSpringErrorhandler(mock));
@@ -83,8 +84,8 @@ public class LegalpersonControllerTest extends BaseTest {
 
     @Test
     void getAuthLegalPersonInit_invalidRequest_scopeNotAllowed() throws Exception {
-        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, getMockCredential());
-        ((AuthSession)mockHttpSession.getAttribute("session")).getLoginRequestInfo().getClient().setScope("");
+        MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, getMockCredential());
+        ((TaraSession) mockHttpSession.getAttribute(TARA_SESSION)).getLoginRequestInfo().getClient().setScope("");
 
         ResultActions resultActions = mock.perform(get("/auth/legal_person/init").session(mockHttpSession))
                 .andDo(print()).andDo(forwardErrorsToSpringErrorhandler(mock));
@@ -100,7 +101,7 @@ public class LegalpersonControllerTest extends BaseTest {
 
     @Test
     void getAuthLegalPersonInit_Ok() throws Exception {
-        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, getMockCredential(), List.of("legalperson"));
+        MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, getMockCredential(), List.of("legalperson"));
 
         ResultActions resultActions = mock.perform(get("/auth/legal_person/init").session(mockHttpSession))
                 .andDo(print()).andDo(forwardErrorsToSpringErrorhandler(mock));
@@ -132,12 +133,12 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andExpect(jsonPath("$.message", is("Your session was not found! Either your session expired or the cookie usage is limited in your browser.")))
                 .andExpect(jsonPath("$.path", is("/auth/legal_person")));
 
-        assertErrorIsLogged("User exception: The attribute 'session' was not found in session");
+        assertErrorIsLogged(String.format("User exception: The attribute '%s' was not found in session", TARA_SESSION));
     }
 
     @Test
     void getAuthLegalPerson_invalidSessionStatus() throws Exception {
-        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.INIT_AUTH_PROCESS, getMockCredential());
+        MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.INIT_AUTH_PROCESS, getMockCredential());
 
         ResultActions resultActions = mock.perform(get("/auth/legal_person").session(mockHttpSession))
                 .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
@@ -161,7 +162,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/xml; charset=UTF-8")
                         .withBodyFile("mock_responses/xroad/nok-soapfault.xml")));
 
-        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
+        MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
 
         ResultActions resultActions = mock.perform(get("/auth/legal_person").session(mockHttpSession))
                 .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
@@ -185,7 +186,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .withHeader("Content-Type", "text/html; charset=UTF-8")
                         .withBody("Not found")));
 
-        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
+        MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
 
         ResultActions resultActions = mock.perform(get("/auth/legal_person").session(mockHttpSession))
                 .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
@@ -210,7 +211,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .withFixedDelay(5000)
                         .withBodyFile("mock_responses/xroad/ok-single-match.xml")));
 
-        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
+        MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
 
         ResultActions resultActions = mock.perform(get("/auth/legal_person").session(mockHttpSession))
                 .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
@@ -234,7 +235,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/xml; charset=UTF-8")
                         .withBodyFile("mock_responses/xroad/ok-no-match.xml")));
 
-        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
+        MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
 
         ResultActions resultActions = mock.perform(get("/auth/legal_person").session(mockHttpSession))
                 .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
@@ -258,7 +259,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/xml; charset=UTF-8")
                         .withBodyFile("mock_responses/xroad/ok-single-match.xml")));
 
-        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
+        MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
 
         ResultActions resultActions = mock.perform(get("/auth/legal_person").session(mockHttpSession))
                 .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
@@ -277,7 +278,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/xml; charset=UTF-8")
                         .withBodyFile("mock_responses/xroad/ok-multiple-matches.xml")));
 
-        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
+        MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
 
         ResultActions resultActions = mock.perform(get("/auth/legal_person").session(mockHttpSession))
                 .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
@@ -312,13 +313,13 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andExpect(jsonPath("$.message", is("Your session was not found! Either your session expired or the cookie usage is limited in your browser.")))
                 .andExpect(jsonPath("$.path", is("/auth/legal_person/confirm")));
 
-        assertErrorIsLogged("User exception: The attribute 'session' was not found in session");
+        assertErrorIsLogged(String.format("User exception: The attribute '%s' was not found in session", TARA_SESSION));
     }
 
     @Test
     void postAuthLegalPersonConfirm_InvalidSession() throws Exception {
 
-        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
+        MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
 
         ResultActions resultActions = mock.perform(post("/auth/legal_person/confirm").param("legal_person_identifier", "1234").session(mockHttpSession))
                 .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
@@ -375,8 +376,8 @@ public class LegalpersonControllerTest extends BaseTest {
     @Test
     void postAuthLegalPersonConfirm_InvalidParameter_notListed() throws Exception {
 
-        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.GET_LEGAL_PERSON_LIST, getMockCredential());
-        ((AuthSession)mockHttpSession.getAttribute("session")).setLegalPersonList(List.of(new AuthSession.LegalPerson("Acme OÜ", "123456abcd")));
+        MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.GET_LEGAL_PERSON_LIST, getMockCredential());
+        ((TaraSession) mockHttpSession.getAttribute(TARA_SESSION)).setLegalPersonList(List.of(new TaraSession.LegalPerson("Acme OÜ", "123456abcd")));
 
         ResultActions resultActions = mock.perform(post("/auth/legal_person/confirm")
                 .param("legal_person_identifier", "9876543210")
@@ -396,8 +397,8 @@ public class LegalpersonControllerTest extends BaseTest {
     @Test
     void postAuthLegalPersonConfirm_validLegalPersonIdentifier() throws Exception {
 
-        MockHttpSession mockHttpSession = getMockHttpSession(AuthState.GET_LEGAL_PERSON_LIST, getMockCredential());
-        ((AuthSession)mockHttpSession.getAttribute("session")).setLegalPersonList(List.of(new AuthSession.LegalPerson(MOCK_LEGAL_PERSON_NAME, MOCK_LEGAL_PERSON_IDENTIFIER)));
+        MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.GET_LEGAL_PERSON_LIST, getMockCredential());
+        ((TaraSession) mockHttpSession.getAttribute(TARA_SESSION)).setLegalPersonList(List.of(new TaraSession.LegalPerson(MOCK_LEGAL_PERSON_NAME, MOCK_LEGAL_PERSON_IDENTIFIER)));
 
         ResultActions resultActions = mock.perform(post("/auth/legal_person/confirm")
                 .param("legal_person_identifier", MOCK_LEGAL_PERSON_IDENTIFIER)

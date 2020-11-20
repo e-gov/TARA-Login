@@ -1,7 +1,7 @@
 package ee.ria.taraauthserver.utils;
 
 import ee.ria.taraauthserver.config.AuthenticationType;
-import ee.ria.taraauthserver.session.AuthSession;
+import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.util.Assert;
@@ -19,11 +19,11 @@ public class ThymeleafSupport {
     }
 
     public String getHomeUrl() {
-        AuthSession authSession = SessionUtils.getOrCreateAuthSession();
-        if (authSession.getLoginRequestInfo() == null)
+        TaraSession taraSession = SessionUtils.getOrCreateAuthSession();
+        if (taraSession.getLoginRequestInfo() == null)
             return "#";
 
-        AuthSession.OidcClient oidcClient = authSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient();
+        TaraSession.OidcClient oidcClient = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient();
         if (oidcClient.getLegacyReturnUrl() != null)
             return oidcClient.getLegacyReturnUrl();
         else
@@ -31,23 +31,23 @@ public class ThymeleafSupport {
     }
 
     public String getBackUrl() {
-        AuthSession authSession = SessionUtils.getOrCreateAuthSession();
-        if (authSession.getLoginRequestInfo() != null)
-            return "/auth/init?login_challenge=" + authSession.getLoginRequestInfo().getChallenge();
+        TaraSession taraSession = SessionUtils.getOrCreateAuthSession();
+        if (taraSession.getLoginRequestInfo() != null)
+            return "/auth/init?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge();
         else
             return "#";
     }
 
     public String getServiceName() {
-        AuthSession authSession = SessionUtils.getOrCreateAuthSession();
-        if (authSession.getLoginRequestInfo() == null)
+        TaraSession taraSession = SessionUtils.getOrCreateAuthSession();
+        if (taraSession.getLoginRequestInfo() == null)
             return null;
 
-        String defaultServicename = authSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getName();
+        String defaultServicename = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getName();
         if (defaultServicename == null)
             return null;
 
-        Map<String, String> serviceNameTranslations = authSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getNameTranslations();
+        Map<String, String> serviceNameTranslations = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getNameTranslations();
         Locale locale = LocaleContextHolder.getLocale();
         if (serviceNameTranslations.containsKey(locale.getLanguage()))
             return serviceNameTranslations.get(locale.getLanguage());

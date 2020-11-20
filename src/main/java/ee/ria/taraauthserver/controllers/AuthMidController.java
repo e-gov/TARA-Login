@@ -5,7 +5,7 @@ import ee.ria.taraauthserver.config.AuthenticationType;
 import ee.ria.taraauthserver.error.BadRequestException;
 import ee.ria.taraauthserver.error.ErrorMessages;
 import ee.ria.taraauthserver.error.ServiceNotAvailableException;
-import ee.ria.taraauthserver.session.AuthSession;
+import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.SessionUtils;
 import ee.ria.taraauthserver.utils.ValidNationalIdNumber;
 import ee.sk.mid.*;
@@ -47,13 +47,15 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 
-import static ee.ria.taraauthserver.session.AuthState.*;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
+import static ee.ria.taraauthserver.utils.Constants.TARA_SESSION;
 
 @Slf4j
 @Validated
 @Controller
 @ConditionalOnProperty(value = "tara.mid-authentication.enabled", matchIfMissing = true)
 public class AuthMidController {
+
 
     @Autowired
     private MidClient midClient;
@@ -80,47 +82,47 @@ public class AuthMidController {
         Session session = sessionRepository.findById(httpSession.getId());
         if (session == null)
             throw new BadRequestException(ErrorMessages.SESSION_NOT_FOUND, "Invalid session");
-        AuthSession authSession = session.getAttribute("session");
-        validateAuthSession(authSession);
-        log.info("AuthSession: " + authSession);
+        TaraSession taraSession = session.getAttribute(TARA_SESSION);
+        validateAuthSession(taraSession);
+        log.info("AuthSession: " + taraSession);
 
         MidAuthenticationHashToSign authenticationHash = MidAuthenticationHashToSign.generateRandomHashOfType(MidHashType.valueOf(midAuthConfigurationProperties.getHashType()));
 
-        MidAuthenticationResponse response = createMidAuthSession(requestParameters, authenticationHash, authSession);
+        MidAuthenticationResponse response = createMidAuthSession(requestParameters, authenticationHash, taraSession);
 
         CompletableFuture.supplyAsync(
-            () -> midClient.getSessionStatusPoller().fetchFinalSessionStatus(response.getSessionID(), "/authentication/session/" + response.getSessionID())
+                () -> midClient.getSessionStatusPoller().fetchFinalSessionStatus(response.getSessionID(), "/authentication/session/" + response.getSessionID())
         ).thenApply(
-            midSessionStatus -> handleMidPollResult(requestParameters, session, authSession, authenticationHash, midSessionStatus)
+                midSessionStatus -> handleMidPollResult(requestParameters, session, taraSession, authenticationHash, midSessionStatus)
         ).exceptionally(
-            exception -> handlePossibleExceptions(session, authSession, exception)
+                exception -> handlePossibleExceptions(session, taraSession, exception)
         );
 
-        session.setAttribute("session", authSession);
+        session.setAttribute(TARA_SESSION, taraSession);
         sessionRepository.save(session);
 
         model.addAttribute("mobileIdVerificationCode", authenticationHash.calculateVerificationCode());
         return "midLoginCode";
     }
 
-    private AuthSession handleMidPollResult(MidRequestBody requestParameters, Session session, AuthSession authSession, MidAuthenticationHashToSign authenticationHash, MidSessionStatus midSessionStatus) {
+    private TaraSession handleMidPollResult(MidRequestBody requestParameters, Session session, TaraSession taraSession, MidAuthenticationHashToSign authenticationHash, MidSessionStatus midSessionStatus) {
         if (StringUtils.equalsIgnoreCase("COMPLETE", midSessionStatus.getState())) {
             if (StringUtils.equalsIgnoreCase("OK", midSessionStatus.getResult())) {
                 try {
                     MidAuthenticationResult midAuthenticationResult = validateAndReturnMidAuthenticationResult(authenticationHash, midSessionStatus);
-                    updateAuthSessionWithResult(requestParameters, session, authSession, midAuthenticationResult);
+                    updateAuthSessionWithResult(requestParameters, session, taraSession, midAuthenticationResult);
                 } catch (Exception e) {
                     log.info("EXCEPTION: " + e.getMessage(), e);
                 }
             }
         }
-        return authSession;
+        return taraSession;
     }
 
-    private void updateAuthSessionWithResult(MidRequestBody requestParameters, Session session, AuthSession authSession, MidAuthenticationResult midAuthenticationResult) {
+    private void updateAuthSessionWithResult(MidRequestBody requestParameters, Session session, TaraSession taraSession, MidAuthenticationResult midAuthenticationResult) {
         String idCode = midAuthenticationResult.getAuthenticationIdentity().getIdentityCode();
-        authSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
-        AuthSession.MidAuthenticationResult authenticationResult = new AuthSession.MidAuthenticationResult();
+        taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
+        TaraSession.MidAuthenticationResult authenticationResult = new TaraSession.MidAuthenticationResult();
 
         authenticationResult.setIdCode(midAuthenticationResult.getAuthenticationIdentity().getIdentityCode());
         authenticationResult.setCountry(midAuthenticationResult.getAuthenticationIdentity().getCountry());
@@ -132,87 +134,87 @@ public class AuthMidController {
         authenticationResult.setAmr(AuthenticationType.MobileID);
         authenticationResult.setAcr(midAuthConfigurationProperties.getLevelOfAssurance());
 
-        authSession.setAuthenticationResult(authenticationResult);
-        session.setAttribute("session", authSession);
+        taraSession.setAuthenticationResult(authenticationResult);
+        session.setAttribute(TARA_SESSION, taraSession);
         sessionRepository.save(session);
     }
 
-    private AuthSession handlePossibleExceptions(Session session, AuthSession authSession, Throwable e) {
+    private TaraSession handlePossibleExceptions(Session session, TaraSession taraSession, Throwable e) {
         if (e.getCause() instanceof javax.ws.rs.BadRequestException) {
-            setSessionStateFailed(session, authSession, e.getMessage());
+            setSessionStateFailed(session, taraSession, e.getMessage());
         }
         if (e.getCause() instanceof javax.ws.rs.NotAuthorizedException) {
-            setSessionStateFailed(session, authSession, e.getMessage());
+            setSessionStateFailed(session, taraSession, e.getMessage());
         }
         if (e.getCause() instanceof MidSessionNotFoundException) {
-            setSessionStateFailed(session, authSession, e.getMessage());
+            setSessionStateFailed(session, taraSession, e.getMessage());
         }
         if (e.getCause() instanceof NotAllowedException) {
-            setSessionStateFailed(session, authSession, e.getMessage());
+            setSessionStateFailed(session, taraSession, e.getMessage());
         }
         if (e.getCause() instanceof InternalServerErrorException) {
-            ((AuthSession.MidAuthenticationResult) authSession.getAuthenticationResult()).setErrorMessage(ErrorMessages.MID_INTERNAL_ERROR);
-            setSessionStateFailed(session, authSession, e.getMessage());
+            ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).setErrorMessage(ErrorMessages.MID_INTERNAL_ERROR);
+            setSessionStateFailed(session, taraSession, e.getMessage());
         }
         if (e.getCause() instanceof MidNotMidClientException) {
-            ((AuthSession.MidAuthenticationResult) authSession.getAuthenticationResult()).setErrorMessage(ErrorMessages.NOT_MID_CLIENT);
-            ((AuthSession.MidAuthenticationResult) authSession.getAuthenticationResult()).setErrorStatus(400);
-            setSessionStateFailed(session, authSession, e.getMessage());
+            ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).setErrorMessage(ErrorMessages.NOT_MID_CLIENT);
+            ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).setErrorStatus(400);
+            setSessionStateFailed(session, taraSession, e.getMessage());
         }
         if (e.getCause() instanceof MidSessionTimeoutException) {
-            ((AuthSession.MidAuthenticationResult) authSession.getAuthenticationResult()).setErrorMessage(ErrorMessages.MID_TRANSACTION_EXPIRED);
-            ((AuthSession.MidAuthenticationResult) authSession.getAuthenticationResult()).setErrorStatus(500);
-            setSessionStateFailed(session, authSession, e.getMessage());
+            ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).setErrorMessage(ErrorMessages.MID_TRANSACTION_EXPIRED);
+            ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).setErrorStatus(500);
+            setSessionStateFailed(session, taraSession, e.getMessage());
         }
         if (e.getCause() instanceof MidUserCancellationException) {
-            ((AuthSession.MidAuthenticationResult) authSession.getAuthenticationResult()).setErrorMessage(ErrorMessages.MID_USER_CANCEL);
-            ((AuthSession.MidAuthenticationResult) authSession.getAuthenticationResult()).setErrorStatus(400);
-            setSessionStateFailed(session, authSession, e.getMessage());
+            ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).setErrorMessage(ErrorMessages.MID_USER_CANCEL);
+            ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).setErrorStatus(400);
+            setSessionStateFailed(session, taraSession, e.getMessage());
         }
         if (e.getCause() instanceof MidInvalidUserConfigurationException) {
-            ((AuthSession.MidAuthenticationResult) authSession.getAuthenticationResult()).setErrorMessage(ErrorMessages.MID_HASH_MISMATCH);
-            ((AuthSession.MidAuthenticationResult) authSession.getAuthenticationResult()).setErrorStatus(500);
-            setSessionStateFailed(session, authSession, e.getMessage());
+            ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).setErrorMessage(ErrorMessages.MID_HASH_MISMATCH);
+            ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).setErrorStatus(500);
+            setSessionStateFailed(session, taraSession, e.getMessage());
         }
         if (e.getCause() instanceof MidPhoneNotAvailableException) {
-            ((AuthSession.MidAuthenticationResult) authSession.getAuthenticationResult()).setErrorMessage(ErrorMessages.MID_PHONE_ABSENT);
-            ((AuthSession.MidAuthenticationResult) authSession.getAuthenticationResult()).setErrorStatus(400);
-            setSessionStateFailed(session, authSession, e.getMessage());
+            ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).setErrorMessage(ErrorMessages.MID_PHONE_ABSENT);
+            ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).setErrorStatus(400);
+            setSessionStateFailed(session, taraSession, e.getMessage());
         }
         if (e.getCause() instanceof MidDeliveryException) {
-            ((AuthSession.MidAuthenticationResult) authSession.getAuthenticationResult()).setErrorMessage(ErrorMessages.MID_DELIVERY_ERROR);
-            ((AuthSession.MidAuthenticationResult) authSession.getAuthenticationResult()).setErrorStatus(400);
-            setSessionStateFailed(session, authSession, e.getMessage());
+            ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).setErrorMessage(ErrorMessages.MID_DELIVERY_ERROR);
+            ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).setErrorStatus(400);
+            setSessionStateFailed(session, taraSession, e.getMessage());
         }
         if (e.getCause() instanceof MidInternalErrorException) {
-            ((AuthSession.MidAuthenticationResult) authSession.getAuthenticationResult()).setErrorMessage(ErrorMessages.MID_INTERNAL_ERROR);
-            setSessionStateFailed(session, authSession, e.getMessage());
+            ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).setErrorMessage(ErrorMessages.MID_INTERNAL_ERROR);
+            setSessionStateFailed(session, taraSession, e.getMessage());
         }
         return null;
     }
 
-    private void setSessionStateFailed(Session session, AuthSession authSession, String message) {
+    private void setSessionStateFailed(Session session, TaraSession taraSession, String message) {
         log.info("Mid polling failed: " + message);
-        authSession.setState(AUTHENTICATION_FAILED);
-        session.setAttribute("session", authSession);
+        taraSession.setState(AUTHENTICATION_FAILED);
+        session.setAttribute(TARA_SESSION, taraSession);
         sessionRepository.save(session);
     }
 
-    private void validateAuthSession(AuthSession authSession) {
+    private void validateAuthSession(TaraSession taraSession) {
 
-        if (authSession == null) {
+        if (taraSession == null) {
             throw new BadRequestException(ErrorMessages.SESSION_NOT_FOUND, "authSession is null");
         }
-        if (authSession.getState() != INIT_AUTH_PROCESS) {
-            throw new BadRequestException(ErrorMessages.SESSION_STATE_INVALID, "authSession state should be " + INIT_AUTH_PROCESS + " but was " + authSession.getState());
+        if (taraSession.getState() != INIT_AUTH_PROCESS) {
+            throw new BadRequestException(ErrorMessages.SESSION_STATE_INVALID, "authSession state should be " + INIT_AUTH_PROCESS + " but was " + taraSession.getState());
         }
-        if (!authSession.getAllowedAuthMethods().contains(AuthenticationType.MobileID)) {
+        if (!taraSession.getAllowedAuthMethods().contains(AuthenticationType.MobileID)) {
             throw new BadRequestException(ErrorMessages.INVALID_REQUEST, "Mobile ID authentication method is not allowed");
         }
-        authSession.setState(INIT_MID);
+        taraSession.setState(INIT_MID);
     }
 
-    private MidAuthenticationResponse createMidAuthSession(MidRequestBody requestParameters, MidAuthenticationHashToSign authenticationHash, AuthSession authSession) {
+    private MidAuthenticationResponse createMidAuthSession(MidRequestBody requestParameters, MidAuthenticationHashToSign authenticationHash, TaraSession taraSession) {
 
         MidAuthenticationRequest midRequest = createMidAuthenticationRequest(requestParameters, authenticationHash);
 
@@ -220,7 +222,7 @@ public class AuthMidController {
             log.info("Mid request: " + midRequest.toString());
             MidAuthenticationResponse response = midClient.getMobileIdConnector().authenticate(midRequest);
             log.info("Mid response: " + response.toString());
-            updateAuthSessionWithInitResponse(authSession, response);
+            updateAuthSessionWithInitResponse(taraSession, response);
             return response;
         } catch (MidInternalErrorException | ProcessingException e) {
             throw new ServiceNotAvailableException(ErrorMessages.MID_INTERNAL_ERROR, String.format("MID service is currently unavailable: %s", e.getMessage()), e);
@@ -229,10 +231,10 @@ public class AuthMidController {
         }
     }
 
-    private void updateAuthSessionWithInitResponse(AuthSession authSession, MidAuthenticationResponse response) {
-        authSession.setState(POLL_MID_STATUS);
-        AuthSession.MidAuthenticationResult midAuthenticationResult = new AuthSession.MidAuthenticationResult();
-        authSession.setAuthenticationResult(midAuthenticationResult);
+    private void updateAuthSessionWithInitResponse(TaraSession taraSession, MidAuthenticationResponse response) {
+        taraSession.setState(POLL_MID_STATUS);
+        TaraSession.MidAuthenticationResult midAuthenticationResult = new TaraSession.MidAuthenticationResult();
+        taraSession.setAuthenticationResult(midAuthenticationResult);
         midAuthenticationResult.setMidSessionId(response.getSessionID());
     }
 
@@ -249,11 +251,11 @@ public class AuthMidController {
         return midRequest;
     }
 
-    private String getTranslatedShortName(AuthSession authSession) {
-        String translatedShortName = authSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getShortName();
+    private String getTranslatedShortName(TaraSession taraSession) {
+        String translatedShortName = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getShortName();
 
-        if (authSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getNameTranslations() != null) {
-            Map<String, String> serviceNameTranslations = authSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getNameTranslations();
+        if (taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getNameTranslations() != null) {
+            Map<String, String> serviceNameTranslations = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getNameTranslations();
             Locale locale = LocaleContextHolder.getLocale();
             if (serviceNameTranslations.containsKey(locale.getLanguage()))
                 translatedShortName = serviceNameTranslations.get(locale.getLanguage());

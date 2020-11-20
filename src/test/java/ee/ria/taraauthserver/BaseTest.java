@@ -13,6 +13,7 @@ import io.restassured.filter.log.ResponseLoggingFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -26,6 +27,7 @@ import java.util.List;
 
 import static ch.qos.logback.classic.Level.*;
 import static io.restassured.RestAssured.config;
+import static io.restassured.RestAssured.given;
 import static io.restassured.config.RedirectConfig.redirectConfig;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;

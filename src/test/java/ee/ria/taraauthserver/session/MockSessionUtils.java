@@ -22,6 +22,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
+import static ee.ria.taraauthserver.utils.Constants.TARA_SESSION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 @Slf4j
@@ -45,13 +46,13 @@ public class MockSessionUtils {
     public static final LocalDate MOCK_NATURAL_PERSON_DATE_OF_BIRTH = LocalDate.of(1971, 1, 1);
 
 
-    public static AuthSession.LoginRequestInfo getMockLoginRequestInfo() {
-        AuthSession.LoginRequestInfo loginRequestInfo = new AuthSession.LoginRequestInfo();
+    public static TaraSession.LoginRequestInfo getMockLoginRequestInfo() {
+        TaraSession.LoginRequestInfo loginRequestInfo = new TaraSession.LoginRequestInfo();
         loginRequestInfo.setChallenge(MOCK_CHALLENGE);
 
-        AuthSession.Client client = new AuthSession.Client();
-        AuthSession.MetaData metaData = new AuthSession.MetaData();
-        AuthSession.OidcClient oidcClient = new AuthSession.OidcClient();
+        TaraSession.Client client = new TaraSession.Client();
+        TaraSession.MetaData metaData = new TaraSession.MetaData();
+        TaraSession.OidcClient oidcClient = new TaraSession.OidcClient();
 
         oidcClient.setName(MOCK_CLIENT_NAME);
         oidcClient.setNameTranslations(Map.of(
@@ -72,16 +73,16 @@ public class MockSessionUtils {
         return loginRequestInfo;
     }
 
-    public static void createMockHttpSession(AuthSession session) {
+    public static void createMockHttpSession(TaraSession session) {
         HttpServletRequest request = new MockHttpServletRequest();
         HttpServletResponse response = new MockHttpServletResponse();
         HttpSession httpSession = request.getSession(true);
-        httpSession.setAttribute("session", session);
+        httpSession.setAttribute(TARA_SESSION, session);
         org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request, response));
     }
 
     @NotNull
-    public static AuthSession.AuthenticationResult getMockCredential() {
+    public static TaraSession.AuthenticationResult getMockCredential() {
         return getMockCredential(
                 MOCK_NATURAL_PERSON_ID_CODE,
                 MOCK_NATURAL_PERSON_FIRSTNAME,
@@ -89,8 +90,8 @@ public class MockSessionUtils {
                 MOCK_NATURAL_PERSON_DATE_OF_BIRTH);
     }
 
-    public static AuthSession.AuthenticationResult getMockCredential(String idCode, String firstName, String lastName, LocalDate dateOfBirth) {
-        AuthSession.AuthenticationResult credential = new AuthSession.AuthenticationResult();
+    public static TaraSession.AuthenticationResult getMockCredential(String idCode, String firstName, String lastName, LocalDate dateOfBirth) {
+        TaraSession.AuthenticationResult credential = new TaraSession.AuthenticationResult();
         credential.setIdCode(idCode);
         credential.setFirstName(firstName);
         credential.setLastName(lastName);
@@ -101,34 +102,34 @@ public class MockSessionUtils {
         return credential;
     }
 
-    public static MockHttpSession getMockHttpSession(AuthState authSessionStatus) {
+    public static MockHttpSession getMockHttpSession(TaraAuthenticationState authSessionStatus) {
         return getMockHttpSession(authSessionStatus, getMockCredential());
     }
 
     @NotNull
-    public static MockHttpSession getMockHttpSession(AuthState authSessionStatus, AuthSession.AuthenticationResult credential) {
+    public static MockHttpSession getMockHttpSession(TaraAuthenticationState authSessionStatus, TaraSession.AuthenticationResult credential) {
         return getMockHttpSession(authSessionStatus, credential, List.of("oidc"));
     }
 
     @NotNull
     public static MockHttpSession getMockHttpSession(
-            AuthState authSessionStatus,
-            AuthSession.AuthenticationResult credential,
+            TaraAuthenticationState authSessionStatus,
+            TaraSession.AuthenticationResult credential,
             List<String> requestedScopes) {
 
         MockHttpSession mockHttpSession = new MockHttpSession();
-        AuthSession.LoginRequestInfo loginRequestInfo = new AuthSession.LoginRequestInfo();
+        TaraSession.LoginRequestInfo loginRequestInfo = new TaraSession.LoginRequestInfo();
         loginRequestInfo.setChallenge(MOCK_LOGIN_CHALLENGE);
-        AuthSession.Client client = new AuthSession.Client();
+        TaraSession.Client client = new TaraSession.Client();
         client.setClientId(MOCK_CLIENT_ID);
         client.setScope("mid legalperson");
         loginRequestInfo.setClient(client);
         loginRequestInfo.setRequestedScopes(requestedScopes);
-        AuthSession mockAuthSession = new AuthSession();
-        mockAuthSession.setAuthenticationResult(credential);
-        mockAuthSession.setState(authSessionStatus);
-        mockAuthSession.setLoginRequestInfo(loginRequestInfo);
-        mockHttpSession.setAttribute("session", mockAuthSession);
+        TaraSession mockTaraSession = new TaraSession();
+        mockTaraSession.setAuthenticationResult(credential);
+        mockTaraSession.setState(authSessionStatus);
+        mockTaraSession.setLoginRequestInfo(loginRequestInfo);
+        mockHttpSession.setAttribute(TARA_SESSION, mockTaraSession);
         return mockHttpSession;
     }
 
