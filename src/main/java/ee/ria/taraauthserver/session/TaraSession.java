@@ -48,7 +48,6 @@ public class TaraSession implements Serializable {
     public static class MidAuthenticationResult extends AuthenticationResult {
         private String midSessionId;
         private ErrorMessages errorMessage;
-        private int errorStatus;
     }
 
     @Data

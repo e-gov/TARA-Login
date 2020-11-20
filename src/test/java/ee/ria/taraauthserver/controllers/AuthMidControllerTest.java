@@ -404,7 +404,7 @@ class AuthMidControllerTest extends BaseTest {
 
         Thread.sleep(500);
 
-        assertInfoIsLogged("Mid polling failed: javax.ws.rs.BadRequestException: HTTP 400 Bad Request");
+        assertInfoIsLogged("Mid polling failed: HTTP 400 Bad Request");
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
     }
@@ -428,7 +428,7 @@ class AuthMidControllerTest extends BaseTest {
 
         Thread.sleep(500);
 
-        assertInfoIsLogged("Mid polling failed: javax.ws.rs.NotAuthorizedException: HTTP 401 Unauthorized");
+        assertInfoIsLogged("Mid polling failed: HTTP 401 Unauthorized");
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
     }
@@ -452,7 +452,7 @@ class AuthMidControllerTest extends BaseTest {
 
         Thread.sleep(500);
 
-        assertInfoIsLogged("Mid polling failed: ee.sk.mid.exception.MidSessionNotFoundException: Mobile-ID session was not found. Sessions time out in ~5 minutes.");
+        assertInfoIsLogged("Mid polling failed: Mobile-ID session was not found. Sessions time out in ~5 minutes.");
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
     }
@@ -476,7 +476,7 @@ class AuthMidControllerTest extends BaseTest {
 
         Thread.sleep(500);
 
-        assertInfoIsLogged("Mid polling failed: javax.ws.rs.NotAllowedException: HTTP 405 Method Not Allowed");
+        assertInfoIsLogged("Mid polling failed: HTTP 405 Method Not Allowed");
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
     }
@@ -500,7 +500,7 @@ class AuthMidControllerTest extends BaseTest {
 
         Thread.sleep(500);
 
-        assertInfoIsLogged("Mid polling failed: javax.ws.rs.InternalServerErrorException: HTTP 500 Server Error");
+        assertInfoIsLogged("Mid polling failed: HTTP 500 Server Error");
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
         // TODO assertEquals(ErrorMessages.MID_INTERNAL_ERROR.getMessage(), ((AuthSession.MidAuthenticationResult) authSession.getAuthenticationResult()).getErrorMessage());
@@ -525,11 +525,10 @@ class AuthMidControllerTest extends BaseTest {
 
         Thread.sleep(500);
 
-        assertInfoIsLogged("Mid polling failed: ee.sk.mid.exception.MidUserCancellationException: User cancelled the operation.");
+        assertInfoIsLogged("Mid polling failed: User cancelled the operation.");
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorMessages.MID_USER_CANCEL, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
-        assertEquals(400, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorStatus());
     }
 
     @Test
@@ -551,11 +550,10 @@ class AuthMidControllerTest extends BaseTest {
 
         Thread.sleep(500);
 
-        assertInfoIsLogged("Mid polling failed: ee.sk.mid.exception.MidNotMidClientException: User has no active certificates, and thus is not Mobile-ID client");
+        assertInfoIsLogged("Mid polling failed: User has no active certificates, and thus is not Mobile-ID client");
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorMessages.NOT_MID_CLIENT, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
-        assertEquals(400, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorStatus());
     }
 
     @Test
@@ -577,11 +575,10 @@ class AuthMidControllerTest extends BaseTest {
 
         Thread.sleep(500);
 
-        assertInfoIsLogged("Mid polling failed: ee.sk.mid.exception.MidSessionTimeoutException: User didn't enter PIN code or communication error.");
+        assertInfoIsLogged("Mid polling failed: User didn't enter PIN code or communication error.");
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorMessages.MID_TRANSACTION_EXPIRED, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
-        assertEquals(500, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorStatus());
     }
 
     @Test
@@ -603,11 +600,10 @@ class AuthMidControllerTest extends BaseTest {
 
         Thread.sleep(500);
 
-        assertInfoIsLogged("Mid polling failed: ee.sk.mid.exception.MidInvalidUserConfigurationException: Mobile-ID configuration on user's SIM card differs from what is configured on service provider side. User needs to contact his/her mobile operator.");
+        assertInfoIsLogged("Mid polling failed: Mobile-ID configuration on user's SIM card differs from what is configured on service provider side. User needs to contact his/her mobile operator.");
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorMessages.MID_HASH_MISMATCH, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
-        assertEquals(500, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorStatus());
     }
 
     @Test
@@ -629,11 +625,10 @@ class AuthMidControllerTest extends BaseTest {
 
         Thread.sleep(500);
 
-        assertInfoIsLogged("Mid polling failed: ee.sk.mid.exception.MidPhoneNotAvailableException: Unable to reach phone or SIM card");
+        assertInfoIsLogged("Mid polling failed: Unable to reach phone or SIM card");
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorMessages.MID_PHONE_ABSENT, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
-        assertEquals(400, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorStatus());
     }
 
     @Test
@@ -655,11 +650,10 @@ class AuthMidControllerTest extends BaseTest {
 
         Thread.sleep(500);
 
-        assertInfoIsLogged("Mid polling failed: ee.sk.mid.exception.MidDeliveryException: SMS sending error");
+        assertInfoIsLogged("Mid polling failed: SMS sending error");
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorMessages.MID_DELIVERY_ERROR, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
-        assertEquals(400, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorStatus());
     }
 
     @Test
@@ -679,11 +673,10 @@ class AuthMidControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200);
 
-        assertInfoIsLogged("Mid polling failed: ee.sk.mid.exception.MidDeliveryException: SMS sending error");
+        assertInfoIsLogged("Mid polling failed: SMS sending error");
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorMessages.MID_DELIVERY_ERROR, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
-        assertEquals(400, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorStatus());
     }
 
     @Test
