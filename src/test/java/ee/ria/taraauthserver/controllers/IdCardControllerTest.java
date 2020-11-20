@@ -66,9 +66,8 @@ class IdCardControllerTest extends BaseTest {
                 .get("/auth/id")
                 .then()
                 .assertThat()
-                .statusCode(400)
-                .body("message", equalTo("message.error.esteid.invalid-request"))
-                .body("error", equalTo("Bad Request"));
+                .statusCode(200)
+                .body("status", equalTo("COMPLETED"));
     }
 
     public static final String X509_CERT = "-----BEGIN CERTIFICATE-----\n" +

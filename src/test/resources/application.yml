@@ -23,7 +23,10 @@ tara:
           responder-certificate-cn: TEST_of_ESTEID-SK_2011.crt
 
         - issuer-cn: TEST of ESTEID-SK 2015
-          url: http://aia.demo.sk.ee/esteid2015
+          url: http://aia.sk.ee/esteid2015
+
+        - issuer-cn: TEST of ESTEID-SK2018
+          url: http://aia.sk.ee/esteid2018
 
       fallback-ocsp:
         - url: http://demo.sk.ee/ocsp
