@@ -1,4 +1,4 @@
-package ee.ria.taraauthserver.config;
+package ee.ria.taraauthserver.config.properties;
 
 
 import lombok.Data;
@@ -89,13 +89,15 @@ public class AuthConfigurationProperties {
         String relyingPartyUuid;
         @NotNull
         String relyingPartyName;
-        @NotNull
+
         @Pattern(regexp = "(SHA256|SHA384|SHA512)", message = "invalid hash value, accepted values are: SHA256, SHA384, SHA512")
         String hashType = "SHA256";
-        @NotNull
+
+        int longPollingTimeoutSeconds = 30;
+
         int connectionTimeoutMilliseconds = 5000;
-        @NotNull
-        int readTimeoutMilliseconds = 30000;
+
+        int readTimeoutMilliseconds = 5000;
     }
 }
 

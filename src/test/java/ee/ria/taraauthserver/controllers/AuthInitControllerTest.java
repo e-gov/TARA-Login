@@ -2,9 +2,9 @@ package ee.ria.taraauthserver.controllers;
 
 import com.github.tomakehurst.wiremock.stubbing.StubMapping;
 import ee.ria.taraauthserver.BaseTest;
-import ee.ria.taraauthserver.config.AuthConfigurationProperties;
-import ee.ria.taraauthserver.config.AuthenticationType;
-import ee.ria.taraauthserver.config.LevelOfAssurance;
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import javax.servlet.http.HttpSession;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static ee.ria.taraauthserver.utils.Constants.TARA_SESSION;
+import static ee.ria.taraauthserver.config.properties.Constants.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.*;

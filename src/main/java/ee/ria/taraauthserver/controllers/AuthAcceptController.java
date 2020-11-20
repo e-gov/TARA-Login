@@ -1,8 +1,8 @@
 package ee.ria.taraauthserver.controllers;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import ee.ria.taraauthserver.config.AuthConfigurationProperties;
-import ee.ria.taraauthserver.config.TaraScope;
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.BadRequestException;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.SessionUtils;

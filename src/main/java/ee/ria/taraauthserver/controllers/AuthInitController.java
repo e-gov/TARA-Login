@@ -1,10 +1,10 @@
 package ee.ria.taraauthserver.controllers;
 
 
-import ee.ria.taraauthserver.config.AuthConfigurationProperties;
-import ee.ria.taraauthserver.config.AuthenticationType;
-import ee.ria.taraauthserver.config.LevelOfAssurance;
-import ee.ria.taraauthserver.config.TaraScope;
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.BadRequestException;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
@@ -32,7 +32,7 @@ import javax.validation.constraints.Size;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ee.ria.taraauthserver.utils.Constants.TARA_SESSION;
+import static ee.ria.taraauthserver.config.properties.Constants.TARA_SESSION;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.springframework.util.CollectionUtils.isEmpty;
 

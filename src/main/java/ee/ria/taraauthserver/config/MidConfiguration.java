@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.config;
 
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.sk.mid.MidClient;
 import ee.sk.mid.rest.MidLoggingFilter;
 import lombok.SneakyThrows;
@@ -42,7 +43,7 @@ public class MidConfiguration {
                 .withRelyingPartyName(midAuthConfigurationProperties.getRelyingPartyName())
                 .withTrustSslContext(tlsTrustStore)
                 .withNetworkConnectionConfig(clientConfig(midAuthConfigurationProperties))
-                .withLongPollingTimeoutSeconds(30)
+                .withLongPollingTimeoutSeconds(midAuthConfigurationProperties.getLongPollingTimeoutSeconds())
                 .build();
     }
 

@@ -1,7 +1,7 @@
 package ee.ria.taraauthserver.controllers;
 
-import ee.ria.taraauthserver.config.AuthConfigurationProperties;
-import ee.ria.taraauthserver.config.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.error.BadRequestException;
 import ee.ria.taraauthserver.error.ErrorMessages;
 import ee.ria.taraauthserver.error.ServiceNotAvailableException;
@@ -48,7 +48,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
-import static ee.ria.taraauthserver.utils.Constants.TARA_SESSION;
+import static ee.ria.taraauthserver.config.properties.Constants.TARA_SESSION;
 
 @Slf4j
 @Validated

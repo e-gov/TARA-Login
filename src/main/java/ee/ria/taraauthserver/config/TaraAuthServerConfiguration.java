@@ -5,6 +5,7 @@ import com.hazelcast.config.MapAttributeConfig;
 import com.hazelcast.config.MapIndexConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.utils.ThymeleafSupport;
 import lombok.extern.slf4j.Slf4j;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
@@ -43,7 +44,9 @@ import static org.springframework.util.ResourceUtils.getFile;
 @EnableHazelcastHttpSession
 @ComponentScan(basePackages = {"ee.ria.taraauthserver"})
 @EnableConfigurationProperties(AuthConfigurationProperties.class)
-public class EidasAuthConfiguration implements WebMvcConfigurer {
+public class TaraAuthServerConfiguration implements WebMvcConfigurer {
+
+    public static final String TARA_SESSION_COOKIE_NAME = "SESSION";
 
     @Autowired
     private AuthConfigurationProperties authConfigurationProperties;
@@ -91,7 +94,7 @@ public class EidasAuthConfiguration implements WebMvcConfigurer {
         serializer.setSameSite("Strict");
         serializer.setUseHttpOnlyCookie(true);
         serializer.setUseBase64Encoding(false);
-        serializer.setCookieName("SESSION");
+        serializer.setCookieName(TARA_SESSION_COOKIE_NAME);
         return serializer;
     }
 

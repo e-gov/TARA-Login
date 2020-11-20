@@ -31,8 +31,9 @@
 | `tara.auth-methods.mobile-id.relying-party-uuid` | Yes | UUID from RIA mobile id contract |
 | `tara.auth-methods.mobile-id.relying-party-name` | Yes | Name from RIA mobile id contract |
 | `tara.auth-methods.mobile-id.hash-type` | Yes | Type of authentication hash, possible values - SHA256, SHA384, SHA512 |
-| `tara.auth-methods.mobile-id.connection-timeout-milliseconds` | Yes | Connection timeout of mobile id requests |
-| `tara.auth-methods.mobile-id.read-timeout-milliseconds` | Yes | Read timeout of mobile id requests |
+| `tara.auth-methods.mobile-id.connection-timeout-milliseconds` | No | Connection timeout of the MID authentication initiation request. Defaults to 5000 if not specified. |
+| `tara.auth-methods.mobile-id.read-timeout-milliseconds` | No | Read timeout of the MID authentication initiation request. Defaults to 5000 if not specified. |
+| `tara.auth-methods.mobile-id.long-polling-timeout-seconds` | No | Long polling timeout period used for MID session status requests. Defaults to 30 if not specified. |
 
 
 ## 1.4 Legal person authentication configuration properties

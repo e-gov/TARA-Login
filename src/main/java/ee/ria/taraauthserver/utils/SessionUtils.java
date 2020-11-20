@@ -13,7 +13,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-import static ee.ria.taraauthserver.utils.Constants.TARA_SESSION;
+import static ee.ria.taraauthserver.config.properties.Constants.TARA_SESSION;
 
 @Slf4j
 @UtilityClass

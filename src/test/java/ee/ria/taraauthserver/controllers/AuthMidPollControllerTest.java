@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
-import static ee.ria.taraauthserver.utils.Constants.TARA_SESSION;
+import static ee.ria.taraauthserver.config.properties.Constants.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 

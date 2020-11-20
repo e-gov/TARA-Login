@@ -1,8 +1,8 @@
 package ee.ria.taraauthserver.session;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import ee.ria.taraauthserver.config.AuthenticationType;
-import ee.ria.taraauthserver.config.LevelOfAssurance;
+import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.error.ErrorMessages;
 import lombok.*;
 

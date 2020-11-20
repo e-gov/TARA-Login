@@ -1,6 +1,6 @@
 package ee.ria.taraauthserver.utils;
 
-import ee.ria.taraauthserver.config.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.i18n.LocaleContextHolder;

@@ -1,7 +1,7 @@
 package ee.ria.taraauthserver.session;
 
-import ee.ria.taraauthserver.config.AuthenticationType;
-import ee.ria.taraauthserver.config.LevelOfAssurance;
+import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +22,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-import static ee.ria.taraauthserver.utils.Constants.TARA_SESSION;
+import static ee.ria.taraauthserver.config.properties.Constants.TARA_SESSION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 @Slf4j

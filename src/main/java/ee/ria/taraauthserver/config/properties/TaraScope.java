@@ -1,4 +1,4 @@
-package ee.ria.taraauthserver.config;
+package ee.ria.taraauthserver.config.properties;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,15 +14,9 @@ public enum TaraScope {
     OPENID("openid"),
     IDCARD("idcard"),
     MID("mid"),
-    EIDAS("eidas"),
-    BANKLINK("banklink"),
-    SMARTID("smartid"),
-    EIDASONLY("eidasonly"),
-    EMAIL("email"),
-    PHONE("phone"),
     LEGALPERSON("legalperson");
 
-    public static final List<TaraScope> SUPPORTS_AUTHENTICATION_METHOD_SELECTION = Collections.unmodifiableList(Arrays.asList(IDCARD, MID, BANKLINK, EIDAS, SMARTID, EIDASONLY));
+    public static final List<TaraScope> SUPPORTS_AUTHENTICATION_METHOD_SELECTION = Collections.unmodifiableList(Arrays.asList(IDCARD, MID));
 
     private String formalName;
 

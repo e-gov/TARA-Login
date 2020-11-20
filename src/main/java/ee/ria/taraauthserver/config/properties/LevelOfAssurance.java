@@ -1,4 +1,4 @@
-package ee.ria.taraauthserver.config;
+package ee.ria.taraauthserver.config.properties;
 
 import java.util.HashMap;
 import java.util.Map;

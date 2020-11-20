@@ -1,8 +1,8 @@
 package ee.ria.taraauthserver.controllers;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import ee.ria.taraauthserver.config.AuthConfigurationProperties;
-import ee.ria.taraauthserver.config.LevelOfAssurance;
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import lombok.Data;
@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static ee.ria.taraauthserver.utils.Constants.TARA_SESSION;
+import static ee.ria.taraauthserver.config.properties.Constants.TARA_SESSION;
 
 @Validated
 @RestController

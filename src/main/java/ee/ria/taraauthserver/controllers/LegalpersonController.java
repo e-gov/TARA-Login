@@ -27,7 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static ee.ria.taraauthserver.config.TaraScope.LEGALPERSON;
+import static ee.ria.taraauthserver.config.properties.TaraScope.LEGALPERSON;
 import static ee.ria.taraauthserver.error.ErrorMessages.INVALID_REQUEST;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.utils.SessionUtils.assertSessionInState;
