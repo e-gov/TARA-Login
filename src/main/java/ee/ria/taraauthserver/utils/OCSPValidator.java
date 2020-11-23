@@ -258,8 +258,6 @@ public class OCSPValidator {
     private X509Certificate getResponseSigningCert(BasicOCSPResp response, X509Certificate userCertIssuer, Ocsp ocspConfiguration)
             throws CertificateException, IOException {
         String responderCn = getResponderCN(response);
-        log.info("FOR SCIENCE: " + trustedCertificates.values());
-        log.info("OCSP response cert: " + getCertFromOcspResponse(response, responderCn));  //TODO remove
         // if explicit responder cert is set in configuration, then response signature MUST be verified with it
         if (ocspConfiguration.getResponderCertificateCn() != null) {
             X509Certificate signCert = trustedCertificates.get(ocspConfiguration.getResponderCertificateCn());

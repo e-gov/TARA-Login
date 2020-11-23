@@ -55,7 +55,7 @@ public class IDCardConfiguration {
         } catch (Exception e) {
             throw new IllegalArgumentException("Failed to read trusted certificates from id-card truststore: " + e.getMessage(), e);
         }
-        log.info("mis need trusted sertifikaadid siis on: " + trustedCertificates.toString());
+
         return trustedCertificates;
     }
 }

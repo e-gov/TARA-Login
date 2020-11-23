@@ -95,7 +95,9 @@ public class EidasAuthConfiguration implements WebMvcConfigurer {
     @Bean
     @SneakyThrows
     public MidClient midClient(KeyStore midTrustStore, AuthConfigurationProperties.MidAuthConfigurationProperties midAuthConfigurationProperties) {
-
+        System.setProperty("javax.net.ssl.trustStore", "src/test/resources/tls-truststore.jks");
+        System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
+        System.setProperty("javax.net.ssl.trustStoreType", "jks");
         return MidClient.newBuilder()
                 .withHostUrl(midAuthConfigurationProperties.getHostUrl())
                 .withRelyingPartyUUID(midAuthConfigurationProperties.getRelyingPartyUuid())

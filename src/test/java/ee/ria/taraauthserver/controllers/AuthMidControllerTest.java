@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.controllers;
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.AuthenticationType;
+import ee.ria.taraauthserver.config.EidasAuthConfiguration;
 import ee.ria.taraauthserver.config.LevelOfAssurance;
 import ee.ria.taraauthserver.error.ErrorMessages;
 import ee.ria.taraauthserver.session.AuthSession;
@@ -10,9 +11,11 @@ import ee.ria.taraauthserver.session.AuthState;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.ConfigFileApplicationContextInitializer;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +25,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.test.annotation.DirtiesContext.ClassMode.BEFORE_CLASS;
 
 @Slf4j
 class AuthMidControllerTest extends BaseTest {
@@ -35,7 +39,9 @@ class AuthMidControllerTest extends BaseTest {
     private SessionRepository sessionRepository;
 
     @Test
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void nationalIdNumber_missing() {
+
         given()
                 .when()
                 .formParam("telephoneNumber", "00000766")

@@ -89,10 +89,6 @@ public class AuthConfigurationProperties {
     @Validated
     @ConfigurationProperties(prefix = "tara.auth-methods.id-card")
     public static class IdCardAuthConfigurationProperties {
-        public static final long DEFAULT_ACCEPTED_CLOCK_SKEW_IN_SECONDS = 2L;
-        public static final long DEFAULT_RESPONSE_LIFETIME_IN_SECONDS = 900L;
-        public static final int DEFAULT_CONNECT_TIMEOUT_IN_MILLISECONDS = 3 * 1000;
-        public static final int DEFAULT_READ_TIMEOUT_IN_MILLISECONDS = 3 * 1000;
 
         @NotNull
         private String truststore;

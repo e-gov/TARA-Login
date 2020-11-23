@@ -40,15 +40,15 @@ public class IdCardController {
     @GetMapping(path = {"/auth/id"})
     @ResponseBody
     public HashMap<String, String> handleRequest(HttpServletRequest request, HttpSession httpSession) {
-        AuthSession authSession = (AuthSession) httpSession.getAttribute(TARA_SESSION);
-        if (authSession == null)
-            throw new BadRequestException("message.error.esteid.invalid-request");
-
         String encodedCertificate = request.getHeader(HEADER_SSL_CLIENT_CERT);
+        AuthSession authSession = (AuthSession) httpSession.getAttribute(TARA_SESSION);
+
         if (encodedCertificate == null)
             throw new BadRequestException("Expected header '" + HEADER_SSL_CLIENT_CERT + "' could not be found in request");
         if (!StringUtils.hasLength(encodedCertificate))
             throw new BadRequestException("Unable to find certificate from request");
+        if (authSession == null)
+            throw new BadRequestException("message.error.esteid.invalid-request");
 
         X509Certificate certificate = X509Utils.toX509Certificate(encodedCertificate);
         validateUserCert(certificate);
