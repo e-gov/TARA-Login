@@ -20,6 +20,7 @@ import org.xml.sax.SAXException;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -139,6 +140,9 @@ public class BusinessRegistryService {
                 log.info("Response received. Code: {}, Response body: {}", responseCode, response);
 
                 DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+                builderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+                builderFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+                builderFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
                 DocumentBuilder builder = builderFactory.newDocumentBuilder();
                 Document xmlDocument = builder.parse(IOUtils.toInputStream(response, StandardCharsets.UTF_8));
                 XPath xPath = XPathFactory.newInstance().newXPath();

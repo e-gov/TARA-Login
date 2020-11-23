@@ -101,7 +101,7 @@ public class MockAuthController {
                 "name", legalPerson.getLegalName(),
                 "registry_code", legalPerson.getLegalPersonIdentifier()
         );
-        attributes.put("represents_legal_person", legalPersonAttributes);
+        attributes.put("legal_person", legalPersonAttributes);
     }
 
     @NotNull
