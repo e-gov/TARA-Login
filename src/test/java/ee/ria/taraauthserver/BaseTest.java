@@ -138,6 +138,7 @@ public abstract class BaseTest {
                 .httpsPort(9877)
                 .keystorePath("src/test/resources/tls-keystore.jks")
                 .keystorePassword("changeit")
+                .keyManagerPassword("changeit")
                 .notifier(new ConsoleNotifier(true))
         );
         wireMockServer.start();
