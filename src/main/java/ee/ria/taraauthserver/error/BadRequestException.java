@@ -1,13 +1,16 @@
 package ee.ria.taraauthserver.error;
 
-public class BadRequestException extends RuntimeException {
+public class BadRequestException extends TaraException {
 
-    public BadRequestException(String message) {
-        super(message);
+    public BadRequestException(String debugMessage) {
+        super(null, debugMessage);
     }
 
-    public BadRequestException(String message, Exception e) {
-        super(message, e);
+    public BadRequestException(ErrorMessages messageCode, String debugMessage) {
+        super(messageCode, debugMessage, null);
     }
 
+    public BadRequestException(ErrorMessages messageCode, String debugMessage, Exception exception) {
+        super(messageCode, debugMessage, exception);
+    }
 }

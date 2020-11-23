@@ -1,13 +1,14 @@
 package ee.ria.taraauthserver.controllers;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import ee.ria.taraauthserver.config.AuthConfigurationProperties;
-import ee.ria.taraauthserver.config.LevelOfAssurance;
-import ee.ria.taraauthserver.session.AuthSession;
-import ee.ria.taraauthserver.session.AuthState;
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.session.TaraSession;
+import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.util.Assert;
@@ -22,7 +23,10 @@ import org.springframework.web.servlet.view.RedirectView;
 import javax.servlet.http.HttpSession;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+
+import static ee.ria.taraauthserver.config.properties.Constants.TARA_SESSION;
 
 @Validated
 @RestController
@@ -37,15 +41,19 @@ public class MockAuthController {
 
     @PostMapping(value = "/mockauth", produces = MediaType.APPLICATION_JSON_VALUE)
     public RedirectView mockAuth(HttpSession session) {
-        AuthSession authSession = (AuthSession) session.getAttribute("session");
-        log.info("current state: " + authSession.getState());
+        TaraSession taraSession = (TaraSession) session.getAttribute(TARA_SESSION);
+        log.info("current state: " + taraSession.getState());
         log.info("session id in AUTH_MOCK: " + session.getId());
-        AuthSession.AuthenticationResult authResult = new AuthSession.AuthenticationResult();
+        TaraSession.AuthenticationResult authResult = new TaraSession.AuthenticationResult();
         authResult.setAcr(LevelOfAssurance.HIGH);
         authResult.setSubject("EE60001019906");
-        authSession.setState(AuthState.AUTHENTICATION_SUCCESS);
-        session.setAttribute("session", authSession);
-        log.info("edited session " + session.getAttribute("session"));
+        authResult.setFirstName("Firstname");
+        authResult.setLastName("Lastname");
+        authResult.setDateOfBirth(LocalDate.now());
+        taraSession.setAuthenticationResult(authResult);
+        taraSession.setState(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
+        session.setAttribute(TARA_SESSION, taraSession);
+        log.info("edited session " + session.getAttribute(TARA_SESSION));
         log.info("with id " + session.getId());
         return new RedirectView("/auth/accept");
     }
@@ -55,24 +63,30 @@ public class MockAuthController {
         return "it just works";
     }
 
+    @GetMapping("/auth/id")
+    public String mockAuthId() {
+        return "{\"ok\":true}";
+    }
+
+    // TODO invalidate session
     @GetMapping(value = "/consent", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> mockConsent(@RequestParam String consent_challenge, HttpSession session) {
-        AuthSession authSession = (AuthSession) session.getAttribute("session");
+        TaraSession taraSession = (TaraSession) session.getAttribute(TARA_SESSION);
 
         String url = authConfigurationProperties.getHydraService().getAcceptConsentUrl() + "?consent_challenge=" + consent_challenge;
         AcceptConsentRequest acceptConsentRequest = new AcceptConsentRequest();
         HttpEntity<AcceptConsentRequest> request = new HttpEntity<>(acceptConsentRequest);
 
+        Map<String, Object> profileAttributes =new LinkedHashMap<>();
+
+        addProfile_attributes(profileAttributes, taraSession);
+
         acceptConsentRequest.setSession(new AcceptConsentRequest.LoginSession(
-                Map.of("profile_attributes", Map.of(
-                        "family_name", authSession.getAuthenticationResult().getLastName(),
-                        "given_name", authSession.getAuthenticationResult().getFirstName(),
-                        "date_of_birth", authSession.getAuthenticationResult().getDateOfBirth().toString()
-                        ),
-                        "state", getStateParameterValue(authSession),
-                        "amr", new String[]{"mid"}
-                )
+                profileAttributes
         ));
+
+        profileAttributes.put("state", getStateParameterValue(taraSession));
+        profileAttributes.put("amr", new String[]{"mid"});
 
         ResponseEntity<Map> response = hydraService.exchange(url, HttpMethod.PUT, request, Map.class);
 
@@ -81,8 +95,29 @@ public class MockAuthController {
         return new ResponseEntity<>(headers, HttpStatus.FOUND);
     }
 
-    private String getStateParameterValue(AuthSession authSession) {
-        URL oidcAuthRequestUrl = (authSession).getLoginRequestInfo().getUrl();
+    private void addLegalPersonAttributes(Map<String, Object> attributes, TaraSession.LegalPerson legalPerson) {
+        Map<String, Object> legalPersonAttributes = Map.of(
+                "name", legalPerson.getLegalName(),
+                "registry_code", legalPerson.getLegalPersonIdentifier()
+        );
+        attributes.put("legal_person", legalPersonAttributes);
+    }
+
+    @NotNull
+    private void addProfile_attributes(Map<String, Object> attributes, TaraSession taraSession) {
+        Map<String, Object> profileAttributes = new LinkedHashMap<>();
+        profileAttributes.put("family_name", taraSession.getAuthenticationResult().getLastName());
+        profileAttributes.put("given_name", taraSession.getAuthenticationResult().getFirstName());
+        profileAttributes.put("date_of_birth", taraSession.getAuthenticationResult().getDateOfBirth().toString());
+        TaraSession.LegalPerson legalPerson = taraSession.getSelectedLegalPerson();
+        if (legalPerson != null) {
+            addLegalPersonAttributes(profileAttributes, legalPerson);
+        }
+        attributes.put("profile_attributes", profileAttributes);
+    }
+
+    private String getStateParameterValue(TaraSession taraSession) {
+        URL oidcAuthRequestUrl = (taraSession).getLoginRequestInfo().getUrl();
         Assert.notNull(oidcAuthRequestUrl, "OIDC authentication URL cannot be null!");
         String state = getQueryMap(oidcAuthRequestUrl.getQuery()).get("state");
         Assert.notNull(state, "State paremeter is mandatory and cannot be null!");

@@ -16,7 +16,9 @@ config = {
     FONTS: './fonts/**/*',
     SASS: './styles/**/*.scss',
     JS_MAIN: './scripts/main/**/*.js',
-    JS_FORM: './scripts/form/**/*.js'
+    JS_FORM: './scripts/form/**/*.js',
+    JS_GENERAL: './scripts/general/**/*.js',
+    JS_LEGALPERSON: './scripts/legalperson/**/*.js'
   },
   DEST: {
     ICO: '../src/main/resources/static/',
@@ -69,7 +71,7 @@ gulp.task('build:css', function() {
 // Build js
 gulp.task('build:js_main', function(cb) {
   pump([
-    gulp.src(config.SRC.JS_MAIN),
+    gulp.src([config.SRC.JS_GENERAL, config.SRC.JS_MAIN]),
     uglify(),
     concat('main.js'),
     gulp.dest(config.DEST.JS),
@@ -88,8 +90,19 @@ gulp.task('build:js_form', function(cb) {
     cb
     );
 });
+gulp.task('build:js_legalperson', function(cb) {
+  pump([
+    gulp.src([config.SRC.JS_GENERAL, config.SRC.JS_LEGALPERSON]),
+    uglify(),
+    concat('legalperson.js'),
+    gulp.dest(config.DEST.JS),
+    browserSync.stream()
+    ],
+    cb
+    );
+});
 
 
 // Gulp build
-gulp.task('build', gulp.series('build:images', 'build:favicon', 'build:fonts', 'build:css', 'build:js_main', 'build:js_form'), function(done) {
+gulp.task('build', gulp.series('build:images', 'build:favicon', 'build:fonts', 'build:css', 'build:js_main', 'build:js_form', 'build:js_legalperson'), function(done) {
 });

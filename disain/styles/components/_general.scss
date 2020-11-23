@@ -152,3 +152,21 @@ body.is-mobile-subview {
   white-space: nowrap;
   border: 0;
 }
+.hidden {
+  display: none;
+}
+.loadersmall {
+    border: 3px solid #f3f3f3;
+    -webkit-animation: spin 1s linear infinite;
+    animation: spin 1s linear infinite;
+    border-top: 3px solid #555;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    float: left;
+    margin: 5px 5px auto auto
+}
+@keyframes spin {
+  0% {transform: rotate(0deg);}
+  100% {transform: rotate(360deg);}
+}

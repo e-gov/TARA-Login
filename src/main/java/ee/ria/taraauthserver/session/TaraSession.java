@@ -1,11 +1,10 @@
 package ee.ria.taraauthserver.session;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import ee.ria.taraauthserver.config.AuthenticationType;
-import ee.ria.taraauthserver.config.LevelOfAssurance;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.error.ErrorMessages;
+import lombok.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -22,11 +21,13 @@ import java.util.Map;
 @Data
 @ToString
 @NoArgsConstructor
-public class AuthSession implements Serializable {
-    private AuthState state;
+public class TaraSession implements Serializable {
+    private TaraAuthenticationState state;
     private LoginRequestInfo loginRequestInfo;
     private List<AuthenticationType> allowedAuthMethods;
     private AuthenticationResult authenticationResult;
+    private List<LegalPerson> legalPersonList;
+    private LegalPerson selectedLegalPerson;
 
     @Data
     @ToString
@@ -46,8 +47,7 @@ public class AuthSession implements Serializable {
     @ToString
     public static class MidAuthenticationResult extends AuthenticationResult {
         private String midSessionId;
-        private String errorMessage;
-        private int errorStatus;
+        private ErrorMessages errorMessage;
     }
 
     @Data
@@ -129,5 +129,14 @@ public class AuthSession implements Serializable {
         @Pattern(regexp = "(private|public)", message = "invalid sector value, accepted values are: private, public")
         @JsonProperty("sector")
         String sector;
+    }
+
+    @ToString
+    @EqualsAndHashCode
+    @RequiredArgsConstructor
+    @Getter
+    public static class LegalPerson implements Serializable {
+        private final String legalName;
+        private final String legalPersonIdentifier;
     }
 }
