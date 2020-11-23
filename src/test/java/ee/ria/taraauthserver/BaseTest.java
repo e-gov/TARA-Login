@@ -13,10 +13,8 @@ import io.restassured.filter.log.ResponseLoggingFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,11 +27,13 @@ import java.util.List;
 
 import static ch.qos.logback.classic.Level.*;
 import static io.restassured.RestAssured.config;
+import static io.restassured.RestAssured.given;
 import static io.restassured.config.RedirectConfig.redirectConfig;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInRelativeOrder;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
@@ -42,9 +42,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @AutoConfigureMockMvc
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public abstract class BaseTest {
-
     protected MockMvc mock;
-
     protected static WireMockServer wireMockServer;
 
     @Autowired
@@ -55,26 +53,15 @@ public abstract class BaseTest {
 
     private static ListAppender<ILoggingEvent> mockAppender;
 
-    static {
-        System.setProperty("javax.net.ssl.trustStore", "src/test/resources/tls-truststore.jks");
-        System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
-        System.setProperty("javax.net.ssl.trustStoreType", "jks");
-        System.setProperty("http.keepAlive", "false");
-        System.setProperty("http.maxConnections", "1");
+    @Test
+    @Order(1)
+    void contextLoads() {
+        assertNotNull(webApplicationContext, "Should not be null!");
     }
 
     @BeforeAll
     static void setUpAll() {
-
-        wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig()
-                .httpDisabled(true)
-                .httpsPort(9877)
-                .keystorePath("src/test/resources/tls-keystore.jks")
-                .keystorePassword("changeit")
-                .notifier(new ConsoleNotifier(true))
-        );
-        wireMockServer.start();
-
+        configureWiremockServer();
         configureRestAssured();
     }
 
@@ -89,7 +76,6 @@ public abstract class BaseTest {
         RestAssured.port = port;
         setupMockLogAppender();
         wireMockServer.resetAll();
-
     }
 
     @AfterEach
@@ -136,15 +122,25 @@ public abstract class BaseTest {
                         || e.getLoggerName().equals(loggerClass.getCanonicalName())))
                 .map(ILoggingEvent::getFormattedMessage)
                 .collect(toList());
-
-        assertThat(events, containsInRelativeOrder(stream(messagesInRelativeOrder)
+        
+        assertThat("Expected log messages not found in output.\n\tExpected log messages: " + List.of(messagesInRelativeOrder) + ",\n\tActual log messages: " + events, events, containsInRelativeOrder(stream(messagesInRelativeOrder)
                 .map(CoreMatchers::startsWith).toArray(Matcher[]::new)));
     }
-
 
     protected static void configureRestAssured() {
         RestAssured.filters(new RequestLoggingFilter(), new ResponseLoggingFilter());
         config = config().redirect(redirectConfig().followRedirects(false));
+    }
+
+    private static void configureWiremockServer() {
+        wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig()
+                .httpDisabled(true)
+                .httpsPort(9877)
+                .keystorePath("src/test/resources/tls-keystore.jks")
+                .keystorePassword("changeit")
+                .notifier(new ConsoleNotifier(true))
+        );
+        wireMockServer.start();
     }
 
 }

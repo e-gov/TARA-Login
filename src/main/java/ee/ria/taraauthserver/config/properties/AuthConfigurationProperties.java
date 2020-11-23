@@ -1,4 +1,4 @@
-package ee.ria.taraauthserver.config;
+package ee.ria.taraauthserver.config.properties;
 
 
 import lombok.Data;
@@ -29,6 +29,8 @@ public class AuthConfigurationProperties {
 
     HydraConfigurationProperties hydraService = new HydraConfigurationProperties();
 
+    TruststoreProperties tls = new TruststoreProperties();
+
     Map<AuthenticationType, AuthMethodProperties> authMethods = new HashMap<>();
 
     @Data
@@ -45,6 +47,19 @@ public class AuthConfigurationProperties {
         String acceptConsentUrl;
         @NotNull
         int requestTimeoutInSeconds = 3;
+    }
+
+    @Data
+    @ToString
+    @Validated
+    @ConfigurationProperties(prefix = "tara.tls")
+    public static class TruststoreProperties {
+        @NotBlank
+        String truststoreLocation;
+        @NotBlank
+        String truststorePassword;
+
+        String trustStoreType = "PKCS12";
     }
 
     @Data
@@ -74,13 +89,15 @@ public class AuthConfigurationProperties {
         String relyingPartyUuid;
         @NotNull
         String relyingPartyName;
-        @NotNull
+
         @Pattern(regexp = "(SHA256|SHA384|SHA512)", message = "invalid hash value, accepted values are: SHA256, SHA384, SHA512")
         String hashType = "SHA256";
-        @NotNull
+
+        int longPollingTimeoutSeconds = 30;
+
         int connectionTimeoutMilliseconds = 5000;
-        @NotNull
-        int readTimeoutMilliseconds = 30000;
+
+        int readTimeoutMilliseconds = 5000;
     }
 }
 

@@ -11,6 +11,7 @@ tara:
     id-card:
       enabled: true
       level-of-assurance: HIGH
+
     mobile-id:
       enabled: true
       level-of-assurance: HIGH
@@ -22,3 +23,27 @@ tara:
       truststore-password: changeit
       connection-timeout-milliseconds: 1000
       read-timeout-milliseconds: 1000
+
+  legal-person-authentication:
+    x-road-server-url: https://localhost:9877/cgi-bin/consumer_proxy
+
+    x-road-service-instance: ee-dev
+    x-road-service-member-class: GOV
+    x-road-service-member-code: 70000310
+    x-road-service-subsystem-code: arireg
+
+    x-road-client-subsystem-instance: ee-dev
+    x-road-client-subsystem-member-class: GOV
+    x-road-client-subsystem-member-code: 70006317
+    x-road-client-subsystem-code: idp
+
+    x-road-server-read-timeout-in-milliseconds: 5000
+    x-road-server-connect-timeout-in-milliseconds: 5000
+
+    x-road-query-esindus-v2-allowed-types: SA,AS
+
+  tls:
+    trust-store-location: classpath:tls-truststore.jks
+    trust-store-password: changeit
+    trust-store-type: jks
+

@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.config;
 
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.sk.mid.MidClient;
 import ee.sk.mid.rest.MidLoggingFilter;
 import lombok.SneakyThrows;
@@ -34,15 +35,15 @@ public class MidConfiguration {
 
     @Bean
     @SneakyThrows
-    public MidClient midClient(KeyStore midTrustStore, AuthConfigurationProperties.MidAuthConfigurationProperties midAuthConfigurationProperties) {
+    public MidClient midClient(SSLContext tlsTrustStore, AuthConfigurationProperties.MidAuthConfigurationProperties midAuthConfigurationProperties) {
 
         return MidClient.newBuilder()
                 .withHostUrl(midAuthConfigurationProperties.getHostUrl())
                 .withRelyingPartyUUID(midAuthConfigurationProperties.getRelyingPartyUuid())
                 .withRelyingPartyName(midAuthConfigurationProperties.getRelyingPartyName())
-                .withTrustSslContext(SSLContext.getDefault())
+                .withTrustSslContext(tlsTrustStore)
                 .withNetworkConnectionConfig(clientConfig(midAuthConfigurationProperties))
-                .withLongPollingTimeoutSeconds(30)
+                .withLongPollingTimeoutSeconds(midAuthConfigurationProperties.getLongPollingTimeoutSeconds())
                 .build();
     }
 

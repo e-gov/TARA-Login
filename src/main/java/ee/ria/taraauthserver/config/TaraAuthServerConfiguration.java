@@ -5,20 +5,27 @@ import com.hazelcast.config.MapAttributeConfig;
 import com.hazelcast.config.MapIndexConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.utils.ThymeleafSupport;
 import lombok.extern.slf4j.Slf4j;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.session.hazelcast.HazelcastIndexedSessionRepository;
 import org.springframework.session.hazelcast.PrincipalNameExtractor;
 import org.springframework.session.hazelcast.config.annotation.web.http.EnableHazelcastHttpSession;
 import org.springframework.session.web.http.CookieSerializer;
 import org.springframework.session.web.http.DefaultCookieSerializer;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -26,24 +33,44 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 import org.springframework.web.servlet.i18n.SessionLocaleResolver;
 
+import javax.net.ssl.SSLContext;
 import java.time.Duration;
 import java.util.Locale;
+
+import static org.springframework.util.ResourceUtils.getFile;
 
 @Slf4j
 @Configuration
 @EnableHazelcastHttpSession
 @ComponentScan(basePackages = {"ee.ria.taraauthserver"})
 @EnableConfigurationProperties(AuthConfigurationProperties.class)
-public class EidasAuthConfiguration implements WebMvcConfigurer {
+public class TaraAuthServerConfiguration implements WebMvcConfigurer {
+
+    public static final String TARA_SESSION_COOKIE_NAME = "SESSION";
 
     @Autowired
     private AuthConfigurationProperties authConfigurationProperties;
 
     @Bean
-    public RestTemplate restTemplate(RestTemplateBuilder builder) {
-        return new RestTemplateBuilder()
+    public SSLContext trustContext() throws Exception {
+        return SSLContextBuilder
+                .create().setKeyStoreType(authConfigurationProperties.getTls().getTrustStoreType())
+                .loadTrustMaterial(
+                        getFile(authConfigurationProperties.getTls().getTruststoreLocation()),
+                        authConfigurationProperties.getTls().getTruststorePassword().toCharArray())
+                .build();
+    }
+
+    @Bean
+    public RestTemplate restTemplate(RestTemplateBuilder builder, SSLContext sslContext) throws Exception {
+        HttpClient client = HttpClients.custom()
+                .setSSLContext(sslContext)
+                .build();
+
+        return builder
                 .setConnectTimeout(Duration.ofSeconds(authConfigurationProperties.getHydraService().getRequestTimeoutInSeconds()))
                 .setReadTimeout(Duration.ofSeconds(authConfigurationProperties.getHydraService().getRequestTimeoutInSeconds()))
+                .requestFactory(() -> new HttpComponentsClientHttpRequestFactory(client))
                 .build();
     }
 
@@ -67,8 +94,15 @@ public class EidasAuthConfiguration implements WebMvcConfigurer {
         serializer.setSameSite("Strict");
         serializer.setUseHttpOnlyCookie(true);
         serializer.setUseBase64Encoding(false);
-        serializer.setCookieName("SESSION");
+        serializer.setCookieName(TARA_SESSION_COOKIE_NAME);
         return serializer;
+    }
+
+    @Bean
+    public LocalValidatorFactoryBean getValidator(MessageSource messageSource) {
+        LocalValidatorFactoryBean bean = new LocalValidatorFactoryBean();
+        bean.setValidationMessageSource(messageSource);
+        return bean;
     }
 
     @Bean

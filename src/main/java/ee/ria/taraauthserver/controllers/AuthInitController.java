@@ -1,13 +1,14 @@
 package ee.ria.taraauthserver.controllers;
 
 
-import ee.ria.taraauthserver.config.AuthConfigurationProperties;
-import ee.ria.taraauthserver.config.AuthenticationType;
-import ee.ria.taraauthserver.config.LevelOfAssurance;
-import ee.ria.taraauthserver.config.TaraScope;
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.BadRequestException;
-import ee.ria.taraauthserver.session.AuthSession;
-import ee.ria.taraauthserver.session.AuthState;
+import ee.ria.taraauthserver.session.TaraSession;
+import ee.ria.taraauthserver.session.TaraAuthenticationState;
+import ee.ria.taraauthserver.utils.RequestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
@@ -15,18 +16,14 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.web.servlet.LocaleResolver;
-import org.springframework.web.servlet.support.RequestContextUtils;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
@@ -35,6 +32,7 @@ import javax.validation.constraints.Size;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static ee.ria.taraauthserver.config.properties.Constants.TARA_SESSION;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
@@ -61,35 +59,35 @@ public class AuthInitController {
             @Pattern(regexp = "(et|en|ru)", message = "supported values are: 'et', 'en', 'ru'")
             String language) {
 
-        AuthSession authSession = initAuthSession(loginChallenge);
+        TaraSession taraSession = initAuthSession(loginChallenge);
 
-        setLocale(language, authSession);
+        setLocale(language, taraSession);
 
         return "loginView";
     }
 
-    private AuthSession initAuthSession(String loginChallenge) {
+    private TaraSession initAuthSession(String loginChallenge) {
         HttpSession httpSession = resetHttpSession();
 
-        AuthSession.LoginRequestInfo loginRequestInfo = fetchLoginRequestInfo(loginChallenge);
+        TaraSession.LoginRequestInfo loginRequestInfo = fetchLoginRequestInfo(loginChallenge);
 
-        AuthSession newAuthSession = getAuthSession(loginRequestInfo);
-        httpSession.setAttribute("session", newAuthSession);
-        log.info("created session: " + newAuthSession);
-        return newAuthSession;
+        TaraSession newTaraSession = getAuthSession(loginRequestInfo);
+        httpSession.setAttribute(TARA_SESSION, newTaraSession);
+        log.info("created session: " + newTaraSession);
+        return newTaraSession;
     }
 
-    private void setLocale(String language, AuthSession authSession) {
-        String locale = getUiLanguage(language, authSession);
-        setLocale(locale);
+    private void setLocale(String language, TaraSession taraSession) {
+        String locale = getUiLanguage(language, taraSession);
+        RequestUtils.setLocale(locale);
     }
 
-    private AuthSession getAuthSession(AuthSession.LoginRequestInfo loginRequestInfo) {
-        AuthSession newAuthSession = new AuthSession();
-        newAuthSession.setState(AuthState.INIT_AUTH_PROCESS);
-        newAuthSession.setLoginRequestInfo(loginRequestInfo);
-        newAuthSession.setAllowedAuthMethods(getAllowedAuthenticationMethodsList(loginRequestInfo));
-        return newAuthSession;
+    private TaraSession getAuthSession(TaraSession.LoginRequestInfo loginRequestInfo) {
+        TaraSession newTaraSession = new TaraSession();
+        newTaraSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+        newTaraSession.setLoginRequestInfo(loginRequestInfo);
+        newTaraSession.setAllowedAuthMethods(getAllowedAuthenticationMethodsList(loginRequestInfo));
+        return newTaraSession;
     }
 
     private HttpSession resetHttpSession() {
@@ -104,24 +102,24 @@ public class AuthInitController {
         return session;
     }
 
-    private String getUiLanguage(String language, AuthSession authSession) {
+    private String getUiLanguage(String language, TaraSession taraSession) {
         if (isNotEmpty(language)) {
             return language;
-        } else if (authSession.getLoginRequestInfo().getOidcContext().getUiLocales() != null && authSession.getLoginRequestInfo().getOidcContext().getUiLocales().get(0).matches("(et|en|ru)")) {
-            return authSession.getLoginRequestInfo().getOidcContext().getUiLocales().get(0);
+        } else if (taraSession.getLoginRequestInfo().getOidcContext().getUiLocales() != null && taraSession.getLoginRequestInfo().getOidcContext().getUiLocales().get(0).matches("(et|en|ru)")) {
+            return taraSession.getLoginRequestInfo().getOidcContext().getUiLocales().get(0);
         } else {
             return taraProperties.getDefaultLocale();
         }
     }
 
-    private AuthSession.LoginRequestInfo fetchLoginRequestInfo(@RequestParam(name = "login_challenge") @Size(max = 50) @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed") String loginChallenge) {
+    private TaraSession.LoginRequestInfo fetchLoginRequestInfo(@RequestParam(name = "login_challenge") @Size(max = 50) @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed") String loginChallenge) {
         String url = taraProperties.getHydraService().getLoginUrl() + "?login_challenge=" + loginChallenge;
         return doRequest(url);
     }
 
-    private LevelOfAssurance getRequestedAcr(AuthSession.LoginRequestInfo loginRequestInfo) {
+    private LevelOfAssurance getRequestedAcr(TaraSession.LoginRequestInfo loginRequestInfo) {
         List<String> requestedAcr = loginRequestInfo.getOidcContext().getAcrValues();
-        if(requestedAcr == null || requestedAcr.isEmpty())
+        if (requestedAcr == null || requestedAcr.isEmpty())
             return null;
         LevelOfAssurance acr = LevelOfAssurance.findByAcrName(requestedAcr.get(0));
         Assert.notNull(acr, "Unsupported acr value requested by client: '" + requestedAcr.get(0) + "'");
@@ -142,7 +140,7 @@ public class AuthInitController {
                 .collect(Collectors.toList()) : new ArrayList<>();
     }
 
-    private List<AuthenticationType> getAllowedAuthenticationMethodsList(AuthSession.LoginRequestInfo loginRequestInfo) {
+    private List<AuthenticationType> getAllowedAuthenticationMethodsList(TaraSession.LoginRequestInfo loginRequestInfo) {
         LevelOfAssurance requestedAcr = getRequestedAcr(loginRequestInfo);
         List<TaraScope> requestedScopes = parseRequestedScopes(loginRequestInfo.getRequestedScopes());
         return getAllowedAuthenticationTypes(requestedScopes, requestedAcr);
@@ -194,9 +192,9 @@ public class AuthInitController {
         return taraProperties.getAuthMethods().get(method).isEnabled();
     }
 
-    private AuthSession.LoginRequestInfo doRequest(String url) {
+    private TaraSession.LoginRequestInfo doRequest(String url) {
         long startTime = System.currentTimeMillis();
-        ResponseEntity<AuthSession.LoginRequestInfo> response = hydraService.exchange(url, HttpMethod.GET, null, AuthSession.LoginRequestInfo.class);
+        ResponseEntity<TaraSession.LoginRequestInfo> response = hydraService.exchange(url, HttpMethod.GET, null, TaraSession.LoginRequestInfo.class);
         long duration = System.currentTimeMillis() - startTime;
         log.info("Response Code: " + response.getStatusCodeValue());
         log.info("Response Body: " + response.getBody());
@@ -206,8 +204,8 @@ public class AuthInitController {
         return response.getBody();
     }
 
-    private void validateResponse(AuthSession.LoginRequestInfo response) {
-        Set<ConstraintViolation<AuthSession.LoginRequestInfo>> constraintViolations = validator.validate(response);
+    private void validateResponse(TaraSession.LoginRequestInfo response) {
+        Set<ConstraintViolation<TaraSession.LoginRequestInfo>> constraintViolations = validator.validate(response);
         if (!constraintViolations.isEmpty())
             throw new IllegalStateException("Invalid hydra response: " + getConstraintViolationsAsString(constraintViolations));
     }
@@ -218,14 +216,4 @@ public class AuthInitController {
                 .collect(Collectors.joining(", "));
     }
 
-    private void setLocale(String requestedLocale) {
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-        HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
-
-        log.info("requested locale is: " + requestedLocale);
-        Locale locale = StringUtils.parseLocaleString(requestedLocale);
-        LocaleResolver localeResolver = RequestContextUtils.getLocaleResolver(request);
-        Assert.notNull(localeResolver, "No LocaleResolver found in request: not in a DispatcherServlet request?");
-        localeResolver.setLocale(request, response, locale);
-    }
 }

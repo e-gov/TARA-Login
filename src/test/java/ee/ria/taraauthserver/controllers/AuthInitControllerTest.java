@@ -2,11 +2,11 @@ package ee.ria.taraauthserver.controllers;
 
 import com.github.tomakehurst.wiremock.stubbing.StubMapping;
 import ee.ria.taraauthserver.BaseTest;
-import ee.ria.taraauthserver.config.AuthConfigurationProperties;
-import ee.ria.taraauthserver.config.AuthenticationType;
-import ee.ria.taraauthserver.config.LevelOfAssurance;
-import ee.ria.taraauthserver.session.AuthSession;
-import ee.ria.taraauthserver.session.AuthState;
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.session.TaraSession;
+import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import javax.servlet.http.HttpSession;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static ee.ria.taraauthserver.config.properties.Constants.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.*;
@@ -107,7 +108,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Duplicate request parameter 'login_challenge'"))
+                .body("message", equalTo("Multiple request parameters with the same name not allowed"))
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
     }
@@ -151,6 +152,7 @@ class AuthInitControllerTest extends BaseTest {
     @Test
     void authInit_Ok_session_status_is_correct() throws Exception {
 
+
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -160,12 +162,12 @@ class AuthInitControllerTest extends BaseTest {
         HttpSession result = mock.perform(MockMvcRequestBuilders.get("/auth/init").param("login_challenge", TEST_LOGIN_CHALLENGE))
                 .andDo(print())
                 .andExpect(status().is(200))
-                .andExpect(request().sessionAttribute("session", is(notNullValue())))
+                .andExpect(request().sessionAttribute(TARA_SESSION, is(notNullValue())))
                 .andReturn().getRequest().getSession();
 
-        AuthSession authSession = (AuthSession) result.getAttribute("session");
+        TaraSession taraSession = (TaraSession) result.getAttribute(TARA_SESSION);
 
-        assertEquals(AuthState.INIT_AUTH_PROCESS, authSession.getState());
+        assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
     }
 
     @Test
@@ -189,7 +191,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .body("message", equalTo("Something went wrong internally. Please consult server logs for further details."));
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
     }
 
     @Test
@@ -207,7 +209,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .body("message", equalTo("Something went wrong internally. Please consult server logs for further details."));
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
     }
 
     @Test
@@ -463,7 +465,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .body("message", equalTo("Something went wrong internally. Please consult server logs for further details."));
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
 
         assertErrorIsLogged("Server encountered an unexpected error: Unsupported acr value requested by client: 'wrongvalue'");
     }
@@ -483,7 +485,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .body("message", equalTo("Something went wrong internally. Please consult server logs for further details."));
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
     }
 
     @Test
@@ -501,7 +503,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .body("message", equalTo("Something went wrong internally. Please consult server logs for further details."));
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
     }
 
     @Test
@@ -519,7 +521,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .body("message", equalTo("Something went wrong internally. Please consult server logs for further details."));
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
 
     }
 }
