@@ -1,11 +1,10 @@
 package ee.ria.taraauthserver.utils;
 
-import ee.ria.taraauthserver.config.AuthConfigurationProperties;
-import ee.ria.taraauthserver.config.AuthConfigurationProperties.Ocsp;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -16,13 +15,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.*;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(value = "tara.auth-methods.id-card.enabled", matchIfMissing = true)
 public class OCSPConfigurationResolver {
 
     @Autowired
-    private final AuthConfigurationProperties.IdCardAuthConfigurationProperties configurationProperties;
+    private final IdCardAuthConfigurationProperties configurationProperties;
 
     public List<Ocsp> resolve(X509Certificate userCert) {
         log.debug("Determining the OCSP configuration");
@@ -38,7 +40,7 @@ public class OCSPConfigurationResolver {
 
         if (CollectionUtils.isNotEmpty(configurationProperties.getFallbackOcsp())) {
             log.info("SHOULD ADD FALLBACK OCSP");
-            List<AuthConfigurationProperties.Ocsp> secondaryConfs = configurationProperties.getFallbackOcsp().stream().filter(
+            List<Ocsp> secondaryConfs = configurationProperties.getFallbackOcsp().stream().filter(
                     e -> e.getIssuerCn().stream().anyMatch(b -> b.equals(issuerCN))
             ).collect(Collectors.toList());
             log.debug("Secondary ocsp configurations to verify cert issued by '{}': {}", issuerCN, secondaryConfs);

@@ -214,14 +214,11 @@ class AuthInitControllerTest extends BaseTest {
 
     @Test
     void authInit_Ok_UiLocales_missing() throws Exception {
-        StubMapping test = wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response-ok_ui_locales-not-set.json")));
-
-        log.info("is running? " + wireMockServer.isRunning());
-        log.info("is running? " + wireMockServer.getSingleStubMapping(test.getUuid()).toString());
 
         mock.perform(MockMvcRequestBuilders.get("/auth/init").param("login_challenge", TEST_LOGIN_CHALLENGE))
                 .andDo(print())

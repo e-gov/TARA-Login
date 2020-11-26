@@ -1,11 +1,12 @@
 package ee.ria.taraauthserver.controllers;
 
 import ee.ria.taraauthserver.BaseTest;
-import ee.ria.taraauthserver.session.TaraSession;
-import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.MockSessionUtils;
+import ee.ria.taraauthserver.session.TaraAuthenticationState;
+import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -13,17 +14,15 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static ee.ria.taraauthserver.session.MockSessionUtils.*;
 import static ee.ria.taraauthserver.config.properties.Constants.TARA_SESSION;
+import static ee.ria.taraauthserver.session.MockSessionUtils.*;
 import static io.restassured.RestAssured.given;
-import static java.lang.Integer.parseInt;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 // Using MockMvc instead of RestAssuredMockMvc because of session mocking bug in RestAssured (see https://github.com/rest-assured/rest-assured/issues/780)
 
@@ -111,6 +110,7 @@ public class AuthAcceptControllerTest extends BaseTest {
         wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
+                        .withHeader(HttpHeaders.CONNECTION, "close")
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
 

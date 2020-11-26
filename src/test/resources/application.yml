@@ -11,7 +11,6 @@ tara:
     id-card:
       enabled: true
       level-of-assurance: HIGH
-
       ocsp-enabled: true
       truststore: file:src/test/resources/idcard-truststore-test.p12
       truststore-type: PKCS12
@@ -24,16 +23,14 @@ tara:
           responder-certificate-cn: TEST_of_ESTEID-SK_2011.crt
 
         - issuer-cn: TEST of ESTEID-SK 2015
-          url: http://aia.sk.ee/esteid2015
+          url: https://localhost:9878/esteid2015
 
         - issuer-cn: TEST of ESTEID-SK2018
-          url: http://aia.sk.ee/esteid2018
+          url: http://aia.demo.sk.ee/esteid2018
 
       fallback-ocsp:
-        - url: http://demo.sk.ee/ocsp
+        - url: https://localhost:9879/ocsp
           issuer-cn: TEST of ESTEID-SK 2011, TEST of ESTEID-SK 2015, TEST of ESTEID2018
-          responder-certificate-cn: TEST of SK OCSP RESPONDER 2020
-
     mobile-id:
       enabled: true
       level-of-assurance: HIGH

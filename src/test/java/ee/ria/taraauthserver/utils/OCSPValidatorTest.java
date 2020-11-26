@@ -8,6 +8,7 @@ import com.github.tomakehurst.wiremock.extension.Parameters;
 import com.github.tomakehurst.wiremock.extension.ResponseTransformer;
 import com.github.tomakehurst.wiremock.http.Request;
 import com.github.tomakehurst.wiremock.http.Response;
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.error.OCSPServiceNotAvailableException;
 import ee.ria.taraauthserver.error.OCSPValidationException;
 import lombok.Builder;
@@ -56,7 +57,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static ee.ria.taraauthserver.config.AuthConfigurationProperties.*;
+import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.*;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.*;
 
@@ -955,6 +956,7 @@ public class OCSPValidatorTest {
 
         @Override
         public Response transform(Request request, Response response, FileSource fileSource, Parameters parameters) {
+            log.info("TRANSFORMING RESPONSE!");
             if (parameters != null && parameters.containsKey("ignore")) return response;
             if (response.getStatus() != 200) return response;
             byte[] responseBytes;
@@ -979,7 +981,6 @@ public class OCSPValidatorTest {
                         parameters.getString("signatureAlgorithm")
                 );
                 OCSPResp ocspResp = new OCSPRespBuilder().build(this.responseStatus, basicOCSPResp);
-
                 responseBytes = ocspResp.getEncoded();
             } catch (Exception e) {
                 throw new RuntimeException(e);

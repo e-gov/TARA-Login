@@ -7,10 +7,12 @@ import ch.qos.logback.core.read.ListAppender;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import ee.ria.taraauthserver.utils.OCSPValidatorTest;
 import io.restassured.RestAssured;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
@@ -53,10 +55,9 @@ public abstract class BaseTest {
 
     private static ListAppender<ILoggingEvent> mockAppender;
 
-    @Test
-    @Order(1)
-    void contextLoads() {
-        assertNotNull(webApplicationContext, "Should not be null!");
+    static {
+        System.setProperty("http.keepAlive", "false");
+        System.setProperty("http.maxConnections", "1");
     }
 
     @BeforeAll
@@ -131,7 +132,6 @@ public abstract class BaseTest {
         RestAssured.filters(new RequestLoggingFilter(), new ResponseLoggingFilter());
         config = config().redirect(redirectConfig().followRedirects(false));
     }
-
     private static void configureWiremockServer() {
         wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig()
                 .httpDisabled(true)

@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import javax.servlet.http.HttpSession;
-import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotAllowedException;
@@ -42,8 +42,6 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
-import java.util.Arrays;
-import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
@@ -113,6 +111,8 @@ public class AuthMidController {
                         return setSessionStateFailed(session, e.getMessage(), MID_PHONE_ABSENT);
                     } catch (MidDeliveryException e) {
                         return setSessionStateFailed(session, e.getMessage(), MID_DELIVERY_ERROR);
+                    } catch (Exception e) {
+                        return setSessionStateFailed(session, e.getMessage(), MID_INTERNAL_ERROR);
                     }
                 }
         ).thenApply(

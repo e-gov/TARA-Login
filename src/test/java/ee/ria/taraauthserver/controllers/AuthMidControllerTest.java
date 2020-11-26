@@ -25,7 +25,6 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERS
 import static ee.ria.taraauthserver.config.properties.Constants.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.springframework.test.annotation.DirtiesContext.ClassMode.BEFORE_CLASS;
 
 @Slf4j
 class AuthMidControllerTest extends BaseTest {
@@ -37,6 +36,11 @@ class AuthMidControllerTest extends BaseTest {
 
     @Autowired
     private SessionRepository sessionRepository;
+
+    static {
+        System.setProperty("http.keepAlive", "false");
+        System.setProperty("http.maxConnections", "1");
+    }
 
     @Test
     void midAuthInit_session_missing() {
@@ -56,7 +60,6 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void nationalIdNumber_missing() {
 
         given()

@@ -1,7 +1,5 @@
 package ee.ria.taraauthserver.utils;
 
-import ee.ria.taraauthserver.config.AuthConfigurationProperties;
-import ee.ria.taraauthserver.config.AuthConfigurationProperties.Ocsp;
 import ee.ria.taraauthserver.error.OCSPServiceNotAvailableException;
 import ee.ria.taraauthserver.error.OCSPValidationException;
 import lombok.RequiredArgsConstructor;
@@ -18,15 +16,20 @@ import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.bouncycastle.cert.ocsp.*;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.operator.ContentVerifier;
 import org.bouncycastle.operator.ContentVerifierProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
+import org.springframework.web.client.RestTemplate;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
 import java.io.*;
 import java.math.BigInteger;
 import java.net.*;
@@ -36,10 +39,18 @@ import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(value = "tara.auth-methods.id-card.enabled", matchIfMissing = true)
 public class OCSPValidator {
+
+    @Autowired
+    RestTemplate restTemplate;
+    @Autowired
+    SSLContext sslContext;
 
     Consumer<List<Integer>> methodRef = Collections::sort;
 
@@ -63,7 +74,7 @@ public class OCSPValidator {
 
         int count = 0;
         int maxTries = ocspConfiguration.size();
-        log.info("MAX TRIES: " + maxTries);
+
         while (true) {
             Ocsp ocspConf = ocspConfiguration.get(count);
             try {
@@ -82,7 +93,8 @@ public class OCSPValidator {
         }
     }
 
-    protected void checkCert(X509Certificate userCert, AuthConfigurationProperties.Ocsp ocspConf) {
+    protected void checkCert(X509Certificate userCert, Ocsp ocspConf) {
+
         X509Certificate issuerCert = findIssuerCertificate(userCert);
         validateCertSignedBy(userCert, issuerCert);
 
@@ -90,11 +102,7 @@ public class OCSPValidator {
             OCSPReq request = buildOCSPReq(userCert, issuerCert, ocspConf);
             OCSPResp response = sendOCSPReq(request, ocspConf);
 
-            log.info("RESPONSE TEST: " + response.getStatus());
-            log.info("RESPONSE TEST2: " + response.getResponseObject());
-
             validateOCSPResponse(response);
-
 
             BasicOCSPResp ocspResponse = getResponse(response, ocspConf);
             validateResponseNonce(request, ocspResponse, ocspConf);
@@ -166,7 +174,7 @@ public class OCSPValidator {
     private OCSPResp sendOCSPReq(OCSPReq request, Ocsp conf) throws IOException {
         byte[] bytes = request.getEncoded();
 
-        HttpURLConnection connection = (HttpURLConnection) new URL(conf.getUrl()).openConnection();
+        HttpURLConnection connection = (HttpURLConnection) getHttpURLConnection(new URL(conf.getUrl()));
         connection.setRequestProperty("Content-Type", "application/ocsp-request");
         connection.setRequestProperty("Accept", "application/ocsp-response");
         connection.setConnectTimeout(conf.getConnectTimeoutInMilliseconds());
@@ -195,6 +203,19 @@ public class OCSPValidator {
             throw new OCSPServiceNotAvailableException(String.format("Service returned HTTP status code %d",
                     connection.getResponseCode()));
         }
+    }
+
+    private URLConnection getHttpURLConnection(URL obj) throws IOException {
+        if (obj.getProtocol().equals("https"))
+            return getHttpsURLConnection(obj);
+        else
+            return obj.openConnection();
+    }
+
+    private HttpsURLConnection getHttpsURLConnection(URL obj) throws IOException {
+        HttpsURLConnection httpsURLConnection = (HttpsURLConnection) obj.openConnection();
+        httpsURLConnection.setSSLSocketFactory(sslContext.getSocketFactory());
+        return httpsURLConnection;
     }
 
     private SingleResp getSingleResp(BasicOCSPResp basicOCSPResponse, CertificateID certificateID) {
@@ -304,6 +325,8 @@ public class OCSPValidator {
         ContentVerifierProvider verifierProvider = new JcaContentVerifierProviderBuilder()
                 .setProvider(BouncyCastleProvider.PROVIDER_NAME)
                 .build(responseSignCertificate.getPublicKey());
+
+        response.isSignatureValid(verifierProvider);
 
         if (!response.isSignatureValid(verifierProvider))
             throw new IllegalStateException("OCSP response signature is not valid");

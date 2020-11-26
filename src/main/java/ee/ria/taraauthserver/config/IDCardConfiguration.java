@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.config;
 
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.utils.X509Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,13 +19,15 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.*;
+
 @ConditionalOnProperty(value = "id-card.enabled", matchIfMissing = true)
 @Configuration
 @Slf4j
 public class IDCardConfiguration {
 
     @Autowired
-    private AuthConfigurationProperties.IdCardAuthConfigurationProperties configurationProvider;
+    private IdCardAuthConfigurationProperties configurationProvider;
 
     @Bean
     KeyStore idcardKeystore(ResourceLoader resourceLoader) {

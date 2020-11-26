@@ -1,7 +1,8 @@
 package ee.ria.taraauthserver.utils;
 
 import ee.ria.taraauthserver.BaseTest;
-import ee.ria.taraauthserver.config.EidasAuthConfiguration;
+import ee.ria.taraauthserver.config.TaraAuthServerConfiguration;
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.ConfigFileApplicationContextInitializer;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -19,17 +21,18 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
 
-import static ee.ria.taraauthserver.config.AuthConfigurationProperties.*;
-import static ee.ria.taraauthserver.config.AuthConfigurationProperties.Ocsp.*;
+import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.*;
+import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp.*;
 import static org.junit.Assert.*;
 
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
-        classes = EidasAuthConfiguration.class,
+        classes = {TestIDCardConfiguration.class, TaraAuthServerConfiguration.class},
         initializers = ConfigFileApplicationContextInitializer.class
 )
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@ActiveProfiles({"mock_configuration"})
 public class OCSPConfigurationResolverTest extends BaseTest {
 
     @Rule

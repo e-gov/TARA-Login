@@ -95,9 +95,9 @@ public class AuthConfigurationProperties {
 
         int longPollingTimeoutSeconds = 30;
 
-        int connectionTimeoutMilliseconds = 5000;
+        int connectionTimeoutMilliseconds = 10000;
 
-        int readTimeoutMilliseconds = 5000;
+        int readTimeoutMilliseconds = 10000;
     }
 
     @Data
@@ -124,6 +124,7 @@ public class AuthConfigurationProperties {
     @Data
     @NoArgsConstructor
     @ToString
+    @Component
     public static class Ocsp {
         public static final long DEFAULT_ACCEPTED_CLOCK_SKEW_IN_SECONDS = 2L;
         public static final long DEFAULT_RESPONSE_LIFETIME_IN_SECONDS = 900L;

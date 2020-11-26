@@ -22,6 +22,7 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import javax.servlet.http.HttpSession;
 import java.net.URL;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -61,11 +62,6 @@ public class MockAuthController {
     @GetMapping(value = "/heartbeat", produces = MediaType.TEXT_HTML_VALUE)
     public String heartbeat() {
         return "it just works";
-    }
-
-    @GetMapping("/auth/id")
-    public String mockAuthId() {
-        return "{\"ok\":true}";
     }
 
     // TODO invalidate session
