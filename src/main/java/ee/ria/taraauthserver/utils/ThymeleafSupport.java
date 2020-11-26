@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.util.Assert;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.web.util.UriComponents;
 
 import java.util.List;
 import java.util.Locale;
@@ -55,8 +56,9 @@ public class ThymeleafSupport {
             return defaultServicename;
     }
 
-    public String getLocaleUrl(String locale) {
-        return ServletUriComponentsBuilder.fromCurrentRequest().replaceQueryParam("lang", locale).toUriString();
+    public String getLocaleUrl(String locale) { // TODO test this part
+        UriComponents uriComponents = ServletUriComponentsBuilder.fromCurrentRequest().replaceQueryParam("lang", locale).build();
+        return uriComponents.getPath() + "?" + uriComponents.getQuery();
     }
 
     public boolean isAuthMethodAllowed(AuthenticationType method) {
