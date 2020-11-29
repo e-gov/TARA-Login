@@ -1,7 +1,7 @@
 package ee.ria.taraauthserver.config;
 
-import ee.ria.taraauthserver.controllers.LegalpersonController;
-import ee.ria.taraauthserver.xroad.BusinessRegistryService;
+import ee.ria.taraauthserver.authentication.legalperson.LegalpersonController;
+import ee.ria.taraauthserver.authentication.legalperson.xroad.BusinessRegistryService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;

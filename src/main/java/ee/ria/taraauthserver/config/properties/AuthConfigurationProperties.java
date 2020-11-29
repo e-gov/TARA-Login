@@ -95,9 +95,9 @@ public class AuthConfigurationProperties {
 
         int longPollingTimeoutSeconds = 30;
 
-        int connectionTimeoutMilliseconds = 10000;
+        int connectionTimeoutMilliseconds = 5000;
 
-        int readTimeoutMilliseconds = 10000;
+        int readTimeoutMilliseconds = 30000;
     }
 
     @Data
@@ -105,7 +105,7 @@ public class AuthConfigurationProperties {
     @Component
     @Validated
     @ConfigurationProperties(prefix = "tara.auth-methods.id-card")
-    public static class IdCardAuthConfigurationProperties {
+    public static class IdCardAuthConfigurationProperties extends AuthMethodProperties {
 
         @NotNull
         private String truststore;

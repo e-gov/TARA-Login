@@ -8,9 +8,10 @@ import com.github.tomakehurst.wiremock.extension.Parameters;
 import com.github.tomakehurst.wiremock.extension.ResponseTransformer;
 import com.github.tomakehurst.wiremock.http.Request;
 import com.github.tomakehurst.wiremock.http.Response;
-import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
-import ee.ria.taraauthserver.error.OCSPServiceNotAvailableException;
-import ee.ria.taraauthserver.error.OCSPValidationException;
+import ee.ria.taraauthserver.authentication.idcard.OCSPConfigurationResolver;
+import ee.ria.taraauthserver.authentication.idcard.OCSPValidator;
+import ee.ria.taraauthserver.error.Exceptions.OCSPServiceNotAvailableException;
+import ee.ria.taraauthserver.error.Exceptions.OCSPValidationException;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Setter;
@@ -698,7 +699,7 @@ public class OCSPValidatorTest {
                         ocspResponderCert
                 ).build());
 
-        X509Certificate userCert = generateUserCertificate("SERIALNUMBER=PNOEE-38001085718, GIVENNAME=JAAK-KRISTJAN, SURNAME=JÕEORG, CN=\"JÕEORG,JAAK-KRISTJAN,38001085718\", C=EE", responderKeys, "CN=MOCK CA").getCertificate();
+        X509Certificate userCert = generateUserCertificate("SERIALNUMBER=PNOEE-38001085718, GIVENNAME=JAAK-KRISTJAN, SURNAME=JÕEORG, CN=\"JÕEORG,JAAK-KRISTJAN,38001085718\", C=EE", responderKeys, "CN=MOCK CA", null, null).getCertificate();
 
         new OCSPValidator(trustedCertificates, ocspConfigurationResolver).checkCert(userCert);
 
@@ -734,7 +735,7 @@ public class OCSPValidatorTest {
                         ocspResponderCert
                 ).build());
 
-        X509Certificate userCert = generateUserCertificate("SERIALNUMBER=PNOEE-38001085718, GIVENNAME=JAAK-KRISTJAN, SURNAME=JÕEORG, CN=\"JÕEORG,JAAK-KRISTJAN,38001085718\", C=EE", responderKeys, "CN=MOCK CA").getCertificate();
+        X509Certificate userCert = generateUserCertificate("SERIALNUMBER=PNOEE-38001085718, GIVENNAME=JAAK-KRISTJAN, SURNAME=JÕEORG, CN=\"JÕEORG,JAAK-KRISTJAN,38001085718\", C=EE", responderKeys, "CN=MOCK CA", null, null).getCertificate();
 
         new OCSPValidator(trustedCertificates, ocspConfigurationResolver).checkCert(userCert);
 
@@ -1047,7 +1048,12 @@ public class OCSPValidatorTest {
         return new X500PrivateCredential(cert, certKeyPair.getPrivate());
     }
 
-    public static X500PrivateCredential generateUserCertificate(String certDn, KeyPair caKeyPair, String issuerDn) throws NoSuchAlgorithmException, CertificateException, OperatorCreationException, CertIOException {
+    public static X500PrivateCredential generateUserCertificate(String certDn, KeyPair caKeyPair, String issuerDn, Date startDate, Date endDate) throws NoSuchAlgorithmException, CertificateException, OperatorCreationException, CertIOException {
+        if (startDate == null)
+            startDate = Date.from(Instant.now().minus(Duration.ofHours(1)));
+        if (endDate == null)
+            endDate = Date.from(Instant.now().plus(Duration.ofHours(1)));
+
         X500Name issuerName = new X500Name(issuerDn);
         X500Name subjectName = new X500Name(certDn);
         BigInteger serial = BigInteger.valueOf(Math.abs(new SecureRandom().nextInt()));
@@ -1056,7 +1062,7 @@ public class OCSPValidatorTest {
         rsa.initialize(2048);
         KeyPair kp = rsa.generateKeyPair();
 
-        X509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(issuerName, serial, Date.from(Instant.now().minus(Duration.ofHours(1))), Date.from(Instant.now().plus(Duration.ofHours(1))), subjectName, kp.getPublic());
+        X509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(issuerName, serial, startDate, endDate, subjectName, kp.getPublic());
 
         AccessDescription caIssuers = new AccessDescription(AccessDescription.id_ad_caIssuers, new GeneralName(GeneralName.uniformResourceIdentifier, new DERIA5String("http://mock.ocsp.url")));
         ASN1EncodableVector aiaAsn = new ASN1EncodableVector();

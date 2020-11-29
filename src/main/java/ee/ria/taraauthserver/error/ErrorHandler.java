@@ -1,5 +1,8 @@
 package ee.ria.taraauthserver.error;
 
+import ee.ria.taraauthserver.error.Exceptions.BadRequestException;
+import ee.ria.taraauthserver.error.Exceptions.NotFoundException;
+import ee.ria.taraauthserver.error.Exceptions.ServiceNotAvailableException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MissingServletRequestParameterException;

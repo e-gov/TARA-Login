@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.utils;
 
+import ee.ria.taraauthserver.authentication.idcard.OCSPValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;

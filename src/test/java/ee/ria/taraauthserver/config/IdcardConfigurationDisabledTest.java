@@ -1,9 +1,8 @@
 package ee.ria.taraauthserver.config;
 
-import ee.ria.taraauthserver.controllers.AuthMidController;
-import ee.ria.taraauthserver.controllers.IdCardController;
-import ee.ria.taraauthserver.utils.OCSPConfigurationResolver;
-import ee.ria.taraauthserver.utils.OCSPValidator;
+import ee.ria.taraauthserver.authentication.idcard.IdCardController;
+import ee.ria.taraauthserver.authentication.idcard.OCSPConfigurationResolver;
+import ee.ria.taraauthserver.authentication.idcard.OCSPValidator;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;

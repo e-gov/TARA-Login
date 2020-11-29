@@ -1,8 +1,8 @@
 package ee.ria.taraauthserver.utils;
 
 import ee.ria.taraauthserver.BaseTest;
+import ee.ria.taraauthserver.authentication.idcard.OCSPConfigurationResolver;
 import ee.ria.taraauthserver.config.TaraAuthServerConfiguration;
-import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;

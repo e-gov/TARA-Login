@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.error;
 
+import ee.ria.taraauthserver.error.Exceptions.TaraException;
 import ee.ria.taraauthserver.utils.RequestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;

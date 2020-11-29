@@ -123,7 +123,7 @@ public abstract class BaseTest {
                         || e.getLoggerName().equals(loggerClass.getCanonicalName())))
                 .map(ILoggingEvent::getFormattedMessage)
                 .collect(toList());
-        
+
         assertThat("Expected log messages not found in output.\n\tExpected log messages: " + List.of(messagesInRelativeOrder) + ",\n\tActual log messages: " + events, events, containsInRelativeOrder(stream(messagesInRelativeOrder)
                 .map(CoreMatchers::startsWith).toArray(Matcher[]::new)));
     }
@@ -132,12 +132,25 @@ public abstract class BaseTest {
         RestAssured.filters(new RequestLoggingFilter(), new ResponseLoggingFilter());
         config = config().redirect(redirectConfig().followRedirects(false));
     }
-    private static void configureWiremockServer() {
+
+    public static void configureWiremockServer() {
         wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig()
                 .httpDisabled(true)
                 .httpsPort(9877)
                 .keystorePath("src/test/resources/tls-keystore.jks")
                 .keystorePassword("changeit")
+                .notifier(new ConsoleNotifier(true))
+        );
+        wireMockServer.start();
+    }
+
+    public static void configureWiremockServer(OCSPValidatorTest.OcspResponseTransformer transformer) {
+        wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig()
+                .httpDisabled(true)
+                .httpsPort(9877)
+                .keystorePath("src/test/resources/tls-keystore.jks")
+                .keystorePassword("changeit")
+                .extensions(transformer)
                 .notifier(new ConsoleNotifier(true))
         );
         wireMockServer.start();
