@@ -171,3 +171,49 @@ Example json:
 ````
 {"status":"PENDING"}
 ````
+
+### 2.5 /auth/id
+
+#### Request:
+
+````
+GET /auth/id
+````
+
+| Cookie        | Mandatory | Description |
+| :---------------- | :---------- | :----------------|
+| `SESSION` | Yes | id of an existing session |
+
+#### Response:
+
+##### Response Code: 200
+
+##### Headers
+
+````
+Set-Cookie: SESSION={sessionId}; Path=/; HttpOnly; SameSite=Strict
+Content-Type: application/json
+````
+
+##### Body
+
+Example json:
+````
+{"status":"COMPLETED"}
+````
+
+##### Response Code: 502, 400
+
+##### Headers
+
+````
+Set-Cookie: SESSION={sessionId}; Path=/; HttpOnly; SameSite=Strict
+Content-Type: application/json
+````
+
+##### Body
+
+Example json:
+````
+{"status":"ERROR", "errorMessage":"Teie sertifikaadid ei kehti."}
+````
