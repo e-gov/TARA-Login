@@ -45,6 +45,8 @@ public class AuthConfigurationProperties {
         String acceptLoginUrl;
         @NotBlank
         String acceptConsentUrl;
+        @NotBlank
+        String healthUrl;
         @NotNull
         int requestTimeoutInSeconds = 3;
     }
@@ -147,6 +149,14 @@ public class AuthConfigurationProperties {
         private int readTimeoutInMilliseconds = DEFAULT_READ_TIMEOUT_IN_MILLISECONDS;
 
         private String responderCertificateCn;
+    }
+
+    @Data
+    @ToString
+    @Component
+    public static class HealthConfigurationProperties {
+
+        private int expirationWarningPeriodInDays = 30;
     }
 }
 

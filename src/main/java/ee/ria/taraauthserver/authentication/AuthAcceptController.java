@@ -39,7 +39,7 @@ class AuthAcceptController {
     private RestTemplate hydraService;
 
     @GetMapping("/auth/accept")
-    public RedirectView authAccept(HttpSession session) {
+    public RedirectView authAccept() {
 
         TaraSession taraSession = SessionUtils.getAuthSession();
 

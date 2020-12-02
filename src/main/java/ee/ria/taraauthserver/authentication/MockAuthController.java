@@ -59,11 +59,6 @@ public class MockAuthController {
         return new RedirectView("/auth/accept");
     }
 
-    @GetMapping(value = "/heartbeat", produces = MediaType.TEXT_HTML_VALUE)
-    public String heartbeat() {
-        return "it just works";
-    }
-
     // TODO invalidate session
     @GetMapping(value = "/consent", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> mockConsent(@RequestParam String consent_challenge, HttpSession session) {
