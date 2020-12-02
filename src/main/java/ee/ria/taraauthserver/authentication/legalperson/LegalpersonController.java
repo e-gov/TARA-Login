@@ -1,7 +1,7 @@
 package ee.ria.taraauthserver.authentication.legalperson;
 
-import ee.ria.taraauthserver.error.Exceptions.BadRequestException;
-import ee.ria.taraauthserver.error.Exceptions.NotFoundException;
+import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import ee.ria.taraauthserver.error.exceptions.NotFoundException;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.SessionUtils;
 import ee.ria.taraauthserver.authentication.legalperson.xroad.BusinessRegistryService;

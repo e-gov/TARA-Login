@@ -1,15 +1,15 @@
-package ee.ria.taraauthserver.authentication;
+package ee.ria.taraauthserver.authentication.mobileid;
 
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.error.ErrorTranslationCodes;
-import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
+import ee.ria.taraauthserver.session.TaraSession;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
-import static ee.ria.taraauthserver.config.properties.Constants.TARA_SESSION;
+import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -29,17 +29,19 @@ class AuthMidPollControllerTest extends BaseTest {
                 .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged(String.format("User exception: The attribute '%s' was not found in session", TARA_SESSION));
+        assertErrorIsLogged("User exception: Session was not found");
     }
 
     @Test
     void midAuth_session_status_incorrect() {
         Session session = sessionRepository.createSession();
 
-        TaraSession testSession = new TaraSession();
-        testSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
-
-        session.setAttribute(TARA_SESSION, testSession);
+        TaraSession taraSession = new TaraSession();
+        taraSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+        TaraSession.MidAuthenticationResult authenticationResult = new TaraSession.MidAuthenticationResult();
+        authenticationResult.setMidSessionId("testSessionId");
+        taraSession.setAuthenticationResult(authenticationResult);
+        session.setAttribute(TARA_SESSION, taraSession);
         sessionRepository.save(session);
 
         given()
@@ -52,17 +54,18 @@ class AuthMidPollControllerTest extends BaseTest {
                 .body("message", equalTo("Ebakorrektne päring."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: Session not in expected status. Expected one of: [NATURAL_PERSON_AUTHENTICATION_COMPLETED, POLL_MID_STATUS], but was INIT_AUTH_PROCESS");
+        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: '[NATURAL_PERSON_AUTHENTICATION_COMPLETED, POLL_MID_STATUS]'");
     }
 
     @Test
     void midAuth_session_status_poll_mid_status() {
         Session session = sessionRepository.createSession();
-
-        TaraSession testSession = new TaraSession();
-        testSession.setState(TaraAuthenticationState.POLL_MID_STATUS);
-
-        session.setAttribute(TARA_SESSION, testSession);
+        TaraSession taraSession = new TaraSession();
+        taraSession.setState(TaraAuthenticationState.POLL_MID_STATUS);
+        TaraSession.MidAuthenticationResult authenticationResult = new TaraSession.MidAuthenticationResult();
+        authenticationResult.setMidSessionId("testSessionId");
+        taraSession.setAuthenticationResult(authenticationResult);
+        session.setAttribute(TARA_SESSION, taraSession);
         sessionRepository.save(session);
 
         given()
@@ -78,11 +81,12 @@ class AuthMidPollControllerTest extends BaseTest {
     @Test
     void midAuth_session_status_authentication_success() {
         Session session = sessionRepository.createSession();
-
-        TaraSession testSession = new TaraSession();
-        testSession.setState(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
-
-        session.setAttribute(TARA_SESSION, testSession);
+        TaraSession taraSession = new TaraSession();
+        taraSession.setState(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
+        TaraSession.MidAuthenticationResult authenticationResult = new TaraSession.MidAuthenticationResult();
+        authenticationResult.setMidSessionId("testSessionId");
+        taraSession.setAuthenticationResult(authenticationResult);
+        session.setAttribute(TARA_SESSION, taraSession);
         sessionRepository.save(session);
 
         given()
@@ -93,7 +97,6 @@ class AuthMidPollControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200)
                 .body("status", equalTo("COMPLETED"));
-
     }
 
     @Test
@@ -119,7 +122,7 @@ class AuthMidPollControllerTest extends BaseTest {
                 .body("message", equalTo("Ebakorrektne päring."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: AuthSession state is: AUTHENTICATION_FAILED");
+        assertErrorIsLogged("User exception: Invalid authentication state: 'AUTHENTICATION_FAILED'");
     }
 
 }

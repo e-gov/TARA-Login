@@ -11,8 +11,7 @@ tara:
     id-card:
       enabled: true
       level-of-assurance: HIGH
-      ocsp-enabled: true
-      truststore: file:src/test/resources/idcard-truststore-test.p12
+      truststore-path: file:src/test/resources/idcard-truststore-test.p12
       truststore-type: PKCS12
       truststore-password: changeit
       ocsp:

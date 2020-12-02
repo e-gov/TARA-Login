@@ -2,14 +2,12 @@ package ee.ria.taraauthserver.authentication.idcard;
 
 import com.google.common.base.Splitter;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
-import ee.ria.taraauthserver.config.properties.Constants;
-import ee.ria.taraauthserver.error.Exceptions.BadRequestException;
-import ee.ria.taraauthserver.error.Exceptions.OCSPServiceNotAvailableException;
-import ee.ria.taraauthserver.error.Exceptions.OCSPValidationException;
+import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import ee.ria.taraauthserver.error.exceptions.OCSPServiceNotAvailableException;
+import ee.ria.taraauthserver.error.exceptions.OCSPValidationException;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.EstonianIdCodeUtil;
-import ee.ria.taraauthserver.authentication.idcard.OCSPValidator;
 import ee.ria.taraauthserver.utils.SessionUtils;
 import ee.ria.taraauthserver.utils.X509Utils;
 import ee.sk.mid.MidNationalIdentificationCodeValidator;
@@ -20,8 +18,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
-import org.springframework.session.Session;
-import org.springframework.session.SessionRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,7 +26,6 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
@@ -38,12 +33,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
-import static ee.ria.taraauthserver.config.properties.Constants.HEADER_SSL_CLIENT_CERT;
-import static ee.ria.taraauthserver.config.properties.Constants.TARA_SESSION;
-import static ee.ria.taraauthserver.error.ErrorTranslationCodes.*;
-import static ee.ria.taraauthserver.error.ErrorTranslationCodes.SESSION_NOT_FOUND;
+import static ee.ria.taraauthserver.error.ErrorTranslationCodes.ESTEID_INVALID_REQUEST;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT;
+import static ee.ria.taraauthserver.utils.SessionUtils.getAuthSessionInState;
+import static ee.ria.taraauthserver.utils.SessionUtils.updateSession;
 import static java.lang.String.format;
 
 @Slf4j
@@ -60,6 +54,7 @@ public class IdCardController {
     @Autowired
     OCSPValidator ocspValidator;
 
+    public static final String HEADER_SSL_CLIENT_CERT = "XCLIENTCERTIFICATE";
     public static final String CN_SERIALNUMBER = "SERIALNUMBER";
     public static final String CN_GIVEN_NAME = "GIVENNAME";
     public static final String CN_SURNAME = "SURNAME";
@@ -68,8 +63,7 @@ public class IdCardController {
     @ResponseBody
     public ModelAndView handleRequest(HttpServletRequest request) {
 
-        TaraSession taraSession = SessionUtils.getAuthSession();
-        SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
+        TaraSession taraSession = getAuthSessionInState(INIT_AUTH_PROCESS);
 
         String encodedCertificate = request.getHeader(HEADER_SSL_CLIENT_CERT);
         validateEncodedCertificate(encodedCertificate);
@@ -103,9 +97,7 @@ public class IdCardController {
 
         addAuthResultToSession(taraSession, certificate);
 
-        Map<String, String> map = new HashMap<>();
-        map.put("status", "COMPLETED");
-        return new ModelAndView(new MappingJackson2JsonView(), map);
+        return new ModelAndView(new MappingJackson2JsonView(), Map.of("status", "COMPLETED"));
     }
 
     private void validateEncodedCertificate(String encodedCertificate) {
@@ -134,7 +126,7 @@ public class IdCardController {
 
     private void updateSessionStatus(TaraSession taraSession) {
         taraSession.setState(NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT);
-        SessionUtils.updateSession(taraSession);
+        updateSession(taraSession);
     }
 
     private void addAuthResultToSession(TaraSession taraSession, X509Certificate certificate) {
@@ -155,7 +147,7 @@ public class IdCardController {
         taraSession.setState(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
         taraSession.setAuthenticationResult(authenticationResult);
         log.info("updated session in idcard controller is: " + taraSession);
-        SessionUtils.updateSession(taraSession);
+        updateSession(taraSession);
     }
 
 }

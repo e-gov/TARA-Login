@@ -2,9 +2,7 @@ package ee.ria.taraauthserver.authentication;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
-import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.session.TaraSession;
-import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,20 +12,17 @@ import org.springframework.http.*;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.servlet.view.RedirectView;
 
 import javax.servlet.http.HttpSession;
 import java.net.URL;
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static ee.ria.taraauthserver.config.properties.Constants.TARA_SESSION;
+import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 
 @Validated
 @RestController
@@ -39,25 +34,6 @@ public class MockAuthController {
 
     @Autowired
     private RestTemplate hydraService;
-
-    @PostMapping(value = "/mockauth", produces = MediaType.APPLICATION_JSON_VALUE)
-    public RedirectView mockAuth(HttpSession session) {
-        TaraSession taraSession = (TaraSession) session.getAttribute(TARA_SESSION);
-        log.info("current state: " + taraSession.getState());
-        log.info("session id in AUTH_MOCK: " + session.getId());
-        TaraSession.AuthenticationResult authResult = new TaraSession.AuthenticationResult();
-        authResult.setAcr(LevelOfAssurance.HIGH);
-        authResult.setSubject("EE60001019906");
-        authResult.setFirstName("Firstname");
-        authResult.setLastName("Lastname");
-        authResult.setDateOfBirth(LocalDate.now());
-        taraSession.setAuthenticationResult(authResult);
-        taraSession.setState(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
-        session.setAttribute(TARA_SESSION, taraSession);
-        log.info("edited session " + session.getAttribute(TARA_SESSION));
-        log.info("with id " + session.getId());
-        return new RedirectView("/auth/accept");
-    }
 
     @GetMapping(value = "/heartbeat", produces = MediaType.TEXT_HTML_VALUE)
     public String heartbeat() {

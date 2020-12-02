@@ -1,12 +1,12 @@
-package ee.ria.taraauthserver.authentication;
+package ee.ria.taraauthserver.authentication.mobileid;
 
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.error.ErrorTranslationCodes;
-import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
+import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,7 @@ import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
-import static ee.ria.taraauthserver.config.properties.Constants.TARA_SESSION;
+import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -36,11 +36,6 @@ class AuthMidControllerTest extends BaseTest {
 
     @Autowired
     private SessionRepository sessionRepository;
-
-    static {
-        System.setProperty("http.keepAlive", "false");
-        System.setProperty("http.maxConnections", "1");
-    }
 
     @Test
     void midAuthInit_session_missing() {
@@ -212,8 +207,9 @@ class AuthMidControllerTest extends BaseTest {
 
         Thread.sleep(1000);
 
-        assertInfoIsLogged("Mid request: ee.sk.mid.rest.dao.request.MidAuthenticationRequest");
-        assertInfoIsLogged("Mid response: MidAbstractResponse{sessionID='de305d54-75b4-431b-adb2-eb6b9e546015'}");
+        assertInfoIsLogged("Mid init request: ee.sk.mid.rest.dao.request.MidAuthenticationRequest");
+        assertInfoIsLogged("Mid init response: MidAbstractResponse{sessionID='de305d54-75b4-431b-adb2-eb6b9e546015'}");
+        assertInfoIsLogged("Mobile ID authentication process with MID session id de305d54-75b4-431b-adb2-eb6b9e546015 has been initiated");
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();

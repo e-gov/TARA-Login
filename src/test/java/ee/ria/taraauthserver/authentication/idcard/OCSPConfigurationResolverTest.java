@@ -1,8 +1,9 @@
-package ee.ria.taraauthserver.utils;
+package ee.ria.taraauthserver.authentication.idcard;
 
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.authentication.idcard.OCSPConfigurationResolver;
 import ee.ria.taraauthserver.config.TaraAuthServerConfiguration;
+import ee.ria.taraauthserver.utils.TestIDCardConfiguration;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;

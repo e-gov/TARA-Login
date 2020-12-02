@@ -1,15 +1,11 @@
-package ee.ria.taraauthserver.authentication;
+package ee.ria.taraauthserver.authentication.idcard;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
-import ee.ria.taraauthserver.config.properties.Constants;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
-import ee.ria.taraauthserver.utils.OCSPValidatorTest;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -43,10 +39,10 @@ import java.util.Base64;
 import java.util.Date;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static ee.ria.taraauthserver.config.properties.Constants.HEADER_SSL_CLIENT_CERT;
-import static ee.ria.taraauthserver.config.properties.Constants.TARA_SESSION;
-import static ee.ria.taraauthserver.utils.OCSPValidatorTest.generateOcspResponderCertificate;
-import static ee.ria.taraauthserver.utils.OCSPValidatorTest.generateUserCertificate;
+import static ee.ria.taraauthserver.authentication.idcard.IdCardController.HEADER_SSL_CLIENT_CERT;
+import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest.generateOcspResponderCertificate;
+import static ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest.generateUserCertificate;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -494,7 +490,7 @@ class IdCardControllerTest extends BaseTest {
         Session session = sessionRepository.createSession();
         TaraSession authSession = new TaraSession();
         authSession.setState(authenticationState);
-        session.setAttribute(Constants.TARA_SESSION, authSession);
+        session.setAttribute(TARA_SESSION, authSession);
         sessionRepository.save(session);
         return session.getId();
     }

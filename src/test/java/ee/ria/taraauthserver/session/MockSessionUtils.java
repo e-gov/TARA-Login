@@ -22,7 +22,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-import static ee.ria.taraauthserver.config.properties.Constants.TARA_SESSION;
+import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 @Slf4j

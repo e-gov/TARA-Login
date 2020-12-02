@@ -3,7 +3,7 @@ package ee.ria.taraauthserver.authentication;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.TaraScope;
-import ee.ria.taraauthserver.error.Exceptions.BadRequestException;
+import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.SessionUtils;
 import lombok.Data;

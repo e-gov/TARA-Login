@@ -3,11 +3,11 @@ package ee.ria.taraauthserver.authentication.idcard;
 import ee.ria.taraauthserver.utils.X509Utils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -39,7 +39,7 @@ public class OCSPConfigurationResolver {
         log.debug("Primary ocsp configuration to verify cert issued by '{}': {}", issuerCN, primaryConf);
         ocspConfiguration.add(primaryConf);
 
-        if (CollectionUtils.isNotEmpty(configurationProperties.getFallbackOcsp())) {
+        if (!CollectionUtils.isEmpty(configurationProperties.getFallbackOcsp())) {
             List<Ocsp> secondaryConfs = configurationProperties.getFallbackOcsp().stream().filter(
                     e -> e.getIssuerCn().stream().anyMatch(b -> b.equals(issuerCN))
             ).collect(Collectors.toList());

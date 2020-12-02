@@ -4,19 +4,21 @@ package ee.ria.taraauthserver.config.properties;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 
+import javax.annotation.PostConstruct;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @ConfigurationProperties(prefix = "tara")
 @Validated
+@Slf4j
 @Data
 public class AuthConfigurationProperties {
 
@@ -108,17 +110,38 @@ public class AuthConfigurationProperties {
     public static class IdCardAuthConfigurationProperties extends AuthMethodProperties {
 
         @NotNull
-        private String truststore;
+        private String truststorePath;
         private String truststoreType = "PKCS12";
         @NotNull
         private String truststorePassword;
-        private boolean ocspEnabled = true;
 
         @Valid
         private List<Ocsp> ocsp;
 
         @Valid
         private List<Ocsp> fallbackOcsp;
+
+        @PostConstruct
+        public void validateConfiguration() {
+            if (this.enabled) {
+                Set<String> duplicateNames = getFindDuplicateConfigurations();
+                Assert.isTrue(duplicateNames.isEmpty(), "Multiple OCSP configurations detected for issuer's with CN's: " + duplicateNames + ". Please check your configuration!");
+                Assert.notNull(this.truststorePath, "Keystore location cannot be empty when OCSP is enabled!");
+                Assert.notNull(this.truststorePassword, "Keystore password cannot be empty when OCSP is enabled!");
+
+            } else {
+                log.warn("OCSP verification has been DISABLED! User certificates will not be checked for revocation!");
+            }
+            log.info("Using id-card configuration: " + this);
+        }
+
+        private Set<String> getFindDuplicateConfigurations() {
+            Set<String> names = new HashSet<>();
+            return ocsp.stream()
+                    .flatMap(item -> item.getIssuerCn().stream())
+                    .filter(cn -> !names.add(cn))
+                    .collect(Collectors.toSet());
+        }
     }
 
     @Data
@@ -135,7 +158,6 @@ public class AuthConfigurationProperties {
         private List<String> issuerCn;
         @NotEmpty
         private String url;
-
         private boolean nonceDisabled = false;
         @Min(0L)
         private long acceptedClockSkewInSeconds = DEFAULT_ACCEPTED_CLOCK_SKEW_IN_SECONDS;
@@ -145,9 +167,9 @@ public class AuthConfigurationProperties {
         private int connectTimeoutInMilliseconds = DEFAULT_CONNECT_TIMEOUT_IN_MILLISECONDS;
         @Min(0L)
         private int readTimeoutInMilliseconds = DEFAULT_READ_TIMEOUT_IN_MILLISECONDS;
-
         private String responderCertificateCn;
     }
+
 }
 
 

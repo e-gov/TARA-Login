@@ -1,4 +1,4 @@
-package ee.ria.taraauthserver.utils;
+package ee.ria.taraauthserver.authentication.idcard;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -8,10 +8,8 @@ import com.github.tomakehurst.wiremock.extension.Parameters;
 import com.github.tomakehurst.wiremock.extension.ResponseTransformer;
 import com.github.tomakehurst.wiremock.http.Request;
 import com.github.tomakehurst.wiremock.http.Response;
-import ee.ria.taraauthserver.authentication.idcard.OCSPConfigurationResolver;
-import ee.ria.taraauthserver.authentication.idcard.OCSPValidator;
-import ee.ria.taraauthserver.error.Exceptions.OCSPServiceNotAvailableException;
-import ee.ria.taraauthserver.error.Exceptions.OCSPValidationException;
+import ee.ria.taraauthserver.error.exceptions.OCSPServiceNotAvailableException;
+import ee.ria.taraauthserver.error.exceptions.OCSPValidationException;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Setter;

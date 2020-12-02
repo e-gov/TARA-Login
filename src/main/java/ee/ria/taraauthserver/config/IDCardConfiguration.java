@@ -33,13 +33,13 @@ public class IDCardConfiguration {
     KeyStore idcardKeystore(ResourceLoader resourceLoader) {
         try {
             KeyStore keystore = KeyStore.getInstance(configurationProvider.getTruststoreType());
-            Resource resource = resourceLoader.getResource(configurationProvider.getTruststore());
+            Resource resource = resourceLoader.getResource(configurationProvider.getTruststorePath());
             try (InputStream inputStream = resource.getInputStream()) {
                 keystore.load(inputStream, configurationProvider.getTruststorePassword().toCharArray());
             }
             return keystore;
         } catch (Exception e) {
-            throw new IllegalStateException("Could not load truststore of type " + configurationProvider.getTruststoreType() + " from " + configurationProvider.getTruststore() + "!", e);
+            throw new IllegalStateException("Could not load truststore of type " + configurationProvider.getTruststoreType() + " from " + configurationProvider.getTruststorePath() + "!", e);
         }
     }
 
@@ -55,6 +55,7 @@ public class IDCardConfiguration {
                 final String commonName = X509Utils.getSubjectCNFromCertificate(ta.getTrustedCert());
                 trustedCertificates.put(commonName, ta.getTrustedCert());
             }
+            trustedCertificates.entrySet().forEach(entry -> log.info("Trusted OCSP responder certificate added to configuration - CN: {}, serialnumber: {}, validFrom: {}, validTo: {}", entry.getKey(), entry.getValue().getSerialNumber(), entry.getValue().getNotBefore(), entry.getValue().getNotAfter()));
         } catch (Exception e) {
             throw new IllegalArgumentException("Failed to read trusted certificates from id-card truststore: " + e.getMessage(), e);
         }
