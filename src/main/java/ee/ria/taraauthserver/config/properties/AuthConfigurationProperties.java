@@ -47,7 +47,6 @@ public class AuthConfigurationProperties {
         String acceptLoginUrl;
         @NotBlank
         String acceptConsentUrl;
-        @NotNull
         int requestTimeoutInSeconds = 3;
     }
 
@@ -60,7 +59,6 @@ public class AuthConfigurationProperties {
         String truststoreLocation;
         @NotBlank
         String truststorePassword;
-
         String trustStoreType = "PKCS12";
     }
 
@@ -91,15 +89,12 @@ public class AuthConfigurationProperties {
         String relyingPartyUuid;
         @NotNull
         String relyingPartyName;
-
         @Pattern(regexp = "(SHA256|SHA384|SHA512)", message = "invalid hash value, accepted values are: SHA256, SHA384, SHA512")
         String hashType = "SHA256";
-
         int longPollingTimeoutSeconds = 30;
-
         int connectionTimeoutMilliseconds = 5000;
-
         int readTimeoutMilliseconds = 30000;
+        int intervalBetweenSessionStatusQueriesInMilliseconds = 5000;
     }
 
     @Data
@@ -114,16 +109,14 @@ public class AuthConfigurationProperties {
         private String truststoreType = "PKCS12";
         @NotNull
         private String truststorePassword;
-
         @Valid
         private List<Ocsp> ocsp;
-
         @Valid
         private List<Ocsp> fallbackOcsp;
-
         @PostConstruct
         public void validateConfiguration() {
             if (this.enabled) {
+                Assert.notEmpty(ocsp, "At least one ocsp configuration must be defined!");
                 Set<String> duplicateNames = getFindDuplicateConfigurations();
                 Assert.isTrue(duplicateNames.isEmpty(), "Multiple OCSP configurations detected for issuer's with CN's: " + duplicateNames + ". Please check your configuration!");
                 Assert.notNull(this.truststorePath, "Keystore location cannot be empty when OCSP is enabled!");

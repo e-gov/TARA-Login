@@ -5,7 +5,7 @@ import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.session.TaraSession;
-import ee.ria.taraauthserver.utils.SessionUtils;
+import ee.ria.taraauthserver.session.SessionUtils;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +18,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.view.RedirectView;
 
@@ -38,7 +39,7 @@ class AuthAcceptController {
     @Autowired
     private RestTemplate hydraService;
 
-    @GetMapping("/auth/accept")
+    @PostMapping("/auth/accept")
     public RedirectView authAccept(HttpSession session) {
 
         TaraSession taraSession = SessionUtils.getAuthSession();
@@ -59,7 +60,7 @@ class AuthAcceptController {
             log.info("accepted session: " + taraSession);
             return new RedirectView(response.getBody().getRedirectUrl());
         } else {
-            throw new IllegalStateException("Internal server error");
+            throw new IllegalStateException("Invalid OIDC server response. Redirect URL missing from response.");
         }
     }
 

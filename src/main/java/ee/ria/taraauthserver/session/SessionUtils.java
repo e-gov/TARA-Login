@@ -1,4 +1,4 @@
-package ee.ria.taraauthserver.utils;
+package ee.ria.taraauthserver.session;
 
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.ErrorTranslationCodes;

@@ -1,6 +1,5 @@
 package ee.ria.taraauthserver.authentication.idcard;
 
-import com.google.common.base.Splitter;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.OCSPServiceNotAvailableException;
@@ -8,7 +7,6 @@ import ee.ria.taraauthserver.error.exceptions.OCSPValidationException;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.EstonianIdCodeUtil;
-import ee.ria.taraauthserver.utils.SessionUtils;
 import ee.ria.taraauthserver.utils.X509Utils;
 import ee.sk.mid.MidNationalIdentificationCodeValidator;
 import lombok.extern.slf4j.Slf4j;
@@ -36,8 +34,8 @@ import static ee.ria.taraauthserver.config.properties.AuthConfigurationPropertie
 import static ee.ria.taraauthserver.error.ErrorTranslationCodes.ESTEID_INVALID_REQUEST;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT;
-import static ee.ria.taraauthserver.utils.SessionUtils.getAuthSessionInState;
-import static ee.ria.taraauthserver.utils.SessionUtils.updateSession;
+import static ee.ria.taraauthserver.session.SessionUtils.getAuthSessionInState;
+import static ee.ria.taraauthserver.session.SessionUtils.updateSession;
 import static java.lang.String.format;
 
 @Slf4j
@@ -130,9 +128,7 @@ public class IdCardController {
     }
 
     private void addAuthResultToSession(TaraSession taraSession, X509Certificate certificate) {
-        Map<String, String> params = Splitter.on(", ").withKeyValueSeparator("=").split(
-                certificate.getSubjectDN().getName()
-        );
+        Map<String, String> params = getCertificateParams(certificate);
         String idCode = EstonianIdCodeUtil.getEstonianIdCode(params.get(CN_SERIALNUMBER));
 
         TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
@@ -148,6 +144,17 @@ public class IdCardController {
         taraSession.setAuthenticationResult(authenticationResult);
         log.info("updated session in idcard controller is: " + taraSession);
         updateSession(taraSession);
+    }
+
+    @NotNull
+    private Map<String, String> getCertificateParams(X509Certificate certificate) {
+        String[] test1 = certificate.getSubjectDN().getName().split(", ");
+        Map<String, String> params = new HashMap<>();
+        for (String s : test1) {
+            String[] t = s.split("=");
+            params.put(t[0], t[1]);
+        }
+        return params;
     }
 
 }

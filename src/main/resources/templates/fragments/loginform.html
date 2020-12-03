@@ -23,7 +23,7 @@
             <div th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).IDCard)}"
                  layout:include="~{fragments/logintabs :: content('id-card')}" th:remove="tag"
                  aria-hidden="true" aria-labelledby="id-card">
-                <form role="form" th:action="@{/auth/accept}" method="get" id="idCardForm" class="c-form"
+                <form role="form" th:action="@{/auth/accept}" method="post" id="idCardForm" class="c-form"
                       layout:fragment="login-form-content">
                     <button role="button" type="button" class="c-btn c-btn--primary" th:text="#{label.common.login}">
                         Login

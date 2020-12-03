@@ -6,7 +6,7 @@ import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.ErrorTranslationCodes;
 import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
 import ee.ria.taraauthserver.session.TaraSession;
-import ee.ria.taraauthserver.utils.SessionUtils;
+import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.utils.ValidNationalIdNumber;
 import ee.sk.mid.*;
 import ee.sk.mid.exception.*;

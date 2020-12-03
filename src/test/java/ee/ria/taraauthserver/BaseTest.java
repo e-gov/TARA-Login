@@ -53,11 +53,6 @@ public abstract class BaseTest {
 
     private static ListAppender<ILoggingEvent> mockAppender;
 
-    static {
-        System.setProperty("http.keepAlive", "false");
-        System.setProperty("http.maxConnections", "1");
-    }
-
     @BeforeAll
     static void setUpAll() {
         configureWiremockServer();

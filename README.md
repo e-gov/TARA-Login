@@ -22,7 +22,7 @@
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `tara.auth-methods.mobile-id.enabled` | Yes | Enable or disable this auth method. Default `true` |
+| `tara.auth-methods.mobile-id.enabled` | No | Enable or disable this auth method. Default `true` |
 | `tara.auth-methods.mobile-id.level-of-assurance` | Yes | Level of assurance of this auth method. Example `HIGH` |
 | `tara.auth-methods.mobile-id.host-url` | Yes | Mobile id client url |
 | `tara.auth-methods.mobile-id.truststore-path` | Yes | Path to truststore file. Example. `file:src/test/resources/mobileid-truststore-test.p12` |
@@ -34,23 +34,24 @@
 | `tara.auth-methods.mobile-id.connection-timeout-milliseconds` | No | Connection timeout of the MID authentication initiation request. Default `5000` |
 | `tara.auth-methods.mobile-id.read-timeout-milliseconds` | No | Read timeout of the MID authentication initiation request. Default `5000` |
 | `tara.auth-methods.mobile-id.long-polling-timeout-seconds` | No | Long polling timeout period used for MID session status requests. Default `30` |
+| `tara.auth-methods.mobile-id.interval-between-session-status-queries-in-milliseconds` | No | Interval between Mobile-ID status polling queries (from UI to tara-login-service). Default `5000` |
 
 ### 1.4 id card auth method
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `tara.auth-methods.id-card.enabled` | Yes | Enable or disable this auth method. Default `true` |
+| `tara.auth-methods.id-card.enabled` | No | Enable or disable this auth method. Default `true` |
 | `tara.auth-methods.id-card.level-of-assurance` | Yes | Level of assurance of this auth method. Example `HIGH` |
 | `tara.auth-methods.id-card.truststore-path` | Yes | Path to truststore file. Example `file:src/test/resources/mobileid-truststore-test.p12` |
 | `tara.auth-methods.id-card.truststore-type` | Yes | Type of the truststore from truststore-path. Example `PKCS12` |
 | `tara.auth-methods.id-card.truststore-password` | Yes | Password of the truststore from truststore-path. Example `changeit` |
 | `tara.auth-methods.id-card.ocsp[0].issuer-cn` | Yes | Required issuer CN. Example `TEST of ESTEID-SK 2011, TEST of ESTEID-SK 2015` |
 | `tara.auth-methods.id-card.ocsp[0].url` | Yes | Ocsp url. Example `http://aia.demo.sk.ee/esteid2018` |
-| `tara.auth-methods.id-card.ocsp[0].nonce-disabled` | Yes | Default `false` |
-| `tara.auth-methods.id-card.ocsp[0].accepted-clock-skew-in-seconds` | Yes | Default `2L` |
-| `tara.auth-methods.id-card.ocsp[0].response-lifetime-in-seconds` | Yes | Default `900L` |
-| `tara.auth-methods.id-card.ocsp[0].connect-timeout-in-milliseconds` | Yes | Default `3000` |
-| `tara.auth-methods.id-card.ocsp[0].read-timeout-in-milliseconds` | Yes | Default `3000` |
+| `tara.auth-methods.id-card.ocsp[0].nonce-disabled` | No | Default `false` |
+| `tara.auth-methods.id-card.ocsp[0].accepted-clock-skew-in-seconds` | No | Default `2L` |
+| `tara.auth-methods.id-card.ocsp[0].response-lifetime-in-seconds` | No | Default `900L` |
+| `tara.auth-methods.id-card.ocsp[0].connect-timeout-in-milliseconds` | No | Default `3000` |
+| `tara.auth-methods.id-card.ocsp[0].read-timeout-in-milliseconds` | No | Default `3000` |
 | `tara.auth-methods.id-card.ocsp[0].responder-certificate-cn` | No | Required responder certificate CN. Example `TEST of SK OCSP RESPONDER 2020` |
 
 ## 1.5 Legal person authentication configuration properties

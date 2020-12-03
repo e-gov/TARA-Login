@@ -3,7 +3,7 @@
       layout:decorate="layout" th:with="hideHeaderLanguageSelection=true">
 <head th:replace="~{fragments/head}"></head>
 <body class="is-mobile-subview"
-      th:attr="data-check-form-refresh-rate=${@environment.getProperty('mobile-id.timeout-between-session-status-queries')}">
+      th:attr="data-check-form-refresh-rate=${@environment.getProperty('tara.auth-methods.mobile-id.interval-between-session-status-queries-in-milliseconds')}">
 <div layout:fragment="content" th:with="hideHeaderLanguageSelection=true" th:remove="tag">
     <iframe width="0" height="0" border="0" name="dummyframe" id="dummyframe"></iframe>
     <div class="container">

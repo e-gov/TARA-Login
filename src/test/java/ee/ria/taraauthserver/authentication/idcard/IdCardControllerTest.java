@@ -21,7 +21,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
@@ -49,11 +48,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
 class IdCardControllerTest extends BaseTest {
-
-    @Autowired
-    private ResourceLoader resourceLoader;
-
-    private static final String MOCK_USER_CERT_2018_PATH = "file:src/test/resources/id-card/38001085718(TEST_of_ESTEID2018).pem";
 
     private static final OCSPValidatorTest.OcspResponseTransformer ocspResponseTransformer = new OCSPValidatorTest.OcspResponseTransformer();
 
@@ -390,7 +384,7 @@ class IdCardControllerTest extends BaseTest {
     }
 
     @Test
-    void idAuth_response_500_when_response_body_is_missing() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
+    void idAuth_response_500_when_response_body_is_missing() {
 
         wireMockServer.stubFor(WireMock.post("/esteid2015")
                 .willReturn(
@@ -416,7 +410,7 @@ class IdCardControllerTest extends BaseTest {
     }
 
     @Test
-    void idAuth_response_ocspService_notAvailable() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
+    void idAuth_response_ocspService_notAvailable() {
 
 
         wireMockServer.stubFor(get(urlEqualTo("/esteid2015"))
@@ -531,8 +525,7 @@ class IdCardControllerTest extends BaseTest {
 
         final byte[] rawCrtText = certificate.getEncoded();
         final String encodedCertText = new String(encoder.encode(rawCrtText));
-        final String prettified_cert = BEGIN_CERT + LINE_SEPARATOR + encodedCertText + LINE_SEPARATOR + END_CERT;
-        return prettified_cert;
+        return BEGIN_CERT + LINE_SEPARATOR + encodedCertText + LINE_SEPARATOR + END_CERT;
     }
 
     public static final String BEGIN_CERT = "-----BEGIN CERTIFICATE-----";

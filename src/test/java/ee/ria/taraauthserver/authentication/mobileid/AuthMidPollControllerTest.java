@@ -54,7 +54,7 @@ class AuthMidPollControllerTest extends BaseTest {
                 .body("message", equalTo("Ebakorrektne päring."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: '[NATURAL_PERSON_AUTHENTICATION_COMPLETED, POLL_MID_STATUS]'");
+        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: '[NATURAL_PERSON_AUTHENTICATION_COMPLETED, POLL_MID_STATUS, AUTHENTICATION_FAILED]'");
     }
 
     @Test
@@ -97,32 +97,6 @@ class AuthMidPollControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200)
                 .body("status", equalTo("COMPLETED"));
-    }
-
-    @Test
-    void midAuth_session_status_authentication_failed() {
-        Session session = sessionRepository.createSession();
-
-        TaraSession testSession = new TaraSession();
-        testSession.setState(TaraAuthenticationState.AUTHENTICATION_FAILED);
-        TaraSession.MidAuthenticationResult authResult = new TaraSession.MidAuthenticationResult();
-        authResult.setErrorMessage(ErrorTranslationCodes.INVALID_REQUEST);
-        testSession.setAuthenticationResult(authResult);
-
-        session.setAttribute(TARA_SESSION, testSession);
-        sessionRepository.save(session);
-
-        given()
-                .when()
-                .sessionId("SESSION", session.getId())
-                .get("/auth/mid/poll")
-                .then()
-                .assertThat()
-                .statusCode(400)
-                .body("message", equalTo("Ebakorrektne päring."))
-                .body("error", equalTo("Bad Request"));
-
-        assertErrorIsLogged("User exception: Invalid authentication state: 'AUTHENTICATION_FAILED'");
     }
 
 }
