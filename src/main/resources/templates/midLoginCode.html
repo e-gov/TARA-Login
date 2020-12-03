@@ -3,7 +3,7 @@
       layout:decorate="layout" th:with="hideHeaderLanguageSelection=true">
 <head th:replace="~{fragments/head}"></head>
 <body class="is-mobile-subview"
-      th:attr="data-check-form-refresh-rate=${@environment.getProperty('mobile-id.timeout-between-session-status-queries')}">
+      th:attr="data-check-form-refresh-rate=${@environment.getProperty('tara.auth-methods.mobile-id.interval-between-session-status-queries-in-milliseconds')}">
 <div layout:fragment="content" th:with="hideHeaderLanguageSelection=true" th:remove="tag">
     <iframe width="0" height="0" border="0" name="dummyframe" id="dummyframe"></iframe>
     <div class="container">
@@ -16,12 +16,13 @@
             <div class="c-tab-login__main">
                 <div layout:include="~{fragments/logintabs :: content(tab_id = 'mobile-id', instruction = 'instruction-check', static = true)}"
                      th:remove="tag">
-                    <form role="form" id="authenticationCheckForm" method="get"
+                    <form role="form" id="midAuthenticationCheckForm" method="post" th:action="@{/auth/mid/poll/cancel}"
                           class="c-form" layout:fragment="login-form-content">
                         <p th:text="#{label.common.controlCode}">Control code:</p>
                         <p class="control-code" th:text="${mobileIdVerificationCode}"></p>
-                        <a class="c-btn c-btn--cancel c-btn--from-link" href="#"
-                           th:text="#{label.common.cancel}">Cancel</a>
+                        <button role="button" type="submit" class="c-btn c-btn--cancel"
+                                th:text="#{label.common.cancel}">Cancel
+                        </button>
                     </form>
                 </div>
             </div>

@@ -3,7 +3,7 @@ tara:
     login-url: https://localhost:9877/oauth2/auth/requests/login
     accept-login-url: https://localhost:9877/oauth2/auth/requests/login/accept
     accept-consent-url: https://localhost:9877/oauth2/auth/requests/consent/accept
-    request-timeout: 3
+    request-timeout-in-seconds: 1
 
   default-locale: et
 
@@ -11,7 +11,26 @@ tara:
     id-card:
       enabled: true
       level-of-assurance: HIGH
+      truststore-path: file:src/test/resources/idcard-truststore-test.p12
+      truststore-type: PKCS12
+      truststore-password: changeit
+      ocsp:
+        - issuer-cn: TEST of ESTEID-SK 2011
+          url: http://aia.sk.ee/esteid2011
+          accepted-clock-skew: 5
+          response-lifetime: 60
+          responder-certificate-cn: TEST_of_ESTEID-SK_2011.crt
 
+        - issuer-cn: TEST of ESTEID-SK 2015
+          url: https://localhost:9877/esteid2015
+          connect-timeout-in-milliseconds: 500
+
+        - issuer-cn: TEST of ESTEID-SK2018
+          url: http://aia.demo.sk.ee/esteid2018
+
+      fallback-ocsp:
+        - url: https://localhost:9877/ocsp
+          issuer-cn: TEST of ESTEID-SK 2011, TEST of ESTEID-SK 2015, TEST of ESTEID2018
     mobile-id:
       enabled: true
       level-of-assurance: HIGH
@@ -23,6 +42,7 @@ tara:
       truststore-password: changeit
       connection-timeout-milliseconds: 1000
       read-timeout-milliseconds: 1000
+      interval-between-session-status-queries-in-milliseconds: 3500
 
   legal-person-authentication:
     x-road-server-url: https://localhost:9877/cgi-bin/consumer_proxy

@@ -1,6 +1,6 @@
 package ee.ria.taraauthserver.config;
 
-import ee.ria.taraauthserver.controllers.AuthMidController;
+import ee.ria.taraauthserver.authentication.mobileid.AuthMidController;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;

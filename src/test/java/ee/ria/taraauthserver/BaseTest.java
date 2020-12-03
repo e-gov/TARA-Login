@@ -7,13 +7,13 @@ import ch.qos.logback.core.read.ListAppender;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest;
 import io.restassured.RestAssured;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -52,12 +52,6 @@ public abstract class BaseTest {
     protected int port;
 
     private static ListAppender<ILoggingEvent> mockAppender;
-
-    @Test
-    @Order(1)
-    void contextLoads() {
-        assertNotNull(webApplicationContext, "Should not be null!");
-    }
 
     @BeforeAll
     static void setUpAll() {
@@ -122,7 +116,7 @@ public abstract class BaseTest {
                         || e.getLoggerName().equals(loggerClass.getCanonicalName())))
                 .map(ILoggingEvent::getFormattedMessage)
                 .collect(toList());
-        
+
         assertThat("Expected log messages not found in output.\n\tExpected log messages: " + List.of(messagesInRelativeOrder) + ",\n\tActual log messages: " + events, events, containsInRelativeOrder(stream(messagesInRelativeOrder)
                 .map(CoreMatchers::startsWith).toArray(Matcher[]::new)));
     }
@@ -132,13 +126,26 @@ public abstract class BaseTest {
         config = config().redirect(redirectConfig().followRedirects(false));
     }
 
-    private static void configureWiremockServer() {
+    public static void configureWiremockServer() {
         wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig()
                 .httpDisabled(true)
                 .httpsPort(9877)
                 .keystorePath("src/test/resources/tls-keystore.jks")
                 .keystorePassword("changeit")
                 .keyManagerPassword("changeit")
+                .notifier(new ConsoleNotifier(true))
+        );
+        wireMockServer.start();
+    }
+
+    public static void configureWiremockServer(OCSPValidatorTest.OcspResponseTransformer transformer) {
+        wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig()
+                .httpDisabled(true)
+                .httpsPort(9877)
+                .keystorePath("src/test/resources/tls-keystore.jks")
+                .keystorePassword("changeit")
+                .keyManagerPassword("changeit")
+                .extensions(transformer)
                 .notifier(new ConsoleNotifier(true))
         );
         wireMockServer.start();

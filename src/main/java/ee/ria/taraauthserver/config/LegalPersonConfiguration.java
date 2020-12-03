@@ -1,7 +1,7 @@
 package ee.ria.taraauthserver.config;
 
 import ee.ria.taraauthserver.config.properties.LegalPersonProperties;
-import ee.ria.taraauthserver.xroad.BusinessRegistryService;
+import ee.ria.taraauthserver.authentication.legalperson.xroad.BusinessRegistryService;
 import freemarker.template.TemplateExceptionHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

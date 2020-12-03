@@ -1,0 +1,27 @@
+package ee.ria.taraauthserver.error;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@Getter
+@AllArgsConstructor
+public enum ErrorTranslationCodes {
+    INVALID_PHONE_NUMBER("message.mid-rest.error.invalid-phone-number"),
+    INVALID_ID_CODE("message.mid-rest.error.invalid-identity-code"),
+    ESTEID_INVALID_REQUEST("message.idc.error"),
+    MID_USER_CANCEL("message.mid-rest.error.user-cancel"),
+    MID_HASH_MISMATCH("message.mid-rest.error.signature-hash-mismatch"),
+    MID_PHONE_ABSENT("message.mid-rest.error.phone-absent"),
+    MID_DELIVERY_ERROR("message.mid-rest.error.delivery-error"),
+    MID_SIM_ERROR("message.mid-rest.error.sim-error"),
+    MID_TRANSACTION_EXPIRED("message.mid-rest.error.expired-transaction"),
+    NOT_MID_CLIENT("message.mid-rest.error.not-mid-client"),
+    MID_INTERNAL_ERROR("message.mid-rest.error.internal-error"),
+    MID_ERROR_GENERAL("message.error.general"),
+    SESSION_NOT_FOUND("message.error.sessionNotFound"),
+    SESSION_STATE_INVALID("message.error.sessionStateInvalid"),
+    INVALID_REQUEST("message.error.invalidRequest"),
+    LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE("label.legal-person.error.service-not-available");
+
+    private final String message;
+}

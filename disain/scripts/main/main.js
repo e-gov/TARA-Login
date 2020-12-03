@@ -129,19 +129,27 @@ jQuery(function ($) {
 		var xhttp = new XMLHttpRequest();
 		xhttp.onreadystatechange = function() {
 			if (this.readyState !== 4) return;
-			if (this.status !== 200 || this.responseText !== '{"ok":true}') {
-				showAlert($('#idCardForm .alert-popup'));
 
-				// Clear and re-show error-message content, because screen readers expect dynamic text addition
-				// for alert messages to be read out
-				var errorMessageTitle = $('#idCardForm .alert-popup #error-message-title');
-				var errorMessage = $('#idCardForm .alert-popup #error-message');
-				errorMessageTitle.text(errorMessageTitle.text());
-				errorMessage.text(errorMessage.text());
+			if (this.status == 200 || this.responseText == '{"status":"COMPLETED"}') {
+			    $('#idCardForm').submit();
+			} else if (this.status == 400 || this.status == 502) {
+			    var jsonResponse = JSON.parse(this.responseText);
+			    showAlert($('#idCardForm .alert-popup'));
+                var errorMessageTitle = $('#idCardForm .alert-popup #error-message-title');
+                var errorMessage = $('#idCardForm .alert-popup #error-message');
 
-				_this.prop('disabled', false);
+                errorMessageTitle.text(errorMessageTitle.text());
+                errorMessage.text(jsonResponse.errorMessage);
+
+                _this.prop('disabled', false);
 			} else {
-				$('#idCardForm').submit();
+			    showAlert($('#idCardForm .alert-popup'));
+                var errorMessageTitle = $('#idCardForm .alert-popup #error-message-title');
+                var errorMessage = $('#idCardForm .alert-popup #error-message');
+                errorMessageTitle.text(errorMessageTitle.text());
+                errorMessage.text(errorMessage.text());
+
+                _this.prop('disabled', false);
 			}
 		};
 		xhttp.open('GET', '/auth/id', true);
@@ -217,6 +225,7 @@ jQuery(function ($) {
 
 	// Smart-ID status polling form - submit cancel
     $('#authenticationCheckForm a.c-btn--from-link').on('click', function(event){
+
         event.preventDefault();
 
         if ($(this).prop('disabled')) return;
