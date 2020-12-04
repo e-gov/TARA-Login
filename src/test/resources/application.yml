@@ -4,7 +4,7 @@ tara:
     accept-login-url: https://localhost:9877/oauth2/auth/requests/login/accept
     accept-consent-url: https://localhost:9877/oauth2/auth/requests/consent/accept
     health-url: https://localhost:9877/health/ready
-    request-timeout: 3
+    request-timeout-in-seconds: 1
 
   default-locale: et
 
@@ -12,7 +12,6 @@ tara:
     id-card:
       enabled: true
       level-of-assurance: HIGH
-      ocsp-enabled: true
       truststore-path: file:src/test/resources/idcard-truststore-test.p12
       truststore-type: PKCS12
       truststore-password: changeit
@@ -44,6 +43,7 @@ tara:
       truststore-password: changeit
       connection-timeout-milliseconds: 1000
       read-timeout-milliseconds: 1000
+      interval-between-session-status-queries-in-milliseconds: 3500
 
   legal-person-authentication:
     x-road-server-url: https://localhost:9877/cgi-bin/consumer_proxy

@@ -1,4 +1,4 @@
-package ee.ria.taraauthserver.error.Exceptions;
+package ee.ria.taraauthserver.error.exceptions;
 
 public class OCSPServiceNotAvailableException extends RuntimeException {
 

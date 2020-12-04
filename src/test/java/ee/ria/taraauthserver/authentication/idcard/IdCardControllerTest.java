@@ -1,15 +1,11 @@
-package ee.ria.taraauthserver.authentication;
+package ee.ria.taraauthserver.authentication.idcard;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
-import ee.ria.taraauthserver.config.properties.Constants;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
-import ee.ria.taraauthserver.utils.OCSPValidatorTest;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +21,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
@@ -43,21 +38,16 @@ import java.util.Base64;
 import java.util.Date;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static ee.ria.taraauthserver.config.properties.Constants.HEADER_SSL_CLIENT_CERT;
-import static ee.ria.taraauthserver.config.properties.Constants.TARA_SESSION;
-import static ee.ria.taraauthserver.utils.OCSPValidatorTest.generateOcspResponderCertificate;
-import static ee.ria.taraauthserver.utils.OCSPValidatorTest.generateUserCertificate;
+import static ee.ria.taraauthserver.authentication.idcard.IdCardController.HEADER_SSL_CLIENT_CERT;
+import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest.generateOcspResponderCertificate;
+import static ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest.generateUserCertificate;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
 class IdCardControllerTest extends BaseTest {
-
-    @Autowired
-    private ResourceLoader resourceLoader;
-
-    private static final String MOCK_USER_CERT_2018_PATH = "file:src/test/resources/id-card/38001085718(TEST_of_ESTEID2018).pem";
 
     private static final OCSPValidatorTest.OcspResponseTransformer ocspResponseTransformer = new OCSPValidatorTest.OcspResponseTransformer();
 
@@ -394,7 +384,7 @@ class IdCardControllerTest extends BaseTest {
     }
 
     @Test
-    void idAuth_response_500_when_response_body_is_missing() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
+    void idAuth_response_500_when_response_body_is_missing() {
 
         wireMockServer.stubFor(WireMock.post("/esteid2015")
                 .willReturn(
@@ -420,7 +410,7 @@ class IdCardControllerTest extends BaseTest {
     }
 
     @Test
-    void idAuth_response_ocspService_notAvailable() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
+    void idAuth_response_ocspService_notAvailable() {
 
 
         wireMockServer.stubFor(get(urlEqualTo("/esteid2015"))
@@ -494,7 +484,7 @@ class IdCardControllerTest extends BaseTest {
         Session session = sessionRepository.createSession();
         TaraSession authSession = new TaraSession();
         authSession.setState(authenticationState);
-        session.setAttribute(Constants.TARA_SESSION, authSession);
+        session.setAttribute(TARA_SESSION, authSession);
         sessionRepository.save(session);
         return session.getId();
     }
@@ -535,8 +525,7 @@ class IdCardControllerTest extends BaseTest {
 
         final byte[] rawCrtText = certificate.getEncoded();
         final String encodedCertText = new String(encoder.encode(rawCrtText));
-        final String prettified_cert = BEGIN_CERT + LINE_SEPARATOR + encodedCertText + LINE_SEPARATOR + END_CERT;
-        return prettified_cert;
+        return BEGIN_CERT + LINE_SEPARATOR + encodedCertText + LINE_SEPARATOR + END_CERT;
     }
 
     public static final String BEGIN_CERT = "-----BEGIN CERTIFICATE-----";

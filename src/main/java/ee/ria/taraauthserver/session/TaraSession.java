@@ -22,6 +22,9 @@ import java.util.Map;
 @ToString
 @NoArgsConstructor
 public class TaraSession implements Serializable {
+
+    public static final String TARA_SESSION = "tara.session";
+
     private TaraAuthenticationState state;
     private LoginRequestInfo loginRequestInfo;
     private List<AuthenticationType> allowedAuthMethods;

@@ -1,6 +1,6 @@
-package ee.ria.taraauthserver.utils;
+package ee.ria.taraauthserver.session;
 
-import ee.ria.taraauthserver.error.Exceptions.BadRequestException;
+import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.ErrorTranslationCodes;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
@@ -13,7 +13,9 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-import static ee.ria.taraauthserver.config.properties.Constants.TARA_SESSION;
+import java.util.List;
+
+import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 
 @Slf4j
 @UtilityClass
@@ -38,6 +40,12 @@ public class SessionUtils {
         }
     }
 
+    public static TaraSession getAuthSessionInState(TaraAuthenticationState expectedState) {
+        TaraSession taraSession = getAuthSession();
+        assertSessionInState(taraSession, expectedState);
+        return taraSession;
+    }
+
     private static HttpSession getCurrentHttpSession() {
         RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes();
         ServletRequestAttributes attributes = (ServletRequestAttributes) requestAttributes;
@@ -55,6 +63,16 @@ public class SessionUtils {
         if (taraSession.getState() != expectedState) {
             throw new BadRequestException(ErrorTranslationCodes.SESSION_STATE_INVALID, String.format("Invalid authentication state: '%s', expected: '%s'", taraSession.getState(), expectedState));
         }
+    }
+
+    public static void assertSessionInState(TaraSession taraSession, List<TaraAuthenticationState> expectedStates) {
+        if (!expectedStates.contains(taraSession.getState()))
+            throw new BadRequestException(ErrorTranslationCodes.SESSION_STATE_INVALID, String.format("Invalid authentication state: '%s', expected one of: '%s'", taraSession.getState(), expectedStates));
+    }
+
+    public static void assertSessionNotInState(TaraSession taraSession, TaraAuthenticationState forbiddenState) {
+        if (taraSession.getState() == forbiddenState)
+            throw new BadRequestException(ErrorTranslationCodes.SESSION_STATE_INVALID, String.format("Invalid authentication state: '%s'", taraSession.getState()));
     }
 
     public static void updateSession(TaraSession taraSession) {

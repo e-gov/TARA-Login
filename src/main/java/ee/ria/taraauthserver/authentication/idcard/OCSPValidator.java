@@ -1,11 +1,10 @@
 package ee.ria.taraauthserver.authentication.idcard;
 
-import ee.ria.taraauthserver.error.Exceptions.OCSPServiceNotAvailableException;
-import ee.ria.taraauthserver.error.Exceptions.OCSPValidationException;
+import ee.ria.taraauthserver.error.exceptions.OCSPServiceNotAvailableException;
+import ee.ria.taraauthserver.error.exceptions.OCSPValidationException;
 import ee.ria.taraauthserver.utils.X509Utils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.Conversion;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.asn1.DEROctetString;
@@ -26,7 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.util.CollectionUtils;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -37,7 +36,6 @@ import java.security.*;
 import java.security.cert.*;
 import java.time.Instant;
 import java.util.*;
-import java.util.function.Consumer;
 
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp;
 
@@ -48,11 +46,7 @@ import static ee.ria.taraauthserver.config.properties.AuthConfigurationPropertie
 public class OCSPValidator {
 
     @Autowired
-    RestTemplate restTemplate;
-    @Autowired
     SSLContext sslContext;
-
-    Consumer<List<Integer>> methodRef = Collections::sort;
 
     public static final String MDC_ATTRIBUTE_OCSP_ID = "ocspUrl";
 
@@ -70,7 +64,7 @@ public class OCSPValidator {
         log.info("OCSP certificate validation. Serialnumber=<{}>, SubjectDN=<{}>, issuerDN=<{}>",
                 userCert.getSerialNumber(), userCert.getSubjectDN().getName(), userCert.getIssuerDN().getName());
         List<Ocsp> ocspConfiguration = ocspConfigurationResolver.resolve(userCert);
-        Assert.isTrue(CollectionUtils.isNotEmpty(ocspConfiguration), "At least one OCSP configuration must be present");
+        Assert.isTrue(!CollectionUtils.isEmpty(ocspConfiguration), "At least one OCSP configuration must be present");
 
         int count = 0;
         int maxTries = ocspConfiguration.size();

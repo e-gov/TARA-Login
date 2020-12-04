@@ -14,12 +14,11 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static ee.ria.taraauthserver.config.properties.Constants.TARA_SESSION;
 import static ee.ria.taraauthserver.session.MockSessionUtils.*;
+import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -39,7 +38,7 @@ public class AuthAcceptControllerTest extends BaseTest {
 
         given()
                 .when()
-                .get("/auth/accept")
+                .post("/auth/accept")
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -50,7 +49,7 @@ public class AuthAcceptControllerTest extends BaseTest {
     void authAccept_incorrectSessionState() throws Exception {
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.INIT_AUTH_PROCESS, getMockCredential());
 
-        ResultActions resultActions = mock.perform(get("/auth/accept").session(mockHttpSession))
+        ResultActions resultActions = mock.perform(MockMvcRequestBuilders.post("/auth/accept").session(mockHttpSession))
                 .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
 
         resultActions
@@ -73,7 +72,7 @@ public class AuthAcceptControllerTest extends BaseTest {
 
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 
-        ResultActions resultActions = mock.perform(get("/auth/accept").session(mockHttpSession))
+        ResultActions resultActions = mock.perform(MockMvcRequestBuilders.post("/auth/accept").session(mockHttpSession))
                 .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
 
         resultActions
@@ -82,6 +81,8 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .andExpect(jsonPath("$.error", is("Internal Server Error")))
                 .andExpect(jsonPath("$.message", is("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti.")))
                 .andExpect(jsonPath("$.path", is("/auth/accept")));
+
+        assertErrorIsLogged("HTTP client exception");
     }
 
     @Test
@@ -94,7 +95,7 @@ public class AuthAcceptControllerTest extends BaseTest {
 
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 
-        ResultActions resultActions = mock.perform(get("/auth/accept").session(mockHttpSession))
+        ResultActions resultActions = mock.perform(MockMvcRequestBuilders.post("/auth/accept").session(mockHttpSession))
                 .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
 
         resultActions
@@ -103,6 +104,8 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .andExpect(jsonPath("$.error", is("Internal Server Error")))
                 .andExpect(jsonPath("$.message", is("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti.")))
                 .andExpect(jsonPath("$.path", is("/auth/accept")));
+
+        assertErrorIsLogged("Server encountered an unexpected error: Invalid OIDC server response. Redirect URL missing from response.");
     }
 
     @Test
@@ -116,7 +119,7 @@ public class AuthAcceptControllerTest extends BaseTest {
 
         MockHttpSession testSession = MockSessionUtils.getMockHttpSession(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 
-        mock.perform(MockMvcRequestBuilders.get("/auth/accept")
+        mock.perform(MockMvcRequestBuilders.post("/auth/accept")
                 .session(testSession))
                 .andDo(print())
                 .andExpect(status().is(302))
@@ -134,7 +137,7 @@ public class AuthAcceptControllerTest extends BaseTest {
         MockHttpSession testSession = MockSessionUtils.getMockHttpSession(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
         ((TaraSession) testSession.getAttribute(TARA_SESSION)).getLoginRequestInfo().setRequestedScopes(List.of("legalperson"));
 
-        mock.perform(MockMvcRequestBuilders.get("/auth/accept")
+        mock.perform(MockMvcRequestBuilders.post("/auth/accept")
                 .session(testSession))
                 .andDo(print())
                 .andExpect(status().is(302))
@@ -152,10 +155,30 @@ public class AuthAcceptControllerTest extends BaseTest {
         MockHttpSession testSession = MockSessionUtils.getMockHttpSession(TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_COMPLETED);
         ((TaraSession) testSession.getAttribute(TARA_SESSION)).getLoginRequestInfo().setRequestedScopes(List.of("legalperson"));
 
-        mock.perform(MockMvcRequestBuilders.get("/auth/accept")
+        mock.perform(MockMvcRequestBuilders.post("/auth/accept")
                 .session(testSession))
                 .andDo(print())
                 .andExpect(status().is(302))
                 .andExpect(header().string("Location", "some/test/url"));
+    }
+
+    @Test
+    void authAccept_oidcServerTimeout() throws Exception {
+        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withFixedDelay(2000)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
+
+        MockHttpSession testSession = MockSessionUtils.getMockHttpSession(TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_COMPLETED);
+        ((TaraSession) testSession.getAttribute(TARA_SESSION)).getLoginRequestInfo().setRequestedScopes(List.of("legalperson"));
+
+        mock.perform(MockMvcRequestBuilders.post("/auth/accept")
+                .session(testSession))
+                .andDo(print())
+                .andExpect(status().is(500));
+
+        assertErrorIsLogged("Server encountered an unexpected error: I/O error on PUT request for \"https://localhost:9877/oauth2/auth/requests/login/accept\": Read timed out; nested exception is java.net.SocketTimeoutException: Read timed out");
     }
 }

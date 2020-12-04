@@ -2,7 +2,7 @@ package ee.ria.taraauthserver.authentication.legalperson.xroad;
 
 import ee.ria.taraauthserver.config.properties.LegalPersonProperties;
 import ee.ria.taraauthserver.error.ErrorTranslationCodes;
-import ee.ria.taraauthserver.error.Exceptions.ServiceNotAvailableException;
+import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
 import ee.ria.taraauthserver.session.TaraSession;
 import freemarker.template.Configuration;
 import freemarker.template.Template;

@@ -2,11 +2,11 @@ package ee.ria.taraauthserver.authentication.mobileid;
 
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
-import ee.ria.taraauthserver.error.Exceptions.BadRequestException;
+import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.ErrorTranslationCodes;
-import ee.ria.taraauthserver.error.Exceptions.ServiceNotAvailableException;
+import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
 import ee.ria.taraauthserver.session.TaraSession;
-import ee.ria.taraauthserver.utils.SessionUtils;
+import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.utils.ValidNationalIdNumber;
 import ee.sk.mid.*;
 import ee.sk.mid.exception.*;
@@ -48,9 +48,9 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 
-import static ee.ria.taraauthserver.config.properties.Constants.TARA_SESSION;
 import static ee.ria.taraauthserver.error.ErrorTranslationCodes.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
+import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 
 @Slf4j
 @Validated
@@ -94,6 +94,7 @@ public class AuthMidController {
         CompletableFuture.supplyAsync(
                 () -> {
                     try {
+                        log.info("Polling Mobile ID authentication process with MID session id {}", response.getSessionID());
                         return midClient.getSessionStatusPoller().fetchFinalSessionStatus(response.getSessionID(), "/authentication/session/" + response.getSessionID());
                     } catch (javax.ws.rs.BadRequestException | BadRequestException | NotAllowedException | MidSessionNotFoundException | NotAuthorizedException e) {
                         return setSessionStateFailed(session, e.getMessage(), null);
@@ -192,9 +193,9 @@ public class AuthMidController {
         MidAuthenticationRequest midRequest = createMidAuthenticationRequest(requestParameters, authenticationHash);
 
         try {
-            log.info("Mid request: " + midRequest.toString());
+            log.info("Mid init request: " + midRequest.toString());
             MidAuthenticationResponse response = midClient.getMobileIdConnector().authenticate(midRequest);
-            log.info("Mid response: " + response.toString());
+            log.info("Mid init response: " + response.toString());
             updateAuthSessionWithInitResponse(taraSession, response);
             return response;
         } catch (MidInternalErrorException | ProcessingException e) {
@@ -205,10 +206,11 @@ public class AuthMidController {
     }
 
     private void updateAuthSessionWithInitResponse(TaraSession taraSession, MidAuthenticationResponse response) {
+        log.info("Mobile ID authentication process with MID session id {} has been initiated", response.getSessionID());
         taraSession.setState(POLL_MID_STATUS);
         TaraSession.MidAuthenticationResult midAuthenticationResult = new TaraSession.MidAuthenticationResult();
-        taraSession.setAuthenticationResult(midAuthenticationResult);
         midAuthenticationResult.setMidSessionId(response.getSessionID());
+        taraSession.setAuthenticationResult(midAuthenticationResult);
     }
 
     private MidAuthenticationRequest createMidAuthenticationRequest(MidRequestBody requestParameters, MidAuthenticationHashToSign authenticationHash) {

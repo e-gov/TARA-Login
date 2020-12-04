@@ -23,7 +23,7 @@
  *
  */
 
-package ee.ria.taraauthserver.error.Exceptions;
+package ee.ria.taraauthserver.error.exceptions;
 
 import ee.ria.taraauthserver.error.ErrorTranslationCodes;
 

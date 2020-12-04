@@ -7,15 +7,13 @@ import ch.qos.logback.core.read.ListAppender;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import ee.ria.taraauthserver.utils.OCSPValidatorTest;
+import ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest;
 import io.restassured.RestAssured;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -54,11 +52,6 @@ public abstract class BaseTest {
     protected int port;
 
     private static ListAppender<ILoggingEvent> mockAppender;
-
-    static {
-        System.setProperty("http.keepAlive", "false");
-        System.setProperty("http.maxConnections", "1");
-    }
 
     @BeforeAll
     static void setUpAll() {
@@ -139,6 +132,7 @@ public abstract class BaseTest {
                 .httpsPort(9877)
                 .keystorePath("src/test/resources/tls-keystore.jks")
                 .keystorePassword("changeit")
+                .keyManagerPassword("changeit")
                 .notifier(new ConsoleNotifier(true))
         );
         wireMockServer.start();
@@ -150,6 +144,7 @@ public abstract class BaseTest {
                 .httpsPort(9877)
                 .keystorePath("src/test/resources/tls-keystore.jks")
                 .keystorePassword("changeit")
+                .keyManagerPassword("changeit")
                 .extensions(transformer)
                 .notifier(new ConsoleNotifier(true))
         );
