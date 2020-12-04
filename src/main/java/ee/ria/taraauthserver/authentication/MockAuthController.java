@@ -2,6 +2,8 @@ package ee.ria.taraauthserver.authentication;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -12,12 +14,15 @@ import org.springframework.http.*;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.view.RedirectView;
 
 import javax.servlet.http.HttpSession;
 import java.net.URL;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
