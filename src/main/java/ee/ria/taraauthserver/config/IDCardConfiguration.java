@@ -33,13 +33,13 @@ public class IDCardConfiguration {
     KeyStore idcardKeystore(ResourceLoader resourceLoader) {
         try {
             KeyStore keystore = KeyStore.getInstance(configurationProvider.getTruststoreType());
-            Resource resource = resourceLoader.getResource(configurationProvider.getTruststore());
+            Resource resource = resourceLoader.getResource(configurationProvider.getTruststorePath());
             try (InputStream inputStream = resource.getInputStream()) {
                 keystore.load(inputStream, configurationProvider.getTruststorePassword().toCharArray());
             }
             return keystore;
         } catch (Exception e) {
-            throw new IllegalStateException("Could not load truststore of type " + configurationProvider.getTruststoreType() + " from " + configurationProvider.getTruststore() + "!", e);
+            throw new IllegalStateException("Could not load truststore of type " + configurationProvider.getTruststoreType() + " from " + configurationProvider.getTruststorePath() + "!", e);
         }
     }
 

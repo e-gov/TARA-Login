@@ -85,7 +85,7 @@ public class TruststoreHealthIndicator extends AbstractHealthIndicator {
     @PostConstruct
     private void setupTruststoreCertificatesInfo() throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException {
         KeyStore keyStore = KeyStore.getInstance(idCardConfiguration.getTruststoreType());
-        Resource resource = resourceLoader.getResource(idCardConfiguration.getTruststore());
+        Resource resource = resourceLoader.getResource(idCardConfiguration.getTruststorePath());
         keyStore.load(resource.getInputStream(), idCardConfiguration.getTruststorePassword().toCharArray());
         Enumeration<String> aliases = keyStore.aliases();
         while (aliases.hasMoreElements()) {

@@ -1,6 +1,5 @@
 package ee.ria.taraauthserver.config.properties;
 
-
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -110,7 +109,7 @@ public class AuthConfigurationProperties {
     public static class IdCardAuthConfigurationProperties extends AuthMethodProperties {
 
         @NotNull
-        private String truststore;
+        private String truststorePath;
         private String truststoreType = "PKCS12";
         @NotNull
         private String truststorePassword;
