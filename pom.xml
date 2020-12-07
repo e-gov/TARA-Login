@@ -156,6 +156,7 @@
 				<configuration>
 					<runOrder>random</runOrder>
 					<redirectTestOutputToFile>true</redirectTestOutputToFile>
+					<reuseForks>false</reuseForks>
 				</configuration>
 			</plugin>
 			<plugin>
