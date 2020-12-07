@@ -10,7 +10,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.asn1.x509.CRLReason;
-import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.cert.ocsp.CertificateStatus;
 import org.bouncycastle.cert.ocsp.OCSPResp;
 import org.bouncycastle.cert.ocsp.RevokedStatus;
@@ -39,22 +38,18 @@ import java.util.Date;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static ee.ria.taraauthserver.authentication.idcard.IdCardController.HEADER_SSL_CLIENT_CERT;
-import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest.generateOcspResponderCertificate;
 import static ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest.generateUserCertificate;
+import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
 class IdCardControllerTest extends BaseTest {
-
     private static final OCSPValidatorTest.OcspResponseTransformer ocspResponseTransformer = new OCSPValidatorTest.OcspResponseTransformer();
-
-    @Autowired
-    private AuthConfigurationProperties.Ocsp ocspConfiguration;
+    private final AuthConfigurationProperties.Ocsp ocspConfiguration = new AuthConfigurationProperties.Ocsp();
     private KeyPair responderKeys;
-    private X509Certificate responderCert;
 
     @Autowired
     private SessionRepository sessionRepository;
@@ -65,23 +60,14 @@ class IdCardControllerTest extends BaseTest {
     }
 
     @BeforeEach
-    public void setUpTest() throws OperatorCreationException, CertificateException, CertIOException, NoSuchAlgorithmException, NoSuchProviderException {
-
+    public void setUpTest() throws NoSuchAlgorithmException, NoSuchProviderException {
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA", BouncyCastleProvider.PROVIDER_NAME);
-
         keyPairGenerator.initialize(2048);
 
         responderKeys = keyPairGenerator.generateKeyPair();
         ocspResponseTransformer.setSignerKey(responderKeys.getPrivate());
         ocspResponseTransformer.setThisUpdateProvider(() -> Date.from(Instant.now()));
         ocspResponseTransformer.setNonceResolver(nonce -> nonce);
-
-
-        responderCert = generateOcspResponderCertificate(
-                "C=EE,O=AS Sertifitseerimiskeskus,OU=OCSP,CN=ESTEID2018 AIA OCSP RESPONDER 201903,E=pki@sk.ee",
-                responderKeys, responderKeys,
-                "CN=MOCK CA").getCertificate();
-
     }
 
     @Test
