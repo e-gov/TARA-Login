@@ -65,9 +65,6 @@ public class AuthMidController {
     private SessionRepository sessionRepository;
 
     @Autowired
-    private AuthConfigurationProperties authConfigurationProperties;
-
-    @Autowired
     private AuthConfigurationProperties.MidAuthConfigurationProperties midAuthConfigurationProperties;
 
     private final Map<String, MidLanguage> midLanguages = Map.of(

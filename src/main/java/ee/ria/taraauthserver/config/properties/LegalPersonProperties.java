@@ -26,16 +26,12 @@
 package ee.ria.taraauthserver.config.properties;
 
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.constraints.NotNull;
-import java.util.List;
 
 @Data
-@Component
 @Validated
 @ConfigurationProperties(prefix = "tara.legal-person-authentication")
 public class LegalPersonProperties {
@@ -73,5 +69,5 @@ public class LegalPersonProperties {
     @NotNull
     private String xRoadClientSubsystemCode;
 
-    private String[] esindusv2AllowedTypes = new String[] {"TÜ", "UÜ", "OÜ","AS", "TÜH", "SA", "MTÜ"};
+    private String[] esindusv2AllowedTypes = new String[]{"TÜ", "UÜ", "OÜ", "AS", "TÜH", "SA", "MTÜ"};
 }

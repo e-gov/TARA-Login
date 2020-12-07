@@ -13,11 +13,10 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.session.hazelcast.HazelcastIndexedSessionRepository;
@@ -42,10 +41,8 @@ import static org.springframework.util.ResourceUtils.getFile;
 @Slf4j
 @Configuration
 @EnableHazelcastHttpSession
-@ComponentScan(basePackages = {"ee.ria.taraauthserver"})
-@EnableConfigurationProperties(AuthConfigurationProperties.class)
+@ConfigurationPropertiesScan
 public class TaraAuthServerConfiguration implements WebMvcConfigurer {
-
     public static final String TARA_SESSION_COOKIE_NAME = "SESSION";
 
     @Autowired
