@@ -1,10 +1,10 @@
 package ee.ria.taraauthserver.authentication.legalperson;
 
+import ee.ria.taraauthserver.authentication.legalperson.xroad.BusinessRegistryService;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.NotFoundException;
-import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.SessionUtils;
-import ee.ria.taraauthserver.authentication.legalperson.xroad.BusinessRegistryService;
+import ee.ria.taraauthserver.session.TaraSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,9 +29,9 @@ import java.util.Optional;
 
 import static ee.ria.taraauthserver.config.properties.TaraScope.LEGALPERSON;
 import static ee.ria.taraauthserver.error.ErrorTranslationCodes.INVALID_REQUEST;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.SessionUtils.assertSessionInState;
 import static ee.ria.taraauthserver.session.SessionUtils.updateSession;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static java.lang.String.format;
 import static org.springframework.util.Assert.isTrue;
 import static org.springframework.util.Assert.notNull;
@@ -47,7 +47,7 @@ public class LegalpersonController {
     @Autowired
     private final BusinessRegistryService eBusinessRegistryService;
 
-    @GetMapping(value="/auth/legal_person/init")
+    @GetMapping(value = "/auth/legal_person/init")
     public String initLegalPerson(Model model) {
         TaraSession taraSession = SessionUtils.getAuthSession();
         assertSessionInState(taraSession, NATURAL_PERSON_AUTHENTICATION_COMPLETED);
@@ -72,7 +72,7 @@ public class LegalpersonController {
         return "legalPersonView";
     }
 
-    @GetMapping(value="/auth/legal_person", produces = {MediaType.APPLICATION_JSON_VALUE})
+    @GetMapping(value = "/auth/legal_person", produces = {MediaType.APPLICATION_JSON_VALUE})
     public ModelAndView fetchLegalPersonsList(HttpServletRequest request, HttpSession httpSession) {
         TaraSession taraSession = SessionUtils.getAuthSession();
 
@@ -109,7 +109,7 @@ public class LegalpersonController {
             taraSession.setState(LEGAL_PERSON_AUTHENTICATION_COMPLETED);
             updateSession(taraSession);
             log.info("Legal person selected: {}", legalPersonIdentifier);
-            return "redirect:/auth/accept";
+            return "forward:/auth/accept";
         } else {
             throw new BadRequestException(INVALID_REQUEST, format("Attempted to select invalid legal person with id: '%s'", legalPersonIdentifier));
         }
