@@ -1,9 +1,9 @@
 package ee.ria.taraauthserver.authentication.mobileid;
 
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
-import ee.ria.taraauthserver.session.SessionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -35,7 +35,7 @@ public class AuthMidPollController {
         if (taraSession.getState() == NATURAL_PERSON_AUTHENTICATION_COMPLETED)
             return new ModelAndView(new MappingJackson2JsonView(), Map.of("status", "COMPLETED"));
         else if (taraSession.getState() == AUTHENTICATION_FAILED)
-            throw new BadRequestException(((TaraSession.MidAuthenticationResult) (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage(), "Mid poll failed");
+            throw new BadRequestException(((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage(), "Mid poll failed");
         else
             return new ModelAndView(new MappingJackson2JsonView(), Map.of("status", "PENDING"));
     }

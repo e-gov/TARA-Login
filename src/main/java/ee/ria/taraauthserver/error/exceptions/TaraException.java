@@ -6,7 +6,7 @@ import lombok.Getter;
 public abstract class TaraException extends RuntimeException {
 
     @Getter
-    private ErrorTranslationCodes messageCode;
+    private final ErrorTranslationCodes messageCode;
 
     public TaraException(ErrorTranslationCodes messageCode, String debugMessage) {
         this(messageCode, debugMessage, null);

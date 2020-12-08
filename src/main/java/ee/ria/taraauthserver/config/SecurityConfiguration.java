@@ -13,13 +13,13 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.sessionManagement()
-            .sessionCreationPolicy(SessionCreationPolicy.NEVER)
-        .and().csrf().disable() // TODO add support to thymeleaf views
-        .headers()
-        .frameOptions().deny()
-        .httpStrictTransportSecurity()
-        .includeSubDomains(true)
-        .maxAgeInSeconds(600000);
+                .sessionCreationPolicy(SessionCreationPolicy.NEVER)
+                .and().csrf().disable() // TODO add support to thymeleaf views
+                .headers()
+                .frameOptions().deny()
+                .httpStrictTransportSecurity()
+                .includeSubDomains(true)
+                .maxAgeInSeconds(600000);
     }
 
     @Override

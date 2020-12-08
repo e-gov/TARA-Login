@@ -33,6 +33,11 @@ import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 import org.springframework.web.servlet.i18n.SessionLocaleResolver;
 
 import javax.net.ssl.SSLContext;
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.time.Duration;
 import java.util.Locale;
 
@@ -49,7 +54,7 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
     private AuthConfigurationProperties authConfigurationProperties;
 
     @Bean
-    public SSLContext trustContext() throws Exception {
+    public SSLContext trustContext() throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         return SSLContextBuilder
                 .create().setKeyStoreType(authConfigurationProperties.getTls().getTrustStoreType())
                 .loadTrustMaterial(
@@ -59,7 +64,7 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
     }
 
     @Bean
-    public RestTemplate restTemplate(RestTemplateBuilder builder, SSLContext sslContext) throws Exception {
+    public RestTemplate restTemplate(RestTemplateBuilder builder, SSLContext sslContext) {
         HttpClient client = HttpClients.custom()
                 .setSSLContext(sslContext)
                 .build();

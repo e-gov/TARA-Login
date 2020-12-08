@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.authentication.mobileid;
 
+import com.github.tomakehurst.wiremock.client.WireMock;
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
@@ -8,7 +9,6 @@ import ee.ria.taraauthserver.error.ErrorTranslationCodes;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -20,10 +20,17 @@ import org.springframework.test.annotation.DirtiesContext;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static ee.ria.taraauthserver.error.ErrorTranslationCodes.MID_INTERNAL_ERROR;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
+import static org.awaitility.Awaitility.await;
+import static org.awaitility.Durations.FIVE_SECONDS;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
@@ -48,8 +55,8 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", Matchers.equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
-                .body("error", Matchers.equalTo("Bad Request"));
+                .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
+                .body("error", equalTo("Bad Request"));
 
         assertErrorIsLogged("User exception: Invalid session");
     }
@@ -64,8 +71,8 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", Matchers.equalTo("Isikukood ei ole korrektne."))
-                .body("error", Matchers.equalTo("Bad Request"));
+                .body("message", equalTo("Isikukood ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
 
         assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
     }
@@ -80,8 +87,8 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", Matchers.equalTo("Isikukood ei ole korrektne."))
-                .body("error", Matchers.equalTo("Bad Request"));
+                .body("message", equalTo("Isikukood ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
 
         assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
     }
@@ -96,8 +103,8 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", Matchers.equalTo("Isikukood ei ole korrektne."))
-                .body("error", Matchers.equalTo("Bad Request"));
+                .body("message", equalTo("Isikukood ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
 
         assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
     }
@@ -112,8 +119,8 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", Matchers.equalTo("Isikukood ei ole korrektne."))
-                .body("error", Matchers.equalTo("Bad Request"));
+                .body("message", equalTo("Isikukood ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
 
         assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
     }
@@ -127,8 +134,8 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", Matchers.equalTo("Telefoninumber ei ole korrektne."))
-                .body("error", Matchers.equalTo("Bad Request"));
+                .body("message", equalTo("Telefoninumber ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
     }
 
     @Test
@@ -141,8 +148,8 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", Matchers.equalTo("Telefoninumber ei ole korrektne."))
-                .body("error", Matchers.equalTo("Bad Request"));
+                .body("message", equalTo("Telefoninumber ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
     }
 
     @Test
@@ -155,8 +162,8 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", Matchers.equalTo("Telefoninumber ei ole korrektne."))
-                .body("error", Matchers.equalTo("Bad Request"));
+                .body("message", equalTo("Telefoninumber ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
     }
 
     @Test
@@ -169,8 +176,8 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", Matchers.equalTo("Telefoninumber ei ole korrektne."))
-                .body("error", Matchers.equalTo("Bad Request"));
+                .body("message", equalTo("Telefoninumber ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
 
     }
 
@@ -184,12 +191,12 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", Matchers.equalTo("Telefoninumber ei ole korrektne."))
-                .body("error", Matchers.equalTo("Bad Request"));
+                .body("message", equalTo("Telefoninumber ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
     }
 
     @Test
-    void phoneNumberAndIdCodeValid() throws InterruptedException {
+    void phoneNumberAndIdCodeValid() {
         createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
         createPollStubWithResponse("mock_responses/mid/mid_poll_response.json", 200);
 
@@ -205,13 +212,9 @@ class AuthMidControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200);
 
-        Thread.sleep(1000);
+        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
 
-        assertInfoIsLogged("Mid init request: ee.sk.mid.rest.dao.request.MidAuthenticationRequest");
-        assertInfoIsLogged("Mid init response: MidAbstractResponse{sessionID='de305d54-75b4-431b-adb2-eb6b9e546015'}");
-        assertInfoIsLogged("Mobile ID authentication process with MID session id de305d54-75b4-431b-adb2-eb6b9e546015 has been initiated");
-
-        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
         assertEquals("60001019906", result.getIdCode());
         assertEquals("EE", result.getCountry());
@@ -222,13 +225,16 @@ class AuthMidControllerTest extends BaseTest {
         assertEquals("2000-01-01", result.getDateOfBirth().toString());
         assertEquals(AuthenticationType.MobileID, result.getAmr());
         assertEquals(LevelOfAssurance.HIGH, result.getAcr());
-        assertEquals(NATURAL_PERSON_AUTHENTICATION_COMPLETED, taraSession.getState());
+
+        assertInfoIsLogged("Mid init request: ee.sk.mid.rest.dao.request.MidAuthenticationRequest");
+        assertInfoIsLogged("Mid init response: MidAbstractResponse{sessionID='de305d54-75b4-431b-adb2-eb6b9e546015'}");
+        assertInfoIsLogged("Mobile ID authentication process with MID session id de305d54-75b4-431b-adb2-eb6b9e546015 has been initiated");
     }
 
     @Test
     void midAuthInit_request_language_is_correct() {
         wireMockServer.stubFor(any(urlPathEqualTo("/mid-api/authentication"))
-                .withRequestBody(matchingJsonPath("$.language", equalTo("ENG")))
+                .withRequestBody(matchingJsonPath("$.language", WireMock.equalTo("ENG")))
                 .willReturn(aResponse()
                         .withBodyFile("mock_responses/mid/mid_authenticate_response.json")
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
@@ -266,8 +272,8 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", Matchers.equalTo("Ebakorrektne päring."))
-                .body("error", Matchers.equalTo("Bad Request"))
+                .body("message", equalTo("Ebakorrektne päring."))
+                .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
         assertErrorIsLogged("User exception: authSession state should be INIT_AUTH_PROCESS but was INIT_MID");
@@ -294,8 +300,8 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", Matchers.equalTo("Ebakorrektne päring."))
-                .body("error", Matchers.equalTo("Bad Request"))
+                .body("message", equalTo("Ebakorrektne päring."))
+                .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
         assertErrorIsLogged("User exception: Mobile ID authentication method is not allowed");
@@ -403,11 +409,9 @@ class AuthMidControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200);
 
-        Thread.sleep(500);
-
+        await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertInfoIsLogged("Mid polling failed: HTTP 400 Bad Request");
-        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
-        assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
     }
 
     @Test
@@ -427,11 +431,9 @@ class AuthMidControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200);
 
-        Thread.sleep(500);
-
+        await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertInfoIsLogged("Mid polling failed: HTTP 401 Unauthorized");
-        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
-        assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
     }
 
     @Test
@@ -451,11 +453,9 @@ class AuthMidControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200);
 
-        Thread.sleep(500);
-
+        await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertInfoIsLogged("Mid polling failed: Mobile-ID session was not found. Sessions time out in ~5 minutes.");
-        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
-        assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
     }
 
     @Test
@@ -475,11 +475,9 @@ class AuthMidControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200);
 
-        Thread.sleep(500);
-
+        await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertInfoIsLogged("Mid polling failed: HTTP 405 Method Not Allowed");
-        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
-        assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
     }
 
     @Test
@@ -499,12 +497,10 @@ class AuthMidControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200);
 
-        Thread.sleep(500);
-
+        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertInfoIsLogged("Mid polling failed: HTTP 500 Server Error");
-        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
-        assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
-        // TODO assertEquals(ErrorMessages.MID_INTERNAL_ERROR.getMessage(), ((AuthSession.MidAuthenticationResult) authSession.getAuthenticationResult()).getErrorMessage());
+        assertEquals(MID_INTERNAL_ERROR, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
     }
 
     @Test
@@ -524,11 +520,9 @@ class AuthMidControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200);
 
-        Thread.sleep(500);
-
+        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertInfoIsLogged("Mid polling failed: User cancelled the operation.");
-        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
-        assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorTranslationCodes.MID_USER_CANCEL, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
     }
 
@@ -549,11 +543,9 @@ class AuthMidControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200);
 
-        Thread.sleep(500);
-
+        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertInfoIsLogged("Mid polling failed: User has no active certificates, and thus is not Mobile-ID client");
-        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
-        assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorTranslationCodes.NOT_MID_CLIENT, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
     }
 
@@ -574,11 +566,9 @@ class AuthMidControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200);
 
-        Thread.sleep(500);
-
+        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertInfoIsLogged("Mid polling failed: User didn't enter PIN code or communication error.");
-        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
-        assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorTranslationCodes.MID_TRANSACTION_EXPIRED, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
     }
 
@@ -599,11 +589,9 @@ class AuthMidControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200);
 
-        Thread.sleep(500);
-
+        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertInfoIsLogged("Mid polling failed: Mobile-ID configuration on user's SIM card differs from what is configured on service provider side. User needs to contact his/her mobile operator.");
-        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
-        assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorTranslationCodes.MID_HASH_MISMATCH, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
     }
 
@@ -624,11 +612,9 @@ class AuthMidControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200);
 
-        Thread.sleep(500);
-
+        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertInfoIsLogged("Mid polling failed: Unable to reach phone or SIM card");
-        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
-        assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorTranslationCodes.MID_PHONE_ABSENT, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
     }
 
@@ -649,11 +635,9 @@ class AuthMidControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200);
 
-        Thread.sleep(500);
-
+        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertInfoIsLogged("Mid polling failed: SMS sending error");
-        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
-        assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorTranslationCodes.MID_DELIVERY_ERROR, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
     }
 
@@ -676,7 +660,7 @@ class AuthMidControllerTest extends BaseTest {
 
         assertInfoIsLogged("Mid polling failed: SMS sending error");
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
-        assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
+        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorTranslationCodes.MID_DELIVERY_ERROR, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
     }
 
@@ -696,7 +680,7 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(502)
-                .body("message", org.hamcrest.Matchers.equalTo("Mobiil-ID teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti."));
+                .body("message", equalTo("Mobiil-ID teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti."));
 
         assertErrorIsLogged("Service not available: MID service is currently unavailable: java.net.SocketTimeoutException: Read timed out");
     }
@@ -707,7 +691,7 @@ class AuthMidControllerTest extends BaseTest {
 
     private void createAuthenticationStubWithResponse(String response, int status, int delayInMilliseconds) {
         wireMockServer.stubFor(any(urlPathEqualTo("/mid-api/authentication"))
-                .withRequestBody(matchingJsonPath("$.language", equalTo("EST")))
+                .withRequestBody(matchingJsonPath("$.language", WireMock.equalTo("EST")))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withStatus(status)

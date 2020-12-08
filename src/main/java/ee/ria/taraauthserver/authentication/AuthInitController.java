@@ -6,8 +6,8 @@ import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
-import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
+import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.RequestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,10 +54,10 @@ public class AuthInitController {
     public String authInit(
             @RequestParam(name = "login_challenge") @Size(max = 50)
             @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed")
-            String loginChallenge,
+                    String loginChallenge,
             @RequestParam(name = "lang", required = false)
             @Pattern(regexp = "(et|en|ru)", message = "supported values are: 'et', 'en', 'ru'")
-            String language) {
+                    String language) {
 
         TaraSession taraSession = initAuthSession(loginChallenge);
 
@@ -164,7 +164,7 @@ public class AuthInitController {
                 .filter(e -> scopes.contains(e.getScope())).collect(Collectors.toList());
 
         if (isEmpty(clientRequestedAuthMethods)) {
-            return  taraProperties.getDefaultAuthenticationMethods();
+            return taraProperties.getDefaultAuthenticationMethods();
         } else {
             return clientRequestedAuthMethods;
         }
@@ -182,7 +182,7 @@ public class AuthInitController {
         boolean isAllowed = authenticationMethodLoa.ordinal() >= requestedLoa.ordinal();
 
         if (!isAllowed) {
-            log.warn("Ignoring authentication method since it's level of assurance is lower than requested. Authentication method: {} with assigned LoA: {}, requested level of assurance: {}", authenticationMethod, authenticationMethodLoa, requestedLoa );
+            log.warn("Ignoring authentication method since it's level of assurance is lower than requested. Authentication method: {} with assigned LoA: {}, requested level of assurance: {}", authenticationMethod, authenticationMethodLoa, requestedLoa);
         }
 
         return isAllowed;

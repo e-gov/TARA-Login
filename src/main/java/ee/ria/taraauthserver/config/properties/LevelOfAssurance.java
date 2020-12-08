@@ -35,8 +35,8 @@ public enum LevelOfAssurance {
     private static final Map<String, LevelOfAssurance> acrNameMap;
 
     static {
-        formalNameMap = new HashMap<String, LevelOfAssurance>();
-        acrNameMap = new HashMap<String, LevelOfAssurance>();
+        formalNameMap = new HashMap<>();
+        acrNameMap = new HashMap<>();
 
         for (LevelOfAssurance loa : LevelOfAssurance.values()) {
             formalNameMap.put(loa.formalName, loa);

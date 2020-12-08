@@ -13,7 +13,10 @@ import org.springframework.validation.annotation.Validated;
 import javax.annotation.PostConstruct;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
-import java.util.*;
+import java.util.EnumMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.IDCard;
@@ -35,7 +38,7 @@ public class AuthConfigurationProperties {
 
     private TruststoreProperties tls = new TruststoreProperties();
 
-    private Map<AuthenticationType, AuthMethodProperties> authMethods = new HashMap<>();
+    private EnumMap<AuthenticationType, AuthMethodProperties> authMethods = new EnumMap<>(AuthenticationType.class);
 
     @Data
     @Validated

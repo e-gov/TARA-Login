@@ -60,11 +60,11 @@ public class BusinessRegistryService {
                 "staatus = 'R' " +
                 "and (" + getConditionList(legalPersonProperties.getEsindusv2AllowedTypes(), "oiguslik_vorm = '%s'") + ") " +
                 "and isikud/item[" +
-                    "isikukood_riik = 'EST' " +
-                    "and fyysilise_isiku_kood = '%s' " +
-                    "and ainuesindusoigus_olemas = 'JAH'" +
+                "isikukood_riik = 'EST' " +
+                "and fyysilise_isiku_kood = '%s' " +
+                "and ainuesindusoigus_olemas = 'JAH'" +
                 "]" +
-            "]";
+                "]";
     }
 
     public List<TaraSession.LegalPerson> executeEsindusV2Service(String idCode) {
@@ -130,8 +130,8 @@ public class BusinessRegistryService {
             con.setRequestProperty("Content-Type", "text/xml;charset=UTF-8");
             con.setDoOutput(true);
 
-            try( DataOutputStream wr = new DataOutputStream( con.getOutputStream())) {
-                wr.write( request.getBytes(StandardCharsets.UTF_8) );
+            try (DataOutputStream wr = new DataOutputStream(con.getOutputStream())) {
+                wr.write(request.getBytes(StandardCharsets.UTF_8));
             }
 
             try (InputStream in = (InputStream) con.getContent()) {
@@ -146,12 +146,12 @@ public class BusinessRegistryService {
                 DocumentBuilder builder = builderFactory.newDocumentBuilder();
                 Document xmlDocument = builder.parse(IOUtils.toInputStream(response, StandardCharsets.UTF_8));
                 XPath xPath = XPathFactory.newInstance().newXPath();
-                String faultCode = (String)xPath.compile("/Envelope/Body/Fault/faultcode/text()")
+                String faultCode = (String) xPath.compile("/Envelope/Body/Fault/faultcode/text()")
                         .evaluate(xmlDocument, XPathConstants.STRING);
                 if (StringUtils.isEmpty(faultCode)) {
                     return (NodeList) xPath.compile(filterExpression).evaluate(xmlDocument, XPathConstants.NODESET);
                 } else {
-                    String faultstring = (String)xPath.compile("/Envelope/Body/Fault/faultstring/text()")
+                    String faultstring = (String) xPath.compile("/Envelope/Body/Fault/faultstring/text()")
                             .evaluate(xmlDocument, XPathConstants.STRING);
                     throw new IllegalStateException("XRoad service returned a soap fault: faultcode = '" + faultCode
                             + "', faultstring = '" + faultstring + "'");
