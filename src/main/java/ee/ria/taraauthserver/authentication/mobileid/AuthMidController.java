@@ -55,7 +55,7 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 @Slf4j
 @Validated
 @Controller
-@ConditionalOnProperty(value = "tara.mid-authentication.enabled", matchIfMissing = true)
+@ConditionalOnProperty(value = "tara.auth-methods.mobile-id.enabled", matchIfMissing = true)
 public class AuthMidController {
 
     @Autowired
