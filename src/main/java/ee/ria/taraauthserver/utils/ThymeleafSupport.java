@@ -51,10 +51,7 @@ public class ThymeleafSupport {
 
         Map<String, String> serviceNameTranslations = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getNameTranslations();
         Locale locale = LocaleContextHolder.getLocale();
-        if (serviceNameTranslations.containsKey(locale.getLanguage()))
-            return serviceNameTranslations.get(locale.getLanguage());
-        else
-            return defaultServicename;
+        return serviceNameTranslations.getOrDefault(locale.getLanguage(), defaultServicename);
     }
 
     public String getLocaleUrl(String locale) { // TODO test this part
@@ -66,7 +63,7 @@ public class ThymeleafSupport {
         Assert.notNull(method, "Authentication method can not be null!");
 
         List<AuthenticationType> clientSpecificAuthMethodList = SessionUtils.getOrCreateAuthSession().getAllowedAuthMethods();
-        if (clientSpecificAuthMethodList == null || clientSpecificAuthMethodList.size() == 0) {
+        if (clientSpecificAuthMethodList == null || clientSpecificAuthMethodList.isEmpty()) {
             return false;
         }
 

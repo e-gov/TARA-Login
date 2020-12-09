@@ -68,7 +68,7 @@ public class MockAuthController {
         AcceptConsentRequest acceptConsentRequest = new AcceptConsentRequest();
         HttpEntity<AcceptConsentRequest> request = new HttpEntity<>(acceptConsentRequest);
 
-        Map<String, Object> profileAttributes =new LinkedHashMap<>();
+        Map<String, Object> profileAttributes = new LinkedHashMap<>();
 
         addProfile_attributes(profileAttributes, taraSession);
 

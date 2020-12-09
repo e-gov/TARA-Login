@@ -1,10 +1,10 @@
 package ee.ria.taraauthserver.authentication.legalperson;
 
+import ee.ria.taraauthserver.authentication.legalperson.xroad.BusinessRegistryService;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.NotFoundException;
-import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.SessionUtils;
-import ee.ria.taraauthserver.authentication.legalperson.xroad.BusinessRegistryService;
+import ee.ria.taraauthserver.session.TaraSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,8 +30,6 @@ import java.util.Optional;
 import static ee.ria.taraauthserver.config.properties.TaraScope.LEGALPERSON;
 import static ee.ria.taraauthserver.error.ErrorTranslationCodes.INVALID_REQUEST;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
-import static ee.ria.taraauthserver.session.SessionUtils.assertSessionInState;
-import static ee.ria.taraauthserver.session.SessionUtils.updateSession;
 import static java.lang.String.format;
 import static org.springframework.util.Assert.isTrue;
 import static org.springframework.util.Assert.notNull;
@@ -47,10 +45,10 @@ public class LegalpersonController {
     @Autowired
     private final BusinessRegistryService eBusinessRegistryService;
 
-    @GetMapping(value="/auth/legal_person/init")
+    @GetMapping(value = "/auth/legal_person/init")
     public String initLegalPerson(Model model) {
         TaraSession taraSession = SessionUtils.getAuthSession();
-        assertSessionInState(taraSession, NATURAL_PERSON_AUTHENTICATION_COMPLETED);
+        SessionUtils.assertSessionInState(taraSession, NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 
         if (!isLegalpersonScopeAllowed(taraSession))
             throw new BadRequestException(INVALID_REQUEST, format("client '%s' is not authorized to use scope '%s'",
@@ -67,16 +65,16 @@ public class LegalpersonController {
         model.addAttribute("login_challenge", taraSession.getLoginRequestInfo().getChallenge());
 
         taraSession.setState(LEGAL_PERSON_AUTHENTICATION_INIT);
-        updateSession(taraSession);
+        SessionUtils.updateSession(taraSession);
 
         return "legalPersonView";
     }
 
-    @GetMapping(value="/auth/legal_person", produces = {MediaType.APPLICATION_JSON_VALUE})
+    @GetMapping(value = "/auth/legal_person", produces = {MediaType.APPLICATION_JSON_VALUE})
     public ModelAndView fetchLegalPersonsList(HttpServletRequest request, HttpSession httpSession) {
         TaraSession taraSession = SessionUtils.getAuthSession();
 
-        assertSessionInState(taraSession, LEGAL_PERSON_AUTHENTICATION_INIT);
+        SessionUtils.assertSessionInState(taraSession, LEGAL_PERSON_AUTHENTICATION_INIT);
         notNull(taraSession.getAuthenticationResult(), "Authentication credentials missing from session!");
 
         List<TaraSession.LegalPerson> legalPersons = eBusinessRegistryService.executeEsindusV2Service(taraSession.getAuthenticationResult().getIdCode());
@@ -86,7 +84,7 @@ public class LegalpersonController {
         } else {
             taraSession.setLegalPersonList(legalPersons);
             taraSession.setState(GET_LEGAL_PERSON_LIST);
-            updateSession(taraSession);
+            SessionUtils.updateSession(taraSession);
             return new ModelAndView(new MappingJackson2JsonView(), Collections.singletonMap("legalPersons", legalPersons));
         }
     }
@@ -98,7 +96,7 @@ public class LegalpersonController {
             @Pattern(regexp = "[a-zA-Z0-9-_]{1,}", message = "invalid legal person identifier")
                     String legalPersonIdentifier) {
         TaraSession taraSession = SessionUtils.getAuthSession();
-        assertSessionInState(taraSession, GET_LEGAL_PERSON_LIST);
+        SessionUtils.assertSessionInState(taraSession, GET_LEGAL_PERSON_LIST);
         List<TaraSession.LegalPerson> legalPersons = taraSession.getLegalPersonList();
         notNull(legalPersons, "Invalid state. Legal person list was not found!");
         isTrue(!legalPersons.isEmpty(), "Invalid state. No list of authorized legal persons was found!");
@@ -107,9 +105,9 @@ public class LegalpersonController {
         if (selectedLegalPerson.isPresent()) {
             taraSession.setSelectedLegalPerson(selectedLegalPerson.get());
             taraSession.setState(LEGAL_PERSON_AUTHENTICATION_COMPLETED);
-            updateSession(taraSession);
+            SessionUtils.updateSession(taraSession);
             log.info("Legal person selected: {}", legalPersonIdentifier);
-            return "redirect:/auth/accept";
+            return "forward:/auth/accept";
         } else {
             throw new BadRequestException(INVALID_REQUEST, format("Attempted to select invalid legal person with id: '%s'", legalPersonIdentifier));
         }

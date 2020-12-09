@@ -24,7 +24,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .frameOptions().deny()
                 .httpStrictTransportSecurity()
                 .includeSubDomains(true)
-        .maxAgeInSeconds(600000);
+                .maxAgeInSeconds(600000);
     }
 
     @Override

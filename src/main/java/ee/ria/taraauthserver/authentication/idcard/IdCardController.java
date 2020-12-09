@@ -4,6 +4,7 @@ import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.OCSPServiceNotAvailableException;
 import ee.ria.taraauthserver.error.exceptions.OCSPValidationException;
+import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.EstonianIdCodeUtil;
@@ -34,8 +35,6 @@ import static ee.ria.taraauthserver.config.properties.AuthConfigurationPropertie
 import static ee.ria.taraauthserver.error.ErrorTranslationCodes.ESTEID_INVALID_REQUEST;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT;
-import static ee.ria.taraauthserver.session.SessionUtils.getAuthSessionInState;
-import static ee.ria.taraauthserver.session.SessionUtils.updateSession;
 import static java.lang.String.format;
 
 @Slf4j
@@ -60,8 +59,7 @@ public class IdCardController {
     @GetMapping(path = {"/auth/id"})
     @ResponseBody
     public ModelAndView handleRequest(HttpServletRequest request) {
-
-        TaraSession taraSession = getAuthSessionInState(INIT_AUTH_PROCESS);
+        TaraSession taraSession = SessionUtils.getAuthSessionInState(INIT_AUTH_PROCESS);
 
         String encodedCertificate = request.getHeader(HEADER_SSL_CLIENT_CERT);
         validateEncodedCertificate(encodedCertificate);
@@ -124,7 +122,7 @@ public class IdCardController {
 
     private void updateSessionStatus(TaraSession taraSession) {
         taraSession.setState(NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT);
-        updateSession(taraSession);
+        SessionUtils.updateSession(taraSession);
     }
 
     private void addAuthResultToSession(TaraSession taraSession, X509Certificate certificate) {
@@ -143,7 +141,7 @@ public class IdCardController {
         taraSession.setState(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
         taraSession.setAuthenticationResult(authenticationResult);
         log.info("updated session in idcard controller is: " + taraSession);
-        updateSession(taraSession);
+        SessionUtils.updateSession(taraSession);
     }
 
     @NotNull

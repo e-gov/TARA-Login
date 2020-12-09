@@ -13,11 +13,10 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.session.hazelcast.HazelcastIndexedSessionRepository;
@@ -34,6 +33,11 @@ import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 import org.springframework.web.servlet.i18n.SessionLocaleResolver;
 
 import javax.net.ssl.SSLContext;
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.time.Duration;
 import java.util.Locale;
 
@@ -42,17 +46,15 @@ import static org.springframework.util.ResourceUtils.getFile;
 @Slf4j
 @Configuration
 @EnableHazelcastHttpSession
-@ComponentScan(basePackages = {"ee.ria.taraauthserver"})
-@EnableConfigurationProperties(AuthConfigurationProperties.class)
+@ConfigurationPropertiesScan
 public class TaraAuthServerConfiguration implements WebMvcConfigurer {
-
     public static final String TARA_SESSION_COOKIE_NAME = "SESSION";
 
     @Autowired
     private AuthConfigurationProperties authConfigurationProperties;
 
     @Bean
-    public SSLContext trustContext() throws Exception {
+    public SSLContext trustContext() throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         return SSLContextBuilder
                 .create().setKeyStoreType(authConfigurationProperties.getTls().getTrustStoreType())
                 .loadTrustMaterial(
@@ -62,7 +64,7 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
     }
 
     @Bean
-    public RestTemplate restTemplate(RestTemplateBuilder builder, SSLContext sslContext) throws Exception {
+    public RestTemplate restTemplate(RestTemplateBuilder builder, SSLContext sslContext) {
         HttpClient client = HttpClients.custom()
                 .setSSLContext(sslContext)
                 .build();

@@ -18,7 +18,10 @@ import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.context.request.WebRequest;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import static java.lang.String.format;
 import static java.lang.String.join;
@@ -29,6 +32,7 @@ import static org.springframework.boot.web.error.ErrorAttributeOptions.Include.M
 @Component
 public class ErrorAttributes extends DefaultErrorAttributes {
 
+    public static final String ATTR_MESSAGE = "message";
     @Autowired
     private MessageSource messageSource;
 
@@ -54,9 +58,9 @@ public class ErrorAttributes extends DefaultErrorAttributes {
     private void handle4xxClientError(WebRequest webRequest, Map<String, Object> attr) {
         Throwable error = getError(webRequest);
         if (isTaraErrorWithErrorCode(error)) {
-            attr.replace("message", translateErrorCode(webRequest, ((TaraException) error).getMessageCode().getMessage()));
+            attr.replace(ATTR_MESSAGE, translateErrorCode(webRequest, ((TaraException) error).getMessageCode().getMessage()));
         } else if (isBindingError(error)) {
-            attr.replace("message", formatBindingErrors((BindException)error));
+            attr.replace(ATTR_MESSAGE, formatBindingErrors((BindException) error));
         }
     }
 
@@ -64,9 +68,9 @@ public class ErrorAttributes extends DefaultErrorAttributes {
         int status = (int) attr.get("status");
         Throwable error = getError(webRequest);
         if (status == 502 && isTaraErrorWithErrorCode(error)) {
-            attr.replace("message", translateErrorCode(webRequest, ((TaraException) error).getMessageCode().getMessage()));
+            attr.replace(ATTR_MESSAGE, translateErrorCode(webRequest, ((TaraException) error).getMessageCode().getMessage()));
         } else {
-            attr.replace("message", translateErrorCode(webRequest, DEFAULT_INTERNAL_EXCEPTION_MSG));
+            attr.replace(ATTR_MESSAGE, translateErrorCode(webRequest, DEFAULT_INTERNAL_EXCEPTION_MSG));
         }
     }
 

@@ -2,11 +2,11 @@ package ee.ria.taraauthserver.authentication.mobileid;
 
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
-import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.ErrorTranslationCodes;
+import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
-import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.SessionUtils;
+import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.ValidNationalIdNumber;
 import ee.sk.mid.*;
 import ee.sk.mid.exception.*;
@@ -16,7 +16,6 @@ import ee.sk.mid.rest.dao.response.MidAuthenticationResponse;
 import lombok.Data;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -51,11 +50,12 @@ import java.util.regex.Matcher;
 import static ee.ria.taraauthserver.error.ErrorTranslationCodes.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 
 @Slf4j
 @Validated
 @Controller
-@ConditionalOnProperty(value = "tara.mid-authentication.enabled", matchIfMissing = true)
+@ConditionalOnProperty(value = "tara.auth-methods.mobile-id.enabled", matchIfMissing = true)
 public class AuthMidController {
 
     @Autowired
@@ -63,9 +63,6 @@ public class AuthMidController {
 
     @Autowired
     private SessionRepository sessionRepository;
-
-    @Autowired
-    private AuthConfigurationProperties authConfigurationProperties;
 
     @Autowired
     private AuthConfigurationProperties.MidAuthConfigurationProperties midAuthConfigurationProperties;
@@ -129,14 +126,12 @@ public class AuthMidController {
     }
 
     private TaraSession handleMidPollResult(MidRequestBody requestParameters, Session session, TaraSession taraSession, MidAuthenticationHashToSign authenticationHash, MidSessionStatus midSessionStatus) {
-        if (StringUtils.equalsIgnoreCase("COMPLETE", midSessionStatus.getState())) {
-            if (StringUtils.equalsIgnoreCase("OK", midSessionStatus.getResult())) {
-                try {
-                    MidAuthenticationResult midAuthenticationResult = validateAndReturnMidAuthenticationResult(authenticationHash, midSessionStatus);
-                    updateAuthSessionWithResult(requestParameters, session, taraSession, midAuthenticationResult);
-                } catch (Exception e) {
-                    log.info("EXCEPTION: " + e.getMessage(), e);
-                }
+        if (equalsIgnoreCase("COMPLETE", midSessionStatus.getState()) && equalsIgnoreCase("OK", midSessionStatus.getResult())) {
+            try {
+                MidAuthenticationResult midAuthenticationResult = validateAndReturnMidAuthenticationResult(authenticationHash, midSessionStatus);
+                updateAuthSessionWithResult(requestParameters, session, taraSession, midAuthenticationResult);
+            } catch (Exception e) {
+                log.info("EXCEPTION: " + e.getMessage(), e);
             }
         }
         return taraSession;

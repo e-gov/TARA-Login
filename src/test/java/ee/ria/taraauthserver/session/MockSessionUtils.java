@@ -138,7 +138,7 @@ public class MockSessionUtils {
     }
 
     @RequiredArgsConstructor
-    private static class ErrorForwardResultHandler implements ResultHandler{
+    private static class ErrorForwardResultHandler implements ResultHandler {
 
         private final MockMvc mock;
 

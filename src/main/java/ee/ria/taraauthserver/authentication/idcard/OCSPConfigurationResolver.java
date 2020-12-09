@@ -16,7 +16,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.*;
+import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
+import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp;
 
 @Slf4j
 @Component
