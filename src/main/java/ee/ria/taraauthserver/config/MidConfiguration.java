@@ -36,7 +36,6 @@ public class MidConfiguration {
     @Bean
     @SneakyThrows
     public MidClient midClient(SSLContext tlsTrustStore, AuthConfigurationProperties.MidAuthConfigurationProperties midAuthConfigurationProperties) {
-
         return MidClient.newBuilder()
                 .withHostUrl(midAuthConfigurationProperties.getHostUrl())
                 .withRelyingPartyUUID(midAuthConfigurationProperties.getRelyingPartyUuid())

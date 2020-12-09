@@ -196,6 +196,7 @@ public class AuthMidController {
         } catch (MidInternalErrorException | ProcessingException e) {
             throw new ServiceNotAvailableException(MID_INTERNAL_ERROR, String.format("MID service is currently unavailable: %s", e.getMessage()), e);
         } catch (Exception e) {
+            System.out.println("stacktrace to string: " + e.toString());
             throw new IllegalStateException("Internal error during MID authentication init: " + e.getMessage(), e);
         }
     }
