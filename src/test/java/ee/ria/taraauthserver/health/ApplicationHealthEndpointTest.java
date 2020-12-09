@@ -1,13 +1,13 @@
 package ee.ria.taraauthserver.health;
 
 import ee.ria.taraauthserver.BaseTest;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.TestPropertySource;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -18,7 +18,11 @@ import static java.time.ZoneId.of;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.when;
 
-public class ApplicationHealthControllerTest extends BaseTest {
+@TestPropertySource(
+        locations = "classpath:application.yml",
+        properties = {"management.endpoints.web.exposure.exclude=",
+                "management.endpoints.web.exposure.include=heartbeat"})
+public class ApplicationHealthEndpointTest extends BaseTest {
 
     @MockBean
     protected BuildProperties buildProperties;
