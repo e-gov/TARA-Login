@@ -1,7 +1,6 @@
 package ee.ria.taraauthserver.authentication.mobileid;
 
 import ee.ria.taraauthserver.BaseTest;
-import ee.ria.taraauthserver.error.ErrorTranslationCodes;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import org.junit.jupiter.api.Test;

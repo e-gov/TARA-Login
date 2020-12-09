@@ -1,8 +1,8 @@
-package ee.ria.taraauthserver.authentication;
+package ee.ria.taraauthserver.authentication.consent;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
-import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.Data;
@@ -11,28 +11,28 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.servlet.view.RedirectView;
 
-import javax.servlet.http.HttpSession;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 import java.net.URL;
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_CONSENT_PROCESS;
 
-@Validated
-@RestController
 @Slf4j
-public class MockAuthController {
+@Validated
+@Controller
+public class AuthConsentController {
 
     @Autowired
     private AuthConfigurationProperties authConfigurationProperties;
@@ -40,52 +40,58 @@ public class MockAuthController {
     @Autowired
     private RestTemplate hydraService;
 
-    @PostMapping(value = "/mockauth", produces = MediaType.APPLICATION_JSON_VALUE)
-    public RedirectView mockAuth(HttpSession session) {
-        TaraSession taraSession = (TaraSession) session.getAttribute(TARA_SESSION);
-        log.info("current state: " + taraSession.getState());
-        log.info("session id in AUTH_MOCK: " + session.getId());
-        TaraSession.AuthenticationResult authResult = new TaraSession.AuthenticationResult();
-        authResult.setAcr(LevelOfAssurance.HIGH);
-        authResult.setSubject("EE60001019906");
-        authResult.setFirstName("Firstname");
-        authResult.setLastName("Lastname");
-        authResult.setDateOfBirth(LocalDate.now());
-        taraSession.setAuthenticationResult(authResult);
-        taraSession.setState(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
-        session.setAttribute(TARA_SESSION, taraSession);
-        log.info("edited session " + session.getAttribute(TARA_SESSION));
-        log.info("with id " + session.getId());
-        return new RedirectView("/auth/accept");
+    @GetMapping(value = "/consent", produces = MediaType.TEXT_HTML_VALUE)
+    public String authAccept(@RequestParam(name = "consent_challenge") @Size(max = 50)
+                             @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed")
+                                     String consentChallenge, Model model) {
+
+        TaraSession taraSession = SessionUtils.getAuthSessionInState(TaraAuthenticationState.AUTHENTICATION_SUCCESS);
+
+        if (taraSession.getLoginRequestInfo().getClient().getMetaData().isDisplay_user_consent()) {
+            taraSession.setState(INIT_CONSENT_PROCESS);
+            taraSession.setConsentChallenge(consentChallenge);
+            SessionUtils.updateSession(taraSession);
+            model.addAttribute("idCode", taraSession.getAuthenticationResult().getIdCode());
+            model.addAttribute("firstName", taraSession.getAuthenticationResult().getFirstName());
+            model.addAttribute("lastName", taraSession.getAuthenticationResult().getLastName());
+            model.addAttribute("dateOfBirth", taraSession.getAuthenticationResult().getDateOfBirth());
+            return "consentView";
+        } else {
+            taraSession.setState(TaraAuthenticationState.CONSENT_NOT_REQUIRED);
+            SessionUtils.updateSession(taraSession);
+            HttpEntity<AcceptConsentRequest> request = createRequestBody(taraSession);
+            String url = authConfigurationProperties.getHydraService().getAcceptConsentUrl() + "?consent_challenge=" + consentChallenge;
+
+            ResponseEntity<Map> response = hydraService.exchange(url, HttpMethod.PUT, request, Map.class);
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody().get("redirect_to") != null) {
+                taraSession.setState(AUTHENTICATION_SUCCESS);
+                SessionUtils.updateSession(taraSession);
+                return "redirect:" + response.getBody().get("redirect_to").toString();
+            } else {
+                throw new IllegalStateException("Invalid OIDC server response. Redirect URL missing from response.");
+            }
+        }
     }
 
-    // TODO invalidate session
-    @GetMapping(value = "/auth/consent", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> mockConsent(@RequestParam String consent_challenge, HttpSession session) {
-        TaraSession taraSession = (TaraSession) session.getAttribute(TARA_SESSION);
-
-        String url = authConfigurationProperties.getHydraService().getAcceptConsentUrl() + "?consent_challenge=" + consent_challenge;
+    @NotNull
+    private HttpEntity<AcceptConsentRequest> createRequestBody(TaraSession taraSession) {
         AcceptConsentRequest acceptConsentRequest = new AcceptConsentRequest();
-
 
         Map<String, Object> profileAttributes = new LinkedHashMap<>();
 
         addProfile_attributes(profileAttributes, taraSession);
+
+        taraSession.getAllowedAuthMethods();
 
         acceptConsentRequest.setSession(new AcceptConsentRequest.LoginSession(
                 profileAttributes
         ));
 
         profileAttributes.put("state", getStateParameterValue(taraSession));
-        profileAttributes.put("amr", new String[]{"mid"});
+        profileAttributes.put("amr", taraSession.getAuthenticationResult().getAmr());
 
-        log.info("body content is: " + acceptConsentRequest.toString());
         HttpEntity<AcceptConsentRequest> request = new HttpEntity<>(acceptConsentRequest);
-        ResponseEntity<Map> response = hydraService.exchange(url, HttpMethod.PUT, request, Map.class);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("location", response.getBody().get("redirect_to").toString());
-        return new ResponseEntity<>(headers, HttpStatus.FOUND);
+        return request;
     }
 
     private void addLegalPersonAttributes(Map<String, Object> attributes, TaraSession.LegalPerson legalPerson) {
@@ -96,12 +102,12 @@ public class MockAuthController {
         attributes.put("legal_person", legalPersonAttributes);
     }
 
-    @NotNull
     private void addProfile_attributes(Map<String, Object> attributes, TaraSession taraSession) {
         Map<String, Object> profileAttributes = new LinkedHashMap<>();
         profileAttributes.put("family_name", taraSession.getAuthenticationResult().getLastName());
         profileAttributes.put("given_name", taraSession.getAuthenticationResult().getFirstName());
         profileAttributes.put("date_of_birth", taraSession.getAuthenticationResult().getDateOfBirth().toString());
+        profileAttributes.put("acr", taraSession.getAuthenticationResult().getAcr());
         TaraSession.LegalPerson legalPerson = taraSession.getSelectedLegalPerson();
         if (legalPerson != null) {
             addLegalPersonAttributes(profileAttributes, legalPerson);
@@ -132,11 +138,9 @@ public class MockAuthController {
     @Data
     public static class AcceptConsentRequest {
         @JsonProperty("remember")
-        Boolean remember = false;
-
+        boolean remember = false;
         @JsonProperty("session")
-        LoginSession session;
-
+        AcceptConsentRequest.LoginSession session;
         @JsonProperty("grant_scope")
         String[] grantScope = new String[]{"openid", "mid"};
 

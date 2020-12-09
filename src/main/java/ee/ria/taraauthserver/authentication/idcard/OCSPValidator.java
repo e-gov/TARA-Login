@@ -75,20 +75,16 @@ public class OCSPValidator {
                 if (count > 0) {
                     log.info("Retrying OCSP request with {}. Configuration: {}", ocspConf.getUrl(), ocspConf);
                 }
-
                 checkCert(userCert, ocspConf);
                 return;
             } catch (OCSPServiceNotAvailableException e) {
                 log.error("OCSP request has failed: {}", e.getMessage(), e);
                 if (++count == maxTries) throw e;
-            } catch (OCSPValidationException e) {
-                throw e;
             }
         }
     }
 
     protected void checkCert(X509Certificate userCert, Ocsp ocspConf) {
-
         X509Certificate issuerCert = findIssuerCertificate(userCert);
         validateCertSignedBy(userCert, issuerCert);
 
@@ -139,13 +135,12 @@ public class OCSPValidator {
 
     private void validateCertStatus(SingleResp singleResponse) {
         org.bouncycastle.cert.ocsp.CertificateStatus status = singleResponse.getCertStatus();
-
-        if (status == org.bouncycastle.cert.ocsp.CertificateStatus.GOOD) {
-            return;
-        } else if (status instanceof RevokedStatus) {
-            throw OCSPValidationException.of(CertificateStatus.REVOKED);
-        } else {
-            throw OCSPValidationException.of(CertificateStatus.UNKNOWN);
+        if (status != org.bouncycastle.cert.ocsp.CertificateStatus.GOOD) {
+            if (status instanceof RevokedStatus) {
+                throw OCSPValidationException.of(CertificateStatus.REVOKED);
+            } else {
+                throw OCSPValidationException.of(CertificateStatus.UNKNOWN);
+            }
         }
     }
 

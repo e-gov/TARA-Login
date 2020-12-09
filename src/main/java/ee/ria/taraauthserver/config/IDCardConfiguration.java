@@ -1,9 +1,7 @@
 package ee.ria.taraauthserver.config;
 
-import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.utils.X509Utils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,22 +13,18 @@ import java.security.KeyStore;
 import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.*;
+import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
+import static java.util.stream.Collectors.toMap;
 
 @ConditionalOnProperty(value = "id-card.enabled", matchIfMissing = true)
 @Configuration
 @Slf4j
 public class IDCardConfiguration {
 
-    @Autowired
-    private IdCardAuthConfigurationProperties configurationProvider;
-
     @Bean
-    KeyStore idcardKeystore(ResourceLoader resourceLoader) {
+    KeyStore idcardKeystore(ResourceLoader resourceLoader, IdCardAuthConfigurationProperties configurationProvider) {
         try {
             KeyStore keystore = KeyStore.getInstance(configurationProvider.getTruststoreType());
             Resource resource = resourceLoader.getResource(configurationProvider.getTruststorePath());
@@ -45,21 +39,15 @@ public class IDCardConfiguration {
 
     @Bean
     public Map<String, X509Certificate> idCardTrustedCertificatesMap(KeyStore idcardKeystore) {
-        final Map<String, X509Certificate> trustedCertificates = new LinkedHashMap<>();
-
         try {
             PKIXParameters params = new PKIXParameters(idcardKeystore);
-            Iterator it = params.getTrustAnchors().iterator();
-            while (it.hasNext()) {
-                TrustAnchor ta = (TrustAnchor) it.next();
-                final String commonName = X509Utils.getSubjectCNFromCertificate(ta.getTrustedCert());
-                trustedCertificates.put(commonName, ta.getTrustedCert());
-            }
-            trustedCertificates.entrySet().forEach(entry -> log.info("Trusted OCSP responder certificate added to configuration - CN: {}, serialnumber: {}, validFrom: {}, validTo: {}", entry.getKey(), entry.getValue().getSerialNumber(), entry.getValue().getNotBefore(), entry.getValue().getNotAfter()));
+            Map<String, X509Certificate> trustedCertificates = params.getTrustAnchors().stream()
+                    .collect(toMap(trustAnchor -> X509Utils.getSubjectCNFromCertificate(trustAnchor.getTrustedCert()), TrustAnchor::getTrustedCert));
+            trustedCertificates.forEach((key, value) -> log.info("Trusted OCSP responder certificate added to configuration - CN: {}, serialnumber: {}, validFrom: {}, validTo: {}",
+                    key, value.getSerialNumber(), value.getNotBefore(), value.getNotAfter()));
+            return trustedCertificates;
         } catch (Exception e) {
             throw new IllegalArgumentException("Failed to read trusted certificates from id-card truststore: " + e.getMessage(), e);
         }
-
-        return trustedCertificates;
     }
 }

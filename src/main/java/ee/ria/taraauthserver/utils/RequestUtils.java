@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.utils;
 
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -13,9 +14,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Locale;
 
 @Slf4j
+@UtilityClass
 public class RequestUtils {
 
-    public static void setLocale(String requestedLocale) {
+    public void setLocale(String requestedLocale) {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
 
@@ -26,7 +28,7 @@ public class RequestUtils {
         localeResolver.setLocale(request, response, locale);
     }
 
-    public static Locale getLocale() {
+    public Locale getLocale() {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         LocaleResolver localeResolver = RequestContextUtils.getLocaleResolver(request);
         return localeResolver.resolveLocale(request);

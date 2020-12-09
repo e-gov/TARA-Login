@@ -9,7 +9,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 @TestPropertySource(
         locations = "classpath:application.yml",
-        properties = {"tara.mid-authentication.enabled=false"})
+        properties = {"tara.auth-methods.mobile-id.enabled=false"})
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class MidConfigurationDisabledTest extends DisabledConfigurationTest {
 

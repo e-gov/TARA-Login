@@ -12,8 +12,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 
-import static java.lang.String.format;
-
 @Component
 public class DuplicateRequestParameterFilter extends OncePerRequestFilter {
 

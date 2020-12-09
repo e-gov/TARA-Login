@@ -1,6 +1,6 @@
 package ee.ria.taraauthserver.utils;
 
-
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.bouncycastle.asn1.*;
@@ -19,12 +19,12 @@ import java.util.Collection;
 import java.util.List;
 
 @Slf4j
+@UtilityClass
 public class X509Utils {
-
     private static final String BEGIN_CERT = "-----BEGIN CERTIFICATE-----";
     private static final String END_CERT = "-----END CERTIFICATE-----";
 
-    public static X509Certificate toX509Certificate(String encodedCertificate) {
+    public X509Certificate toX509Certificate(String encodedCertificate) {
         try {
             return (X509Certificate) CertificateFactory.getInstance("X.509")
                     .generateCertificate(new ByteArrayInputStream(Base64.decodeBase64(encodedCertificate
@@ -34,7 +34,7 @@ public class X509Utils {
         }
     }
 
-    public static String getIssuerCNFromCertificate(X509Certificate certificate) {
+    public String getIssuerCNFromCertificate(X509Certificate certificate) {
         try {
             return getFirstCNFromX500Name(
                     new JcaX509CertificateHolder(certificate).getIssuer()
@@ -44,7 +44,7 @@ public class X509Utils {
         }
     }
 
-    public static String getSubjectCNFromCertificate(X509Certificate certificate) {
+    public String getSubjectCNFromCertificate(X509Certificate certificate) {
         try {
             return getFirstCNFromX500Name(
                     new JcaX509CertificateHolder(certificate).getSubject()
@@ -54,12 +54,12 @@ public class X509Utils {
         }
     }
 
-    public static String getFirstCNFromX500Name(X500Name x500Name) {
+    public String getFirstCNFromX500Name(X500Name x500Name) {
         final RDN cn = x500Name.getRDNs(BCStyle.CN)[0];
         return IETFUtils.valueToString(cn.getFirst().getValue());
     }
 
-    public static String getRfc822NameSubjectAltName(X509Certificate certificate) {
+    public String getRfc822NameSubjectAltName(X509Certificate certificate) {
         try {
             Collection<List<?>> sanFields = certificate.getSubjectAlternativeNames();
 
@@ -77,7 +77,7 @@ public class X509Utils {
         }
     }
 
-    public static String getOCSPUrl(X509Certificate certificate) {
+    public String getOCSPUrl(X509Certificate certificate) {
         ASN1Primitive obj;
         try {
             obj = getExtensionValue(certificate, Extension.authorityInfoAccess.getId());
@@ -105,7 +105,7 @@ public class X509Utils {
         return null;
     }
 
-    private static ASN1Primitive getExtensionValue(X509Certificate certificate, String oid) throws IOException {
+    private ASN1Primitive getExtensionValue(X509Certificate certificate, String oid) throws IOException {
         byte[] bytes = certificate.getExtensionValue(oid);
         if (bytes == null) {
             return null;

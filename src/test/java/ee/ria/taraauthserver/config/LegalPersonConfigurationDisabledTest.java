@@ -10,8 +10,8 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 
 @TestPropertySource(
-        locations= "classpath:application.yml",
-        properties = { "tara.legal-person-authentication.enabled=false" })
+        locations = "classpath:application.yml",
+        properties = {"tara.legal-person-authentication.enabled=false"})
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class LegalPersonConfigurationDisabledTest extends DisabledConfigurationTest {
 

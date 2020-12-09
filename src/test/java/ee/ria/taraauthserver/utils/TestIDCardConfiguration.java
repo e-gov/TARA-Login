@@ -5,8 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.*;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
@@ -17,11 +19,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
 @Slf4j
-@EnableConfigurationProperties
-@ComponentScan(basePackages = {
-        "ee.ria.taraauthserver.utils"
-})
-@Configuration
+@TestConfiguration
 @Profile("mock_configuration")
 public class TestIDCardConfiguration {
 
@@ -65,7 +63,6 @@ public class TestIDCardConfiguration {
     @ConditionalOnProperty("tara.auth-methods.id-card.enabled")
     OCSPValidator mockOCSPValidator() {
         log.info("MOCKING OCSP VALIDATOR");
-        OCSPValidator ocspValidator = Mockito.mock(OCSPValidator.class);
-        return ocspValidator;
+        return Mockito.mock(OCSPValidator.class);
     }
 }

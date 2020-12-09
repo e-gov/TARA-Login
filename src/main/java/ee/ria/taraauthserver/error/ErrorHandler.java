@@ -34,21 +34,21 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler({ServiceNotAvailableException.class})
-    public ModelAndView handleDownstreamServiceErrors(Exception ex, HttpServletResponse response) throws Exception {
+    public ModelAndView handleDownstreamServiceErrors(Exception ex, HttpServletResponse response) throws IOException {
         log.error("Service not available: {}", ex.getMessage(), ex);
         response.sendError(HttpServletResponse.SC_BAD_GATEWAY);
         return new ModelAndView();
     }
 
     @ExceptionHandler({NotFoundException.class})
-    public ModelAndView handleNotFound(Exception ex, HttpServletResponse response) throws Exception {
+    public ModelAndView handleNotFound(Exception ex, HttpServletResponse response) throws IOException {
         log.error("Results not found: {}", ex.getMessage(), ex);
         response.sendError(HttpServletResponse.SC_NOT_FOUND);
         return new ModelAndView();
     }
 
     @ExceptionHandler({Exception.class})
-    public ModelAndView handleAll(Exception ex, HttpServletResponse response) throws Exception {
+    public ModelAndView handleAll(Exception ex, HttpServletResponse response) throws IOException {
         log.error("Server encountered an unexpected error: {}", ex.getMessage(), ex);
         response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         return new ModelAndView();

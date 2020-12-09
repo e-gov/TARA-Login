@@ -22,7 +22,7 @@ import java.security.cert.CertificateException;
 
 @Slf4j
 @Configuration
-@ConditionalOnProperty(value = "tara.mid-authentication.enabled", matchIfMissing = true)
+@ConditionalOnProperty(value = "tara.auth-methods.mobile-id.enabled", matchIfMissing = true)
 public class MidConfiguration {
 
     @Bean

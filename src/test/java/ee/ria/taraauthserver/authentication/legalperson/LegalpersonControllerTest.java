@@ -408,8 +408,8 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
 
         resultActions
-                .andExpect(status().is(302))
-                .andExpect(header().string("Location", "/auth/accept"));
+                .andExpect(status().is(200))
+                .andExpect(forwardedUrl("/auth/accept"));
 
         assertInfoIsLogged("Legal person selected: " + MOCK_LEGAL_PERSON_IDENTIFIER);
     }
