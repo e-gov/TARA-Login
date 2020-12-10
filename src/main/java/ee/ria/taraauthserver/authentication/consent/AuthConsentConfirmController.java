@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.view.RedirectView;
 
+import javax.validation.constraints.Pattern;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,11 +32,14 @@ public class AuthConsentConfirmController {
     private RestTemplate hydraService;
 
     @PostMapping(value = "/auth/consent/confirm", produces = MediaType.TEXT_HTML_VALUE)
-    public RedirectView authConsentConfirm(@RequestParam(name = "consent_given") boolean consentGiven) {
+    public RedirectView authConsentConfirm(
+            @RequestParam(name = "consent_given")
+            @Pattern(regexp = "(true|false)", message = "supported values are: 'true', 'false'")
+                    String consentGiven) {
 
         TaraSession taraSession = SessionUtils.getAuthSessionInState(TaraAuthenticationState.INIT_CONSENT_PROCESS);
 
-        if (consentGiven) {
+        if (consentGiven.equals("true")) {
             return acceptConsent(taraSession);
         } else {
             return rejectConsent(taraSession);
@@ -50,7 +54,7 @@ public class AuthConsentConfirmController {
         HttpEntity<Map> entity = new HttpEntity<>(map);
         ResponseEntity<Map> response = hydraService.exchange(url, HttpMethod.PUT, entity, Map.class);
         if (response.getStatusCode() == HttpStatus.OK && response.getBody().get("redirect_to") != null) {
-            taraSession.setState(CONSENT_GIVEN);
+            taraSession.setState(CONSENT_NOT_GIVEN);
             SessionUtils.updateSession(taraSession);
             return new RedirectView(response.getBody().get("redirect_to").toString());
         } else {
@@ -64,7 +68,7 @@ public class AuthConsentConfirmController {
         HttpEntity<ConsentUtils.AcceptConsentRequest> request = ConsentUtils.createRequestBody(taraSession);
         ResponseEntity<Map> response = hydraService.exchange(url, HttpMethod.PUT, request, Map.class);
         if (response.getStatusCode() == HttpStatus.OK && response.getBody().get("redirect_to") != null) {
-            taraSession.setState(CONSENT_NOT_GIVEN);
+            taraSession.setState(CONSENT_GIVEN);
             SessionUtils.updateSession(taraSession);
             return new RedirectView(response.getBody().get("redirect_to").toString());
         } else {

@@ -33,7 +33,7 @@ public class AuthConsentController {
     @Autowired
     private RestTemplate hydraService;
 
-    @GetMapping(value = "/consent", produces = MediaType.TEXT_HTML_VALUE)
+    @GetMapping(value = "/auth/consent", produces = MediaType.TEXT_HTML_VALUE)
     public String authConsent(@RequestParam(name = "consent_challenge") @Size(max = 50)
                               @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed")
                                       String consentChallenge, Model model) {
