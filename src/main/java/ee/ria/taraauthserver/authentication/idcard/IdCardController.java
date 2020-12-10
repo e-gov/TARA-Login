@@ -136,7 +136,7 @@ public class IdCardController {
         authenticationResult.setCountry("EE");
         authenticationResult.setDateOfBirth(MidNationalIdentificationCodeValidator.getBirthDate(idCode));
         authenticationResult.setAcr(configurationProperties.getLevelOfAssurance());
-        authenticationResult.setAmr(AuthenticationType.IDCard);
+        authenticationResult.setAmr(AuthenticationType.ID_CARD);
         authenticationResult.setSubject(authenticationResult.getCountry() + authenticationResult.getIdCode());
         taraSession.setState(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
         taraSession.setAuthenticationResult(authenticationResult);

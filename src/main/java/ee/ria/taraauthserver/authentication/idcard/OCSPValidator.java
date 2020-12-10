@@ -170,7 +170,7 @@ public class OCSPValidator {
         connection.setReadTimeout(conf.getReadTimeoutInMilliseconds());
         connection.setDoOutput(true);
 
-        this.log.info("Sending OCSP request to <{}>. Request payload: <{}>. OCSP configuration: <{}>", conf.getUrl(), Base64.getEncoder().encodeToString(bytes), conf);
+        log.info("Sending OCSP request to <{}>. Request payload: <{}>. OCSP configuration: <{}>", conf.getUrl(), Base64.getEncoder().encodeToString(bytes), conf);
         try (DataOutputStream outputStream = new DataOutputStream(new BufferedOutputStream(connection.getOutputStream()))) {
             outputStream.write(bytes);
             outputStream.flush();
@@ -187,7 +187,7 @@ public class OCSPValidator {
                 return new OCSPResp(in);
             }
         } else {
-            this.log.error("OCSP request has failed (HTTP {}) - {}",
+            log.error("OCSP request has failed (HTTP {}) - {}",
                     connection.getResponseCode(), connection.getResponseMessage());
             throw new OCSPServiceNotAvailableException(String.format("Service returned HTTP status code %d",
                     connection.getResponseCode()));

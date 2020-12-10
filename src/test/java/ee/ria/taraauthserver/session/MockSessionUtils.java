@@ -97,7 +97,7 @@ public class MockSessionUtils {
         credential.setLastName(lastName);
         credential.setDateOfBirth(dateOfBirth);
         credential.setAcr(LevelOfAssurance.HIGH);
-        credential.setAmr(AuthenticationType.MobileID);
+        credential.setAmr(AuthenticationType.MOBILE_ID);
         credential.setSubject("EE" + idCode);
         return credential;
     }

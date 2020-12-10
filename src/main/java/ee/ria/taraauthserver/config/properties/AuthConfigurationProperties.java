@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static ee.ria.taraauthserver.config.properties.AuthenticationType.IDCard;
-import static ee.ria.taraauthserver.config.properties.AuthenticationType.MobileID;
+import static ee.ria.taraauthserver.config.properties.AuthenticationType.ID_CARD;
+import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
 import static java.util.Arrays.asList;
 
 @Slf4j
@@ -32,7 +32,7 @@ public class AuthConfigurationProperties {
     @Pattern(regexp = "(et|en|ru)", message = "invalid default locale value, accepted values are: et, en, ru")
     private String defaultLocale = "et";
 
-    private List<AuthenticationType> defaultAuthenticationMethods = asList(IDCard, MobileID);
+    private List<AuthenticationType> defaultAuthenticationMethods = asList(ID_CARD, MOBILE_ID);
 
     private HydraConfigurationProperties hydraService = new HydraConfigurationProperties();
 

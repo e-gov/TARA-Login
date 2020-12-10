@@ -6,8 +6,8 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum AuthenticationType {
-    IDCard("idcard", "id-card", TaraScope.IDCARD),
-    MobileID("mID", "mobile-id", TaraScope.MID);
+    ID_CARD("idcard", "id-card", TaraScope.IDCARD),
+    MOBILE_ID("mID", "mobile-id", TaraScope.MID);
 
     private final String amrName;
     private final String propertyName;

@@ -223,7 +223,7 @@ class AuthMidControllerTest extends BaseTest {
         assertEquals("+37200000266", result.getPhoneNumber());
         assertEquals("EE60001019906", result.getSubject());
         assertEquals("2000-01-01", result.getDateOfBirth().toString());
-        assertEquals(AuthenticationType.MobileID, result.getAmr());
+        assertEquals(AuthenticationType.MOBILE_ID, result.getAmr());
         assertEquals(LevelOfAssurance.HIGH, result.getAcr());
 
         assertInfoIsLogged("Mid init request: ee.sk.mid.rest.dao.request.MidAuthenticationRequest");
@@ -285,7 +285,7 @@ class AuthMidControllerTest extends BaseTest {
 
         TaraSession testSession = new TaraSession();
         List<AuthenticationType> allowedMethods = new ArrayList<>();
-        allowedMethods.add(AuthenticationType.IDCard);
+        allowedMethods.add(AuthenticationType.ID_CARD);
         testSession.setAllowedAuthMethods(allowedMethods);
         testSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
         session.setAttribute(TARA_SESSION, testSession);
@@ -711,7 +711,7 @@ class AuthMidControllerTest extends BaseTest {
         Session session = sessionRepository.createSession();
         TaraSession testSession = new TaraSession();
         List<AuthenticationType> allowedMethods = new ArrayList<>();
-        allowedMethods.add(AuthenticationType.MobileID);
+        allowedMethods.add(AuthenticationType.MOBILE_ID);
         testSession.setAllowedAuthMethods(allowedMethods);
         testSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
         TaraSession.LoginRequestInfo lri = new TaraSession.LoginRequestInfo();
