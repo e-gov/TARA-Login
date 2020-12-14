@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.authentication.consent;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +13,9 @@ import org.springframework.util.Assert;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @UtilityClass
 public class ConsentUtils {
@@ -20,43 +23,42 @@ public class ConsentUtils {
     @NotNull
     public HttpEntity<AcceptConsentRequest> createRequestBody(TaraSession taraSession) {
         AcceptConsentRequest acceptConsentRequest = new AcceptConsentRequest();
+        AcceptConsentRequest.LoginSession loginSession = new AcceptConsentRequest.LoginSession();
+        AcceptConsentRequest.IdToken idToken = new AcceptConsentRequest.IdToken();
+        AcceptConsentRequest.ProfileAttributes profileAttributes = new AcceptConsentRequest.ProfileAttributes();
 
-        Map<String, Object> profileAttributes = new LinkedHashMap<>();
+        profileAttributes.setGivenName(taraSession.getAuthenticationResult().getFirstName());
+        profileAttributes.setFamilyName(taraSession.getAuthenticationResult().getLastName());
+        profileAttributes.setDateOfBirth(taraSession.getAuthenticationResult().getDateOfBirth().toString());
 
-        addProfile_attributes(profileAttributes, taraSession);
+        TaraSession.LegalPerson legalPerson = taraSession.getSelectedLegalPerson();
+        if (legalPerson != null) {
+            AcceptConsentRequest.RepresentsLegalPerson representsLegalPerson = new AcceptConsentRequest.RepresentsLegalPerson();
+            representsLegalPerson.setName(legalPerson.getLegalName());
+            representsLegalPerson.setRegistryCode(legalPerson.getLegalPersonIdentifier());
+            profileAttributes.setRepresentsLegalPerson(representsLegalPerson);
+        }
 
-        taraSession.getAllowedAuthMethods();
+        idToken.setProfileAttributes(profileAttributes);
+        idToken.setAcr(taraSession.getAuthenticationResult().getAcr().getAcrName());
+        idToken.setAmr(taraSession.getAuthenticationResult().getAmr().getAmrName());
+        idToken.setState(getStateParameterValue(taraSession));
+        loginSession.setIdToken(idToken);
+        acceptConsentRequest.setSession(loginSession);
 
-        acceptConsentRequest.setSession(new AcceptConsentRequest.LoginSession(
-                profileAttributes
-        ));
+        List<String> requestedScopes = taraSession.getLoginRequestInfo().getRequestedScopes();
+        List<String> allowedScopes = List.of(taraSession.getLoginRequestInfo().getClient().getScope().split(" "));
 
-        profileAttributes.put("state", getStateParameterValue(taraSession));
-        profileAttributes.put("amr", taraSession.getAuthenticationResult().getAmr());
+        List<String> scope = requestedScopes.stream()
+                .distinct()
+                .filter(allowedScopes::contains)
+                .collect(Collectors.toList());
+        scope.add("openid");
+
+        acceptConsentRequest.setGrantScope(scope);
 
         HttpEntity<AcceptConsentRequest> request = new HttpEntity<>(acceptConsentRequest);
         return request;
-    }
-
-    private void addLegalPersonAttributes(Map<String, Object> attributes, TaraSession.LegalPerson legalPerson) {
-        Map<String, Object> legalPersonAttributes = Map.of(
-                "name", legalPerson.getLegalName(),
-                "registry_code", legalPerson.getLegalPersonIdentifier()
-        );
-        attributes.put("legal_person", legalPersonAttributes);
-    }
-
-    private void addProfile_attributes(Map<String, Object> attributes, TaraSession taraSession) {
-        Map<String, Object> profileAttributes = new LinkedHashMap<>();
-        profileAttributes.put("family_name", taraSession.getAuthenticationResult().getLastName());
-        profileAttributes.put("given_name", taraSession.getAuthenticationResult().getFirstName());
-        profileAttributes.put("date_of_birth", taraSession.getAuthenticationResult().getDateOfBirth().toString());
-        profileAttributes.put("acr", taraSession.getAuthenticationResult().getAcr());
-        TaraSession.LegalPerson legalPerson = taraSession.getSelectedLegalPerson();
-        if (legalPerson != null) {
-            addLegalPersonAttributes(profileAttributes, legalPerson);
-        }
-        attributes.put("profile_attributes", profileAttributes);
     }
 
     private String getStateParameterValue(TaraSession taraSession) {
@@ -82,19 +84,48 @@ public class ConsentUtils {
     @Data
     public static class AcceptConsentRequest {
         @JsonProperty("remember")
-        boolean remember = false;
+        Boolean remember = false;
         @JsonProperty("session")
-        AcceptConsentRequest.LoginSession session;
+        LoginSession session;
         @JsonProperty("grant_scope")
-        String[] grantScope = new String[]{"openid", "mid"};
+        List<String> grantScope;
 
         @Data
-        @RequiredArgsConstructor
         public static class LoginSession {
-            @JsonProperty("access_token")
-            private Map accessToken;
             @JsonProperty("id_token")
-            private final Map idToken;
+            private IdToken idToken;
+        }
+
+        @Data
+        public static class IdToken {
+            @JsonProperty("profile_attributes")
+            private ProfileAttributes profileAttributes;
+            @JsonProperty("acr")
+            private String acr;
+            @JsonProperty("amr")
+            private String amr;
+            @JsonProperty("state")
+            private String state;
+        }
+
+        @Data
+        public static class ProfileAttributes {
+            @JsonProperty("family_name")
+            private String familyName;
+            @JsonProperty("given_name")
+            private String givenName;
+            @JsonProperty("date_of_birth")
+            private String dateOfBirth;
+            @JsonProperty("represents_legal_person")
+            private RepresentsLegalPerson representsLegalPerson;
+        }
+
+        @Data
+        public static class RepresentsLegalPerson {
+            @JsonProperty("name")
+            private String name;
+            @JsonProperty("registry_code")
+            private String registryCode;
         }
     }
 

@@ -50,7 +50,9 @@ public class AuthConsentConfirmController {
     private RedirectView rejectConsent(TaraSession taraSession) {
         String url = authConfigurationProperties.getHydraService().getRejectConsentUrl() + "?consent_challenge=" + taraSession.getConsentChallenge();
         Map<String, String> map = new HashMap<>();
-        map.put("error", "request_denied");
+        map.put("error", "user_cancel");
+        map.put("error_debug", "Consent not given. User canceled the authentication process.");
+        map.put("error_description", "Consent not given. User canceled the authentication process.");
         HttpEntity<Map> entity = new HttpEntity<>(map);
         ResponseEntity<Map> response = hydraService.exchange(url, HttpMethod.PUT, entity, Map.class);
         if (response.getStatusCode() == HttpStatus.OK && response.getBody().get("redirect_to") != null) {

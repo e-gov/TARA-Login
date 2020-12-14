@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Data
 @ToString
@@ -34,6 +35,10 @@ public class TaraSession implements Serializable {
     private LegalPerson selectedLegalPerson;
     private String consentChallenge;
 
+    public List<String> getAllowedMethodsAsStringList() {
+        return allowedAuthMethods.stream().map(s -> String.valueOf(s.getAmrName())).collect(Collectors.toList());
+    }
+
     @Data
     public static class AuthenticationResult implements Serializable {
         private String idCode;
@@ -46,6 +51,7 @@ public class TaraSession implements Serializable {
         private AuthenticationType amr;
         private LevelOfAssurance acr; //TODO acr vs LevelOfAssurance vs loa, choose one
     }
+
 
     @Data
     @EqualsAndHashCode(callSuper = true)

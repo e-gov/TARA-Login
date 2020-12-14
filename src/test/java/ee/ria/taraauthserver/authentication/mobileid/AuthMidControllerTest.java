@@ -272,7 +272,7 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Ebakorrektne päring."))
+                .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 

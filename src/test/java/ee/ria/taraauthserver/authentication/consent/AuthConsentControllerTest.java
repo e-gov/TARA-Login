@@ -1,6 +1,8 @@
 package ee.ria.taraauthserver.authentication.consent;
 
 import ee.ria.taraauthserver.BaseTest;
+import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.SneakyThrows;
@@ -15,10 +17,13 @@ import org.springframework.session.SessionRepository;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -35,7 +40,7 @@ class AuthConsentControllerTest extends BaseTest {
         given()
                 .param("consent_challenge", "")
                 .when()
-                .get("/consent")
+                .get("/auth/consent")
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -48,7 +53,7 @@ class AuthConsentControllerTest extends BaseTest {
     void authConsent_consentChallenge_ParamMissing() {
         given()
                 .when()
-                .get("/consent")
+                .get("/auth/consent")
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -64,7 +69,7 @@ class AuthConsentControllerTest extends BaseTest {
         given()
                 .param("consent_challenge", "......")
                 .when()
-                .get("/consent")
+                .get("/auth/consent")
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -80,7 +85,7 @@ class AuthConsentControllerTest extends BaseTest {
         given()
                 .param("consent_challenge", "123456789012345678901234567890123456789012345678900")
                 .when()
-                .get("/consent")
+                .get("/auth/consent")
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -111,7 +116,7 @@ class AuthConsentControllerTest extends BaseTest {
         given()
                 .when()
                 .queryParam("consent_challenge", MOCK_CONSENT_CHALLENGE)
-                .get("/consent")
+                .get("/auth/consent")
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -129,11 +134,11 @@ class AuthConsentControllerTest extends BaseTest {
                 .when()
                 .sessionId("SESSION", session.getId())
                 .queryParam("consent_challenge", MOCK_CONSENT_CHALLENGE)
-                .get("/consent")
+                .get("/auth/consent")
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Ebakorrektne päring."))
+                .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
                 .body("error", equalTo("Bad Request"));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected: 'AUTHENTICATION_SUCCESS'");
@@ -147,10 +152,14 @@ class AuthConsentControllerTest extends BaseTest {
                 .when()
                 .sessionId("SESSION", session.getId())
                 .queryParam("consent_challenge", MOCK_CONSENT_CHALLENGE)
-                .get("/consent")
+                .get("/auth/consent")
                 .then()
                 .assertThat()
                 .statusCode(200)
+                .body(containsString("firstname"))
+                .body(containsString("lastname"))
+                .body(containsString("abc123idcode"))
+                .body(containsString("17.12.1992"))
                 .header(HttpHeaders.CONTENT_TYPE, "text/html;charset=UTF-8");
 
         TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
@@ -166,13 +175,14 @@ class AuthConsentControllerTest extends BaseTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withHeader(HttpHeaders.CONNECTION, "close")
                         .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
 
         given()
                 .when()
                 .sessionId("SESSION", session.getId())
                 .queryParam("consent_challenge", MOCK_CONSENT_CHALLENGE)
-                .get("/consent")
+                .get("/auth/consent")
                 .then()
                 .assertThat()
                 .statusCode(302);
@@ -200,7 +210,14 @@ class AuthConsentControllerTest extends BaseTest {
         ar.setFirstName("firstname");
         ar.setLastName("lastname");
         ar.setDateOfBirth(LocalDate.of(1992, 12, 17));
+        ar.setAcr(LevelOfAssurance.HIGH);
+        ar.setAmr(AuthenticationType.MobileID);
         authSession.setAuthenticationResult(ar);
+        List<AuthenticationType> allowedMethods = new ArrayList<>();
+        allowedMethods.add(AuthenticationType.IDCard);
+        authSession.setAllowedAuthMethods(allowedMethods);
+        TaraSession.LegalPerson legalPerson = new TaraSession.LegalPerson("legalName", "identifier123");
+        authSession.setSelectedLegalPerson(legalPerson);
         session.setAttribute(TARA_SESSION, authSession);
         sessionRepository.save(session);
         return session;

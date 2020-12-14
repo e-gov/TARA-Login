@@ -59,35 +59,6 @@ public class MockAuthController {
         return new RedirectView("/auth/accept");
     }
 
-    // TODO invalidate session
-    @GetMapping(value = "/auth/consent", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> mockConsent(@RequestParam String consent_challenge, HttpSession session) {
-        TaraSession taraSession = (TaraSession) session.getAttribute(TARA_SESSION);
-
-        String url = authConfigurationProperties.getHydraService().getAcceptConsentUrl() + "?consent_challenge=" + consent_challenge;
-        AcceptConsentRequest acceptConsentRequest = new AcceptConsentRequest();
-
-
-        Map<String, Object> profileAttributes = new LinkedHashMap<>();
-
-        addProfile_attributes(profileAttributes, taraSession);
-
-        acceptConsentRequest.setSession(new AcceptConsentRequest.LoginSession(
-                profileAttributes
-        ));
-
-        profileAttributes.put("state", getStateParameterValue(taraSession));
-        profileAttributes.put("amr", new String[]{"mid"});
-
-        log.info("body content is: " + acceptConsentRequest.toString());
-        HttpEntity<AcceptConsentRequest> request = new HttpEntity<>(acceptConsentRequest);
-        ResponseEntity<Map> response = hydraService.exchange(url, HttpMethod.PUT, request, Map.class);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("location", response.getBody().get("redirect_to").toString());
-        return new ResponseEntity<>(headers, HttpStatus.FOUND);
-    }
-
     private void addLegalPersonAttributes(Map<String, Object> attributes, TaraSession.LegalPerson legalPerson) {
         Map<String, Object> legalPersonAttributes = Map.of(
                 "name", legalPerson.getLegalName(),

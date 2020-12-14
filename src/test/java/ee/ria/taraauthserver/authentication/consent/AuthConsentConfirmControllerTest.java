@@ -1,6 +1,8 @@
 package ee.ria.taraauthserver.authentication.consent;
 
 import ee.ria.taraauthserver.BaseTest;
+import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.SneakyThrows;
@@ -13,6 +15,8 @@ import org.springframework.session.SessionRepository;
 
 import java.net.URL;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
@@ -86,7 +90,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Ebakorrektne päring."))
+                .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
                 .body("error", equalTo("Bad Request"));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected: 'INIT_CONSENT_PROCESS'");
@@ -149,6 +153,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withHeader(HttpHeaders.CONNECTION, "close")
                         .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
 
         given()
@@ -209,8 +214,13 @@ class AuthConsentConfirmControllerTest extends BaseTest {
         ar.setFirstName("firstname");
         ar.setLastName("lastname");
         ar.setDateOfBirth(LocalDate.of(1992, 12, 17));
+        ar.setAcr(LevelOfAssurance.HIGH);
+        ar.setAmr(AuthenticationType.MobileID);
         authSession.setAuthenticationResult(ar);
         authSession.setConsentChallenge(MOCK_CONSENT_CHALLENGE);
+        List<AuthenticationType> allowedMethods = new ArrayList<>();
+        allowedMethods.add(AuthenticationType.IDCard);
+        authSession.setAllowedAuthMethods(allowedMethods);
         session.setAttribute(TARA_SESSION, authSession);
         sessionRepository.save(session);
         return session;

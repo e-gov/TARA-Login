@@ -19,7 +19,6 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.util.Map;
 
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_CONSENT_PROCESS;
 
 @Slf4j
@@ -58,6 +57,11 @@ public class AuthConsentController {
         model.addAttribute("firstName", taraSession.getAuthenticationResult().getFirstName());
         model.addAttribute("lastName", taraSession.getAuthenticationResult().getLastName());
         model.addAttribute("dateOfBirth", taraSession.getAuthenticationResult().getDateOfBirth());
+        TaraSession.LegalPerson legalPerson = taraSession.getSelectedLegalPerson();
+        if (legalPerson != null) {
+            model.addAttribute("legalPersonName", legalPerson.getLegalName());
+            model.addAttribute("legalPersonRegistryCode", legalPerson.getLegalPersonIdentifier());
+        }
         return "consentView";
     }
 

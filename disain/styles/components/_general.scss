@@ -110,6 +110,15 @@ body {
   }
 }
 
+// consent
+.consent-button {
+  display: inline-block;
+  margin-right: 20px;
+}
+.consent-table {
+  padding-bottom: 20px;
+}
+
 // Mobile
 body.is-mobile-subview {
   @media (max-width: $breakpoint-mobile) {
