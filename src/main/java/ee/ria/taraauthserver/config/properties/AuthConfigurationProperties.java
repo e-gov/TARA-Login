@@ -54,6 +54,9 @@ public class AuthConfigurationProperties {
         @NotBlank
         private String acceptConsentUrl;
 
+        @NotBlank
+        private String rejectLoginUrl;
+
         private int requestTimeoutInSeconds = 3;
     }
 
