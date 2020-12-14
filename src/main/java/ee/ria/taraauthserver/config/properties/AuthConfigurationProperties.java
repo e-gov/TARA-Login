@@ -1,6 +1,5 @@
 package ee.ria.taraauthserver.config.properties;
 
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -53,6 +52,9 @@ public class AuthConfigurationProperties {
 
         @NotBlank
         private String acceptConsentUrl;
+
+        @NotBlank
+        private String healthUrl;
 
         private int requestTimeoutInSeconds = 3;
     }
@@ -190,5 +192,12 @@ public class AuthConfigurationProperties {
         private int readTimeoutInMilliseconds = DEFAULT_READ_TIMEOUT_IN_MILLISECONDS;
 
         private String responderCertificateCn;
+    }
+
+    @Data
+    @ConfigurationProperties(prefix = "tara.health-endpoint")
+    public static class HealthConfigurationProperties {
+
+        private int expirationWarningPeriodInDays = 30;
     }
 }
