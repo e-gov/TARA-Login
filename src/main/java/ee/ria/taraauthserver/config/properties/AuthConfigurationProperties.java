@@ -1,9 +1,13 @@
 package ee.ria.taraauthserver.config.properties;
 
 import lombok.*;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 
@@ -16,8 +20,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static ee.ria.taraauthserver.config.properties.AuthenticationType.IDCard;
-import static ee.ria.taraauthserver.config.properties.AuthenticationType.MobileID;
+import static ee.ria.taraauthserver.config.properties.AuthenticationType.ID_CARD;
+import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
 import static java.util.Arrays.asList;
 
 @Slf4j
@@ -29,7 +33,7 @@ public class AuthConfigurationProperties {
     @Pattern(regexp = "(et|en|ru)", message = "invalid default locale value, accepted values are: et, en, ru")
     private String defaultLocale = "et";
 
-    private List<AuthenticationType> defaultAuthenticationMethods = asList(IDCard, MobileID);
+    private List<AuthenticationType> defaultAuthenticationMethods = asList(ID_CARD, MOBILE_ID);
 
     private HydraConfigurationProperties hydraService = new HydraConfigurationProperties();
 
@@ -78,10 +82,8 @@ public class AuthConfigurationProperties {
     public static class AuthMethodProperties {
 
         @NotNull
-        private LevelOfAssurance levelOfAssurance;
-
-        @Getter
-        private boolean enabled = true;
+        LevelOfAssurance levelOfAssurance;
+        boolean enabled = true;
     }
 
     @Data
@@ -199,7 +201,6 @@ public class AuthConfigurationProperties {
     @ToString
     @Component
     public static class HealthConfigurationProperties {
-
         private int expirationWarningPeriodInDays = 30;
     }
 }

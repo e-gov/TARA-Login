@@ -312,7 +312,7 @@ class AuthInitControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response-ok_ui_locales-not-set.json")));
 
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.IDCard).setEnabled(false);
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setEnabled(false);
 
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
@@ -356,8 +356,8 @@ class AuthInitControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response.json")));
 
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.IDCard).setLevelOfAssurance(LevelOfAssurance.HIGH);
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MobileID).setLevelOfAssurance(LevelOfAssurance.LOW);
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.HIGH);
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.LOW);
 
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
@@ -380,8 +380,8 @@ class AuthInitControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response-ok_acr-not-set.json")));
 
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.IDCard).setLevelOfAssurance(LevelOfAssurance.LOW);
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MobileID).setLevelOfAssurance(LevelOfAssurance.HIGH);
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.LOW);
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.HIGH);
 
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
@@ -405,8 +405,8 @@ class AuthInitControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response-ok_scope-unknown.json")));
 
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MobileID).setLevelOfAssurance(LevelOfAssurance.HIGH);
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.IDCard).setLevelOfAssurance(LevelOfAssurance.HIGH);
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.HIGH);
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.HIGH);
 
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
@@ -430,8 +430,8 @@ class AuthInitControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response-ok_scope-unknown.json")));
 
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MobileID).setLevelOfAssurance(LevelOfAssurance.LOW);
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.IDCard).setLevelOfAssurance(LevelOfAssurance.LOW);
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.LOW);
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.LOW);
 
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)

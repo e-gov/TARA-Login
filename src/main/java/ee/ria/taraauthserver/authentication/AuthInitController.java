@@ -73,7 +73,7 @@ public class AuthInitController {
 
         TaraSession newTaraSession = getAuthSession(loginRequestInfo);
         httpSession.setAttribute(TARA_SESSION, newTaraSession);
-        log.info("created session: " + newTaraSession);
+        log.info("Created session: {}", newTaraSession);
         return newTaraSession;
     }
 
@@ -94,8 +94,8 @@ public class AuthInitController {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         HttpSession session = request.getSession(false);
         if (session != null) {
+            log.warn("Session '{}' has been reset", session.getId());
             session.invalidate();
-            log.warn("session has been reset");
         }
 
         session = request.getSession(true);

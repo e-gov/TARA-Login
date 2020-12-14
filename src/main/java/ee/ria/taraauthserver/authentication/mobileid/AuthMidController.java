@@ -149,7 +149,7 @@ public class AuthMidController {
         authenticationResult.setPhoneNumber(requestParameters.getTelephoneNumber());
         authenticationResult.setSubject(midAuthenticationResult.getAuthenticationIdentity().getCountry() + midAuthenticationResult.getAuthenticationIdentity().getIdentityCode());
         authenticationResult.setDateOfBirth(MidNationalIdentificationCodeValidator.getBirthDate(idCode));
-        authenticationResult.setAmr(AuthenticationType.MobileID);
+        authenticationResult.setAmr(AuthenticationType.MOBILE_ID);
         authenticationResult.setAcr(midAuthConfigurationProperties.getLevelOfAssurance());
 
         taraSession.setAuthenticationResult(authenticationResult);
@@ -170,14 +170,13 @@ public class AuthMidController {
     }
 
     private void validateAuthSession(TaraSession taraSession) {
-
         if (taraSession == null) {
             throw new BadRequestException(SESSION_NOT_FOUND, "authSession is null");
         }
         if (taraSession.getState() != INIT_AUTH_PROCESS) {
             throw new BadRequestException(SESSION_STATE_INVALID, "authSession state should be " + INIT_AUTH_PROCESS + " but was " + taraSession.getState());
         }
-        if (!taraSession.getAllowedAuthMethods().contains(AuthenticationType.MobileID)) {
+        if (!taraSession.getAllowedAuthMethods().contains(AuthenticationType.MOBILE_ID)) {
             throw new BadRequestException(INVALID_REQUEST, "Mobile ID authentication method is not allowed");
         }
         taraSession.setState(INIT_MID);
@@ -265,7 +264,6 @@ public class AuthMidController {
     }
 
     @Data
-    @ToString
     public static class MidRequestBody {
         @ValidNationalIdNumber(message = "{message.mid-rest.error.invalid-identity-code}")
         private String idCode;

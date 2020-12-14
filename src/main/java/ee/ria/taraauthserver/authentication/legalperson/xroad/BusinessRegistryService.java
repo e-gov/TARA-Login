@@ -97,7 +97,7 @@ public class BusinessRegistryService {
             Template template = templateConfiguration.getTemplate(SOAP_REQUEST_TEMPLATE);
             try (Writer writer = new StringWriter()) {
 
-                Map<String, String> params = new HashMap();
+                Map<String, String> params = new HashMap<>();
                 params.put("nonce", escapeXml11(nonce));
                 params.put("serviceRoadInstance", escapeXml11(legalPersonProperties.getXRoadServiceInstance()));
                 params.put("serviceMemberClass", escapeXml11(legalPersonProperties.getXRoadServiceMemberClass()));
