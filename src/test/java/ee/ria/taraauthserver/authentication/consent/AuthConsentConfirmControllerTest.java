@@ -205,21 +205,21 @@ class AuthConsentConfirmControllerTest extends BaseTest {
         TaraSession.Client client = new TaraSession.Client();
         md.setDisplay_user_consent(display);
         client.setMetaData(md);
+        client.setScope("mid idcard");
         lri.setClient(client);
         lri.setUrl(new URL("https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c80393c7-6666-4dd2-b890-0ada47161cfa&nonce=fa97f828-eda3-4975-bca2-4bfbb9b24d28&ui_locales=et"));
         authSession.setLoginRequestInfo(lri);
-
         TaraSession.AuthenticationResult ar = new TaraSession.AuthenticationResult();
         ar.setIdCode("abc123idcode");
         ar.setFirstName("firstname");
         ar.setLastName("lastname");
         ar.setDateOfBirth(LocalDate.of(1992, 12, 17));
         ar.setAcr(LevelOfAssurance.HIGH);
-        ar.setAmr(AuthenticationType.MobileID);
+        ar.setAmr(AuthenticationType.MOBILE_ID);
         authSession.setAuthenticationResult(ar);
         authSession.setConsentChallenge(MOCK_CONSENT_CHALLENGE);
         List<AuthenticationType> allowedMethods = new ArrayList<>();
-        allowedMethods.add(AuthenticationType.IDCard);
+        allowedMethods.add(AuthenticationType.ID_CARD);
         authSession.setAllowedAuthMethods(allowedMethods);
         session.setAttribute(TARA_SESSION, authSession);
         sessionRepository.save(session);
