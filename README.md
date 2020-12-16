@@ -75,12 +75,12 @@
 ## 1.6 Heartbeat endpoint configuration properties
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `management.health.defaults.enabled` | No | Whether to enable default health indicators. Default `true` |
-| `management.info.git.mode` | No | Display the full git information. Default `simple` |
-| `management.endpoints.web.base-path` | No | Base path of heartbeat endpoint. Default `/actuator` |
-| `management.endpoints.web.exposure.exclude` | No | Endpoint IDs that should be excluded or `*` for all. Example `heartbeat`|
-| `management.endpoints.web.exposure.include` | No | Endpoint IDs that should be included or `*` for all. Example `heartbeat`|
-| `management.endpoints.jmx.exposure.exclude` | No | Endpoint IDs that should be excluded or `*` for all. Example `heartbeat`|
+| `management.health.defaults.enabled` | No | Whether to enable default health indicators. Default `false` |
+| `management.info.git.mode` | No | Mode to use to expose git information. Default `full` |
+| `management.endpoints.web.base-path` | No | Base path of heartbeat endpoint. Default `/` |
+| `management.endpoints.web.exposure.exclude` | No | Endpoint IDs that should be excluded or `*` for all. Example `heartbeat` Default `*` |
+| `management.endpoints.web.exposure.include` | No | Endpoint IDs that should be included or `*` for all. Example `heartbeat` |
+| `management.endpoints.jmx.exposure.exclude` | No | Endpoint IDs that should be excluded or `*` for all. Example `heartbeat` Default `*` |
 | `management.endpoints.jmx.exposure.include` | No | Endpoint IDs that should be included or `*` for all. Example `heartbeat` |
 
 ## 2 TARA login server endpoints
