@@ -1,13 +1,13 @@
 package ee.ria.taraauthserver.health;
 
-import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.HealthConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.health.AbstractHealthIndicator;
 import org.springframework.boot.actuate.health.Health;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
@@ -35,22 +35,22 @@ import static java.util.stream.Collectors.toMap;
 
 @Slf4j
 @Component
-@ConditionalOnProperty(value = "tara.health-endpoint.enabled", matchIfMissing = true)
 public class TruststoreHealthIndicator extends AbstractHealthIndicator {
-
-    @Autowired
-    ResourceLoader resourceLoader;
-    @Autowired
-    private AuthConfigurationProperties.IdCardAuthConfigurationProperties idCardConfiguration;
-    @Autowired
-    private AuthConfigurationProperties.HealthConfigurationProperties healthConfiguration;
-
     public static final String X_509 = "X.509";
     public static final String TRUSTSTORE_WARNING = "Truststore certificate '%s' with serial number '%s' is expiring at %s";
     private final Map<String, CertificateInfo> trustStoreCertificates = new HashMap<>();
 
+    @Autowired
+    private ResourceLoader resourceLoader;
+
+    @Autowired
+    private IdCardAuthConfigurationProperties idCardConfiguration;
+
+    @Autowired
+    private HealthConfigurationProperties healthConfiguration;
+
     @Getter
-    private Clock systemClock;
+    private final Clock systemClock;
 
     public TruststoreHealthIndicator() {
         super("Truststore certificates expiration check failed");
@@ -66,7 +66,7 @@ public class TruststoreHealthIndicator extends AbstractHealthIndicator {
         }
     }
 
-    public List<String> getCertificateExpirationWarnings() {
+    List<String> getCertificateExpirationWarnings() {
         return getCertificatesExpiredAt(now(getSystemClock()).plus(Period.ofDays(healthConfiguration.getExpirationWarningPeriodInDays()))).values().stream()
                 .map(certificateInfo -> format(TRUSTSTORE_WARNING, certificateInfo.getSubjectDN(),
                         certificateInfo.getSerialNumber(), certificateInfo.getValidTo()))
@@ -74,9 +74,6 @@ public class TruststoreHealthIndicator extends AbstractHealthIndicator {
     }
 
     private Map<String, CertificateInfo> getCertificatesExpiredAt(Instant expired) {
-        Map<String, CertificateInfo> test = trustStoreCertificates.entrySet().stream()
-                .filter(es -> expired.isAfter(es.getValue().validTo))
-                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
         return trustStoreCertificates.entrySet().stream()
                 .filter(es -> expired.isAfter(es.getValue().validTo))
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));

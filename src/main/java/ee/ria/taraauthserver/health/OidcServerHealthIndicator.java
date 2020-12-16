@@ -4,7 +4,6 @@ import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.health.AbstractHealthIndicator;
 import org.springframework.boot.actuate.health.Health;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -14,14 +13,13 @@ import java.net.URI;
 import static java.net.URI.create;
 
 @Component
-@ConditionalOnProperty(value = "tara.health-endpoint.enabled", matchIfMissing = true)
 public class OidcServerHealthIndicator extends AbstractHealthIndicator {
 
     @Autowired
     private AuthConfigurationProperties authConfigurationProperties;
 
     @Autowired
-    SSLContext sslContext;
+    private SSLContext sslContext;
 
     public OidcServerHealthIndicator() {
         super("Authentication service health check failed");

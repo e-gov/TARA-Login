@@ -69,3 +69,18 @@ tara:
     trust-store-password: changeit
     trust-store-type: jks
 
+management:
+  health:
+    defaults:
+      enabled: false
+  info:
+    git:
+      mode: full
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        exclude: "*"
+    jmx:
+      exposure:
+        exclude: "*"

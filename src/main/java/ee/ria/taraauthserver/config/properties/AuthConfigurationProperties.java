@@ -1,14 +1,11 @@
 package ee.ria.taraauthserver.config.properties;
 
-import lombok.*;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 
@@ -57,10 +54,10 @@ public class AuthConfigurationProperties {
         private String acceptConsentUrl;
 
         @NotBlank
-        private String rejectConsentUrl;
+        private String healthUrl;
 
         @NotBlank
-        private String healthUrl;
+        private String rejectConsentUrl;
 
         private int requestTimeoutInSeconds = 3;
     }
@@ -199,9 +196,9 @@ public class AuthConfigurationProperties {
     }
 
     @Data
-    @ToString
-    @Component
+    @ConfigurationProperties(prefix = "tara.health-endpoint")
     public static class HealthConfigurationProperties {
+
         private int expirationWarningPeriodInDays = 30;
     }
 }
