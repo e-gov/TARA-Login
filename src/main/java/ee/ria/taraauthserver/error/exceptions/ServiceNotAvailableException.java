@@ -25,15 +25,11 @@
 
 package ee.ria.taraauthserver.error.exceptions;
 
-import ee.ria.taraauthserver.error.ErrorTranslationCodes;
+import ee.ria.taraauthserver.error.ErrorCode;
 
 public class ServiceNotAvailableException extends TaraException {
 
-    public ServiceNotAvailableException(String debugMessage) {
-        super(null, debugMessage, null);
-    }
-
-    public ServiceNotAvailableException(ErrorTranslationCodes messageCode, String debugMessage, Exception exception) {
-        super(messageCode, debugMessage, exception);
+    public ServiceNotAvailableException(ErrorCode messageCode, String message, Exception exception) {
+        super(messageCode, message, exception);
     }
 }

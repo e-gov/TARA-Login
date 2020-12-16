@@ -23,7 +23,6 @@ public class AuthMidPollController {
     @GetMapping(value = "/auth/mid/poll")
     @ResponseBody
     public ModelAndView authMidPoll() {
-
         TaraSession taraSession = SessionUtils.getAuthSession();
         log.debug("Polling for response from Mobile ID authentication process with MID session id {}",
                 ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getMidSessionId());
@@ -35,7 +34,7 @@ public class AuthMidPollController {
         if (taraSession.getState() == NATURAL_PERSON_AUTHENTICATION_COMPLETED)
             return new ModelAndView(new MappingJackson2JsonView(), Map.of("status", "COMPLETED"));
         else if (taraSession.getState() == AUTHENTICATION_FAILED)
-            throw new BadRequestException(((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage(), "Mid poll failed");
+            throw new BadRequestException(taraSession.getAuthenticationResult().getErrorCode(), "Mid poll failed");
         else
             return new ModelAndView(new MappingJackson2JsonView(), Map.of("status", "PENDING"));
     }

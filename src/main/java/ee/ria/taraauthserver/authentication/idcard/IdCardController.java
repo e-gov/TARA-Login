@@ -32,7 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
-import static ee.ria.taraauthserver.error.ErrorTranslationCodes.ESTEID_INVALID_REQUEST;
+import static ee.ria.taraauthserver.error.ErrorCode.ESTEID_INVALID_REQUEST;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT;
 import static java.lang.String.format;
