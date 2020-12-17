@@ -56,6 +56,9 @@ public class AuthConfigurationProperties {
         @NotBlank
         private String healthUrl;
 
+        @NotBlank
+        private String rejectConsentUrl;
+
         private int requestTimeoutInSeconds = 3;
     }
 
@@ -77,10 +80,8 @@ public class AuthConfigurationProperties {
     public static class AuthMethodProperties {
 
         @NotNull
-        private LevelOfAssurance levelOfAssurance;
-
-        @Getter
-        private boolean enabled = true;
+        LevelOfAssurance levelOfAssurance;
+        boolean enabled = true;
     }
 
     @Data

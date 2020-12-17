@@ -8,6 +8,7 @@
 | `tara.hydra-service.login-url` | Yes | Url to initialize Hydra OIDC server login process |
 | `tara.hydra-service.accept-login-url` | Yes | Url to accept Hydra OIDC server login |
 | `tara.hydra-service.accept-consent-url` | Yes | Url to accept Hydra OIDC server consent |
+| `tara.hydra-service.reject-consent-url` | Yes | Url to reject Hydra OIDC server consent |
 | `tara.hydra-service.request-timeout` | Yes | Hydra service request timeout |
 | `tara.hydra-service.health-url` | Yes | Hydra service health url |
 
@@ -252,4 +253,65 @@ Content-Type: application/json
 Example json:
 ````
 {"status":"ERROR", "errorMessage":"Teie sertifikaadid ei kehti."}
+````
+
+### 2.6 /auth/consent
+
+#### Request:
+
+````
+GET /auth/consent
+````
+
+| Cookie        | Mandatory | Description |
+| :---------------- | :---------- | :----------------|
+| `SESSION` | Yes | id of an existing session |
+
+#### Response:
+
+##### Response Code: 200
+
+##### Headers
+
+````
+Set-Cookie: SESSION={sessionId}; Path=/; HttpOnly; SameSite=Strict
+Content-Type: text/html;charset=UTF-8
+````
+
+##### Body
+
+````
+HTML page with user personal details and buttons to refuse or grant consent
+````
+
+##### Response Code: 302
+
+##### Headers
+
+````
+Set-Cookie: SESSION={sessionId}; Path=/; HttpOnly; SameSite=Strict
+Location: {redirectUrl}
+````
+
+### 2.7 /auth/confirm/consent
+
+#### Request:
+
+````
+POST /auth/consent
+````
+
+| Cookie        | Mandatory | Description |
+| :---------------- | :---------- | :----------------|
+| `SESSION` | Yes | id of an existing session |
+
+#### Response:
+
+##### Response Code: 302
+
+##### Headers
+
+````
+Set-Cookie: SESSION={sessionId}; Path=/; HttpOnly; SameSite=Strict
+Location: {redirectUrl}
 ````
