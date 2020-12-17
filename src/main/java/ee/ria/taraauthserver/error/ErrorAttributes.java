@@ -58,7 +58,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
     private void handle4xxClientError(WebRequest webRequest, Map<String, Object> attr) {
         Throwable error = getError(webRequest);
         if (isTaraErrorWithErrorCode(error)) {
-            attr.replace(ATTR_MESSAGE, translateErrorCode(webRequest, ((TaraException) error).getMessageCode().getMessage()));
+            attr.replace(ATTR_MESSAGE, translateErrorCode(webRequest, ((TaraException) error).getErrorCode().getMessage()));
         } else if (isBindingError(error)) {
             attr.replace(ATTR_MESSAGE, formatBindingErrors((BindException) error));
         }
@@ -68,14 +68,14 @@ public class ErrorAttributes extends DefaultErrorAttributes {
         int status = (int) attr.get("status");
         Throwable error = getError(webRequest);
         if (status == 502 && isTaraErrorWithErrorCode(error)) {
-            attr.replace(ATTR_MESSAGE, translateErrorCode(webRequest, ((TaraException) error).getMessageCode().getMessage()));
+            attr.replace(ATTR_MESSAGE, translateErrorCode(webRequest, ((TaraException) error).getErrorCode().getMessage()));
         } else {
             attr.replace(ATTR_MESSAGE, translateErrorCode(webRequest, DEFAULT_INTERNAL_EXCEPTION_MSG));
         }
     }
 
     private boolean isTaraErrorWithErrorCode(Throwable error) {
-        return error instanceof TaraException && ((TaraException) error).getMessageCode() != null;
+        return error instanceof TaraException && ((TaraException) error).getErrorCode() != null;
     }
 
     @NotNull

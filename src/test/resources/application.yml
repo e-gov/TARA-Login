@@ -4,6 +4,8 @@ tara:
     accept-login-url: https://localhost:9877/oauth2/auth/requests/login/accept
     reject-login-url: https://localhost:9877/oauth2/auth/requests/login/reject
     accept-consent-url: https://localhost:9877/oauth2/auth/requests/consent/accept
+    reject-consent-url: https://localhost:9877/oauth2/auth/requests/consent/reject
+    health-url: https://localhost:9877/health/ready
     request-timeout-in-seconds: 1
 
   default-locale: et
@@ -68,3 +70,18 @@ tara:
     trust-store-password: changeit
     trust-store-type: jks
 
+management:
+  health:
+    defaults:
+      enabled: false
+  info:
+    git:
+      mode: full
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        exclude: "*"
+    jmx:
+      exposure:
+        exclude: "*"

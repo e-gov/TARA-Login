@@ -1,20 +1,19 @@
 package ee.ria.taraauthserver.error.exceptions;
 
-import ee.ria.taraauthserver.error.ErrorTranslationCodes;
+import ee.ria.taraauthserver.error.ErrorCode;
 import lombok.Getter;
 
 public abstract class TaraException extends RuntimeException {
 
     @Getter
-    private final ErrorTranslationCodes messageCode;
+    private final ErrorCode errorCode;
 
-    public TaraException(ErrorTranslationCodes messageCode, String debugMessage) {
-        this(messageCode, debugMessage, null);
+    public TaraException(ErrorCode errorCode, String message) {
+        this(errorCode, message, null);
     }
 
-    public TaraException(ErrorTranslationCodes messageCode, String debugMessage, Exception exception) {
-        super(debugMessage, exception);
-        this.messageCode = messageCode;
+    public TaraException(ErrorCode errorCode, String message, Exception exception) {
+        super(message, exception);
+        this.errorCode = errorCode;
     }
-
 }

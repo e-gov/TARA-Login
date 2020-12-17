@@ -1,7 +1,7 @@
 package ee.ria.taraauthserver.authentication.legalperson.xroad;
 
 import ee.ria.taraauthserver.config.properties.LegalPersonProperties;
-import ee.ria.taraauthserver.error.ErrorTranslationCodes;
+import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
 import ee.ria.taraauthserver.session.TaraSession;
 import freemarker.template.Configuration;
@@ -159,7 +159,7 @@ public class BusinessRegistryService {
             }
 
         } catch (SocketTimeoutException | ConnectException | UnknownHostException | SSLException e) {
-            throw new ServiceNotAvailableException(ErrorTranslationCodes.LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE, "Could not connect to business registry. Connection failed: " + e.getMessage(), e);
+            throw new ServiceNotAvailableException(ErrorCode.LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE, "Could not connect to business registry. Connection failed: " + e.getMessage(), e);
         } catch (XPathExpressionException | IOException | SAXException | ParserConfigurationException e) {
             throw new IllegalStateException("Failed to extract data from response: " + e.getMessage(), e);
         }

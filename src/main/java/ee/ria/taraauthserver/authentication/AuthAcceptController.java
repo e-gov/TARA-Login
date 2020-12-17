@@ -24,7 +24,7 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import java.util.List;
 
-import static ee.ria.taraauthserver.error.ErrorTranslationCodes.SESSION_STATE_INVALID;
+import static ee.ria.taraauthserver.error.ErrorCode.SESSION_STATE_INVALID;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 
 @Slf4j

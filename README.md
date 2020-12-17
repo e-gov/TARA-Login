@@ -8,7 +8,9 @@
 | `tara.hydra-service.login-url` | Yes | Url to initialize Hydra OIDC server login process |
 | `tara.hydra-service.accept-login-url` | Yes | Url to accept Hydra OIDC server login |
 | `tara.hydra-service.accept-consent-url` | Yes | Url to accept Hydra OIDC server consent |
+| `tara.hydra-service.reject-consent-url` | Yes | Url to reject Hydra OIDC server consent |
 | `tara.hydra-service.request-timeout` | Yes | Hydra service request timeout |
+| `tara.hydra-service.health-url` | Yes | Hydra service health url |
 
 ### 1.2 trusted TLS certificates
 
@@ -72,6 +74,23 @@
 | `tara.legal-person-authentication.x-road-server-connect-timeout-in-milliseconds` | No | X-Road security server connect timeout in milliseconds. Defaults to 3000 if not specified.  |
 | `tara.legal-person-authentication.x-road-query-esindus-v2-allowed-types` | No | List of legal person types in arireg.esindus_v2 service response that are considered valid for authentication. Defaults to `TÜ,UÜ, OÜ,AS,TÜH,SA,MTÜ` if not specified.  |
 
+## 1.6 Heartbeat endpoint configuration properties
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `management.endpoints.web.base-path` | No | Base path of heartbeat endpoint. Default `/` |
+| `management.endpoints.web.exposure.exclude` | No | Endpoint IDs that should be excluded or `*` for all. Example `heartbeat` Default `*` |
+| `management.endpoints.web.exposure.include` | No | Endpoint IDs that should be included or `*` for all. Example `heartbeat` |
+
+This endpoint is turned off by default. Here is the minimum required configuration to turn it on:
+
+````yaml
+management:
+  endpoints:
+    web:
+      exposure:
+        exclude: ""
+        include: "heartbeat"
+````
 
 ## 2 TARA login server endpoints
 
@@ -234,4 +253,65 @@ Content-Type: application/json
 Example json:
 ````
 {"status":"ERROR", "errorMessage":"Teie sertifikaadid ei kehti."}
+````
+
+### 2.6 /auth/consent
+
+#### Request:
+
+````
+GET /auth/consent
+````
+
+| Cookie        | Mandatory | Description |
+| :---------------- | :---------- | :----------------|
+| `SESSION` | Yes | id of an existing session |
+
+#### Response:
+
+##### Response Code: 200
+
+##### Headers
+
+````
+Set-Cookie: SESSION={sessionId}; Path=/; HttpOnly; SameSite=Strict
+Content-Type: text/html;charset=UTF-8
+````
+
+##### Body
+
+````
+HTML page with user personal details and buttons to refuse or grant consent
+````
+
+##### Response Code: 302
+
+##### Headers
+
+````
+Set-Cookie: SESSION={sessionId}; Path=/; HttpOnly; SameSite=Strict
+Location: {redirectUrl}
+````
+
+### 2.7 /auth/confirm/consent
+
+#### Request:
+
+````
+POST /auth/consent
+````
+
+| Cookie        | Mandatory | Description |
+| :---------------- | :---------- | :----------------|
+| `SESSION` | Yes | id of an existing session |
+
+#### Response:
+
+##### Response Code: 302
+
+##### Headers
+
+````
+Set-Cookie: SESSION={sessionId}; Path=/; HttpOnly; SameSite=Strict
+Location: {redirectUrl}
 ````
