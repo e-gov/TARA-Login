@@ -62,7 +62,6 @@ public class TestIDCardConfiguration {
     @Primary
     @ConditionalOnProperty("tara.auth-methods.id-card.enabled")
     OCSPValidator mockOCSPValidator() {
-        log.info("MOCKING OCSP VALIDATOR");
         return Mockito.mock(OCSPValidator.class);
     }
 }

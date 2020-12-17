@@ -1,0 +1,41 @@
+<div class="container" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+    <div class="alert alert-neutral">
+        <h2 th:utext="#{label.consent.header}"></h2>
+        <table class="consent-table">
+            <tr>
+                <th th:utext="#{label.natural-person.id-code}"></th>
+                <td th:text="${idCode}">Personal ID-code</td>
+            </tr>
+            <tr>
+                <th th:utext="#{label.natural-person.surname}"></th>
+                <td th:text="${lastName}">Surname</td>
+            </tr>
+            <tr>
+                <th th:utext="#{label.natural-person.given-name}"></th>
+                <td th:text="${firstName}">Givenname</td>
+            </tr>
+            <tr>
+                <th th:utext="#{label.natural-person.date-of-birth}"></th>
+                <td th:text="${#temporals.format(dateOfBirth, 'dd.MM.yyyy')}">Date of birth</td>
+            </tr>
+            <tr th:if="${legalPersonName != null}">
+                <th th:utext="#{html.auth.legalperson.legalPersonName}"></th>
+                <td th:text="${legalPersonName}">Legal person name</td>
+            </tr>
+            <tr th:if="${legalPersonRegistryCode != null}">
+                <th th:utext="#{html.auth.legalperson.legalPersonIdentifier}"></th>
+                <td th:text="${legalPersonRegistryCode}">Legal person registry code</td>
+            </tr>
+        </table>
+        <form method="POST" th:action="@{/auth/consent/confirm(consent_given=true)}" class="consent-button c-form">
+            <button th:text="#{label.consent.accept}" type="submit" name="submit" value="value"
+                    class="c-btn c-btn--primary">ACCEPT
+            </button>
+        </form>
+        <form method="POST" th:action="@{/auth/consent/confirm(consent_given=false)}" class="consent-button c-form">
+            <button th:text="#{label.consent.reject}" type="submit" name="submit" value="value"
+                    class="c-btn c-btn--cancel">REJECT
+            </button>
+        </form>
+    </div>
+</div>

@@ -3,6 +3,7 @@ tara:
     login-url: https://localhost:9877/oauth2/auth/requests/login
     accept-login-url: https://localhost:9877/oauth2/auth/requests/login/accept
     accept-consent-url: https://localhost:9877/oauth2/auth/requests/consent/accept
+    reject-consent-url: https://localhost:9877/oauth2/auth/requests/consent/reject
     health-url: https://localhost:9877/health/ready
     request-timeout-in-seconds: 1
 

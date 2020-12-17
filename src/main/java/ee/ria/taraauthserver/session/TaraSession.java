@@ -9,6 +9,7 @@ import org.springframework.context.i18n.LocaleContextHolder;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -27,6 +28,7 @@ public class TaraSession implements Serializable {
     private AuthenticationResult authenticationResult;
     private List<LegalPerson> legalPersonList;
     private LegalPerson selectedLegalPerson;
+    private String consentChallenge;
 
     @Data
     public static class AuthenticationResult implements Serializable {
@@ -91,6 +93,9 @@ public class TaraSession implements Serializable {
         @Valid
         @JsonProperty("oidc_client")
         private OidcClient oidcClient = new OidcClient();
+        @NotNull
+        @JsonProperty("display_user_consent")
+        private boolean display_user_consent;
     }
 
     @Data
