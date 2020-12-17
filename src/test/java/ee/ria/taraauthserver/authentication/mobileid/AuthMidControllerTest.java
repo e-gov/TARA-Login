@@ -2,51 +2,64 @@ package ee.ria.taraauthserver.authentication.mobileid;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import ee.ria.taraauthserver.BaseTest;
-import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
-import ee.ria.taraauthserver.error.ErrorTranslationCodes;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
+import ee.sk.mid.MidAuthenticationHashToSign;
+import ee.sk.mid.MidHashType;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
-import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static ee.ria.taraauthserver.error.ErrorTranslationCodes.MID_INTERNAL_ERROR;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
+import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.hasProperty;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
 class AuthMidControllerTest extends BaseTest {
+    private final MidAuthenticationHashToSign MOCK_HASH_TO_SIGN = new MidAuthenticationHashToSign.MobileIdAuthenticationHashToSignBuilder()
+            .withHashType(MidHashType.SHA512)
+            .withHashInBase64("bT+0Fuuf0QChq/sYb+Nz8vhLE8n3gLeL/wOXKxxE4ao=").build();
 
     // TODO parameter names (idCode vs id_code)
 
-    @Autowired
-    private AuthConfigurationProperties authConfigurationProperties;
+    @SpyBean
+    private AuthMidService authMidService;
 
     @Autowired
     private SessionRepository sessionRepository;
 
+    @BeforeEach
+    void beforeEach() {
+        Mockito.doReturn(MOCK_HASH_TO_SIGN).when(authMidService).getAuthenticationHash();
+    }
+
+    @AfterEach
+    void afterEach() {
+        Mockito.reset(authMidService);
+    }
+
     @Test
     void midAuthInit_session_missing() {
-
         given()
                 .when()
                 .formParam("idCode", "60001019906")
@@ -63,7 +76,6 @@ class AuthMidControllerTest extends BaseTest {
 
     @Test
     void nationalIdNumber_missing() {
-
         given()
                 .when()
                 .formParam("telephoneNumber", "00000766")
@@ -197,10 +209,10 @@ class AuthMidControllerTest extends BaseTest {
 
     @Test
     void phoneNumberAndIdCodeValid() {
-        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid/mid_poll_response.json", 200);
+        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 200);
+        createMidApiPollStub("mock_responses/mid/mid_poll_response.json", 200);
 
-        String sessionId = createCorrectSession();
+        String sessionId = createNewAuthenticationSession(MOBILE_ID);
 
         given()
                 .when()
@@ -223,7 +235,7 @@ class AuthMidControllerTest extends BaseTest {
         assertEquals("+37200000266", result.getPhoneNumber());
         assertEquals("EE60001019906", result.getSubject());
         assertEquals("2000-01-01", result.getDateOfBirth().toString());
-        assertEquals(AuthenticationType.MOBILE_ID, result.getAmr());
+        assertEquals(MOBILE_ID, result.getAmr());
         assertEquals(LevelOfAssurance.HIGH, result.getAcr());
 
         assertInfoIsLogged("Mid init request: ee.sk.mid.rest.dao.request.MidAuthenticationRequest");
@@ -240,7 +252,7 @@ class AuthMidControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withStatus(200)));
 
-        String sessionId = createCorrectSession();
+        String sessionId = createNewAuthenticationSession(MOBILE_ID);
 
         given()
                 .when()
@@ -256,10 +268,8 @@ class AuthMidControllerTest extends BaseTest {
     @Test
     void midAuthInit_session_status_incorrect() {
         Session session = sessionRepository.createSession();
-
         TaraSession testSession = new TaraSession();
         testSession.setState(TaraAuthenticationState.INIT_MID);
-
         session.setAttribute(TARA_SESSION, testSession);
         sessionRepository.save(session);
 
@@ -282,7 +292,6 @@ class AuthMidControllerTest extends BaseTest {
     @Test
     void midAuthInit_session_mid_not_allowed() {
         Session session = sessionRepository.createSession();
-
         TaraSession testSession = new TaraSession();
         List<AuthenticationType> allowedMethods = new ArrayList<>();
         allowedMethods.add(AuthenticationType.ID_CARD);
@@ -309,64 +318,64 @@ class AuthMidControllerTest extends BaseTest {
 
     @Test
     void midAuthInit_response_400() {
-        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 400);
+        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 400);
 
         given()
                 .when()
                 .formParam("idCode", "60001019906")
                 .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", createCorrectSession())
+                .sessionId("SESSION", createNewAuthenticationSession(MOBILE_ID))
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
                 .statusCode(500);
 
-        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: HTTP 400 Bad Request");
+        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: HTTP 400 Bad Request"); // TODO:
     }
 
     @Test
     void midAuthInit_response_401() {
-        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 401);
+        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 401);
 
         given()
                 .when()
                 .formParam("idCode", "60001019906")
                 .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", createCorrectSession())
+                .sessionId("SESSION", createNewAuthenticationSession(MOBILE_ID))
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
                 .statusCode(500);
 
-        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: Request is unauthorized for URI https://localhost:9877/mid-api/authentication: HTTP 401 Unauthorized");
+        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: Request is unauthorized for URI https://localhost:9877/mid-api/authentication: HTTP 401 Unauthorized"); // TODO:
     }
 
     @Test
     void midAuthInit_response_405() {
-        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 405);
+        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 405);
 
         given()
                 .when()
                 .formParam("idCode", "60001019906")
                 .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", createCorrectSession())
+                .sessionId("SESSION", createNewAuthenticationSession(MOBILE_ID))
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
                 .statusCode(500);
 
-        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: HTTP 405 Method Not Allowed");
+        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: HTTP 405 Method Not Allowed"); // TODO:
     }
 
     @Test
     void midAuthInit_response_500() {
-        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 500);
+        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 500);
 
         given()
                 .when()
                 .formParam("idCode", "60001019906")
                 .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", createCorrectSession())
+                .sessionId("SESSION", createNewAuthenticationSession(MOBILE_ID))
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
@@ -376,14 +385,14 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
-    void midAuthInit_response_no_certificate() {
-        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 500);
+    void midAuthInit_response_no_certificate() { // TODO: no certificate?
+        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 500);
 
         given()
                 .when()
                 .formParam("idCode", "60001019906")
                 .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", createCorrectSession())
+                .sessionId("SESSION", createNewAuthenticationSession(MOBILE_ID))
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
@@ -392,284 +401,11 @@ class AuthMidControllerTest extends BaseTest {
         assertErrorIsLogged("Service not available: MID service is currently unavailable: Error getting response from cert-store/MSSP for URI https://localhost:9877/mid-api/authentication: HTTP 500 Server Error");
     }
 
-    @Test
-    void midAuthPoll_response_400() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid/mid_poll_empty_response.json", 400);
-
-        String sessionId = createCorrectSession();
-
-        given()
-                .when()
-                .formParam("idCode", "60001019939")
-                .formParam("telephoneNumber", "00000266")
-                .sessionId("SESSION", sessionId)
-                .post("/auth/mid/init")
-                .then()
-                .assertThat()
-                .statusCode(200);
-
-        await().atMost(FIVE_SECONDS)
-                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertInfoIsLogged("Mid polling failed: HTTP 400 Bad Request");
-    }
 
     @Test
-    void midAuthPoll_response_401() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid/mid_poll_empty_response.json", 401);
-
-        String sessionId = createCorrectSession();
-
-        given()
-                .when()
-                .formParam("idCode", "60001019939")
-                .formParam("telephoneNumber", "00000266")
-                .sessionId("SESSION", sessionId)
-                .post("/auth/mid/init")
-                .then()
-                .assertThat()
-                .statusCode(200);
-
-        await().atMost(FIVE_SECONDS)
-                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertInfoIsLogged("Mid polling failed: HTTP 401 Unauthorized");
-    }
-
-    @Test
-    void midAuthPoll_response_404() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid/mid_poll_empty_response.json", 404);
-
-        String sessionId = createCorrectSession();
-
-        given()
-                .when()
-                .formParam("idCode", "60001019939")
-                .formParam("telephoneNumber", "00000266")
-                .sessionId("SESSION", sessionId)
-                .post("/auth/mid/init")
-                .then()
-                .assertThat()
-                .statusCode(200);
-
-        await().atMost(FIVE_SECONDS)
-                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertInfoIsLogged("Mid polling failed: Mobile-ID session was not found. Sessions time out in ~5 minutes.");
-    }
-
-    @Test
-    void midAuthPoll_response_405() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid/mid_poll_empty_response.json", 405);
-
-        String sessionId = createCorrectSession();
-
-        given()
-                .when()
-                .formParam("idCode", "60001019939")
-                .formParam("telephoneNumber", "00000266")
-                .sessionId("SESSION", sessionId)
-                .post("/auth/mid/init")
-                .then()
-                .assertThat()
-                .statusCode(200);
-
-        await().atMost(FIVE_SECONDS)
-                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertInfoIsLogged("Mid polling failed: HTTP 405 Method Not Allowed");
-    }
-
-    @Test
-    void midAuthPoll_response_500() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid/mid_poll_empty_response.json", 500);
-
-        String sessionId = createCorrectSession();
-
-        given()
-                .when()
-                .formParam("idCode", "60001019939")
-                .formParam("telephoneNumber", "00000266")
-                .sessionId("SESSION", sessionId)
-                .post("/auth/mid/init")
-                .then()
-                .assertThat()
-                .statusCode(200);
-
-        TaraSession taraSession = await().atMost(FIVE_SECONDS)
-                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertInfoIsLogged("Mid polling failed: HTTP 500 Server Error");
-        assertEquals(MID_INTERNAL_ERROR, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
-    }
-
-    @Test
-    void midAuthPoll_response_user_cancelled() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid/mid_poll_response_user_cancelled.json", 200);
-
-        String sessionId = createCorrectSession();
-
-        given()
-                .when()
-                .formParam("idCode", "60001019906")
-                .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", sessionId)
-                .post("/auth/mid/init")
-                .then()
-                .assertThat()
-                .statusCode(200);
-
-        TaraSession taraSession = await().atMost(FIVE_SECONDS)
-                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertInfoIsLogged("Mid polling failed: User cancelled the operation.");
-        assertEquals(ErrorTranslationCodes.MID_USER_CANCEL, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
-    }
-
-    @Test
-    void midAuthPoll_response_not_mid_client() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid/mid_poll_response_not_mid_client.json", 200);
-
-        String sessionId = createCorrectSession();
-
-        given()
-                .when()
-                .formParam("idCode", "60001019906")
-                .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", sessionId)
-                .post("/auth/mid/init")
-                .then()
-                .assertThat()
-                .statusCode(200);
-
-        TaraSession taraSession = await().atMost(FIVE_SECONDS)
-                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertInfoIsLogged("Mid polling failed: User has no active certificates, and thus is not Mobile-ID client");
-        assertEquals(ErrorTranslationCodes.NOT_MID_CLIENT, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
-    }
-
-    @Test
-    void midAuthPoll_response_timeout() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid/mid_poll_response_timeout.json", 200);
-
-        String sessionId = createCorrectSession();
-
-        given()
-                .when()
-                .formParam("idCode", "60001019906")
-                .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", sessionId)
-                .post("/auth/mid/init")
-                .then()
-                .assertThat()
-                .statusCode(200);
-
-        TaraSession taraSession = await().atMost(FIVE_SECONDS)
-                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertInfoIsLogged("Mid polling failed: User didn't enter PIN code or communication error.");
-        assertEquals(ErrorTranslationCodes.MID_TRANSACTION_EXPIRED, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
-    }
-
-    @Test
-    void midAuthPoll_response_signature_hash_mismatch() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid/mid_poll_response_signature_hash_mismatch.json", 200);
-
-        String sessionId = createCorrectSession();
-
-        given()
-                .when()
-                .formParam("idCode", "60001019906")
-                .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", sessionId)
-                .post("/auth/mid/init")
-                .then()
-                .assertThat()
-                .statusCode(200);
-
-        TaraSession taraSession = await().atMost(FIVE_SECONDS)
-                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertInfoIsLogged("Mid polling failed: Mobile-ID configuration on user's SIM card differs from what is configured on service provider side. User needs to contact his/her mobile operator.");
-        assertEquals(ErrorTranslationCodes.MID_HASH_MISMATCH, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
-    }
-
-    @Test
-    void midAuthPoll_response_phone_absent() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid/mid_poll_response_phone_absent.json", 200);
-
-        String sessionId = createCorrectSession();
-
-        given()
-                .when()
-                .formParam("idCode", "60001019906")
-                .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", sessionId)
-                .post("/auth/mid/init")
-                .then()
-                .assertThat()
-                .statusCode(200);
-
-        TaraSession taraSession = await().atMost(FIVE_SECONDS)
-                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertInfoIsLogged("Mid polling failed: Unable to reach phone or SIM card");
-        assertEquals(ErrorTranslationCodes.MID_PHONE_ABSENT, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
-    }
-
-    @Test
-    void midAuthPoll_response_delivery_error() throws InterruptedException {
-        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid/mid_poll_response_delivery_error.json", 200);
-
-        String sessionId = createCorrectSession();
-
-        given()
-                .when()
-                .formParam("idCode", "60001019906")
-                .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", sessionId)
-                .post("/auth/mid/init")
-                .then()
-                .assertThat()
-                .statusCode(200);
-
-        TaraSession taraSession = await().atMost(FIVE_SECONDS)
-                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertInfoIsLogged("Mid polling failed: SMS sending error");
-        assertEquals(ErrorTranslationCodes.MID_DELIVERY_ERROR, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
-    }
-
-    @Test
-    void midAuthPoll_response_sim_error() {
-        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200);
-        createPollStubWithResponse("mock_responses/mid/mid_poll_response_sim_error.json", 200);
-
-        String sessionId = createCorrectSession();
-
-        given()
-                .when()
-                .formParam("idCode", "60001019906")
-                .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", sessionId)
-                .post("/auth/mid/init")
-                .then()
-                .assertThat()
-                .statusCode(200);
-
-        assertInfoIsLogged("Mid polling failed: SMS sending error");
-        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
-        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
-        assertEquals(ErrorTranslationCodes.MID_DELIVERY_ERROR, ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getErrorMessage());
-    }
-
-    @Test
-    @DirtiesContext
     void midAuthInit_response_timeout() {
-        createAuthenticationStubWithResponse("mock_responses/mid/mid_authenticate_response.json", 200, 2000);
-
-        String sessionId = createCorrectSession();
+        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 200, 2000);
+        String sessionId = createNewAuthenticationSession(MOBILE_ID);
 
         given()
                 .when()
@@ -683,48 +419,5 @@ class AuthMidControllerTest extends BaseTest {
                 .body("message", equalTo("Mobiil-ID teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti."));
 
         assertErrorIsLogged("Service not available: MID service is currently unavailable: java.net.SocketTimeoutException: Read timed out");
-    }
-
-    private void createAuthenticationStubWithResponse(String response, int status) {
-        createAuthenticationStubWithResponse(response, status, 0);
-    }
-
-    private void createAuthenticationStubWithResponse(String response, int status, int delayInMilliseconds) {
-        wireMockServer.stubFor(any(urlPathEqualTo("/mid-api/authentication"))
-                .withRequestBody(matchingJsonPath("$.language", WireMock.equalTo("EST")))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withStatus(status)
-                        .withFixedDelay(delayInMilliseconds)
-                        .withBodyFile(response)));
-    }
-
-    private void createPollStubWithResponse(String response, int status) {
-        wireMockServer.stubFor(any(urlPathMatching("/mid-api/authentication/session/.*"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withStatus(status)
-                        .withBodyFile(response)));
-    }
-
-    private String createCorrectSession() {
-        Session session = sessionRepository.createSession();
-        TaraSession testSession = new TaraSession();
-        List<AuthenticationType> allowedMethods = new ArrayList<>();
-        allowedMethods.add(AuthenticationType.MOBILE_ID);
-        testSession.setAllowedAuthMethods(allowedMethods);
-        testSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
-        TaraSession.LoginRequestInfo lri = new TaraSession.LoginRequestInfo();
-        TaraSession.Client client = new TaraSession.Client();
-        TaraSession.MetaData metaData = new TaraSession.MetaData();
-        TaraSession.OidcClient oidcClient = new TaraSession.OidcClient();
-        oidcClient.setShortName("short_name");
-        metaData.setOidcClient(oidcClient);
-        client.setMetaData(metaData);
-        lri.setClient(client);
-        testSession.setLoginRequestInfo(lri);
-        session.setAttribute(TARA_SESSION, testSession);
-        sessionRepository.save(session);
-        return session.getId();
     }
 }

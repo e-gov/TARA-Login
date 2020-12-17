@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.config;
 
-import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.MidAuthConfigurationProperties;
+import ee.sk.mid.MidAuthenticationResponseValidator;
 import ee.sk.mid.MidClient;
 import ee.sk.mid.rest.MidLoggingFilter;
 import lombok.SneakyThrows;
@@ -26,30 +27,35 @@ import java.security.cert.CertificateException;
 public class MidConfiguration {
 
     @Bean
-    public KeyStore midTrustStore(AuthConfigurationProperties.MidAuthConfigurationProperties midAuthConfigurationProperties, ResourceLoader loader) throws KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException {
-        Resource resource = loader.getResource(midAuthConfigurationProperties.getTruststorePath());
-        KeyStore trustStore = KeyStore.getInstance(midAuthConfigurationProperties.getTruststoreType());
-        trustStore.load(resource.getInputStream(), midAuthConfigurationProperties.getTruststorePassword().toCharArray());
+    public MidAuthenticationResponseValidator midAuthenticationResponseValidator(KeyStore midTrustStore) {
+        return new MidAuthenticationResponseValidator(midTrustStore);
+    }
+
+    @Bean
+    public KeyStore midTrustStore(MidAuthConfigurationProperties properties, ResourceLoader loader) throws KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException {
+        Resource resource = loader.getResource(properties.getTruststorePath());
+        KeyStore trustStore = KeyStore.getInstance(properties.getTruststoreType());
+        trustStore.load(resource.getInputStream(), properties.getTruststorePassword().toCharArray());
         return trustStore;
     }
 
     @Bean
     @SneakyThrows
-    public MidClient midClient(SSLContext tlsTrustStore, AuthConfigurationProperties.MidAuthConfigurationProperties midAuthConfigurationProperties) {
+    public MidClient midClient(SSLContext tlsTrustStore, MidAuthConfigurationProperties properties) {
         return MidClient.newBuilder()
-                .withHostUrl(midAuthConfigurationProperties.getHostUrl())
-                .withRelyingPartyUUID(midAuthConfigurationProperties.getRelyingPartyUuid())
-                .withRelyingPartyName(midAuthConfigurationProperties.getRelyingPartyName())
+                .withHostUrl(properties.getHostUrl())
+                .withRelyingPartyUUID(properties.getRelyingPartyUuid())
+                .withRelyingPartyName(properties.getRelyingPartyName())
                 .withTrustSslContext(tlsTrustStore)
-                .withNetworkConnectionConfig(clientConfig(midAuthConfigurationProperties))
-                .withLongPollingTimeoutSeconds(midAuthConfigurationProperties.getLongPollingTimeoutSeconds())
+                .withNetworkConnectionConfig(clientConfig(properties))
+                .withLongPollingTimeoutSeconds(properties.getLongPollingTimeoutSeconds())
                 .build();
     }
 
-    private ClientConfig clientConfig(AuthConfigurationProperties.MidAuthConfigurationProperties midAuthConfigurationProperties) {
+    private ClientConfig clientConfig(MidAuthConfigurationProperties properties) {
         ClientConfig clientConfig = new ClientConfig();
-        clientConfig.property(ClientProperties.CONNECT_TIMEOUT, midAuthConfigurationProperties.getConnectionTimeoutMilliseconds());
-        clientConfig.property(ClientProperties.READ_TIMEOUT, midAuthConfigurationProperties.getReadTimeoutMilliseconds());
+        clientConfig.property(ClientProperties.CONNECT_TIMEOUT, properties.getConnectionTimeoutMilliseconds());
+        clientConfig.property(ClientProperties.READ_TIMEOUT, properties.getReadTimeoutMilliseconds());
         clientConfig.register(new MidLoggingFilter());
         return clientConfig;
     }

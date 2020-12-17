@@ -3,8 +3,9 @@ package ee.ria.taraauthserver.session;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
-import ee.ria.taraauthserver.error.ErrorTranslationCodes;
+import ee.ria.taraauthserver.error.ErrorCode;
 import lombok.*;
+import org.springframework.context.i18n.LocaleContextHolder;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -14,17 +15,11 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.net.URL;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 
 @Data
-@ToString
 @NoArgsConstructor
 public class TaraSession implements Serializable {
-
     public static final String TARA_SESSION = "tara.session";
 
     private TaraAuthenticationState state;
@@ -46,13 +41,13 @@ public class TaraSession implements Serializable {
         private LocalDate dateOfBirth;
         private AuthenticationType amr;
         private LevelOfAssurance acr; //TODO acr vs LevelOfAssurance vs loa, choose one
+        private ErrorCode errorCode;
     }
 
     @Data
     @EqualsAndHashCode(callSuper = true)
     public static class MidAuthenticationResult extends AuthenticationResult {
         private String midSessionId;
-        private ErrorTranslationCodes errorMessage;
     }
 
     @Data
@@ -140,5 +135,18 @@ public class TaraSession implements Serializable {
     public static class LegalPerson implements Serializable {
         private final String legalName;
         private final String legalPersonIdentifier;
+    }
+
+    public String getOidcClientTranslatedShortName() {
+        OidcClient oidcClient = getLoginRequestInfo().getClient().getMetaData().getOidcClient();
+        String translatedShortName = oidcClient.getShortName();
+
+        if (oidcClient.getNameTranslations() != null) {
+            Map<String, String> serviceNameTranslations = oidcClient.getNameTranslations();
+            Locale locale = LocaleContextHolder.getLocale();
+            if (serviceNameTranslations.containsKey(locale.getLanguage()))
+                translatedShortName = serviceNameTranslations.get(locale.getLanguage());
+        }
+        return translatedShortName;
     }
 }

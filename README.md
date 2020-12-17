@@ -73,6 +73,16 @@
 | `tara.legal-person-authentication.x-road-server-connect-timeout-in-milliseconds` | No | X-Road security server connect timeout in milliseconds. Defaults to 3000 if not specified.  |
 | `tara.legal-person-authentication.x-road-query-esindus-v2-allowed-types` | No | List of legal person types in arireg.esindus_v2 service response that are considered valid for authentication. Defaults to `TÜ,UÜ, OÜ,AS,TÜH,SA,MTÜ` if not specified.  |
 
+## 1.6 Heartbeat endpoint configuration properties
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `management.health.defaults.enabled` | No | Whether to enable default health indicators. Default `false` |
+| `management.info.git.mode` | No | Mode to use to expose git information. Default `full` |
+| `management.endpoints.web.base-path` | No | Base path of heartbeat endpoint. Default `/` |
+| `management.endpoints.web.exposure.exclude` | No | Endpoint IDs that should be excluded or `*` for all. Example `heartbeat` Default `*` |
+| `management.endpoints.web.exposure.include` | No | Endpoint IDs that should be included or `*` for all. Example `heartbeat` |
+| `management.endpoints.jmx.exposure.exclude` | No | Endpoint IDs that should be excluded or `*` for all. Example `heartbeat` Default `*` |
+| `management.endpoints.jmx.exposure.include` | No | Endpoint IDs that should be included or `*` for all. Example `heartbeat` |
 
 ## 2 TARA login server endpoints
 
