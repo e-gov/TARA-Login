@@ -9,6 +9,7 @@
 | `tara.hydra-service.accept-login-url` | Yes | Url to accept Hydra OIDC server login |
 | `tara.hydra-service.accept-consent-url` | Yes | Url to accept Hydra OIDC server consent |
 | `tara.hydra-service.request-timeout` | Yes | Hydra service request timeout |
+| `tara.hydra-service.health-url` | Yes | Hydra service health url |
 
 ### 1.2 trusted TLS certificates
 
@@ -75,13 +76,20 @@
 ## 1.6 Heartbeat endpoint configuration properties
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `management.health.defaults.enabled` | No | Whether to enable default health indicators. Default `false` |
-| `management.info.git.mode` | No | Mode to use to expose git information. Default `full` |
 | `management.endpoints.web.base-path` | No | Base path of heartbeat endpoint. Default `/` |
 | `management.endpoints.web.exposure.exclude` | No | Endpoint IDs that should be excluded or `*` for all. Example `heartbeat` Default `*` |
 | `management.endpoints.web.exposure.include` | No | Endpoint IDs that should be included or `*` for all. Example `heartbeat` |
-| `management.endpoints.jmx.exposure.exclude` | No | Endpoint IDs that should be excluded or `*` for all. Example `heartbeat` Default `*` |
-| `management.endpoints.jmx.exposure.include` | No | Endpoint IDs that should be included or `*` for all. Example `heartbeat` |
+
+This endpoint is turned off by default. Here is the minimum required configuration to turn it on:
+
+````yaml
+management:
+  endpoints:
+    web:
+      exposure:
+        exclude: ""
+        include: "heartbeat"
+````
 
 ## 2 TARA login server endpoints
 
