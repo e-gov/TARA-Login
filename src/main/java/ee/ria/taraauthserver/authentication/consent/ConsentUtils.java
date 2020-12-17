@@ -1,10 +1,8 @@
 package ee.ria.taraauthserver.authentication.consent;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpEntity;
@@ -12,10 +10,11 @@ import org.springframework.util.Assert;
 
 import java.net.URL;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static java.util.List.of;
 
 @UtilityClass
 public class ConsentUtils {
@@ -41,13 +40,13 @@ public class ConsentUtils {
 
         idToken.setProfileAttributes(profileAttributes);
         idToken.setAcr(taraSession.getAuthenticationResult().getAcr().getAcrName());
-        idToken.setAmr(taraSession.getAuthenticationResult().getAmr().getAmrName());
+        idToken.setAmr(of(taraSession.getAuthenticationResult().getAmr().getAmrName()));
         idToken.setState(getStateParameterValue(taraSession));
         loginSession.setIdToken(idToken);
         acceptConsentRequest.setSession(loginSession);
 
         List<String> requestedScopes = taraSession.getLoginRequestInfo().getRequestedScopes();
-        List<String> allowedScopes = List.of(taraSession.getLoginRequestInfo().getClient().getScope().split(" "));
+        List<String> allowedScopes = of(taraSession.getLoginRequestInfo().getClient().getScope().split(" "));
 
         List<String> scope = requestedScopes.stream()
                 .distinct()
@@ -56,9 +55,7 @@ public class ConsentUtils {
         scope.add("openid");
 
         acceptConsentRequest.setGrantScope(scope);
-
-        HttpEntity<AcceptConsentRequest> request = new HttpEntity<>(acceptConsentRequest);
-        return request;
+        return new HttpEntity<>(acceptConsentRequest);
     }
 
     private String getStateParameterValue(TaraSession taraSession) {
@@ -103,7 +100,7 @@ public class ConsentUtils {
             @JsonProperty("acr")
             private String acr;
             @JsonProperty("amr")
-            private String amr;
+            private List<String> amr;
             @JsonProperty("state")
             private String state;
         }

@@ -3,9 +3,9 @@ package ee.ria.taraauthserver.config.properties;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+
+import static java.util.List.of;
 
 @Getter
 @AllArgsConstructor
@@ -16,9 +16,9 @@ public enum TaraScope {
     MID("mid"),
     LEGALPERSON("legalperson");
 
-    public static final List<TaraScope> SUPPORTS_AUTHENTICATION_METHOD_SELECTION = Collections.unmodifiableList(Arrays.asList(IDCARD, MID));
+    public static final List<TaraScope> SUPPORTS_AUTHENTICATION_METHOD_SELECTION = of(IDCARD, MID);
 
-    private String formalName;
+    private final String formalName;
 
     public static TaraScope getScope(String value) {
         for (TaraScope v : values())
