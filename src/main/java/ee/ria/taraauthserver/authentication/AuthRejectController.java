@@ -11,7 +11,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.view.RedirectView;
@@ -33,7 +33,7 @@ public class AuthRejectController {
     @Autowired
     RestTemplate hydraService;
 
-    @PostMapping("/auth/reject")
+    @GetMapping("/auth/reject")
     public RedirectView authReject(@RequestParam(name = "error_code")
                                    @Pattern(regexp = "(user_cancel)", message = "the only supported value is: 'user_cancel'")
                                            String errorCode) {
@@ -67,8 +67,8 @@ public class AuthRejectController {
     private HttpEntity<Map<String, String>> createRequestBody(String errorCode) {
         Map<String, String> map = new HashMap<>();
         map.put("error", errorCode);
-        map.put("error_debug", "tekst");
-        map.put("error_description", "tekst");
+        map.put("error_debug", "User canceled the authentication process.");
+        map.put("error_description", "User canceled the authentication process.");
         return new HttpEntity<>(map);
     }
 
