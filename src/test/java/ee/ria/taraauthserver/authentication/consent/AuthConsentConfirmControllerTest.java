@@ -203,7 +203,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
         TaraSession.LoginRequestInfo lri = new TaraSession.LoginRequestInfo();
         TaraSession.MetaData md = new TaraSession.MetaData();
         TaraSession.Client client = new TaraSession.Client();
-        md.setDisplay_user_consent(display);
+        md.setDisplayUserConsent(display);
         client.setMetaData(md);
         client.setScope("mid idcard");
         lri.setClient(client);

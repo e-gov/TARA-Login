@@ -95,7 +95,7 @@ public class TaraSession implements Serializable {
         private OidcClient oidcClient = new OidcClient();
         @NotNull
         @JsonProperty("display_user_consent")
-        private boolean display_user_consent;
+        private boolean displayUserConsent;
     }
 
     @Data

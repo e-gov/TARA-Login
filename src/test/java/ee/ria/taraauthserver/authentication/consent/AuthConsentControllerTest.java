@@ -14,7 +14,6 @@ import org.springframework.http.MediaType;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -199,7 +198,7 @@ class AuthConsentControllerTest extends BaseTest {
         TaraSession.LoginRequestInfo lri = new TaraSession.LoginRequestInfo();
         TaraSession.MetaData md = new TaraSession.MetaData();
         TaraSession.Client client = new TaraSession.Client();
-        md.setDisplay_user_consent(display);
+        md.setDisplayUserConsent(display);
         client.setMetaData(md);
         client.setScope("mid idcard");
         lri.setClient(client);

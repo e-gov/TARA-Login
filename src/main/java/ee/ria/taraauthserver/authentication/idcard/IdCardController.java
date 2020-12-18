@@ -70,11 +70,11 @@ public class IdCardController {
             certificate.checkValidity();
         } catch (CertificateNotYetValidException e) {
             return createErrorResponse("User certificate is not yet valid",
-                    getLocalizedMessage("message.idc.certnotyetvalid"),
+                    getLocalizedMessage("message.idc.cert-not-yet-valid"),
                     HttpStatus.BAD_REQUEST);
         } catch (CertificateExpiredException e) {
             return createErrorResponse("User certificate is expired",
-                    getLocalizedMessage("message.idc.certexpired"),
+                    getLocalizedMessage("message.idc.cert-expired"),
                     HttpStatus.BAD_REQUEST);
         }
 

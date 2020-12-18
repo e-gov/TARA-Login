@@ -39,7 +39,7 @@ public class AuthConsentController {
 
         TaraSession taraSession = SessionUtils.getAuthSessionInState(TaraAuthenticationState.AUTHENTICATION_SUCCESS);
 
-        if (taraSession.getLoginRequestInfo().getClient().getMetaData().isDisplay_user_consent()) {
+        if (taraSession.getLoginRequestInfo().getClient().getMetaData().isDisplayUserConsent()) {
             taraSession.setState(INIT_CONSENT_PROCESS);
             taraSession.setConsentChallenge(consentChallenge);
             SessionUtils.updateSession(taraSession);

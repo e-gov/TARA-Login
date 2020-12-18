@@ -23,9 +23,9 @@ public enum ErrorCode {
     MID_INTEGRATION_ERROR("message.error.general"),
     MID_VALIDATION_ERROR("message.mid-rest.error.validation-error"),
     ERROR_GENERAL("message.error.general"),
-    SESSION_NOT_FOUND("message.error.sessionNotFound"),
-    SESSION_STATE_INVALID("message.error.sessionStateInvalid"),
-    INVALID_REQUEST("message.error.invalidRequest"),
+    SESSION_NOT_FOUND("message.error.session-not-found"),
+    SESSION_STATE_INVALID("message.error.session-state-invalid"),
+    INVALID_REQUEST("message.error.invalid-request"),
     LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE("label.legal-person.error.service-not-available");
 
     private final String message;
