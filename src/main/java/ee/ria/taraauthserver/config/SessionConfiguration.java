@@ -4,6 +4,9 @@ import org.apache.ignite.Ignite;
 import org.apache.ignite.Ignition;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
+import org.apache.ignite.ssl.SslContextFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -38,6 +41,10 @@ public class SessionConfiguration {
     @ConfigurationProperties(prefix = "ignite")
     public IgniteConfiguration igniteConfiguration(Consumer<IgniteConfiguration> configurer) {
         IgniteConfiguration cfg = new IgniteConfiguration();
+        TcpDiscoverySpi tcpDiscoverySpi = new TcpDiscoverySpi();
+        tcpDiscoverySpi.setIpFinder(new TcpDiscoveryVmIpFinder());
+        cfg.setDiscoverySpi(tcpDiscoverySpi);
+        cfg.setSslContextFactory(new SslContextFactory());
         configurer.accept(cfg);
         return cfg;
     }
