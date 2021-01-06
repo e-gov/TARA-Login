@@ -44,7 +44,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andExpect(jsonPath("$.message", is("Your session was not found! Either your session expired or the cookie usage is limited in your browser.")))
                 .andExpect(jsonPath("$.path", is("/auth/legal_person/init")));
 
-        assertErrorIsLogged(String.format("User exception: The attribute '%s' was not found in session", TARA_SESSION));
+        assertErrorIsLogged("User exception: Invalid session");
     }
 
     @Test
@@ -135,7 +135,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andExpect(jsonPath("$.message", is("Your session was not found! Either your session expired or the cookie usage is limited in your browser.")))
                 .andExpect(jsonPath("$.path", is("/auth/legal_person")));
 
-        assertErrorIsLogged(String.format("User exception: The attribute '%s' was not found in session", TARA_SESSION));
+        assertErrorIsLogged("User exception: Invalid session");
     }
 
     @Test
@@ -315,7 +315,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andExpect(jsonPath("$.message", is("Your session was not found! Either your session expired or the cookie usage is limited in your browser.")))
                 .andExpect(jsonPath("$.path", is("/auth/legal_person/confirm")));
 
-        assertErrorIsLogged(String.format("User exception: The attribute '%s' was not found in session", TARA_SESSION));
+        assertErrorIsLogged("User exception: Invalid session");
     }
 
     @Test

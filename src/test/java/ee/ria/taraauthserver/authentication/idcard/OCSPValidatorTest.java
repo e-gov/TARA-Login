@@ -8,11 +8,13 @@ import com.github.tomakehurst.wiremock.extension.Parameters;
 import com.github.tomakehurst.wiremock.extension.ResponseTransformer;
 import com.github.tomakehurst.wiremock.http.Request;
 import com.github.tomakehurst.wiremock.http.Response;
+import ee.ria.taraauthserver.WiremockExtension;
 import ee.ria.taraauthserver.config.TaraAuthServerConfiguration;
 import ee.ria.taraauthserver.error.exceptions.OCSPServiceNotAvailableException;
 import ee.ria.taraauthserver.error.exceptions.OCSPValidationException;
 import lombok.Builder;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
@@ -31,11 +33,10 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,16 +74,17 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(
-        classes = {TaraAuthServerConfiguration.class, OCSPValidator.class, RestTemplate.class},
-        initializers = ConfigFileApplicationContextInitializer.class
-)
+@ContextConfiguration(classes = {TaraAuthServerConfiguration.class, OCSPValidator.class, RestTemplate.class}, initializers = ConfigFileApplicationContextInitializer.class)
 public class OCSPValidatorTest {
-    private static final OcspResponseTransformer ocspResponseTransformer = new OcspResponseTransformer();
-    private static final WireMockServer mockOcspServer = new WireMockServer(
+    private static final OcspResponseTransformer ocspResponseTransformer = new OcspResponseTransformer(true);
+
+    @RegisterExtension
+    static final WiremockExtension mockOcspServer = new WiremockExtension(
             WireMockConfiguration.wireMockConfig().dynamicPort().extensions(ocspResponseTransformer)
     );
-    private static final WireMockServer mockFallbackOcspServer = new WireMockServer(
+
+    @RegisterExtension
+    static final WiremockExtension mockFallbackOcspServer = new WiremockExtension(
             WireMockConfiguration.wireMockConfig().dynamicPort().extensions(ocspResponseTransformer)
     );
 
@@ -109,18 +111,6 @@ public class OCSPValidatorTest {
     private Ocsp ocspConfiguration;
     private KeyPair responderKeys;
     private X509Certificate responderCert;
-
-    @BeforeAll
-    public static void setUp() {
-        mockOcspServer.start();
-        mockFallbackOcspServer.start();
-    }
-
-    @AfterAll
-    public static void tearDown() {
-        mockOcspServer.stop();
-        mockFallbackOcspServer.stop();
-    }
 
     @BeforeEach
     public void setUpTest() throws Exception {
@@ -952,8 +942,9 @@ public class OCSPValidatorTest {
     }
 
     @Setter
+    @RequiredArgsConstructor
     public static class OcspResponseTransformer extends ResponseTransformer {
-
+        private final boolean applyGlobally;
         private int responseStatus;
         private CertificateStatus certificateStatus;
         private Function<DEROctetString, DEROctetString> nonceResolver;
@@ -1000,7 +991,7 @@ public class OCSPValidatorTest {
 
         @Override
         public String getName() {
-            return getClass().getSimpleName();
+            return "ocsp";
         }
 
         private BasicOCSPResp mockOcspResponse(CertificateID certificateID, DEROctetString nonce, byte[] responderCert, String responseId, String signatureAlgorithm) throws OCSPException, OperatorCreationException, IOException {
@@ -1024,6 +1015,10 @@ public class OCSPValidatorTest {
             );
         }
 
+        @Override
+        public boolean applyGlobally() {
+            return applyGlobally;
+        }
     }
 
     private Ocsp getMockOcspConfiguration(List<String> issuerCn, String url,

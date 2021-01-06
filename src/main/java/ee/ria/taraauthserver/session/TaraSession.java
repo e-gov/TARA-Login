@@ -18,10 +18,10 @@ import java.time.LocalDate;
 import java.util.*;
 
 @Data
-@NoArgsConstructor
+@RequiredArgsConstructor
 public class TaraSession implements Serializable {
     public static final String TARA_SESSION = "tara.session";
-
+    private final String sessionId;
     private TaraAuthenticationState state;
     private LoginRequestInfo loginRequestInfo;
     private List<AuthenticationType> allowedAuthMethods;

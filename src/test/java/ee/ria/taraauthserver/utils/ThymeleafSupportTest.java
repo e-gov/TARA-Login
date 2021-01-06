@@ -1,6 +1,5 @@
 package ee.ria.taraauthserver.utils;
 
-import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
@@ -14,27 +13,27 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
 import static ee.ria.taraauthserver.session.MockSessionUtils.*;
+import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
-class ThymeleafSupportTest extends BaseTest {
-
+class ThymeleafSupportTest {
     private ThymeleafSupport thymeleafSupport;
     private TaraSession testSession;
 
     @BeforeEach
     public void setUp() {
         thymeleafSupport = new ThymeleafSupport();
-        testSession = new TaraSession();
-        testSession.setLoginRequestInfo(getMockLoginRequestInfo());
         LocaleContextHolder.setLocale(Locale.ENGLISH);
-        createMockHttpSession(testSession);
+        HttpSession mockHttpSession = createMockHttpSession(getMockLoginRequestInfo());
+        testSession = (TaraSession) mockHttpSession.getAttribute(TARA_SESSION);
     }
 
     @Test
@@ -48,7 +47,7 @@ class ThymeleafSupportTest extends BaseTest {
     @Test
     void isAuthMethodAllowed_trueWhenAuthMethodListedInSession() {
         for (AuthenticationType authMethod : AuthenticationType.values()) {
-            testSession.setAllowedAuthMethods(List.of(authMethod));
+            testSession.setAllowedAuthMethods(List.of(authMethod)); // TODO:
             assertTrue(thymeleafSupport.isAuthMethodAllowed(authMethod), "Authmethod " + authMethod + " should be allowed");
         }
     }
@@ -63,7 +62,6 @@ class ThymeleafSupportTest extends BaseTest {
     @Test
     void getServiceName_returnsNullWhenSessionMissing() {
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(new MockHttpServletRequest(), new MockHttpServletResponse()));
-
         assertEquals(null, thymeleafSupport.getServiceName());
     }
 
@@ -71,9 +69,7 @@ class ThymeleafSupportTest extends BaseTest {
     void getServiceName_returnsNullWhenNoClientNameSet() {
         TaraSession.LoginRequestInfo mockLoginRequestInfo = getMockLoginRequestInfo();
         mockLoginRequestInfo.getClient().getMetaData().getOidcClient().setName(null);
-        testSession.setLoginRequestInfo(mockLoginRequestInfo);
-        createMockHttpSession(testSession);
-
+        createMockHttpSession(mockLoginRequestInfo);
         assertEquals(null, thymeleafSupport.getServiceName());
     }
 
@@ -82,9 +78,7 @@ class ThymeleafSupportTest extends BaseTest {
         TaraSession.LoginRequestInfo mockLoginRequestInfo = getMockLoginRequestInfo();
         mockLoginRequestInfo.getClient().getMetaData().getOidcClient().setName(MOCK_CLIENT_NAME);
         mockLoginRequestInfo.getClient().getMetaData().getOidcClient().setNameTranslations(new HashMap<>());
-        testSession.setLoginRequestInfo(mockLoginRequestInfo);
-        createMockHttpSession(testSession);
-
+        createMockHttpSession(mockLoginRequestInfo);
         assertEquals(MOCK_CLIENT_NAME, thymeleafSupport.getServiceName());
     }
 
@@ -92,9 +86,7 @@ class ThymeleafSupportTest extends BaseTest {
     void getServiceName_returnsClientNameWithTranslationWhenTranslationExists() {
         TaraSession.LoginRequestInfo mockLoginRequestInfo = getMockLoginRequestInfo();
         mockLoginRequestInfo.getClient().getMetaData().getOidcClient().setName(MOCK_CLIENT_NAME);
-        testSession.setLoginRequestInfo(mockLoginRequestInfo);
-        createMockHttpSession(testSession);
-
+        createMockHttpSession(mockLoginRequestInfo);
         assertEquals(MOCK_CLIENT_NAME_EN, thymeleafSupport.getServiceName());
     }
 
@@ -107,24 +99,19 @@ class ThymeleafSupportTest extends BaseTest {
 
     @Test
     void getBackUrl_returnsAuthInitWhenSessionPresent() {
-        testSession.setLoginRequestInfo(getMockLoginRequestInfo());
-        createMockHttpSession(testSession);
-
+        createMockHttpSession(getMockLoginRequestInfo());
         assertEquals("/auth/init?login_challenge=" + MOCK_CHALLENGE, thymeleafSupport.getBackUrl());
     }
 
     @Test
     void getBackUrl_returnsNoUrlWhenSessionMissing() {
-        createMockHttpSession(new TaraSession());
-
+        createMockHttpSession(null);
         assertEquals("#", thymeleafSupport.getBackUrl());
     }
 
     @Test
     void getHomeUrl_returnsLegacyReturnUrlWhenPresent() {
-        testSession.setLoginRequestInfo(getMockLoginRequestInfo());
-        createMockHttpSession(testSession);
-
+        createMockHttpSession(getMockLoginRequestInfo());
         assertEquals(MOCK_CLIENT_LEGACY_URL, thymeleafSupport.getHomeUrl());
     }
 
@@ -132,9 +119,7 @@ class ThymeleafSupportTest extends BaseTest {
     void getHomeUrl_returnsLegacyReturnsUserCancelLinkWhenLegacyNotPresent() {
         TaraSession.LoginRequestInfo mockLoginRequestInfo = getMockLoginRequestInfo();
         mockLoginRequestInfo.getClient().getMetaData().getOidcClient().setLegacyReturnUrl(null);
-        testSession.setLoginRequestInfo(mockLoginRequestInfo);
-        createMockHttpSession(testSession);
-
+        createMockHttpSession(mockLoginRequestInfo);
         assertEquals("/auth/reject?error_code=user_cancel", thymeleafSupport.getHomeUrl());
     }
 }

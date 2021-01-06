@@ -4,7 +4,6 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
-import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
@@ -18,10 +17,10 @@ import io.restassured.filter.log.ResponseLoggingFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -52,14 +51,25 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @AutoConfigureMockMvc
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public abstract class BaseTest {
+    protected static final OCSPValidatorTest.OcspResponseTransformer ocspResponseTransformer = new OCSPValidatorTest.OcspResponseTransformer(false);
     protected MockMvc mock;
-    protected static WireMockServer wireMockServer;
+
+    @RegisterExtension
+    protected static WiremockExtension wireMockServer = new WiremockExtension(WireMockConfiguration.wireMockConfig()
+            .httpDisabled(true)
+            .httpsPort(9877)
+            .keystorePath("src/test/resources/tls-keystore.jks")
+            .keystorePassword("changeit")
+            .keyManagerPassword("changeit")
+            .extensions(ocspResponseTransformer)
+            .notifier(new ConsoleNotifier(true))
+    );
 
     @Autowired
     private WebApplicationContext webApplicationContext;
 
     @Autowired
-    private SessionRepository sessionRepository;
+    protected SessionRepository<Session> sessionRepository;
 
     @LocalServerPort
     protected int port;
@@ -68,13 +78,10 @@ public abstract class BaseTest {
 
     @BeforeAll
     static void setUpAll() {
-        configureWiremockServer();
         configureRestAssured();
-    }
-
-    @AfterAll
-    static void tearDownAll() {
-        wireMockServer.stop();
+        System.setProperty("IGNITE_QUIET", "false");
+        System.setProperty("IGNITE_HOME", System.getProperty("java.io.tmpdir"));
+        System.setProperty("java.net.preferIPv4Stack", "true");
     }
 
     @BeforeEach
@@ -82,12 +89,10 @@ public abstract class BaseTest {
         mock = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
         RestAssured.port = port;
         setupMockLogAppender();
-        wireMockServer.resetAll();
     }
 
     @AfterEach
     public void afterEachTest() {
-        wireMockServer.resetAll();
         ((Logger) getLogger(ROOT_LOGGER_NAME)).detachAppender(mockAppender);
     }
 
@@ -139,31 +144,6 @@ public abstract class BaseTest {
         config = config().redirect(redirectConfig().followRedirects(false));
     }
 
-    public static void configureWiremockServer() {
-        wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig()
-                .httpDisabled(true)
-                .httpsPort(9877)
-                .keystorePath("src/test/resources/tls-keystore.jks")
-                .keystorePassword("changeit")
-                .keyManagerPassword("changeit")
-                .notifier(new ConsoleNotifier(true))
-        );
-        wireMockServer.start();
-    }
-
-    public static void configureWiremockServer(OCSPValidatorTest.OcspResponseTransformer transformer) {
-        wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig()
-                .httpDisabled(true)
-                .httpsPort(9877)
-                .keystorePath("src/test/resources/tls-keystore.jks")
-                .keystorePassword("changeit")
-                .keyManagerPassword("changeit")
-                .extensions(transformer)
-                .notifier(new ConsoleNotifier(true))
-        );
-        wireMockServer.start();
-    }
-
     protected static void createMidApiAuthenticationStub(String response, int status) {
         createMidApiAuthenticationStub(response, status, 0);
     }
@@ -186,9 +166,9 @@ public abstract class BaseTest {
                         .withBodyFile(response)));
     }
 
-    protected String createNewAuthenticationSession(AuthenticationType... authenticationTypes) {
+    protected Session createNewAuthenticationSession(AuthenticationType... authenticationTypes) {
         Session session = sessionRepository.createSession();
-        TaraSession testSession = new TaraSession();
+        TaraSession testSession = new TaraSession(session.getId());
         testSession.setAllowedAuthMethods(asList(authenticationTypes));
         testSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
         TaraSession.LoginRequestInfo lri = new TaraSession.LoginRequestInfo();
@@ -202,6 +182,6 @@ public abstract class BaseTest {
         testSession.setLoginRequestInfo(lri);
         session.setAttribute(TARA_SESSION, testSession);
         sessionRepository.save(session);
-        return session.getId();
+        return session;
     }
 }

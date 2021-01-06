@@ -7,11 +7,9 @@ import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.session.Session;
-import org.springframework.session.SessionRepository;
 
 import java.net.URL;
 import java.time.LocalDate;
@@ -25,11 +23,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class AuthConsentConfirmControllerTest extends BaseTest {
-
     public static final String MOCK_CONSENT_CHALLENGE = "abcdefg098AAdsCC";
-
-    @Autowired
-    SessionRepository sessionRepository;
 
     @Test
     void authConsent_consentChallenge_ParamMissing() {
@@ -75,7 +69,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: Session was not found");
+        assertErrorIsLogged("User exception: Invalid session");
     }
 
     @Test
@@ -198,7 +192,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     @SneakyThrows
     private Session createSession(TaraAuthenticationState authenticationState, boolean display) {
         Session session = sessionRepository.createSession();
-        TaraSession authSession = new TaraSession();
+        TaraSession authSession = new TaraSession(session.getId());
         authSession.setState(authenticationState);
         TaraSession.LoginRequestInfo lri = new TaraSession.LoginRequestInfo();
         TaraSession.MetaData md = new TaraSession.MetaData();

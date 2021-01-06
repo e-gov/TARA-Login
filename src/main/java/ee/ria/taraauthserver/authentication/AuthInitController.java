@@ -9,6 +9,7 @@ import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.RequestUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
@@ -68,10 +69,12 @@ public class AuthInitController {
 
     private TaraSession initAuthSession(String loginChallenge) {
         HttpSession httpSession = resetHttpSession();
-
         TaraSession.LoginRequestInfo loginRequestInfo = fetchLoginRequestInfo(loginChallenge);
 
-        TaraSession newTaraSession = getAuthSession(loginRequestInfo);
+        TaraSession newTaraSession = new TaraSession(httpSession.getId());
+        newTaraSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+        newTaraSession.setLoginRequestInfo(loginRequestInfo);
+        newTaraSession.setAllowedAuthMethods(getAllowedAuthenticationMethodsList(loginRequestInfo));
         httpSession.setAttribute(TARA_SESSION, newTaraSession);
         log.info("Created session: {}", newTaraSession);
         return newTaraSession;
@@ -80,14 +83,6 @@ public class AuthInitController {
     private void setLocale(String language, TaraSession taraSession) {
         String locale = getUiLanguage(language, taraSession);
         RequestUtils.setLocale(locale);
-    }
-
-    private TaraSession getAuthSession(TaraSession.LoginRequestInfo loginRequestInfo) {
-        TaraSession newTaraSession = new TaraSession();
-        newTaraSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
-        newTaraSession.setLoginRequestInfo(loginRequestInfo);
-        newTaraSession.setAllowedAuthMethods(getAllowedAuthenticationMethodsList(loginRequestInfo));
-        return newTaraSession;
     }
 
     private HttpSession resetHttpSession() {

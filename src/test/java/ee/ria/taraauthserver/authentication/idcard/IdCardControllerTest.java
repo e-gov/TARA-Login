@@ -16,7 +16,6 @@ import org.bouncycastle.cert.ocsp.RevokedStatus;
 import org.bouncycastle.cert.ocsp.UnknownStatus;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.OperatorCreationException;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,17 +46,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
 class IdCardControllerTest extends BaseTest {
-    private static final OCSPValidatorTest.OcspResponseTransformer ocspResponseTransformer = new OCSPValidatorTest.OcspResponseTransformer();
+
     private final AuthConfigurationProperties.Ocsp ocspConfiguration = new AuthConfigurationProperties.Ocsp();
     private KeyPair responderKeys;
 
     @Autowired
-    private SessionRepository sessionRepository;
+    private SessionRepository<Session> sessionRepository;
 
-    @BeforeAll
-    public static void setUpAll() {
-        configureWiremockServer(ocspResponseTransformer);
-    }
+
+//    @BeforeAll
+//    public static void setUpAll() {
+//        configureWiremockServer(ocspResponseTransformer);
+//    }
 
     @BeforeEach
     public void setUpTest() throws NoSuchAlgorithmException, NoSuchProviderException {
@@ -376,7 +376,7 @@ class IdCardControllerTest extends BaseTest {
                 .willReturn(
                         WireMock.aResponse()
                                 .withStatus(200)
-                                .withTransformerParameter("ignore", true)
+                                .withTransformer("ocsp", "ignore", true)
                                 .withHeader("Content-Type", "application/ocsp-response")
                 )
         );
@@ -468,7 +468,7 @@ class IdCardControllerTest extends BaseTest {
 
     private String createSessionWithAuthenticationState(TaraAuthenticationState authenticationState) {
         Session session = sessionRepository.createSession();
-        TaraSession authSession = new TaraSession();
+        TaraSession authSession = new TaraSession(session.getId());
         authSession.setState(authenticationState);
         session.setAttribute(TARA_SESSION, authSession);
         sessionRepository.save(session);
@@ -497,6 +497,7 @@ class IdCardControllerTest extends BaseTest {
                 .willReturn(
                         WireMock.aResponse()
                                 .withStatus(200)
+                                .withTransformers("ocsp")
                                 .withTransformerParameter("responderId", responseParams.getResponseId())
                                 .withTransformerParameter("signatureAlgorithm", responseParams.getSignatureAlgorithm() == null ? "SHA256withRSA" : responseParams.getSignatureAlgorithm())
                                 .withTransformerParameter("ocspConf", responseParams.getOcspConf())

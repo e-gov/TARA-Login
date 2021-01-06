@@ -16,11 +16,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.util.Collections;
@@ -30,6 +29,7 @@ import java.util.Optional;
 import static ee.ria.taraauthserver.config.properties.TaraScope.LEGALPERSON;
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
+import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.lang.String.format;
 import static org.springframework.util.Assert.isTrue;
 import static org.springframework.util.Assert.notNull;
@@ -46,8 +46,7 @@ public class LegalpersonController {
     private final BusinessRegistryService eBusinessRegistryService;
 
     @GetMapping(value = "/auth/legal_person/init")
-    public String initLegalPerson(Model model) {
-        TaraSession taraSession = SessionUtils.getAuthSession();
+    public String initLegalPerson(Model model, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 
         if (!isLegalpersonScopeAllowed(taraSession))
@@ -65,15 +64,12 @@ public class LegalpersonController {
         model.addAttribute("login_challenge", taraSession.getLoginRequestInfo().getChallenge());
 
         taraSession.setState(LEGAL_PERSON_AUTHENTICATION_INIT);
-        SessionUtils.updateSession(taraSession);
 
         return "legalPersonView";
     }
 
     @GetMapping(value = "/auth/legal_person", produces = {MediaType.APPLICATION_JSON_VALUE})
-    public ModelAndView fetchLegalPersonsList(HttpServletRequest request, HttpSession httpSession) {
-        TaraSession taraSession = SessionUtils.getAuthSession();
-
+    public ModelAndView fetchLegalPersonsList(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, LEGAL_PERSON_AUTHENTICATION_INIT);
         notNull(taraSession.getAuthenticationResult(), "Authentication credentials missing from session!");
 
@@ -84,7 +80,6 @@ public class LegalpersonController {
         } else {
             taraSession.setLegalPersonList(legalPersons);
             taraSession.setState(GET_LEGAL_PERSON_LIST);
-            SessionUtils.updateSession(taraSession);
             return new ModelAndView(new MappingJackson2JsonView(), Collections.singletonMap("legalPersons", legalPersons));
         }
     }
@@ -94,8 +89,7 @@ public class LegalpersonController {
             @RequestParam(name = "legal_person_identifier")
             @Size(max = 50)
             @Pattern(regexp = "[a-zA-Z0-9-_]{1,}", message = "invalid legal person identifier")
-                    String legalPersonIdentifier) {
-        TaraSession taraSession = SessionUtils.getAuthSession();
+                    String legalPersonIdentifier, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, GET_LEGAL_PERSON_LIST);
         List<TaraSession.LegalPerson> legalPersons = taraSession.getLegalPersonList();
         notNull(legalPersons, "Invalid state. Legal person list was not found!");
@@ -105,7 +99,6 @@ public class LegalpersonController {
         if (selectedLegalPerson.isPresent()) {
             taraSession.setSelectedLegalPerson(selectedLegalPerson.get());
             taraSession.setState(LEGAL_PERSON_AUTHENTICATION_COMPLETED);
-            SessionUtils.updateSession(taraSession);
             log.info("Legal person selected: {}", legalPersonIdentifier);
             return "forward:/auth/accept";
         } else {

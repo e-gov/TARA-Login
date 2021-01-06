@@ -46,7 +46,7 @@ public class AuthMidService {
     private MidClient midClient;
 
     @Autowired
-    private SessionRepository sessionRepository;
+    private SessionRepository<Session> sessionRepository;
 
     @Autowired
     private MidAuthenticationResponseValidator midAuthenticationResponseValidator;
@@ -54,15 +54,14 @@ public class AuthMidService {
     @Autowired
     private MidAuthConfigurationProperties midAuthConfigurationProperties;
 
-    public MidAuthenticationHashToSign startMidAuthSession(String sessionId, String idCode, String telephoneNumber) {
+    public MidAuthenticationHashToSign startMidAuthSession(TaraSession taraSession, String idCode, String telephoneNumber) {
         try {
-            Session session = sessionRepository.findById(sessionId);
             MidAuthenticationHashToSign authenticationHash = getAuthenticationHash();
-            MidAuthenticationResponse midAuthentication = initMidAuthentication(session, idCode, telephoneNumber, authenticationHash);
+            MidAuthenticationResponse midAuthentication = initMidAuthentication(taraSession, idCode, telephoneNumber, authenticationHash);
             CompletableFuture.supplyAsync(() -> pollAuthenticationResult(midAuthentication))
-                    .thenAcceptAsync(midSessionStatus -> handleAuthenticationResult(session, authenticationHash, midSessionStatus, telephoneNumber))
+                    .thenAcceptAsync(midSessionStatus -> handleAuthenticationResult(taraSession, authenticationHash, midSessionStatus, telephoneNumber))
                     .exceptionally(ex -> {
-                        handleAuthenticationException(session, ex);
+                        handleAuthenticationException(taraSession, ex);
                         return null;
                     });
             return authenticationHash;
@@ -77,8 +76,7 @@ public class AuthMidService {
         return MidAuthenticationHashToSign.generateRandomHashOfType(MidHashType.valueOf(midAuthConfigurationProperties.getHashType()));
     }
 
-    private MidAuthenticationResponse initMidAuthentication(Session session, String idCode, String telephoneNumber, MidAuthenticationHashToSign authenticationHash) {
-        TaraSession taraSession = session.getAttribute(TARA_SESSION);
+    private MidAuthenticationResponse initMidAuthentication(TaraSession taraSession, String idCode, String telephoneNumber, MidAuthenticationHashToSign authenticationHash) {
         taraSession.setState(INIT_MID);
         String translatedShortName = taraSession.getOidcClientTranslatedShortName();
 
@@ -87,8 +85,6 @@ public class AuthMidService {
         log.info("Mid init response: {}", response);
 
         updateAuthSessionWithInitResponse(taraSession, response);
-        session.setAttribute(TARA_SESSION, taraSession);
-        sessionRepository.save(session);
         return response;
     }
 
@@ -123,11 +119,11 @@ public class AuthMidService {
         return midClient.getSessionStatusPoller().fetchFinalSessionStatus(response.getSessionID(), "/authentication/session/" + response.getSessionID());
     }
 
-    private void handleAuthenticationResult(Session session, MidAuthenticationHashToSign authenticationHash, MidSessionStatus midSessionStatus, String telephoneNumber) {
+    private void handleAuthenticationResult(TaraSession taraSession, MidAuthenticationHashToSign authenticationHash, MidSessionStatus midSessionStatus, String telephoneNumber) {
         if (midSessionStatus != null && equalsIgnoreCase("COMPLETE", midSessionStatus.getState()) && equalsIgnoreCase("OK", midSessionStatus.getResult())) {
             MidAuthentication authentication = midClient.createMobileIdAuthentication(midSessionStatus, authenticationHash);
             MidAuthenticationResult midAuthResult = midAuthenticationResponseValidator.validate(authentication);
-            TaraSession.MidAuthenticationResult taraAuthResult = new TaraSession.MidAuthenticationResult();
+            TaraSession.MidAuthenticationResult taraAuthResult = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
 
             MidAuthenticationIdentity authIdentity = midAuthResult.getAuthenticationIdentity();
             if (authIdentity != null) {
@@ -142,8 +138,6 @@ public class AuthMidService {
             taraAuthResult.setAmr(AuthenticationType.MOBILE_ID);
             taraAuthResult.setAcr(midAuthConfigurationProperties.getLevelOfAssurance());
 
-            TaraSession taraSession = session.getAttribute(TARA_SESSION);
-            taraSession.setAuthenticationResult(taraAuthResult);
             if (midAuthResult.isValid() && midAuthResult.getErrors().isEmpty()) {
                 taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
             } else {
@@ -151,17 +145,19 @@ public class AuthMidService {
                 taraAuthResult.setErrorCode(MID_VALIDATION_ERROR);
                 log.error("Authentication result validation failed: {}", midAuthResult.getErrors());
             }
+            Session session = sessionRepository.findById(taraSession.getSessionId());
             session.setAttribute(TARA_SESSION, taraSession);
             sessionRepository.save(session);
         }
     }
 
-    private void handleAuthenticationException(Session session, Throwable ex) {
+    private void handleAuthenticationException(TaraSession taraSession, Throwable ex) {
         Throwable cause = ex.getCause();
         log.warn("Mid polling failed: {}", cause.getMessage()); // TODO:
-        TaraSession taraSession = session.getAttribute(TARA_SESSION);
         taraSession.setState(AUTHENTICATION_FAILED);
         taraSession.getAuthenticationResult().setErrorCode(ErrorCode.getErrorCode(cause));
+
+        Session session = sessionRepository.findById(taraSession.getSessionId());
         session.setAttribute(TARA_SESSION, taraSession);
         sessionRepository.save(session);
     }

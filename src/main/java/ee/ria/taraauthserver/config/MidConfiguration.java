@@ -4,7 +4,6 @@ import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.MidAu
 import ee.sk.mid.MidAuthenticationResponseValidator;
 import ee.sk.mid.MidClient;
 import ee.sk.mid.rest.MidLoggingFilter;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
@@ -40,7 +39,6 @@ public class MidConfiguration {
     }
 
     @Bean
-    @SneakyThrows
     public MidClient midClient(SSLContext tlsTrustStore, MidAuthConfigurationProperties properties) {
         return MidClient.newBuilder()
                 .withHostUrl(properties.getHostUrl())

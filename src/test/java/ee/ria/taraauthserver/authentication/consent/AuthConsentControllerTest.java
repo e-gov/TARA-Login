@@ -122,7 +122,7 @@ class AuthConsentControllerTest extends BaseTest {
                 .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: Session was not found");
+        assertErrorIsLogged("User exception: Invalid session");
     }
 
     @Test
@@ -193,7 +193,7 @@ class AuthConsentControllerTest extends BaseTest {
     @SneakyThrows
     private Session createSession(TaraAuthenticationState authenticationState, boolean display) {
         Session session = sessionRepository.createSession();
-        TaraSession authSession = new TaraSession();
+        TaraSession authSession = new TaraSession(session.getId());
         authSession.setState(authenticationState);
         TaraSession.LoginRequestInfo lri = new TaraSession.LoginRequestInfo();
         TaraSession.MetaData md = new TaraSession.MetaData();

@@ -1,18 +1,15 @@
 package ee.ria.taraauthserver.authentication.idcard;
 
-import ee.ria.taraauthserver.config.TaraAuthServerConfiguration;
 import ee.ria.taraauthserver.utils.TestIDCardConfiguration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.context.ConfigFileApplicationContextInitializer;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.web.client.RestTemplate;
 
 import java.security.cert.X509Certificate;
 import java.util.List;
@@ -24,10 +21,7 @@ import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(
-        classes = {TestIDCardConfiguration.class, TaraAuthServerConfiguration.class, OCSPConfigurationResolver.class, RestTemplate.class},
-        initializers = ConfigFileApplicationContextInitializer.class
-)
+@ContextConfiguration(classes = {TestIDCardConfiguration.class})
 @ActiveProfiles({"mock_configuration"})
 public class OCSPConfigurationResolverTest {
 

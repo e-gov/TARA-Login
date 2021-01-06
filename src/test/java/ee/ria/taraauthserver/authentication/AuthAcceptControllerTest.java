@@ -59,7 +59,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .andExpect(jsonPath("$.message", is("Invalid request - invalid session.")))
                 .andExpect(jsonPath("$.path", is("/auth/accept")));
 
-        assertErrorIsLogged("User exception: Session in invalid state: 'INIT_AUTH_PROCESS'. Expected state: [LEGAL_PERSON_AUTHENTICATION_COMPLETED, NATURAL_PERSON_AUTHENTICATION_COMPLETED]");
+        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [LEGAL_PERSON_AUTHENTICATION_COMPLETED, NATURAL_PERSON_AUTHENTICATION_COMPLETED]");
     }
 
     @Test

@@ -84,3 +84,11 @@ management:
     jmx:
       exposure:
         exclude: "*"
+
+ignite:
+  igniteInstanceName: tara2-ignite
+  localHost: 127.0.0.1
+
+spring:
+  session:
+    timeout: 60s
