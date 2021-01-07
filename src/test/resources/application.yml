@@ -44,7 +44,7 @@ tara:
       truststore-password: changeit
       connection-timeout-milliseconds: 1000
       read-timeout-milliseconds: 1000
-      interval-between-session-status-queries-in-milliseconds: 3500
+      interval-between-session-status-queries-in-milliseconds: 1000
 
   legal-person-authentication:
     x-road-server-url: https://localhost:9877/cgi-bin/consumer_proxy
@@ -59,8 +59,8 @@ tara:
     x-road-client-subsystem-member-code: 70006317
     x-road-client-subsystem-code: idp
 
-    x-road-server-read-timeout-in-milliseconds: 5000
-    x-road-server-connect-timeout-in-milliseconds: 5000
+    x-road-server-read-timeout-in-milliseconds: 1000
+    x-road-server-connect-timeout-in-milliseconds: 1000
 
     x-road-query-esindus-v2-allowed-types: SA,AS
 
