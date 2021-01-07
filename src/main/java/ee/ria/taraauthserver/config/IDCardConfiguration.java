@@ -18,9 +18,9 @@ import java.util.Map;
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
 import static java.util.stream.Collectors.toMap;
 
+@Slf4j
 @ConditionalOnProperty(value = "id-card.enabled", matchIfMissing = true)
 @Configuration
-@Slf4j
 public class IDCardConfiguration {
 
     @Bean

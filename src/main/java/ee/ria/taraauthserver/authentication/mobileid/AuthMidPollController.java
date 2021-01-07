@@ -8,28 +8,26 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 
-import java.util.List;
 import java.util.Map;
 
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
+import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 
 @Slf4j
 @RestController
 public class AuthMidPollController {
+    private static final TaraAuthenticationState[] ALLOWED_STATES = {INIT_MID, POLL_MID_STATUS, AUTHENTICATION_FAILED, NATURAL_PERSON_AUTHENTICATION_COMPLETED};
 
     @GetMapping(value = "/auth/mid/poll")
     @ResponseBody
-    public ModelAndView authMidPoll() {
-        TaraSession taraSession = SessionUtils.getAuthSession();
+    public ModelAndView authMidPoll(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+        SessionUtils.assertSessionInState(taraSession, ALLOWED_STATES);
         log.debug("Polling for response from Mobile ID authentication process with MID session id {}",
                 ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getMidSessionId());
-
-        List<TaraAuthenticationState> allowedStates =
-                List.of(NATURAL_PERSON_AUTHENTICATION_COMPLETED, POLL_MID_STATUS, AUTHENTICATION_FAILED);
-        SessionUtils.assertSessionInState(taraSession, allowedStates);
 
         if (taraSession.getState() == NATURAL_PERSON_AUTHENTICATION_COMPLETED)
             return new ModelAndView(new MappingJackson2JsonView(), Map.of("status", "COMPLETED"));

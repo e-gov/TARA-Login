@@ -73,12 +73,15 @@ public class MockSessionUtils {
         return loginRequestInfo;
     }
 
-    public static void createMockHttpSession(TaraSession session) {
+    public static HttpSession createMockHttpSession(TaraSession.LoginRequestInfo loginRequestInfo) {
         HttpServletRequest request = new MockHttpServletRequest();
         HttpServletResponse response = new MockHttpServletResponse();
         HttpSession httpSession = request.getSession(true);
-        httpSession.setAttribute(TARA_SESSION, session);
+        TaraSession taraSession = new TaraSession(httpSession.getId());
+        taraSession.setLoginRequestInfo(loginRequestInfo);
+        httpSession.setAttribute(TARA_SESSION, taraSession);
         org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request, response));
+        return httpSession;
     }
 
     @NotNull
@@ -125,7 +128,7 @@ public class MockSessionUtils {
         client.setScope("mid legalperson");
         loginRequestInfo.setClient(client);
         loginRequestInfo.setRequestedScopes(requestedScopes);
-        TaraSession mockTaraSession = new TaraSession();
+        TaraSession mockTaraSession = new TaraSession(mockHttpSession.getId());
         mockTaraSession.setAuthenticationResult(credential);
         mockTaraSession.setState(authSessionStatus);
         mockTaraSession.setLoginRequestInfo(loginRequestInfo);

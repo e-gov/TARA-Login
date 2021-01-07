@@ -21,6 +21,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 
@@ -35,6 +36,7 @@ import static ee.ria.taraauthserver.config.properties.AuthConfigurationPropertie
 import static ee.ria.taraauthserver.error.ErrorCode.ESTEID_INVALID_REQUEST;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT;
+import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.lang.String.format;
 
 @Slf4j
@@ -58,9 +60,8 @@ public class IdCardController {
 
     @GetMapping(path = {"/auth/id"})
     @ResponseBody
-    public ModelAndView handleRequest(HttpServletRequest request) {
-        TaraSession taraSession = SessionUtils.getAuthSessionInState(INIT_AUTH_PROCESS);
-
+    public ModelAndView handleRequest(HttpServletRequest request, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+        SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
         String encodedCertificate = request.getHeader(HEADER_SSL_CLIENT_CERT);
         validateEncodedCertificate(encodedCertificate);
 
@@ -78,7 +79,7 @@ public class IdCardController {
                     HttpStatus.BAD_REQUEST);
         }
 
-        updateSessionStatus(taraSession);
+        taraSession.setState(NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT);
 
         try {
             ocspValidator.checkCert(certificate);
@@ -120,11 +121,6 @@ public class IdCardController {
         return modelAndView;
     }
 
-    private void updateSessionStatus(TaraSession taraSession) {
-        taraSession.setState(NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT);
-        SessionUtils.updateSession(taraSession);
-    }
-
     private void addAuthResultToSession(TaraSession taraSession, X509Certificate certificate) {
         Map<String, String> params = getCertificateParams(certificate);
         String idCode = EstonianIdCodeUtil.getEstonianIdCode(params.get(CN_SERIALNUMBER));
@@ -141,7 +137,6 @@ public class IdCardController {
         taraSession.setState(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
         taraSession.setAuthenticationResult(authenticationResult);
         log.info("updated session in idcard controller is: " + taraSession);
-        SessionUtils.updateSession(taraSession);
     }
 
     @NotNull

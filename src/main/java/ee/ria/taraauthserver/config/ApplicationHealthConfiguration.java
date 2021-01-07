@@ -1,6 +1,5 @@
 package ee.ria.taraauthserver.config;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.health.DefaultHealthContributorRegistry;
 import org.springframework.boot.actuate.health.HealthContributor;
 import org.springframework.boot.actuate.health.HealthContributorRegistry;
@@ -11,7 +10,6 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.LinkedHashMap;
 
-@Slf4j
 @Configuration
 @ConditionalOnExpression("'${management.endpoints.web.exposure.include}'.contains('heartbeat')")
 public class ApplicationHealthConfiguration {
