@@ -86,8 +86,18 @@ management:
         exclude: "*"
 
 ignite:
-  igniteInstanceName: tara2-ignite
-  localHost: 127.0.0.1
+  igniteInstanceName: tara2-ignite-t1
+  discoverySpi:
+    ipFinder:
+      addresses:
+        - 127.0.0.1
+  sslContextFactory:
+    keyStoreType: JKS
+    keyStoreFilePath: src\test\resources\tls-keystore.jks
+    keyStorePassword: changeit
+    trustStoreFilePath: src\test\resources\tls-truststore.jks
+    trustStorePassword: changeit
+    protocol: TLSv1.2
 
 spring:
   session:
