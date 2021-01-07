@@ -8,7 +8,6 @@ import com.github.tomakehurst.wiremock.extension.Parameters;
 import com.github.tomakehurst.wiremock.extension.ResponseTransformer;
 import com.github.tomakehurst.wiremock.http.Request;
 import com.github.tomakehurst.wiremock.http.Response;
-import ee.ria.taraauthserver.WiremockExtension;
 import ee.ria.taraauthserver.config.TaraAuthServerConfiguration;
 import ee.ria.taraauthserver.error.exceptions.OCSPServiceNotAvailableException;
 import ee.ria.taraauthserver.error.exceptions.OCSPValidationException;
@@ -33,14 +32,15 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.ConfigFileApplicationContextInitializer;
+import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -74,17 +74,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {TaraAuthServerConfiguration.class, OCSPValidator.class, RestTemplate.class}, initializers = ConfigFileApplicationContextInitializer.class)
+@ContextConfiguration(classes = {TaraAuthServerConfiguration.class, OCSPValidator.class, RestTemplate.class}, initializers = ConfigDataApplicationContextInitializer.class)
 public class OCSPValidatorTest {
     private static final OcspResponseTransformer ocspResponseTransformer = new OcspResponseTransformer(true);
 
-    @RegisterExtension
-    static final WiremockExtension mockOcspServer = new WiremockExtension(
+    private static final WireMockServer mockOcspServer = new WireMockServer(
             WireMockConfiguration.wireMockConfig().dynamicPort().extensions(ocspResponseTransformer)
     );
 
-    @RegisterExtension
-    static final WiremockExtension mockFallbackOcspServer = new WiremockExtension(
+    private static final WireMockServer mockFallbackOcspServer = new WireMockServer(
             WireMockConfiguration.wireMockConfig().dynamicPort().extensions(ocspResponseTransformer)
     );
 
@@ -111,6 +109,18 @@ public class OCSPValidatorTest {
     private Ocsp ocspConfiguration;
     private KeyPair responderKeys;
     private X509Certificate responderCert;
+
+    @BeforeAll
+    public static void setUp() {
+        mockOcspServer.start();
+        mockFallbackOcspServer.start();
+    }
+
+    @AfterAll
+    public static void tearDown() {
+//        mockOcspServer.stop();
+//        mockFallbackOcspServer.stop();
+    }
 
     @BeforeEach
     public void setUpTest() throws Exception {

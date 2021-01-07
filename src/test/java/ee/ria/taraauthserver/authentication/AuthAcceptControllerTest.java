@@ -49,8 +49,8 @@ public class AuthAcceptControllerTest extends BaseTest {
     void authAccept_incorrectSessionState() throws Exception {
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.INIT_AUTH_PROCESS, getMockCredential());
 
-        ResultActions resultActions = mock.perform(MockMvcRequestBuilders.post("/auth/accept").session(mockHttpSession))
-                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+        ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.post("/auth/accept").session(mockHttpSession))
+                .andDo(forwardErrorsToSpringErrorhandler(mockMvc)).andDo(print());
 
         resultActions
                 .andExpect(status().is(400))
@@ -72,8 +72,8 @@ public class AuthAcceptControllerTest extends BaseTest {
 
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 
-        ResultActions resultActions = mock.perform(MockMvcRequestBuilders.post("/auth/accept").session(mockHttpSession))
-                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+        ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.post("/auth/accept").session(mockHttpSession))
+                .andDo(forwardErrorsToSpringErrorhandler(mockMvc)).andDo(print());
 
         resultActions
                 .andExpect(status().is(500))
@@ -95,8 +95,8 @@ public class AuthAcceptControllerTest extends BaseTest {
 
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 
-        ResultActions resultActions = mock.perform(MockMvcRequestBuilders.post("/auth/accept").session(mockHttpSession))
-                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+        ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.post("/auth/accept").session(mockHttpSession))
+                .andDo(forwardErrorsToSpringErrorhandler(mockMvc)).andDo(print());
 
         resultActions
                 .andExpect(status().is(500))
@@ -119,7 +119,7 @@ public class AuthAcceptControllerTest extends BaseTest {
 
         MockHttpSession testSession = MockSessionUtils.getMockHttpSession(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 
-        mock.perform(MockMvcRequestBuilders.post("/auth/accept")
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/accept")
                 .session(testSession))
                 .andDo(print())
                 .andExpect(status().is(302))
@@ -137,7 +137,7 @@ public class AuthAcceptControllerTest extends BaseTest {
         MockHttpSession testSession = MockSessionUtils.getMockHttpSession(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
         ((TaraSession) testSession.getAttribute(TARA_SESSION)).getLoginRequestInfo().setRequestedScopes(List.of("legalperson"));
 
-        mock.perform(MockMvcRequestBuilders.post("/auth/accept")
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/accept")
                 .session(testSession))
                 .andDo(print())
                 .andExpect(status().is(302))
@@ -155,7 +155,7 @@ public class AuthAcceptControllerTest extends BaseTest {
         MockHttpSession testSession = MockSessionUtils.getMockHttpSession(TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_COMPLETED);
         ((TaraSession) testSession.getAttribute(TARA_SESSION)).getLoginRequestInfo().setRequestedScopes(List.of("legalperson"));
 
-        mock.perform(MockMvcRequestBuilders.post("/auth/accept")
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/accept")
                 .session(testSession))
                 .andDo(print())
                 .andExpect(status().is(302))
@@ -174,7 +174,7 @@ public class AuthAcceptControllerTest extends BaseTest {
         MockHttpSession testSession = MockSessionUtils.getMockHttpSession(TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_COMPLETED);
         ((TaraSession) testSession.getAttribute(TARA_SESSION)).getLoginRequestInfo().setRequestedScopes(List.of("legalperson"));
 
-        mock.perform(MockMvcRequestBuilders.post("/auth/accept")
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/accept")
                 .session(testSession))
                 .andDo(print())
                 .andExpect(status().is(500));

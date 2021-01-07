@@ -286,7 +286,7 @@ class AuthMidControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
-        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected: 'INIT_AUTH_PROCESS'");
+        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [INIT_AUTH_PROCESS]");
     }
 
     @Test

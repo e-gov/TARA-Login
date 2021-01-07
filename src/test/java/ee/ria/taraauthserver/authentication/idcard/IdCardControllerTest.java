@@ -46,18 +46,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
 class IdCardControllerTest extends BaseTest {
-
     private final AuthConfigurationProperties.Ocsp ocspConfiguration = new AuthConfigurationProperties.Ocsp();
     private KeyPair responderKeys;
 
     @Autowired
     private SessionRepository<Session> sessionRepository;
-
-
-//    @BeforeAll
-//    public static void setUpAll() {
-//        configureWiremockServer(ocspResponseTransformer);
-//    }
 
     @BeforeEach
     public void setUpTest() throws NoSuchAlgorithmException, NoSuchProviderException {
@@ -150,7 +143,7 @@ class IdCardControllerTest extends BaseTest {
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected: 'INIT_AUTH_PROCESS'");
+        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [INIT_AUTH_PROCESS]");
     }
 
     @Test

@@ -21,8 +21,6 @@ import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.view.RedirectView;
 
-import java.util.List;
-
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 
@@ -39,7 +37,7 @@ class AuthAcceptController {
 
     @PostMapping("/auth/accept")
     public RedirectView authAccept(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
-        SessionUtils.assertSessionInState(taraSession, List.of(LEGAL_PERSON_AUTHENTICATION_COMPLETED, NATURAL_PERSON_AUTHENTICATION_COMPLETED));
+        SessionUtils.assertSessionInState(taraSession, LEGAL_PERSON_AUTHENTICATION_COMPLETED, NATURAL_PERSON_AUTHENTICATION_COMPLETED);
         if (isLegalPersonAttributesRequested(taraSession)) {
             return new RedirectView("/auth/legal_person/init");
         }

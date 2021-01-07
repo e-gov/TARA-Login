@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
@@ -20,9 +21,7 @@ import org.hamcrest.Matcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.session.Session;
@@ -48,14 +47,10 @@ import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @Slf4j
-@AutoConfigureMockMvc
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public abstract class BaseTest {
     protected static final OCSPValidatorTest.OcspResponseTransformer ocspResponseTransformer = new OCSPValidatorTest.OcspResponseTransformer(false);
-    protected MockMvc mock;
-
-    @RegisterExtension
-    protected static WiremockExtension wireMockServer = new WiremockExtension(WireMockConfiguration.wireMockConfig()
+    protected static final WireMockServer wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig()
             .httpDisabled(true)
             .httpsPort(9877)
             .keystorePath("src/test/resources/tls-keystore.jks")
@@ -64,6 +59,8 @@ public abstract class BaseTest {
             .extensions(ocspResponseTransformer)
             .notifier(new ConsoleNotifier(true))
     );
+
+    protected MockMvc mockMvc;
 
     @Autowired
     private WebApplicationContext webApplicationContext;
@@ -82,13 +79,15 @@ public abstract class BaseTest {
         System.setProperty("IGNITE_QUIET", "false");
         System.setProperty("IGNITE_HOME", System.getProperty("java.io.tmpdir"));
         System.setProperty("java.net.preferIPv4Stack", "true");
+        wireMockServer.start();
     }
 
     @BeforeEach
     public void beforeEachTest() {
-        mock = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
         RestAssured.port = port;
-        setupMockLogAppender();
+        configureMockLogAppender();
+        wireMockServer.resetAll();
     }
 
     @AfterEach
@@ -96,10 +95,15 @@ public abstract class BaseTest {
         ((Logger) getLogger(ROOT_LOGGER_NAME)).detachAppender(mockAppender);
     }
 
-    private void setupMockLogAppender() {
+    private void configureMockLogAppender() {
         mockAppender = new ListAppender<>();
         mockAppender.start();
         ((Logger) getLogger(ROOT_LOGGER_NAME)).addAppender(mockAppender);
+    }
+
+    private static void configureRestAssured() {
+        RestAssured.filters(new RequestLoggingFilter(), new ResponseLoggingFilter());
+        config = config().redirect(redirectConfig().followRedirects(false));
     }
 
     protected void assertInfoIsLogged(String... messagesInRelativeOrder) {
@@ -137,11 +141,6 @@ public abstract class BaseTest {
 
         assertThat("Expected log messages not found in output.\n\tExpected log messages: " + List.of(messagesInRelativeOrder) + ",\n\tActual log messages: " + events, events, containsInRelativeOrder(stream(messagesInRelativeOrder)
                 .map(CoreMatchers::startsWith).toArray(Matcher[]::new)));
-    }
-
-    protected static void configureRestAssured() {
-        RestAssured.filters(new RequestLoggingFilter(), new ResponseLoggingFilter());
-        config = config().redirect(redirectConfig().followRedirects(false));
     }
 
     protected static void createMidApiAuthenticationStub(String response, int status) {

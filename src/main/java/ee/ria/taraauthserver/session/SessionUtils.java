@@ -10,10 +10,11 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import java.util.List;
+import java.util.Arrays;
 
 import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static java.util.Arrays.stream;
 
 @Slf4j
 @UtilityClass
@@ -27,19 +28,11 @@ public class SessionUtils {
         return httpSession == null ? null : (TaraSession) httpSession.getAttribute(TARA_SESSION);
     }
 
-    public void assertSessionInState(TaraSession taraSession, TaraAuthenticationState expectedState) {
+    public void assertSessionInState(TaraSession taraSession, TaraAuthenticationState... validSessionStates) {
         if (taraSession == null) {
             throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
-        } else if (taraSession.getState() != expectedState) {
-            throw new BadRequestException(ErrorCode.SESSION_STATE_INVALID, String.format("Invalid authentication state: '%s', expected: '%s'", taraSession.getState(), expectedState));
-        }
-    }
-
-    public void assertSessionInState(TaraSession taraSession, List<TaraAuthenticationState> expectedStates) {
-        if (taraSession == null) {
-            throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
-        } else if (!expectedStates.contains(taraSession.getState())) {
-            throw new BadRequestException(ErrorCode.SESSION_STATE_INVALID, String.format("Invalid authentication state: '%s', expected one of: %s", taraSession.getState(), expectedStates));
+        } else if (stream(validSessionStates).noneMatch(s -> s == taraSession.getState())) {
+            throw new BadRequestException(ErrorCode.SESSION_STATE_INVALID, String.format("Invalid authentication state: '%s', expected one of: %s", taraSession.getState(), Arrays.toString(validSessionStates)));
         }
     }
 }

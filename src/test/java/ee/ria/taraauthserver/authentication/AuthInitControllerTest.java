@@ -155,7 +155,7 @@ class AuthInitControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response-ok_ui_locales-not-set.json")));
 
-        HttpSession result = mock.perform(MockMvcRequestBuilders.get("/auth/init").param("login_challenge", TEST_LOGIN_CHALLENGE))
+        HttpSession result = mockMvc.perform(MockMvcRequestBuilders.get("/auth/init").param("login_challenge", TEST_LOGIN_CHALLENGE))
                 .andDo(print())
                 .andExpect(status().is(200))
                 .andExpect(request().sessionAttribute(TARA_SESSION, is(notNullValue())))
@@ -211,7 +211,7 @@ class AuthInitControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response-ok_ui_locales-not-set.json")));
 
-        mock.perform(MockMvcRequestBuilders.get("/auth/init").param("login_challenge", TEST_LOGIN_CHALLENGE))
+        mockMvc.perform(MockMvcRequestBuilders.get("/auth/init").param("login_challenge", TEST_LOGIN_CHALLENGE))
                 .andDo(print())
                 .andExpect(status().is(200))
                 .andExpect(content().string(containsString("Turvaline autentimine asutuste e-teenustes")))
@@ -256,7 +256,7 @@ class AuthInitControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response.json")));
 
-        mock.perform(MockMvcRequestBuilders.get("/auth/init").param("login_challenge", TEST_LOGIN_CHALLENGE))
+        mockMvc.perform(MockMvcRequestBuilders.get("/auth/init").param("login_challenge", TEST_LOGIN_CHALLENGE))
                 .andDo(print())
                 .andExpect(status().is(200))
                 .andExpect(content().string(containsString("Для безопасной аутентификации в э-услугах")))
@@ -271,7 +271,7 @@ class AuthInitControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response.json")));
 
-        mock.perform(MockMvcRequestBuilders.get("/auth/init")
+        mockMvc.perform(MockMvcRequestBuilders.get("/auth/init")
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
                 .param("lang", "en"))
                 .andDo(print())
@@ -288,7 +288,7 @@ class AuthInitControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response-ok_ui_locales-incorrect.json")));
 
-        mock.perform(MockMvcRequestBuilders.get("/auth/init").param("login_challenge", TEST_LOGIN_CHALLENGE))
+        mockMvc.perform(MockMvcRequestBuilders.get("/auth/init").param("login_challenge", TEST_LOGIN_CHALLENGE))
                 .andDo(print())
                 .andExpect(status().is(200))
                 .andExpect(content().string(containsString("Turvaline autentimine asutuste e-teenustes")))

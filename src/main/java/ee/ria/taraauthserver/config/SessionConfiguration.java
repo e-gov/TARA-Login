@@ -27,6 +27,14 @@ import static javax.cache.expiry.CreatedExpiryPolicy.factoryOf;
 import static org.apache.ignite.cache.CacheAtomicityMode.ATOMIC;
 import static org.apache.ignite.cache.CacheMode.PARTITIONED;
 
+/**
+ * Replace {@link EnableSpringHttpSession} with Spring Session Ignite module or corresponding Community Extension,
+ * that provides SessionRepository implementation backed by Ignite and configuration support when it becomes available.
+ *
+ * @see <a href="https://github.com/spring-projects/spring-session/pull/1730">Ignite integration module pull request</a>
+ * @see <a href="https://docs.spring.io/spring-session/docs/2.4.1/reference/html5/#httpsession">HttpSession Integration</a>
+ * @see <a href="https://docs.spring.io/spring-session/docs/2.4.1/reference/html5/#community">Spring Session Community Extensions</a>
+ */
 @Configuration
 @EnableSpringHttpSession
 public class SessionConfiguration {

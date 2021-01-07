@@ -12,17 +12,15 @@ import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 
-import java.util.List;
 import java.util.Map;
 
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
-import static java.util.List.of;
 
 @Slf4j
 @RestController
 public class AuthMidPollController {
-    private static final List<TaraAuthenticationState> ALLOWED_STATES = of(INIT_MID, POLL_MID_STATUS, AUTHENTICATION_FAILED, NATURAL_PERSON_AUTHENTICATION_COMPLETED);
+    private static final TaraAuthenticationState[] ALLOWED_STATES = {INIT_MID, POLL_MID_STATUS, AUTHENTICATION_FAILED, NATURAL_PERSON_AUTHENTICATION_COMPLETED};
 
     @GetMapping(value = "/auth/mid/poll")
     @ResponseBody

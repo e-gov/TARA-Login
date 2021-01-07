@@ -11,16 +11,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.servlet.view.RedirectView;
 
-import java.util.List;
-
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
-import static java.util.List.of;
 
 @Slf4j
 @RestController
 public class AuthMidPollCancelController {
-    private static final List<TaraAuthenticationState> ALLOWED_STATES = of(INIT_MID, POLL_MID_STATUS);
+    private static final TaraAuthenticationState[] ALLOWED_STATES = {INIT_MID, POLL_MID_STATUS};
 
     @PostMapping(value = "/auth/mid/poll/cancel", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
