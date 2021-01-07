@@ -93,10 +93,10 @@ ignite:
         - 127.0.0.1
   sslContextFactory:
     keyStoreType: JKS
-    keyStoreFilePath: src\test\resources\tls-keystore.jks
+    keyStoreFilePath: src/test/resources/tls-keystore.jks
     keyStorePassword: changeit
     trustStoreType: JKS
-    trustStoreFilePath: src\test\resources\tls-truststore.jks
+    trustStoreFilePath: src/test/resources/tls-truststore.jks
     trustStorePassword: changeit
     protocol: TLSv1.2
 
