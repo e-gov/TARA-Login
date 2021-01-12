@@ -1,4 +1,14 @@
 # TARA login server
+## Building the webapp
+
+Requirements:
+* JDK 11
+
+Execute the following command to build the tara-login-server webapp:
+````
+./mvnw clean package
+````
+
 ## 1 TARA login server configuration properties
 
 ### 1.1 hydra service
