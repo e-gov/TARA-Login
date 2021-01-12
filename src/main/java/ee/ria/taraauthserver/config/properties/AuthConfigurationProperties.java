@@ -59,6 +59,9 @@ public class AuthConfigurationProperties {
         @NotBlank
         private String rejectConsentUrl;
 
+        @NotBlank
+        private String rejectLoginUrl;
+
         private int requestTimeoutInSeconds = 3;
     }
 
@@ -81,6 +84,7 @@ public class AuthConfigurationProperties {
 
         @NotNull
         LevelOfAssurance levelOfAssurance;
+
         boolean enabled = true;
     }
 
