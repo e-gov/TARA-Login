@@ -21,7 +21,6 @@ import java.time.Duration;
 import java.util.function.Consumer;
 
 import static ee.ria.taraauthserver.session.IgniteSessionRepository.DEFAULT_SESSION_MAP_NAME;
-import static java.lang.Math.toIntExact;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static javax.cache.expiry.CreatedExpiryPolicy.factoryOf;
 import static org.apache.ignite.cache.CacheAtomicityMode.ATOMIC;
@@ -73,10 +72,9 @@ public class SessionConfiguration {
     }
 
     @Bean
-    public CookieSerializer cookieSerializer(@Value("${spring.session.timeout}") Duration sessionTimeout) {
+    public CookieSerializer cookieSerializer() {
         DefaultCookieSerializer serializer = new DefaultCookieSerializer();
         serializer.setCookiePath("/");
-        serializer.setCookieMaxAge(toIntExact(sessionTimeout.toSeconds()));
         serializer.setUseSecureCookie(true);
         serializer.setSameSite("Strict");
         serializer.setUseHttpOnlyCookie(true);

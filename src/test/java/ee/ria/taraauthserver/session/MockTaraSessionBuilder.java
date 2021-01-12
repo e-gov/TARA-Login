@@ -2,34 +2,27 @@ package ee.ria.taraauthserver.session;
 
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
-import lombok.RequiredArgsConstructor;
+import lombok.Builder;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.mock.web.MockHttpSession;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.ResultHandler;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static java.lang.String.join;
+import static java.util.Objects.requireNonNullElseGet;
 
 @Slf4j
-public class MockSessionUtils {
-
+public class MockTaraSessionBuilder {
     public static final String MOCK_LOGIN_CHALLENGE = "abcdefg098AAdsCC";
-    public static final String MOCK_CHALLENGE = "123456abcdefg";
     public static final String MOCK_CLIENT_ID = "openIdDemo";
     public static final String MOCK_CLIENT_NAME = "institution.name";
     public static final String MOCK_CLIENT_NAME_EN = "institution.name.en";
@@ -45,10 +38,38 @@ public class MockSessionUtils {
     public static final String MOCK_NATURAL_PERSON_LASTNAME = "Männik";
     public static final LocalDate MOCK_NATURAL_PERSON_DATE_OF_BIRTH = LocalDate.of(1971, 1, 1);
 
+    @Builder
+    public static TaraSession buildTaraSession(@NonNull String sessionId, TaraAuthenticationState authenticationState, List<AuthenticationType> authenticationTypes,
+                                               List<String> clientAllowedScopes, List<String> requestedScopes, List<TaraSession.LegalPerson> legalPersonList,
+                                               TaraSession.AuthenticationResult authenticationResult) {
+        TaraSession taraSession = new TaraSession(sessionId);
+        TaraSession.LoginRequestInfo lri = new TaraSession.LoginRequestInfo();
+        TaraSession.Client client = new TaraSession.Client();
+        TaraSession.MetaData metaData = new TaraSession.MetaData();
+        TaraSession.OidcClient oidcClient = new TaraSession.OidcClient();
+        taraSession.setLegalPersonList(legalPersonList);
 
-    public static TaraSession.LoginRequestInfo getMockLoginRequestInfo() {
+        lri.setChallenge(MOCK_LOGIN_CHALLENGE);
+        if (requestedScopes != null) {
+            lri.setRequestedScopes(requestedScopes);
+        }
+        oidcClient.setShortName("short_name");
+        client.setClientId(MOCK_CLIENT_ID);
+        metaData.setOidcClient(oidcClient);
+        client.setMetaData(metaData);
+        client.setScope(clientAllowedScopes == null ? "" : join(" ", clientAllowedScopes));
+        lri.setClient(client);
+
+        taraSession.setAllowedAuthMethods(authenticationTypes);
+        taraSession.setState(authenticationState == null ? TaraAuthenticationState.INIT_AUTH_PROCESS : authenticationState);
+        taraSession.setLoginRequestInfo(lri);
+        taraSession.setAuthenticationResult(requireNonNullElseGet(authenticationResult, () -> new TaraSession.MidAuthenticationResult("testSessionId")));
+        return taraSession;
+    }
+
+    public static TaraSession.LoginRequestInfo buildMockLoginRequestInfo() {
         TaraSession.LoginRequestInfo loginRequestInfo = new TaraSession.LoginRequestInfo();
-        loginRequestInfo.setChallenge(MOCK_CHALLENGE);
+        loginRequestInfo.setChallenge(MOCK_LOGIN_CHALLENGE);
 
         TaraSession.Client client = new TaraSession.Client();
         TaraSession.MetaData metaData = new TaraSession.MetaData();
@@ -73,7 +94,7 @@ public class MockSessionUtils {
         return loginRequestInfo;
     }
 
-    public static HttpSession createMockHttpSession(TaraSession.LoginRequestInfo loginRequestInfo) {
+    public static HttpSession buildMockHttpSession(TaraSession.LoginRequestInfo loginRequestInfo) {
         HttpServletRequest request = new MockHttpServletRequest();
         HttpServletResponse response = new MockHttpServletResponse();
         HttpSession httpSession = request.getSession(true);
@@ -84,16 +105,15 @@ public class MockSessionUtils {
         return httpSession;
     }
 
-    @NotNull
-    public static TaraSession.AuthenticationResult getMockCredential() {
-        return getMockCredential(
+    public static TaraSession.AuthenticationResult buildMockCredential() {
+        return buildMockCredential(
                 MOCK_NATURAL_PERSON_ID_CODE,
                 MOCK_NATURAL_PERSON_FIRSTNAME,
                 MOCK_NATURAL_PERSON_LASTNAME,
                 MOCK_NATURAL_PERSON_DATE_OF_BIRTH);
     }
 
-    public static TaraSession.AuthenticationResult getMockCredential(String idCode, String firstName, String lastName, LocalDate dateOfBirth) {
+    public static TaraSession.AuthenticationResult buildMockCredential(String idCode, String firstName, String lastName, LocalDate dateOfBirth) {
         TaraSession.AuthenticationResult credential = new TaraSession.AuthenticationResult();
         credential.setIdCode(idCode);
         credential.setFirstName(firstName);
@@ -103,65 +123,5 @@ public class MockSessionUtils {
         credential.setAmr(AuthenticationType.MOBILE_ID);
         credential.setSubject("EE" + idCode);
         return credential;
-    }
-
-    public static MockHttpSession getMockHttpSession(TaraAuthenticationState authSessionStatus) {
-        return getMockHttpSession(authSessionStatus, getMockCredential());
-    }
-
-    @NotNull
-    public static MockHttpSession getMockHttpSession(TaraAuthenticationState authSessionStatus, TaraSession.AuthenticationResult credential) {
-        return getMockHttpSession(authSessionStatus, credential, List.of("oidc"));
-    }
-
-    @NotNull
-    public static MockHttpSession getMockHttpSession(
-            TaraAuthenticationState authSessionStatus,
-            TaraSession.AuthenticationResult credential,
-            List<String> requestedScopes) {
-
-        MockHttpSession mockHttpSession = new MockHttpSession();
-        TaraSession.LoginRequestInfo loginRequestInfo = new TaraSession.LoginRequestInfo();
-        loginRequestInfo.setChallenge(MOCK_LOGIN_CHALLENGE);
-        TaraSession.Client client = new TaraSession.Client();
-        client.setClientId(MOCK_CLIENT_ID);
-        client.setScope("mid legalperson");
-        loginRequestInfo.setClient(client);
-        loginRequestInfo.setRequestedScopes(requestedScopes);
-        TaraSession mockTaraSession = new TaraSession(mockHttpSession.getId());
-        mockTaraSession.setAuthenticationResult(credential);
-        mockTaraSession.setState(authSessionStatus);
-        mockTaraSession.setLoginRequestInfo(loginRequestInfo);
-        mockHttpSession.setAttribute(TARA_SESSION, mockTaraSession);
-        return mockHttpSession;
-    }
-
-    public static ResultHandler forwardErrorsToSpringErrorhandler(MockMvc mvc) {
-        return new ErrorForwardResultHandler(mvc);
-    }
-
-    @RequiredArgsConstructor
-    private static class ErrorForwardResultHandler implements ResultHandler {
-
-        private final MockMvc mock;
-
-        public final void handle(MvcResult result) throws Exception {
-            if (result.getResolvedException() != null) {
-                byte[] response = mock.perform(get("/error").requestAttr(RequestDispatcher.ERROR_STATUS_CODE, result.getResponse()
-                        .getStatus())
-                        .requestAttr(RequestDispatcher.ERROR_REQUEST_URI, result.getRequest().getRequestURI())
-                        .requestAttr(RequestDispatcher.ERROR_EXCEPTION, result.getResolvedException())
-                        .requestAttr(RequestDispatcher.ERROR_MESSAGE, String.valueOf(result.getResolvedException().getMessage())))
-                        .andReturn()
-                        .getResponse()
-                        .getContentAsByteArray();
-
-                log.info("Response: {}", new String(result.getResponse().getContentAsByteArray(), StandardCharsets.UTF_8));
-
-                result.getResponse()
-                        .getOutputStream()
-                        .write(response);
-            }
-        }
     }
 }

@@ -33,7 +33,7 @@ class AuthConsentControllerTest extends BaseTest {
     public static final String MOCK_CONSENT_CHALLENGE = "abcdefg098AAdsCC";
 
     @Autowired
-    SessionRepository sessionRepository;
+    private SessionRepository<Session> sessionRepository;
 
     @Test
     @Tag(value = "USER_CONSENT_ENDPOINT")

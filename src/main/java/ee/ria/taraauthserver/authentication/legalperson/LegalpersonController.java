@@ -76,7 +76,7 @@ public class LegalpersonController {
         List<TaraSession.LegalPerson> legalPersons = eBusinessRegistryService.executeEsindusV2Service(taraSession.getAuthenticationResult().getIdCode());
 
         if (isEmpty(legalPersons)) {
-            throw new NotFoundException("Current user has no valid legal person records in business registry");
+            throw new NotFoundException("Current user has no valid legal person records in business registry"); // TODO: NotFoundException -> BadRequestException with error code?
         } else {
             taraSession.setLegalPersonList(legalPersons);
             taraSession.setState(GET_LEGAL_PERSON_LIST);

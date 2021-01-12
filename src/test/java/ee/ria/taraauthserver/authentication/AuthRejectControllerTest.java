@@ -13,7 +13,7 @@ import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static ee.ria.taraauthserver.session.MockSessionUtils.MOCK_LOGIN_CHALLENGE;
+import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.MOCK_LOGIN_CHALLENGE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;

@@ -11,18 +11,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.session.SessionRepository;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.web.servlet.i18n.SessionLocaleResolver;
-
-import javax.servlet.http.HttpSession;
 
 import java.net.URL;
-import java.util.Locale;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
@@ -30,10 +24,6 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @Slf4j
 class AuthInitControllerTest extends BaseTest {
