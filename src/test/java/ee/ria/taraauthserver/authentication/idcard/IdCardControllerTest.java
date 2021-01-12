@@ -17,8 +17,11 @@ import org.bouncycastle.cert.ocsp.UnknownStatus;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
@@ -39,6 +42,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static ee.ria.taraauthserver.authentication.idcard.IdCardController.HEADER_SSL_CLIENT_CERT;
 import static ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest.generateOcspResponderCertificate;
 import static ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest.generateUserCertificate;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
@@ -64,6 +68,8 @@ class IdCardControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "ESTEID_INIT")
+    @Tag(value = "ESTEID_AUTH_ENDPOINT")
     void idAuth_certificate_missing() {
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
         given()
@@ -80,6 +86,8 @@ class IdCardControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "ESTEID_INIT")
+    @Tag(value = "ESTEID_AUTH_ENDPOINT")
     void idAuth_certificate_incorrect() {
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
 
@@ -98,20 +106,9 @@ class IdCardControllerTest extends BaseTest {
     }
 
     @Test
-    void idAuth_session_missing() {
-        given()
-                .when()
-                .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
-                .get("/auth/id")
-                .then()
-                .assertThat()
-                .statusCode(400)
-                .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
-                .body("error", equalTo("Bad Request"));
-    }
-
-    @Test
-    void idAuth_session_empty_string() {
+    @Tag(value = "ESTEID_INIT")
+    @Tag(value = "ESTEID_AUTH_ENDPOINT")
+    void idAuth_certificate_empty_string() {
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
 
         given()
@@ -129,6 +126,21 @@ class IdCardControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "ESTEID_INIT")
+    void idAuth_session_missing() {
+        given()
+                .when()
+                .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
+                .get("/auth/id")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
+                .body("error", equalTo("Bad Request"));
+    }
+
+    @Test
+    @Tag(value = "ESTEID_INIT")
     void idAuth_session_incorrect_authentication_state() {
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_MID);
 
@@ -147,6 +159,8 @@ class IdCardControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "OCSP_RESPONSE_STATUS_HANDLING")
+    @Tag(value = "IDCARD_AUTH_SUCCESSFUL")
     void idAuth_ok() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
 
         KeyPairGenerator rsa = KeyPairGenerator.getInstance("RSA");
@@ -175,6 +189,7 @@ class IdCardControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(200)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
                 .body("status", equalTo("COMPLETED"));
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
@@ -189,6 +204,8 @@ class IdCardControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "OCSP_RESPONSE_STATUS_HANDLING")
+    @Tag(value = "IDCARD_ERROR_HANDLING")
     void idAuth_response_certificate_status_revoked() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
 
         KeyPairGenerator rsa = KeyPairGenerator.getInstance("RSA");
@@ -226,6 +243,9 @@ class IdCardControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "ESTEID_INIT")
+    @Tag(value = "OCSP_RESPONSE_STATUS_HANDLING")
+    @Tag(value = "IDCARD_ERROR_HANDLING")
     void idAuth_response_certificate_status_unknown() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
 
         KeyPairGenerator rsa = KeyPairGenerator.getInstance("RSA");
@@ -259,12 +279,13 @@ class IdCardControllerTest extends BaseTest {
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
 
-        assertEquals(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT, taraSession.getState());
+        assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
         assertWarningIsLogged("OCSP validation failed: Invalid certificate status <UNKNOWN> received");
 
     }
 
     @Test
+    @Tag(value = "OCSP_FAILOVER_CONF")
     void idAuth_response_200_when_response_is_404_and_fallback_service_is_used() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
 
         KeyPairGenerator rsa = KeyPairGenerator.getInstance("RSA");
@@ -297,6 +318,7 @@ class IdCardControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "OCSP_CA_WHITELIST")
     void idAuth_response_500_when_issuer_certificate_not_trusted() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
 
         KeyPairGenerator rsa = KeyPairGenerator.getInstance("RSA");
@@ -330,6 +352,7 @@ class IdCardControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "OCSP_RESPONSE_VALID_SIG")
     void idAuth_response_500_when_responder_certificate_issuer_different_from_user() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
 
         KeyPairGenerator rsa = KeyPairGenerator.getInstance("RSA");
@@ -363,8 +386,8 @@ class IdCardControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "OCSP_VALID_RESPONSE")
     void idAuth_response_500_when_response_body_is_missing() {
-
         wireMockServer.stubFor(WireMock.post("/esteid2015")
                 .willReturn(
                         WireMock.aResponse()
@@ -389,9 +412,8 @@ class IdCardControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "OCSP_VALID_RESPONSE")
     void idAuth_response_ocspService_notAvailable() {
-
-
         wireMockServer.stubFor(get(urlEqualTo("/esteid2015"))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -414,6 +436,8 @@ class IdCardControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "CERTIFICATE_IS_VALID")
+    @Tag(value = "IDCARD_ERROR_HANDLING")
     void idAuth_response_userCert_notYetValid() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
         X509Certificate userCert =
                 generateUserCertificate("SERIALNUMBER=PNOEE-38001085718, GIVENNAME=JAAK-KRISTJAN, SURNAME=JÕEORG, CN=\"JÕEORG,JAAK-KRISTJAN,38001085718\", C=EE", responderKeys, "CN=TEST of ESTEID-SK 2015",
@@ -437,6 +461,8 @@ class IdCardControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "CERTIFICATE_IS_VALID")
+    @Tag(value = "IDCARD_ERROR_HANDLING")
     void idAuth_response_userCert_expired() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
         X509Certificate userCert =
                 generateUserCertificate("SERIALNUMBER=PNOEE-38001085718, GIVENNAME=JAAK-KRISTJAN, SURNAME=JÕEORG, CN=\"JÕEORG,JAAK-KRISTJAN,38001085718\", C=EE", responderKeys, "CN=TEST of ESTEID-SK 2015",
@@ -456,6 +482,8 @@ class IdCardControllerTest extends BaseTest {
                 .body("status", equalTo("ERROR"))
                 .body("errorMessage", equalTo("Teie sertifikaadid ei kehti."));
 
+        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertWarningIsLogged("OCSP validation failed: User certificate is expired");
     }
 

@@ -11,6 +11,7 @@ import ee.sk.mid.MidHashType;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,8 +41,8 @@ class AuthMidControllerTest extends BaseTest {
             .withHashType(MidHashType.SHA512)
             .withHashInBase64("bT+0Fuuf0QChq/sYb+Nz8vhLE8n3gLeL/wOXKxxE4ao=").build();
 
-    // TODO parameter names (idCode vs id_code)
 
+    // TODO parameter names (idCode vs id_code)
     @SpyBean
     private AuthMidService authMidService;
 
@@ -59,6 +60,7 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_AUTH_INIT")
     void midAuthInit_session_missing() {
         given()
                 .when()
@@ -75,6 +77,32 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_AUTH_INIT")
+    void midAuthInit_session_status_incorrect() {
+        Session session = sessionRepository.createSession();
+        TaraSession testSession = new TaraSession(session.getId());
+        testSession.setState(TaraAuthenticationState.INIT_MID);
+        session.setAttribute(TARA_SESSION, testSession);
+        sessionRepository.save(session);
+
+        given()
+                .when()
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "00000766")
+                .sessionId("SESSION", session.getId())
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
+                .body("error", equalTo("Bad Request"))
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+
+        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [INIT_AUTH_PROCESS]");
+    }
+
+    @Test
+    @Tag(value = "MID_INIT_ENDPOINT")
     void nationalIdNumber_missing() {
         given()
                 .when()
@@ -90,6 +118,7 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_INIT_ENDPOINT")
     void nationalIdNumber_blank() {
         given()
                 .when()
@@ -106,6 +135,7 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_VALID_INPUT_IDCODE")
     void nationalIdNumber_invalidLength() {
         given()
                 .when()
@@ -122,6 +152,7 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_VALID_INPUT_IDCODE")
     void nationalIdNumber_invalid() {
         given()
                 .when()
@@ -138,6 +169,7 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_INIT_ENDPOINT")
     void phoneNumber_missing() {
         given()
                 .when()
@@ -151,6 +183,7 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_INIT_ENDPOINT")
     void phoneNumber_blank() {
         given()
                 .when()
@@ -165,6 +198,7 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_VALID_INPUT_TEL")
     void phoneNumber_invalid() {
         given()
                 .when()
@@ -179,6 +213,7 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_VALID_INPUT_TEL")
     void phoneNumber_tooShort() {
         given()
                 .when()
@@ -194,6 +229,7 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_VALID_INPUT_TEL")
     void phoneNumber_tooLong() {
         given()
                 .when()
@@ -208,6 +244,37 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_AUTH_INIT")
+    void midAuthInit_session_mid_not_allowed() {
+        Session session = sessionRepository.createSession();
+        TaraSession testSession = new TaraSession(session.getId());
+        List<AuthenticationType> allowedMethods = new ArrayList<>();
+        allowedMethods.add(AuthenticationType.ID_CARD);
+        testSession.setAllowedAuthMethods(allowedMethods);
+        testSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+        session.setAttribute(TARA_SESSION, testSession);
+        sessionRepository.save(session);
+
+        given()
+                .when()
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "00000766")
+                .sessionId("SESSION", session.getId())
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Ebakorrektne päring."))
+                .body("error", equalTo("Bad Request"))
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+
+        assertErrorIsLogged("User exception: Mobile ID authentication method is not allowed");
+    }
+
+    @Test
+    @Tag(value = "MID_AUTH_INIT")
+    @Tag(value = "MID_AUTH_INIT_REQUEST")
+    @Tag(value = "MID_AUTH_INIT_RESPONSE")
     void phoneNumberAndIdCodeValid() {
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 200);
         createMidApiPollStub("mock_responses/mid/mid_poll_response.json", 200);
@@ -266,57 +333,7 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
-    void midAuthInit_session_status_incorrect() {
-        Session session = sessionRepository.createSession();
-        TaraSession testSession = new TaraSession(session.getId());
-        testSession.setState(TaraAuthenticationState.INIT_MID);
-        session.setAttribute(TARA_SESSION, testSession);
-        sessionRepository.save(session);
-
-        given()
-                .when()
-                .formParam("idCode", "60001019906")
-                .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", session.getId())
-                .post("/auth/mid/init")
-                .then()
-                .assertThat()
-                .statusCode(400)
-                .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
-                .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-
-        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [INIT_AUTH_PROCESS]");
-    }
-
-    @Test
-    void midAuthInit_session_mid_not_allowed() {
-        Session session = sessionRepository.createSession();
-        TaraSession testSession = new TaraSession(session.getId());
-        List<AuthenticationType> allowedMethods = new ArrayList<>();
-        allowedMethods.add(AuthenticationType.ID_CARD);
-        testSession.setAllowedAuthMethods(allowedMethods);
-        testSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
-        session.setAttribute(TARA_SESSION, testSession);
-        sessionRepository.save(session);
-
-        given()
-                .when()
-                .formParam("idCode", "60001019906")
-                .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", session.getId())
-                .post("/auth/mid/init")
-                .then()
-                .assertThat()
-                .statusCode(400)
-                .body("message", equalTo("Ebakorrektne päring."))
-                .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-
-        assertErrorIsLogged("User exception: Mobile ID authentication method is not allowed");
-    }
-
-    @Test
+    @Tag(value = "MID_AUTH_INIT_RESPONSE")
     void midAuthInit_response_400() {
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 400);
 
@@ -330,10 +347,11 @@ class AuthMidControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(500);
 
-        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: HTTP 400 Bad Request"); // TODO:
+        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: HTTP 400 Bad Request");
     }
 
     @Test
+    @Tag(value = "MID_AUTH_INIT_RESPONSE")
     void midAuthInit_response_401() {
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 401);
 
@@ -351,6 +369,7 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_AUTH_INIT_RESPONSE")
     void midAuthInit_response_405() {
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 405);
 
@@ -368,6 +387,7 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_AUTH_INIT_RESPONSE")
     void midAuthInit_response_500() {
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 500);
 

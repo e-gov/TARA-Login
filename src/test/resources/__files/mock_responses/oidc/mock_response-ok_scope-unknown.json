@@ -1,5 +1,5 @@
 {
-  "challenge": "string",
+  "challenge": "abcdefg098AAdsCC",
   "client": {
     "allowed_cors_origins": [
       "string"
@@ -60,7 +60,7 @@
     "response_types": [
       "string"
     ],
-    "scope": "idcard mid",
+    "scope": "idcard mid banklink",
     "sector_identifier_uri": "string",
     "subject_type": "string",
     "token_endpoint_auth_method": "string",
@@ -83,8 +83,8 @@
   ],
   "requested_scope": [
     "idcard",
-    "mid",
-    "ldap"
+    "ldap",
+    "banklink"
   ],
   "session_id": "string",
   "skip": true,

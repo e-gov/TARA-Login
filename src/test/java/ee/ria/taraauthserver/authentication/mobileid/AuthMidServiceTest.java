@@ -7,10 +7,7 @@ import ee.ria.taraauthserver.session.TaraSession;
 import ee.sk.mid.*;
 import ee.sk.mid.exception.MidInternalErrorException;
 import ee.sk.mid.rest.MidConnector;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentMatchers;
@@ -70,6 +67,8 @@ public class AuthMidServiceTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_AUTH_POLL_REQUEST")
+    @Tag(value = "MID_AUTH_POLL_RESPONSE_COMPLETE")
     void correctAuthenticationSessionStateWhen_successfulAuthentication() {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_response.json", 200);
         assertNotNull(sessionRepository.findById(sessionId));
@@ -96,6 +95,7 @@ public class AuthMidServiceTest extends BaseTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"INVALID_RESULT", "SIGNATURE_VERIFICATION_FAILURE", "CERTIFICATE_EXPIRED", "CERTIFICATE_NOT_TRUSTED"})
+    @Tag(value = "MID_AUTH_POLL_AUTHENTICITY")
     void authenticationFailsWhen_MidAuthenticationResultValidationFails(String validationError) {
         MidAuthenticationResult authenticationResult = new MidAuthenticationResult();
         authenticationResult.setValid(false);
@@ -112,6 +112,7 @@ public class AuthMidServiceTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_AUTH_INIT_RESPONSE")
     void unchangedAuthenticationSessionStateWhen_MidApi_MidInternalErrorException() {
         Session session = createNewAuthenticationSession(MOBILE_ID);
         Mockito.doReturn(midConnectorMock).when(midClient).getMobileIdConnector();
@@ -125,6 +126,7 @@ public class AuthMidServiceTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_AUTH_INIT_RESPONSE")
     void unchangedAuthenticationSessionStateWhen_MidApi_ProcessingException() {
         Session session = createNewAuthenticationSession(MOBILE_ID);
         Mockito.doReturn(midConnectorMock).when(midClient).getMobileIdConnector();
@@ -138,6 +140,7 @@ public class AuthMidServiceTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_AUTH_INIT_RESPONSE")
     void unchangedAuthenticationSessionStateWhen_MidApi_RuntimeException() {
         Session session = createNewAuthenticationSession(MOBILE_ID);
         Mockito.doReturn(midConnectorMock).when(midClient).getMobileIdConnector();
@@ -151,76 +154,91 @@ public class AuthMidServiceTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_AUTH_POLL_RESPONSE")
     void authenticationFailsWhen_MidApi_response_delivery_error() {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_response_delivery_error.json", 200);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertWarningIsLogged("Mid polling failed: SMS sending error");
         assertEquals(MID_DELIVERY_ERROR, taraSession.getAuthenticationResult().getErrorCode());
+        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
     }
 
     @Test
+    @Tag(value = "MID_AUTH_POLL_RESPONSE")
     void authenticationFailsWhen_MidApi_response_sim_error() {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_response_sim_error.json", 200);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertWarningIsLogged("Mid polling failed: SMS sending error");
         assertEquals(MID_DELIVERY_ERROR, taraSession.getAuthenticationResult().getErrorCode());
+        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
     }
 
     @Test
+    @Tag(value = "MID_AUTH_POLL_RESPONSE")
     void authenticationFailsWhen_MidApi_response_400() {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_empty_response.json", 400);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertWarningIsLogged("Mid polling failed: HTTP 400 Bad Request");
         assertEquals(ERROR_GENERAL, taraSession.getAuthenticationResult().getErrorCode());
+        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
     }
 
     @Test
+    @Tag(value = "MID_AUTH_POLL_RESPONSE")
     void authenticationFailsWhen_MidApi_response_401() {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_empty_response.json", 401);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertWarningIsLogged("Mid polling failed: HTTP 401 Unauthorized");
         assertEquals(ERROR_GENERAL, taraSession.getAuthenticationResult().getErrorCode());
+        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
     }
 
     @Test
+    @Tag(value = "MID_AUTH_POLL_RESPONSE")
     void authenticationFailsWhen_MidApi_response_404() {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_empty_response.json", 404);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertWarningIsLogged("Mid polling failed: Mobile-ID session was not found. Sessions time out in ~5 minutes.");
         assertEquals(MID_INTEGRATION_ERROR, taraSession.getAuthenticationResult().getErrorCode());
+        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
     }
 
     @Test
+    @Tag(value = "MID_AUTH_POLL_RESPONSE")
     void authenticationFailsWhen_MidApi_response_405() {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_empty_response.json", 405);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertWarningIsLogged("Mid polling failed: HTTP 405 Method Not Allowed");
         assertEquals(ERROR_GENERAL, taraSession.getAuthenticationResult().getErrorCode());
+        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
     }
 
     @Test
+    @Tag(value = "MID_AUTH_POLL_RESPONSE")
     void authenticationFailsWhen_MidApi_response_500() {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_empty_response.json", 500);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertWarningIsLogged("Mid polling failed: HTTP 500 Server Error");
         assertEquals(MID_INTERNAL_ERROR, taraSession.getAuthenticationResult().getErrorCode());
+        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
     }
 
     @Test
+    @Tag(value = "MID_AUTH_POLL_RESPONSE_COMPLETE")
     void authenticationFailsWhen_MidApi_response_user_cancelled() {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_response_user_cancelled.json", 200);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
@@ -231,6 +249,7 @@ public class AuthMidServiceTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_AUTH_POLL_RESPONSE_COMPLETE")
     void authenticationFailsWhen_MidApi_response_not_mid_client() {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_response_not_mid_client.json", 200);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
@@ -241,6 +260,7 @@ public class AuthMidServiceTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_AUTH_POLL_RESPONSE_COMPLETE")
     void authenticationFailsWhen_MidApi_response_timeout() {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_response_timeout.json", 200);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
@@ -251,6 +271,7 @@ public class AuthMidServiceTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_AUTH_POLL_RESPONSE_COMPLETE")
     void authenticationFailsWhen_MidApi_response_signature_hash_mismatch() {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_response_signature_hash_mismatch.json", 200);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
@@ -261,6 +282,7 @@ public class AuthMidServiceTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_AUTH_POLL_RESPONSE_COMPLETE")
     void authenticationFailsWhen_MidApi_response_phone_absent() {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_response_phone_absent.json", 200);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)

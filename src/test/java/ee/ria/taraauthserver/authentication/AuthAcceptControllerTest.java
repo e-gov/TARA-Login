@@ -5,6 +5,7 @@ import ee.ria.taraauthserver.session.MockSessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockHttpSession;
@@ -29,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class AuthAcceptControllerTest extends BaseTest {
 
     @Test
+    @Tag(value = "ACCEPT_LOGIN")
     void authAccept_missingSession() {
         wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
@@ -46,6 +48,7 @@ public class AuthAcceptControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "ACCEPT_LOGIN")
     void authAccept_incorrectSessionState() throws Exception {
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.INIT_AUTH_PROCESS, getMockCredential());
 
@@ -63,6 +66,7 @@ public class AuthAcceptControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "ACCEPT_LOGIN")
     void authAccept_OidcServerInvalidResponse_BadRequest() throws Exception {
         wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
@@ -86,6 +90,7 @@ public class AuthAcceptControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "ACCEPT_LOGIN")
     void authAccept_OidcServerInvalidResponse_MissingRedirectUrl() throws Exception {
         wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
@@ -109,7 +114,9 @@ public class AuthAcceptControllerTest extends BaseTest {
     }
 
     @Test
-    void authAccept_NaturalPersonAuthenticationComplete_ok() throws Exception {
+    @Tag(value = "ACCEPT_LOGIN")
+    @Tag(value = "AUTH_ACCEPT_LOGIN_ENDPOINT")
+    void authAccept_NaturalPersonAuthenticationComplete_Redirected() throws Exception {
         wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -127,7 +134,9 @@ public class AuthAcceptControllerTest extends BaseTest {
     }
 
     @Test
-    void authAccept_NaturalPersonAuthenticationCompleteWithLegalPersonAuthenticationRequest_Redirected() throws Exception {
+    @Tag(value = "AUTH_REDIRECT_TO_LEGALPERSON_INIT")
+    @Tag(value = "AUTH_ACCEPT_LOGIN_ENDPOINT")
+    void authAccept_LegalPersonAuthenticationRequest_Redirected() throws Exception {
         wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -145,7 +154,9 @@ public class AuthAcceptControllerTest extends BaseTest {
     }
 
     @Test
-    void authAccept_legalPersonAuthenticationComplete_ok() throws Exception {
+    @Tag(value = "ACCEPT_LOGIN")
+    @Tag(value = "AUTH_ACCEPT_LOGIN_ENDPOINT")
+    void authAccept_legalPersonAuthenticationComplete_Redirected() throws Exception {
         wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -163,6 +174,7 @@ public class AuthAcceptControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "ACCEPT_LOGIN")
     void authAccept_oidcServerTimeout() throws Exception {
         wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()

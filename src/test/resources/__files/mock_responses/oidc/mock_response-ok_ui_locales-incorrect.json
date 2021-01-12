@@ -1,5 +1,5 @@
 {
-  "challenge": "string",
+  "challenge": "abcdefg098AAdsCC",
   "client": {
     "allowed_cors_origins": [
       "string"
@@ -77,7 +77,7 @@
     "id_token_hint_claims": {},
     "login_hint": "string",
     "ui_locales": [
-      "wtf"
+      "ger"
     ]
   },
   "request_url": "https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et",

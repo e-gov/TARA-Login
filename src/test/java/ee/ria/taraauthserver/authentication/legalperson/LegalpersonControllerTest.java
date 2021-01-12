@@ -5,6 +5,7 @@ import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.ResultActions;
@@ -31,6 +32,7 @@ public class LegalpersonControllerTest extends BaseTest {
     public static final String MOCK_LEGAL_PERSON_NAME = "Acme & sons OÜ";
 
     @Test
+    @Tag(value = "LEGAL_PERSON_AUTH_START")
     void getAuthLegalPersonInit_noSession() throws Exception {
         ResultActions resultActions = mockMvc.perform(
                 get("/auth/legal_person/init").session(new MockHttpSession())
@@ -48,6 +50,7 @@ public class LegalpersonControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "LEGAL_PERSON_AUTH_START")
     void getAuthLegalPersonInit_invalidSessionStatus() throws Exception {
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.INIT_AUTH_PROCESS, getMockCredential());
 
@@ -68,6 +71,7 @@ public class LegalpersonControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "LEGAL_PERSON_AUTH_START")
     void getAuthLegalPersonInit_invalidRequest_noLegalpersonScopeInOidcRequest() throws Exception {
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, getMockCredential());
         ((TaraSession) mockHttpSession.getAttribute(TARA_SESSION)).getLoginRequestInfo().setRequestedScopes(new ArrayList<>());
@@ -85,6 +89,7 @@ public class LegalpersonControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "LEGAL_PERSON_AUTH_START")
     void getAuthLegalPersonInit_invalidRequest_scopeNotAllowed() throws Exception {
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, getMockCredential());
         ((TaraSession) mockHttpSession.getAttribute(TARA_SESSION)).getLoginRequestInfo().getClient().setScope("");
@@ -102,6 +107,8 @@ public class LegalpersonControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "LEGAL_PERSON_AUTH_START")
+    @Tag(value = "UI_LEGALPERSON_AUTHENTICATION_VIEW")
     void getAuthLegalPersonInit_Ok() throws Exception {
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, getMockCredential(), List.of("legalperson"));
 
@@ -124,6 +131,7 @@ public class LegalpersonControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "LEGAL_PERSON_AUTH_START")
     void getAuthLegalPerson_noSession() throws Exception {
         ResultActions resultActions = mockMvc.perform(get("/auth/legal_person").session(new MockHttpSession()))
                 .andDo(forwardErrorsToSpringErrorhandler(mockMvc)).andDo(print());
@@ -139,6 +147,7 @@ public class LegalpersonControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "LEGAL_PERSON_AUTH_START")
     void getAuthLegalPerson_invalidSessionStatus() throws Exception {
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.INIT_AUTH_PROCESS, getMockCredential());
 
@@ -156,6 +165,7 @@ public class LegalpersonControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "LEGAL_PERSON_BUSINESSREGISTER_RESPONSE")
     void getAuthLegalPerson_xroadError_SoapFaultInResponse() throws Exception {
 
         wireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
@@ -180,6 +190,7 @@ public class LegalpersonControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "LEGAL_PERSON_BUSINESSREGISTER_RESPONSE")
     void getAuthLegalPerson_xroadError_InvalidResponse() throws Exception {
 
         wireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
@@ -204,6 +215,7 @@ public class LegalpersonControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "LEGAL_PERSON_BUSINESSREGISTER_RESPONSE")
     void getAuthLegalPerson_xroadError_RequestTimesOut() throws Exception {
 
         wireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
@@ -229,6 +241,7 @@ public class LegalpersonControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "LEGAL_PERSON_BUSINESSREGISTER_RESPONSE")
     void getAuthLegalPerson_noValidLegalPersonsFound() throws Exception {
 
         wireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
@@ -253,6 +266,8 @@ public class LegalpersonControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "LEGAL_PERSON_BUSINESSREGISTER_RESPONSE")
+    @Tag(value = "LEGAL_PERSON_AUTH_START_ENDPOINT")
     void getAuthLegalPerson_validLegalPersons_singleLegalPersonFound() throws Exception {
 
         wireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
@@ -272,6 +287,8 @@ public class LegalpersonControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "LEGAL_PERSON_BUSINESSREGISTER_RESPONSE")
+    @Tag(value = "LEGAL_PERSON_AUTH_START_ENDPOINT")
     void getAuthLegalPerson_validLegalPersons_multipleLegalPersonFound() throws Exception {
 
         wireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
@@ -299,6 +316,7 @@ public class LegalpersonControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "LEGAL_PERSON_SELECTION_CONFIRMED")
     void postAuthLegalPersonConfirm_NoSession() throws Exception {
 
         MockHttpSession mockHttpSession = new MockHttpSession();
@@ -319,6 +337,7 @@ public class LegalpersonControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "LEGAL_PERSON_SELECTION_CONFIRMED")
     void postAuthLegalPersonConfirm_InvalidSession() throws Exception {
 
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
@@ -337,6 +356,8 @@ public class LegalpersonControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "LEGAL_PERSON_SELECTION_ENDPOINT")
+    @Tag(value = "LEGAL_PERSON_SELECTION_CONFIRMED")
     void postAuthLegalPersonConfirm_MissingRequiredParam() throws Exception {
 
         MockHttpSession mockHttpSession = new MockHttpSession();
@@ -356,6 +377,7 @@ public class LegalpersonControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "LEGAL_PERSON_SELECTION_CONFIRMED")
     void postAuthLegalPersonConfirm_InvalidParameter_InvalidInput() throws Exception {
 
         MockHttpSession mockHttpSession = new MockHttpSession();
@@ -376,6 +398,7 @@ public class LegalpersonControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "LEGAL_PERSON_SELECTION_CONFIRMED")
     void postAuthLegalPersonConfirm_InvalidParameter_notListed() throws Exception {
 
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.GET_LEGAL_PERSON_LIST, getMockCredential());
@@ -397,6 +420,8 @@ public class LegalpersonControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "LEGAL_PERSON_SELECTION_CONFIRMED")
+    @Tag(value = "LEGAL_PERSON_SELECTION_ENDPOINT")
     void postAuthLegalPersonConfirm_validLegalPersonIdentifier() throws Exception {
 
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.GET_LEGAL_PERSON_LIST, getMockCredential());

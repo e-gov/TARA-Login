@@ -3,14 +3,19 @@ package ee.ria.taraauthserver.authentication.mobileid;
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.matchesPattern;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class AuthMidPollControllerTest extends BaseTest {
 
@@ -18,6 +23,7 @@ class AuthMidPollControllerTest extends BaseTest {
     private SessionRepository sessionRepository;
 
     @Test
+    @Tag(value = "MID_AUTH_STATUS_CHECK_VALID_SESSION")
     void midAuth_session_missing() {
         given()
                 .when()
@@ -32,6 +38,7 @@ class AuthMidPollControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_AUTH_STATUS_CHECK_VALID_SESSION")
     void midAuth_session_status_incorrect() {
         Session session = sessionRepository.createSession();
 
@@ -57,6 +64,7 @@ class AuthMidPollControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_AUTH_PENDING")
     void midAuth_session_status_poll_mid_status() {
         Session session = sessionRepository.createSession();
         TaraSession taraSession = new TaraSession(session.getId());
@@ -78,6 +86,8 @@ class AuthMidPollControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_AUTH_STATUS_CHECK_ENDPOINT")
+    @Tag(value = "MID_AUTH_SUCCESS")
     void midAuth_session_status_authentication_success() {
         Session session = sessionRepository.createSession();
         TaraSession taraSession = new TaraSession(session.getId());
@@ -90,12 +100,16 @@ class AuthMidPollControllerTest extends BaseTest {
 
         given()
                 .when()
-                .sessionId("SESSION", session.getId())
+                .cookie("SESSION", session.getId())
                 .get("/auth/mid/poll")
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .body("status", equalTo("COMPLETED"));
+                .body("status", equalTo("COMPLETED"))
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
+
+        TaraSession taraSessionAfterResponse = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
+        assertEquals(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, taraSession.getState());
     }
 
 }

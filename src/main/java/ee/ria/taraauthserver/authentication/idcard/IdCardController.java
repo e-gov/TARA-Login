@@ -70,10 +70,12 @@ public class IdCardController {
         try {
             certificate.checkValidity();
         } catch (CertificateNotYetValidException e) {
+            taraSession.setState(TaraAuthenticationState.AUTHENTICATION_FAILED);
             return createErrorResponse("User certificate is not yet valid",
                     getLocalizedMessage("message.idc.cert-not-yet-valid"),
                     HttpStatus.BAD_REQUEST);
         } catch (CertificateExpiredException e) {
+            taraSession.setState(TaraAuthenticationState.AUTHENTICATION_FAILED);
             return createErrorResponse("User certificate is expired",
                     getLocalizedMessage("message.idc.cert-expired"),
                     HttpStatus.BAD_REQUEST);
@@ -84,9 +86,12 @@ public class IdCardController {
         try {
             ocspValidator.checkCert(certificate);
         } catch (OCSPServiceNotAvailableException exception) {
+            taraSession.setState(TaraAuthenticationState.AUTHENTICATION_FAILED);
             return createErrorResponse("OCSP service is currently not available, please try again later",
-                    getLocalizedMessage("message.idc.error.ocsp.not.available"), HttpStatus.BAD_GATEWAY);
+                    getLocalizedMessage("message.idc.error.ocsp.not.available"),
+                    HttpStatus.BAD_GATEWAY);
         } catch (OCSPValidationException exception) {
+            taraSession.setState(TaraAuthenticationState.AUTHENTICATION_FAILED);
             return createErrorResponse(exception.getMessage(),
                     getLocalizedMessage(format("message.idc.%s", exception.getStatus().name().toLowerCase())),
                     HttpStatus.BAD_REQUEST);

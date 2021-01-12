@@ -107,8 +107,7 @@ public class AuthInitController {
     }
 
     private TaraSession.LoginRequestInfo fetchLoginRequestInfo(@RequestParam(name = "login_challenge") @Size(max = 50) @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed") String loginChallenge) {
-        String url = taraProperties.getHydraService().getLoginUrl() + "?login_challenge=" + loginChallenge;
-        return doRequest(url);
+        return doRequest(loginChallenge);
     }
 
     private LevelOfAssurance getRequestedAcr(TaraSession.LoginRequestInfo loginRequestInfo) {
@@ -136,6 +135,9 @@ public class AuthInitController {
 
     private List<AuthenticationType> getAllowedAuthenticationMethodsList(TaraSession.LoginRequestInfo loginRequestInfo) {
         LevelOfAssurance requestedAcr = getRequestedAcr(loginRequestInfo);
+
+        //TODO filter out and add warning if requested scopes has scope that isnt in allowed scopes
+
         List<TaraScope> requestedScopes = parseRequestedScopes(loginRequestInfo.getRequestedScopes());
         return getAllowedAuthenticationTypes(requestedScopes, requestedAcr);
     }
@@ -144,7 +146,7 @@ public class AuthInitController {
         List<AuthenticationType> requestedAuthMethods = getRequestedAuthenticationMethodList(requestedScopes);
         List<AuthenticationType> allowedAuthenticationMethodsList = requestedAuthMethods.stream()
                 .filter(this::isAuthenticationMethodEnabled)
-                .filter(autMethod -> isAuthenticationMethodAllowedByRequestedLoa(requestedLoa, autMethod))
+                .filter(authMethod -> isAuthenticationMethodAllowedByRequestedLoa(requestedLoa, authMethod))
                 .collect(Collectors.toList());
 
         if (isEmpty(allowedAuthenticationMethodsList))
@@ -186,28 +188,30 @@ public class AuthInitController {
         return taraProperties.getAuthMethods().get(method).isEnabled();
     }
 
-    private TaraSession.LoginRequestInfo doRequest(String url) {
+    private TaraSession.LoginRequestInfo doRequest(String loginChallenge) {
+        String url = taraProperties.getHydraService().getLoginUrl() + "?login_challenge=" + loginChallenge;
+        log.info("OIDC login GET request: " + url);
         long startTime = System.currentTimeMillis();
         ResponseEntity<TaraSession.LoginRequestInfo> response = hydraService.exchange(url, HttpMethod.GET, null, TaraSession.LoginRequestInfo.class);
         long duration = System.currentTimeMillis() - startTime;
-        log.info("Response Code: " + response.getStatusCodeValue());
-        log.info("Response Body: " + response.getBody());
-        log.info("request duration: " + duration + " ms");
+        log.info("OIDC login response Code: " + response.getStatusCodeValue());
+        log.info("OIDC login response Body: " + response.getBody());
+        log.info("OIDC login request duration: " + duration + " ms");
 
-        validateResponse(response.getBody());
+        validateResponse(response.getBody(), loginChallenge);
         return response.getBody();
     }
 
-    private void validateResponse(TaraSession.LoginRequestInfo response) {
+    private void validateResponse(TaraSession.LoginRequestInfo response, String loginChallenge) {
         Set<ConstraintViolation<TaraSession.LoginRequestInfo>> constraintViolations = validator.validate(response);
-        if (!constraintViolations.isEmpty())
+        if (!constraintViolations.isEmpty() || !response.getChallenge().equals(loginChallenge))
             throw new IllegalStateException("Invalid hydra response: " + getConstraintViolationsAsString(constraintViolations));
     }
 
     private static String getConstraintViolationsAsString(Set<? extends ConstraintViolation<?>> constraintViolations) {
         return constraintViolations.stream()
                 .map(cv -> cv == null ? "null" : cv.getPropertyPath() + ": " + cv.getMessage())
-                .collect(Collectors.joining(", "));
+                .sorted().collect(Collectors.joining(", "));
     }
 
 }

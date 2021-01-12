@@ -6,6 +6,7 @@ import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -26,7 +27,8 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     public static final String MOCK_CONSENT_CHALLENGE = "abcdefg098AAdsCC";
 
     @Test
-    void authConsent_consentChallenge_ParamMissing() {
+    @Tag(value = "USER_CONSENT_CONFIRM_ENDPOINT")
+    void authConsent_consentGiven_ParamMissing() {
         given()
                 .when()
                 .post("/auth/consent/confirm")
@@ -41,7 +43,8 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     }
 
     @Test
-    void authConsent_consentChallenge_InvalidValue() {
+    @Tag(value = "USER_CONSENT_CONFIRM_ENDPOINT")
+    void authConsent_consentGiven_InvalidValue() {
         given()
                 .param("consent_given", "invalidvalue")
                 .when()
@@ -57,6 +60,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "USER_CONSENT_CONFIRM_ENDPOINT")
     void authConsent_session_missing() {
 
         given()
@@ -73,6 +77,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "USER_CONSENT_CONFIRM_ENDPOINT")
     void authConsent_wrong_authentication_state() {
         Session session = createSession(TaraAuthenticationState.INIT_MID, true);
 
@@ -91,7 +96,9 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     }
 
     @Test
-    void authConsent_accept_successful() {
+    @Tag(value = "USER_CONSENT_CONFIRM_ENDPOINT")
+    @Tag(value = "USER_CONSENT_POST_ACCEPT")
+    void authConsent_acceptSuccessful() {
         Session session = createSession(TaraAuthenticationState.INIT_CONSENT_PROCESS, true);
 
         wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
@@ -114,7 +121,8 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     }
 
     @Test
-    void authConsent_accept_no_redirect() {
+    @Tag(value = "USER_CONSENT_POST_ACCEPT")
+    void authConsent_acceptNoRedirect() {
         Session session = createSession(TaraAuthenticationState.INIT_CONSENT_PROCESS, true);
 
         wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
@@ -140,7 +148,8 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     }
 
     @Test
-    void authConsent_reject_successful() {
+    @Tag(value = "USER_CONSENT_POST_REJECT")
+    void authConsent_rejectSuccessful() {
         Session session = createSession(TaraAuthenticationState.INIT_CONSENT_PROCESS, true);
 
         wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/consent/reject?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
@@ -164,7 +173,8 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     }
 
     @Test
-    void authConsent_reject_no_redirect() {
+    @Tag(value = "USER_CONSENT_POST_REJECT")
+    void authConsent_rejectNoRedirect() {
         Session session = createSession(TaraAuthenticationState.INIT_CONSENT_PROCESS, true);
 
         wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/consent/reject?consent_challenge=" + MOCK_CONSENT_CHALLENGE))

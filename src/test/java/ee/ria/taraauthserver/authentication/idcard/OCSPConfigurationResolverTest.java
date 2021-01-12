@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.authentication.idcard;
 
 import ee.ria.taraauthserver.utils.TestIDCardConfiguration;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -45,6 +46,8 @@ public class OCSPConfigurationResolverTest {
     private IdCardAuthConfigurationProperties idCardConfigurationProperties;
 
     @Test
+    @Tag(value = "OCSP_URL_CONF")
+    @Tag(value = "OCSP_CA_WHITELIST")
     public void resolveShouldFailWhenNoUserCertProvided() {
         assertNotNull(idCardConfigurationProperties);
         Exception expectedEx = assertThrows(IllegalArgumentException.class, () -> {
@@ -54,6 +57,8 @@ public class OCSPConfigurationResolverTest {
     }
 
     @Test
+    @Tag(value = "OCSP_URL_CONF")
+    @Tag(value = "OCSP_CA_WHITELIST")
     public void resolveShouldFailWithNoExplicitlyDefinedConfigurationAndNoAiaOcspExtension() {
         Mockito.when(idCardConfigurationProperties.getOcsp()).thenReturn(asList());
         Exception expectedEx = assertThrows(IllegalArgumentException.class, () -> {
@@ -66,6 +71,8 @@ public class OCSPConfigurationResolverTest {
     }
 
     @Test
+    @Tag(value = "OCSP_URL_CONF")
+    @Tag(value = "OCSP_CA_WHITELIST")
     public void resolveShouldSucceedWithEsteid2018CertWithoutExplicitConfiguration() {
 
         Mockito.when(idCardConfigurationProperties.getOcsp()).thenReturn(asList());
@@ -85,6 +92,8 @@ public class OCSPConfigurationResolverTest {
     }
 
     @Test
+    @Tag(value = "OCSP_URL_CONF")
+    @Tag(value = "OCSP_CA_WHITELIST")
     public void resolveShouldSucceedWithEsteid2015CertWithAiaExtensionAndWithoutExplicitConfiguration() {
 
         Mockito.when(idCardConfigurationProperties.getOcsp()).thenReturn(asList());
@@ -104,6 +113,8 @@ public class OCSPConfigurationResolverTest {
     }
 
     @Test
+    @Tag(value = "OCSP_URL_CONF")
+    @Tag(value = "OCSP_CA_WHITELIST")
     public void resolveShouldSucceedithEsteid2015CertWithoutAiaExtensionAndWithExplicitConfiguration() {
 
         Mockito.when(idCardConfigurationProperties.getOcsp()).thenReturn(asList(getMockOcspConfiguration(
@@ -127,6 +138,8 @@ public class OCSPConfigurationResolverTest {
     }
 
     @Test
+    @Tag(value = "OCSP_URL_CONF")
+    @Tag(value = "OCSP_CA_WHITELIST")
     public void resolveShouldFailWithEsteid2015CertWithoutAiaExtensionAndWithoutExplicitConfiguration() {
         Mockito.when(idCardConfigurationProperties.getOcsp()).thenReturn(asList());
         Exception expectedEx = assertThrows(IllegalArgumentException.class, () -> {
@@ -137,6 +150,8 @@ public class OCSPConfigurationResolverTest {
     }
 
     @Test
+    @Tag(value = "OCSP_URL_CONF")
+    @Tag(value = "OCSP_CA_WHITELIST")
     public void resolveShouldSucceedWithEsteid2018CertAndExplicitlyDefinedConfiguration() {
         Mockito.when(idCardConfigurationProperties.getOcsp()).thenReturn(asList(
                 getMockOcspConfiguration(
@@ -161,6 +176,8 @@ public class OCSPConfigurationResolverTest {
     }
 
     @Test
+    @Tag(value = "OCSP_URL_CONF")
+    @Tag(value = "OCSP_FAILOVER_CONF")
     public void resolveShouldSucceedWithASingleFallbackOcsp() {
         Mockito.when(idCardConfigurationProperties.getFallbackOcsp()).thenReturn(asList(
                 getMockOcspConfiguration(
@@ -169,7 +186,6 @@ public class OCSPConfigurationResolverTest {
                         false, 3, 901, 1111, 2222,
                         "TEST_of_SK_OCSP_RESPONDER_2011.pem")
         ));
-
 
         List<Ocsp> conf = new OCSPConfigurationResolver(idCardConfigurationProperties)
                 .resolve(mockUserCertificate2018);
@@ -196,6 +212,8 @@ public class OCSPConfigurationResolverTest {
     }
 
     @Test
+    @Tag(value = "OCSP_URL_CONF")
+    @Tag(value = "OCSP_FAILOVER_CONF")
     public void resolveShouldSucceedWithMultipleFallbackOcspsAndSelectSingleRelevantConf() {
         Mockito.when(idCardConfigurationProperties.getFallbackOcsp()).thenReturn(asList(
                 getMockOcspConfiguration(
@@ -241,6 +259,8 @@ public class OCSPConfigurationResolverTest {
     }
 
     @Test
+    @Tag(value = "OCSP_URL_CONF")
+    @Tag(value = "OCSP_FAILOVER_CONF")
     public void resolveShouldSucceedWithMultipleFallbackOcspsAndSelectMultipleRelevantConfs() {
         Mockito.when(idCardConfigurationProperties.getFallbackOcsp()).thenReturn(asList(
                 getMockOcspConfiguration(

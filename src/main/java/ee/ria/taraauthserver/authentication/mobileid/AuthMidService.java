@@ -153,7 +153,7 @@ public class AuthMidService {
 
     private void handleAuthenticationException(TaraSession taraSession, Throwable ex) {
         Throwable cause = ex.getCause();
-        log.warn("Mid polling failed: {}", cause.getMessage()); // TODO:
+        log.warn("Mid polling failed: {}", cause.getMessage());
         taraSession.setState(AUTHENTICATION_FAILED);
         taraSession.getAuthenticationResult().setErrorCode(ErrorCode.getErrorCode(cause));
 
