@@ -13,3 +13,7 @@ management:
     jmx:
       exposure:
         exclude: "*"
+
+spring:
+  session:
+    timeout: 300s

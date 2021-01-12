@@ -32,10 +32,10 @@ public class LegalpersonControllerTest extends BaseTest {
 
     @Test
     void getAuthLegalPersonInit_noSession() throws Exception {
-        ResultActions resultActions = mock.perform(
+        ResultActions resultActions = mockMvc.perform(
                 get("/auth/legal_person/init").session(new MockHttpSession())
         ).andDo(print())
-                .andDo(forwardErrorsToSpringErrorhandler(mock));
+                .andDo(forwardErrorsToSpringErrorhandler(mockMvc));
 
         resultActions
                 .andExpect(status().is(400))
@@ -44,17 +44,17 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andExpect(jsonPath("$.message", is("Your session was not found! Either your session expired or the cookie usage is limited in your browser.")))
                 .andExpect(jsonPath("$.path", is("/auth/legal_person/init")));
 
-        assertErrorIsLogged(String.format("User exception: The attribute '%s' was not found in session", TARA_SESSION));
+        assertErrorIsLogged("User exception: Invalid session");
     }
 
     @Test
     void getAuthLegalPersonInit_invalidSessionStatus() throws Exception {
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.INIT_AUTH_PROCESS, getMockCredential());
 
-        ResultActions resultActions = mock.perform(
+        ResultActions resultActions = mockMvc.perform(
                 get("/auth/legal_person/init").session(mockHttpSession)
         ).andDo(print())
-                .andDo(forwardErrorsToSpringErrorhandler(mock));
+                .andDo(forwardErrorsToSpringErrorhandler(mockMvc));
 
         resultActions
                 .andExpect(status().is(400))
@@ -64,7 +64,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andExpect(jsonPath("$.path", is("/auth/legal_person/init")));
 
 
-        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected: 'NATURAL_PERSON_AUTHENTICATION_COMPLETED'");
+        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [NATURAL_PERSON_AUTHENTICATION_COMPLETED]");
     }
 
     @Test
@@ -72,8 +72,8 @@ public class LegalpersonControllerTest extends BaseTest {
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, getMockCredential());
         ((TaraSession) mockHttpSession.getAttribute(TARA_SESSION)).getLoginRequestInfo().setRequestedScopes(new ArrayList<>());
 
-        ResultActions resultActions = mock.perform(get("/auth/legal_person/init").session(mockHttpSession))
-                .andDo(print()).andDo(forwardErrorsToSpringErrorhandler(mock));
+        ResultActions resultActions = mockMvc.perform(get("/auth/legal_person/init").session(mockHttpSession))
+                .andDo(print()).andDo(forwardErrorsToSpringErrorhandler(mockMvc));
 
         resultActions
                 .andExpect(jsonPath("$.status", is(400)))
@@ -89,8 +89,8 @@ public class LegalpersonControllerTest extends BaseTest {
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, getMockCredential());
         ((TaraSession) mockHttpSession.getAttribute(TARA_SESSION)).getLoginRequestInfo().getClient().setScope("");
 
-        ResultActions resultActions = mock.perform(get("/auth/legal_person/init").session(mockHttpSession))
-                .andDo(print()).andDo(forwardErrorsToSpringErrorhandler(mock));
+        ResultActions resultActions = mockMvc.perform(get("/auth/legal_person/init").session(mockHttpSession))
+                .andDo(print()).andDo(forwardErrorsToSpringErrorhandler(mockMvc));
 
         resultActions
                 .andExpect(jsonPath("$.status", is(400)))
@@ -105,8 +105,8 @@ public class LegalpersonControllerTest extends BaseTest {
     void getAuthLegalPersonInit_Ok() throws Exception {
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, getMockCredential(), List.of("legalperson"));
 
-        ResultActions resultActions = mock.perform(get("/auth/legal_person/init").session(mockHttpSession))
-                .andDo(print()).andDo(forwardErrorsToSpringErrorhandler(mock));
+        ResultActions resultActions = mockMvc.perform(get("/auth/legal_person/init").session(mockHttpSession))
+                .andDo(print()).andDo(forwardErrorsToSpringErrorhandler(mockMvc));
 
         resultActions
                 .andExpect(status().is(200))
@@ -125,8 +125,8 @@ public class LegalpersonControllerTest extends BaseTest {
 
     @Test
     void getAuthLegalPerson_noSession() throws Exception {
-        ResultActions resultActions = mock.perform(get("/auth/legal_person").session(new MockHttpSession()))
-                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+        ResultActions resultActions = mockMvc.perform(get("/auth/legal_person").session(new MockHttpSession()))
+                .andDo(forwardErrorsToSpringErrorhandler(mockMvc)).andDo(print());
 
         resultActions
                 .andExpect(status().is(400))
@@ -135,15 +135,15 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andExpect(jsonPath("$.message", is("Your session was not found! Either your session expired or the cookie usage is limited in your browser.")))
                 .andExpect(jsonPath("$.path", is("/auth/legal_person")));
 
-        assertErrorIsLogged(String.format("User exception: The attribute '%s' was not found in session", TARA_SESSION));
+        assertErrorIsLogged("User exception: Invalid session");
     }
 
     @Test
     void getAuthLegalPerson_invalidSessionStatus() throws Exception {
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.INIT_AUTH_PROCESS, getMockCredential());
 
-        ResultActions resultActions = mock.perform(get("/auth/legal_person").session(mockHttpSession))
-                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+        ResultActions resultActions = mockMvc.perform(get("/auth/legal_person").session(mockHttpSession))
+                .andDo(forwardErrorsToSpringErrorhandler(mockMvc)).andDo(print());
 
         resultActions
                 .andExpect(status().is(400))
@@ -152,7 +152,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andExpect(jsonPath("$.message", is("Invalid request - invalid session.")))
                 .andExpect(jsonPath("$.path", is("/auth/legal_person")));
 
-        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected: 'LEGAL_PERSON_AUTHENTICATION_INIT'");
+        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [LEGAL_PERSON_AUTHENTICATION_INIT]");
     }
 
     @Test
@@ -166,8 +166,8 @@ public class LegalpersonControllerTest extends BaseTest {
 
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
 
-        ResultActions resultActions = mock.perform(get("/auth/legal_person").session(mockHttpSession))
-                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+        ResultActions resultActions = mockMvc.perform(get("/auth/legal_person").session(mockHttpSession))
+                .andDo(forwardErrorsToSpringErrorhandler(mockMvc)).andDo(print());
 
         resultActions
                 .andExpect(status().is(500))
@@ -190,8 +190,8 @@ public class LegalpersonControllerTest extends BaseTest {
 
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
 
-        ResultActions resultActions = mock.perform(get("/auth/legal_person").session(mockHttpSession))
-                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+        ResultActions resultActions = mockMvc.perform(get("/auth/legal_person").session(mockHttpSession))
+                .andDo(forwardErrorsToSpringErrorhandler(mockMvc)).andDo(print());
 
         resultActions
                 .andExpect(status().is(500))
@@ -215,8 +215,8 @@ public class LegalpersonControllerTest extends BaseTest {
 
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
 
-        ResultActions resultActions = mock.perform(get("/auth/legal_person").session(mockHttpSession))
-                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+        ResultActions resultActions = mockMvc.perform(get("/auth/legal_person").session(mockHttpSession))
+                .andDo(forwardErrorsToSpringErrorhandler(mockMvc)).andDo(print());
 
         resultActions
                 .andExpect(status().is(502))
@@ -239,8 +239,8 @@ public class LegalpersonControllerTest extends BaseTest {
 
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
 
-        ResultActions resultActions = mock.perform(get("/auth/legal_person").session(mockHttpSession))
-                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+        ResultActions resultActions = mockMvc.perform(get("/auth/legal_person").session(mockHttpSession))
+                .andDo(forwardErrorsToSpringErrorhandler(mockMvc)).andDo(print());
 
         resultActions
                 .andExpect(status().is(404))
@@ -263,8 +263,8 @@ public class LegalpersonControllerTest extends BaseTest {
 
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
 
-        ResultActions resultActions = mock.perform(get("/auth/legal_person").session(mockHttpSession))
-                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+        ResultActions resultActions = mockMvc.perform(get("/auth/legal_person").session(mockHttpSession))
+                .andDo(forwardErrorsToSpringErrorhandler(mockMvc)).andDo(print());
 
         resultActions
                 .andExpect(status().is(200))
@@ -282,8 +282,8 @@ public class LegalpersonControllerTest extends BaseTest {
 
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
 
-        ResultActions resultActions = mock.perform(get("/auth/legal_person").session(mockHttpSession))
-                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+        ResultActions resultActions = mockMvc.perform(get("/auth/legal_person").session(mockHttpSession))
+                .andDo(forwardErrorsToSpringErrorhandler(mockMvc)).andDo(print());
 
         resultActions
                 .andExpect(status().is(200))
@@ -303,10 +303,10 @@ public class LegalpersonControllerTest extends BaseTest {
 
         MockHttpSession mockHttpSession = new MockHttpSession();
 
-        ResultActions resultActions = mock.perform(post("/auth/legal_person/confirm")
+        ResultActions resultActions = mockMvc.perform(post("/auth/legal_person/confirm")
                 .param("legal_person_identifier", "1234")
                 .session(mockHttpSession))
-                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+                .andDo(forwardErrorsToSpringErrorhandler(mockMvc)).andDo(print());
 
         resultActions
                 .andExpect(status().is(400))
@@ -315,7 +315,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andExpect(jsonPath("$.message", is("Your session was not found! Either your session expired or the cookie usage is limited in your browser.")))
                 .andExpect(jsonPath("$.path", is("/auth/legal_person/confirm")));
 
-        assertErrorIsLogged(String.format("User exception: The attribute '%s' was not found in session", TARA_SESSION));
+        assertErrorIsLogged("User exception: Invalid session");
     }
 
     @Test
@@ -323,8 +323,8 @@ public class LegalpersonControllerTest extends BaseTest {
 
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_INIT, getMockCredential());
 
-        ResultActions resultActions = mock.perform(post("/auth/legal_person/confirm").param("legal_person_identifier", "1234").session(mockHttpSession))
-                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+        ResultActions resultActions = mockMvc.perform(post("/auth/legal_person/confirm").param("legal_person_identifier", "1234").session(mockHttpSession))
+                .andDo(forwardErrorsToSpringErrorhandler(mockMvc)).andDo(print());
 
         resultActions
                 .andExpect(status().is(400))
@@ -333,7 +333,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .andExpect(jsonPath("$.message", is("Invalid request - invalid session.")))
                 .andExpect(jsonPath("$.path", is("/auth/legal_person/confirm")));
 
-        assertErrorIsLogged("User exception: Invalid authentication state: 'LEGAL_PERSON_AUTHENTICATION_INIT', expected: 'GET_LEGAL_PERSON_LIST'");
+        assertErrorIsLogged("User exception: Invalid authentication state: 'LEGAL_PERSON_AUTHENTICATION_INIT', expected one of: [GET_LEGAL_PERSON_LIST]");
     }
 
     @Test
@@ -341,9 +341,9 @@ public class LegalpersonControllerTest extends BaseTest {
 
         MockHttpSession mockHttpSession = new MockHttpSession();
 
-        ResultActions resultActions = mock.perform(post("/auth/legal_person/confirm")
+        ResultActions resultActions = mockMvc.perform(post("/auth/legal_person/confirm")
                 .session(mockHttpSession))
-                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+                .andDo(forwardErrorsToSpringErrorhandler(mockMvc)).andDo(print());
 
         resultActions
                 .andExpect(status().is(400))
@@ -360,10 +360,10 @@ public class LegalpersonControllerTest extends BaseTest {
 
         MockHttpSession mockHttpSession = new MockHttpSession();
 
-        ResultActions resultActions = mock.perform(post("/auth/legal_person/confirm")
+        ResultActions resultActions = mockMvc.perform(post("/auth/legal_person/confirm")
                 .param("legal_person_identifier", "<>?=`*,.")
                 .session(mockHttpSession))
-                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+                .andDo(forwardErrorsToSpringErrorhandler(mockMvc)).andDo(print());
 
         resultActions
                 .andExpect(status().is(400))
@@ -381,10 +381,10 @@ public class LegalpersonControllerTest extends BaseTest {
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.GET_LEGAL_PERSON_LIST, getMockCredential());
         ((TaraSession) mockHttpSession.getAttribute(TARA_SESSION)).setLegalPersonList(List.of(new TaraSession.LegalPerson("Acme OÜ", "123456abcd")));
 
-        ResultActions resultActions = mock.perform(post("/auth/legal_person/confirm")
+        ResultActions resultActions = mockMvc.perform(post("/auth/legal_person/confirm")
                 .param("legal_person_identifier", "9876543210")
                 .session(mockHttpSession))
-                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+                .andDo(forwardErrorsToSpringErrorhandler(mockMvc)).andDo(print());
 
         resultActions
                 .andExpect(status().is(400))
@@ -402,10 +402,10 @@ public class LegalpersonControllerTest extends BaseTest {
         MockHttpSession mockHttpSession = getMockHttpSession(TaraAuthenticationState.GET_LEGAL_PERSON_LIST, getMockCredential());
         ((TaraSession) mockHttpSession.getAttribute(TARA_SESSION)).setLegalPersonList(List.of(new TaraSession.LegalPerson(MOCK_LEGAL_PERSON_NAME, MOCK_LEGAL_PERSON_IDENTIFIER)));
 
-        ResultActions resultActions = mock.perform(post("/auth/legal_person/confirm")
+        ResultActions resultActions = mockMvc.perform(post("/auth/legal_person/confirm")
                 .param("legal_person_identifier", MOCK_LEGAL_PERSON_IDENTIFIER)
                 .session(mockHttpSession))
-                .andDo(forwardErrorsToSpringErrorhandler(mock)).andDo(print());
+                .andDo(forwardErrorsToSpringErrorhandler(mockMvc)).andDo(print());
 
         resultActions
                 .andExpect(status().is(200))

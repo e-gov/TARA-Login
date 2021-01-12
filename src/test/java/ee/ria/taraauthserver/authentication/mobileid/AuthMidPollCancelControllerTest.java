@@ -31,7 +31,7 @@ class AuthMidPollCancelControllerTest extends BaseTest {
                 .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: Session was not found");
+        assertErrorIsLogged("User exception: Invalid session");
     }
 
     @Test
@@ -48,7 +48,7 @@ class AuthMidPollCancelControllerTest extends BaseTest {
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: Invalid authentication state: 'COMPLETE', expected: 'POLL_MID_STATUS'");
+        assertErrorIsLogged("User exception: Invalid authentication state: 'COMPLETE', expected one of: [INIT_MID, POLL_MID_STATUS]");
     }
 
     @Test
@@ -73,7 +73,7 @@ class AuthMidPollCancelControllerTest extends BaseTest {
         Session session = sessionRepository.createSession();
         TaraSession.LoginRequestInfo loginRequestInfo = new TaraSession.LoginRequestInfo();
         loginRequestInfo.setChallenge("123abc");
-        TaraSession taraSession = new TaraSession();
+        TaraSession taraSession = new TaraSession(session.getId());
         taraSession.setState(state);
         taraSession.setLoginRequestInfo(loginRequestInfo);
         TaraSession.MidAuthenticationResult authenticationResult = new TaraSession.MidAuthenticationResult();

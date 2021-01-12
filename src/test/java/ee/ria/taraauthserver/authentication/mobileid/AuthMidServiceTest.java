@@ -18,6 +18,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
 import javax.ws.rs.ProcessingException;
@@ -45,7 +46,7 @@ public class AuthMidServiceTest extends BaseTest {
     private AuthMidService authMidService;
 
     @Autowired
-    private SessionRepository sessionRepository;
+    private SessionRepository<Session> sessionRepository;
 
     @SpyBean
     private MidAuthenticationResponseValidator midAuthenticationResponseValidator;
@@ -71,7 +72,7 @@ public class AuthMidServiceTest extends BaseTest {
     @Test
     void correctAuthenticationSessionStateWhen_successfulAuthentication() {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_response.json", 200);
-
+        assertNotNull(sessionRepository.findById(sessionId));
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
 
@@ -112,39 +113,39 @@ public class AuthMidServiceTest extends BaseTest {
 
     @Test
     void unchangedAuthenticationSessionStateWhen_MidApi_MidInternalErrorException() {
-        String sessionId = createNewAuthenticationSession(MOBILE_ID);
+        Session session = createNewAuthenticationSession(MOBILE_ID);
         Mockito.doReturn(midConnectorMock).when(midClient).getMobileIdConnector();
         Mockito.doThrow(new MidInternalErrorException("MidInternalErrorException")).when(midConnectorMock).authenticate(Mockito.any());
         ServiceNotAvailableException expectedEx = assertThrows(ServiceNotAvailableException.class, () -> {
-            authMidService.startMidAuthSession(sessionId, "60001019906", "+37200000766");
+            authMidService.startMidAuthSession(session.getAttribute(TARA_SESSION), "60001019906", "+37200000766");
         });
-        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
         assertEquals(INIT_AUTH_PROCESS, taraSession.getState());
         assertEquals("MID service is currently unavailable: MidInternalErrorException", expectedEx.getMessage());
     }
 
     @Test
     void unchangedAuthenticationSessionStateWhen_MidApi_ProcessingException() {
-        String sessionId = createNewAuthenticationSession(MOBILE_ID);
+        Session session = createNewAuthenticationSession(MOBILE_ID);
         Mockito.doReturn(midConnectorMock).when(midClient).getMobileIdConnector();
         Mockito.doThrow(new ProcessingException("ProcessingException")).when(midConnectorMock).authenticate(Mockito.any());
         ServiceNotAvailableException expectedEx = assertThrows(ServiceNotAvailableException.class, () -> {
-            authMidService.startMidAuthSession(sessionId, "60001019906", "+37200000766");
+            authMidService.startMidAuthSession(session.getAttribute(TARA_SESSION), "60001019906", "+37200000766");
         });
-        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
         assertEquals(INIT_AUTH_PROCESS, taraSession.getState());
         assertEquals("MID service is currently unavailable: ProcessingException", expectedEx.getMessage());
     }
 
     @Test
     void unchangedAuthenticationSessionStateWhen_MidApi_RuntimeException() {
-        String sessionId = createNewAuthenticationSession(MOBILE_ID);
+        Session session = createNewAuthenticationSession(MOBILE_ID);
         Mockito.doReturn(midConnectorMock).when(midClient).getMobileIdConnector();
         Mockito.doThrow(new RuntimeException("RuntimeException")).when(midConnectorMock).authenticate(Mockito.any());
         IllegalStateException expectedEx = assertThrows(IllegalStateException.class, () -> {
-            authMidService.startMidAuthSession(sessionId, "60001019906", "+37200000766");
+            authMidService.startMidAuthSession(session.getAttribute(TARA_SESSION), "60001019906", "+37200000766");
         });
-        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
         assertEquals(INIT_AUTH_PROCESS, taraSession.getState());
         assertEquals("Internal error during MID authentication init: RuntimeException", expectedEx.getMessage());
     }
@@ -272,10 +273,10 @@ public class AuthMidServiceTest extends BaseTest {
     private String startMidAuthSessionWithPollResponse(String pollResponse, int pollHttpStatus) {
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 200);
         createMidApiPollStub(pollResponse, pollHttpStatus);
-        String sessionId = createNewAuthenticationSession(MOBILE_ID);
-        MidAuthenticationHashToSign midAuthenticationHashToSign = authMidService.startMidAuthSession(sessionId, "60001019906", "+37200000766");
+        Session session = createNewAuthenticationSession(MOBILE_ID);
+        MidAuthenticationHashToSign midAuthenticationHashToSign = authMidService.startMidAuthSession(session.getAttribute(TARA_SESSION), "60001019906", "+37200000766");
         assertNotNull(midAuthenticationHashToSign);
-        return sessionId;
+        return session.getId();
     }
 
     private void assertMidApiRequests() {

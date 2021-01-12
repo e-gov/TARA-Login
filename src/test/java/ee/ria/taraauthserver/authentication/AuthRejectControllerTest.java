@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class AuthRejectControllerTest extends BaseTest {
 
     @Autowired
-    SessionRepository sessionRepository;
+    private SessionRepository<Session> sessionRepository;
 
     @Test
     void authReject_missingSession() {
@@ -145,7 +145,7 @@ class AuthRejectControllerTest extends BaseTest {
     @NotNull
     private String createSession() {
         Session session = sessionRepository.createSession();
-        TaraSession authSession = new TaraSession();
+        TaraSession authSession = new TaraSession(session.getId());
         TaraSession.LoginRequestInfo lri = new TaraSession.LoginRequestInfo();
         lri.setChallenge(MOCK_LOGIN_CHALLENGE);
         authSession.setLoginRequestInfo(lri);

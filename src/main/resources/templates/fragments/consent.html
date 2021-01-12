@@ -19,11 +19,11 @@
                 <td th:text="${#temporals.format(dateOfBirth, 'dd.MM.yyyy')}">Date of birth</td>
             </tr>
             <tr th:if="${legalPersonName != null}">
-                <th th:utext="#{html.auth.legalperson.legalPersonName}"></th>
+                <th th:utext="#{label.legal-person.legal-person-name}"></th>
                 <td th:text="${legalPersonName}">Legal person name</td>
             </tr>
             <tr th:if="${legalPersonRegistryCode != null}">
-                <th th:utext="#{html.auth.legalperson.legalPersonIdentifier}"></th>
+                <th th:utext="#{label.legal-person.legal-person-identifier}"></th>
                 <td th:text="${legalPersonRegistryCode}">Legal person registry code</td>
             </tr>
         </table>

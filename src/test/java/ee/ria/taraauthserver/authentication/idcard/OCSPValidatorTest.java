@@ -13,6 +13,7 @@ import ee.ria.taraauthserver.error.exceptions.OCSPServiceNotAvailableException;
 import ee.ria.taraauthserver.error.exceptions.OCSPValidationException;
 import lombok.Builder;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
@@ -39,7 +40,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.ConfigFileApplicationContextInitializer;
+import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -73,15 +74,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(
-        classes = {TaraAuthServerConfiguration.class, OCSPValidator.class, RestTemplate.class},
-        initializers = ConfigFileApplicationContextInitializer.class
-)
+@ContextConfiguration(classes = {TaraAuthServerConfiguration.class, OCSPValidator.class, RestTemplate.class}, initializers = ConfigDataApplicationContextInitializer.class)
 public class OCSPValidatorTest {
-    private static final OcspResponseTransformer ocspResponseTransformer = new OcspResponseTransformer();
+    private static final OcspResponseTransformer ocspResponseTransformer = new OcspResponseTransformer(true);
+
     private static final WireMockServer mockOcspServer = new WireMockServer(
             WireMockConfiguration.wireMockConfig().dynamicPort().extensions(ocspResponseTransformer)
     );
+
     private static final WireMockServer mockFallbackOcspServer = new WireMockServer(
             WireMockConfiguration.wireMockConfig().dynamicPort().extensions(ocspResponseTransformer)
     );
@@ -118,8 +118,8 @@ public class OCSPValidatorTest {
 
     @AfterAll
     public static void tearDown() {
-        mockOcspServer.stop();
-        mockFallbackOcspServer.stop();
+//        mockOcspServer.stop();
+//        mockFallbackOcspServer.stop();
     }
 
     @BeforeEach
@@ -952,8 +952,9 @@ public class OCSPValidatorTest {
     }
 
     @Setter
+    @RequiredArgsConstructor
     public static class OcspResponseTransformer extends ResponseTransformer {
-
+        private final boolean applyGlobally;
         private int responseStatus;
         private CertificateStatus certificateStatus;
         private Function<DEROctetString, DEROctetString> nonceResolver;
@@ -1000,7 +1001,7 @@ public class OCSPValidatorTest {
 
         @Override
         public String getName() {
-            return getClass().getSimpleName();
+            return "ocsp";
         }
 
         private BasicOCSPResp mockOcspResponse(CertificateID certificateID, DEROctetString nonce, byte[] responderCert, String responseId, String signatureAlgorithm) throws OCSPException, OperatorCreationException, IOException {
@@ -1024,6 +1025,10 @@ public class OCSPValidatorTest {
             );
         }
 
+        @Override
+        public boolean applyGlobally() {
+            return applyGlobally;
+        }
     }
 
     private Ocsp getMockOcspConfiguration(List<String> issuerCn, String url,

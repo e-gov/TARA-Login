@@ -14,7 +14,6 @@ import org.springframework.http.MediaType;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -123,7 +122,7 @@ class AuthConsentControllerTest extends BaseTest {
                 .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: Session was not found");
+        assertErrorIsLogged("User exception: Invalid session");
     }
 
     @Test
@@ -141,7 +140,7 @@ class AuthConsentControllerTest extends BaseTest {
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected: 'AUTHENTICATION_SUCCESS'");
+        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [AUTHENTICATION_SUCCESS]");
     }
 
     @Test
@@ -194,12 +193,12 @@ class AuthConsentControllerTest extends BaseTest {
     @SneakyThrows
     private Session createSession(TaraAuthenticationState authenticationState, boolean display) {
         Session session = sessionRepository.createSession();
-        TaraSession authSession = new TaraSession();
+        TaraSession authSession = new TaraSession(session.getId());
         authSession.setState(authenticationState);
         TaraSession.LoginRequestInfo lri = new TaraSession.LoginRequestInfo();
         TaraSession.MetaData md = new TaraSession.MetaData();
         TaraSession.Client client = new TaraSession.Client();
-        md.setDisplay_user_consent(display);
+        md.setDisplayUserConsent(display);
         client.setMetaData(md);
         client.setScope("mid idcard");
         lri.setClient(client);

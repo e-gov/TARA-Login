@@ -18,10 +18,10 @@ import java.time.LocalDate;
 import java.util.*;
 
 @Data
-@NoArgsConstructor
+@RequiredArgsConstructor
 public class TaraSession implements Serializable {
     public static final String TARA_SESSION = "tara.session";
-
+    private final String sessionId;
     private TaraAuthenticationState state;
     private LoginRequestInfo loginRequestInfo;
     private List<AuthenticationType> allowedAuthMethods;
@@ -95,7 +95,7 @@ public class TaraSession implements Serializable {
         private OidcClient oidcClient = new OidcClient();
         @NotNull
         @JsonProperty("display_user_consent")
-        private boolean display_user_consent;
+        private boolean displayUserConsent;
     }
 
     @Data

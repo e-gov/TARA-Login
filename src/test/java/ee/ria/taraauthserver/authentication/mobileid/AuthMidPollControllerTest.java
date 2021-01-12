@@ -28,14 +28,14 @@ class AuthMidPollControllerTest extends BaseTest {
                 .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: Session was not found");
+        assertErrorIsLogged("User exception: Invalid session");
     }
 
     @Test
     void midAuth_session_status_incorrect() {
         Session session = sessionRepository.createSession();
 
-        TaraSession taraSession = new TaraSession();
+        TaraSession taraSession = new TaraSession(session.getId());
         taraSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
         TaraSession.MidAuthenticationResult authenticationResult = new TaraSession.MidAuthenticationResult();
         authenticationResult.setMidSessionId("testSessionId");
@@ -53,13 +53,13 @@ class AuthMidPollControllerTest extends BaseTest {
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: '[NATURAL_PERSON_AUTHENTICATION_COMPLETED, POLL_MID_STATUS, AUTHENTICATION_FAILED]'");
+        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [INIT_MID, POLL_MID_STATUS, AUTHENTICATION_FAILED, NATURAL_PERSON_AUTHENTICATION_COMPLETED]");
     }
 
     @Test
     void midAuth_session_status_poll_mid_status() {
         Session session = sessionRepository.createSession();
-        TaraSession taraSession = new TaraSession();
+        TaraSession taraSession = new TaraSession(session.getId());
         taraSession.setState(TaraAuthenticationState.POLL_MID_STATUS);
         TaraSession.MidAuthenticationResult authenticationResult = new TaraSession.MidAuthenticationResult();
         authenticationResult.setMidSessionId("testSessionId");
@@ -80,7 +80,7 @@ class AuthMidPollControllerTest extends BaseTest {
     @Test
     void midAuth_session_status_authentication_success() {
         Session session = sessionRepository.createSession();
-        TaraSession taraSession = new TaraSession();
+        TaraSession taraSession = new TaraSession(session.getId());
         taraSession.setState(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
         TaraSession.MidAuthenticationResult authenticationResult = new TaraSession.MidAuthenticationResult();
         authenticationResult.setMidSessionId("testSessionId");

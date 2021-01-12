@@ -21,8 +21,8 @@ public class ThymeleafSupport {
     }
 
     public String getHomeUrl() {
-        TaraSession taraSession = SessionUtils.getOrCreateAuthSession();
-        if (taraSession.getLoginRequestInfo() == null)
+        TaraSession taraSession = SessionUtils.getAuthSession();
+        if (taraSession == null || taraSession.getLoginRequestInfo() == null)
             return "#";
 
         TaraSession.OidcClient oidcClient = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient();
@@ -33,16 +33,16 @@ public class ThymeleafSupport {
     }
 
     public String getBackUrl() {
-        TaraSession taraSession = SessionUtils.getOrCreateAuthSession();
-        if (taraSession.getLoginRequestInfo() != null)
-            return "/auth/init?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge();
-        else
+        TaraSession taraSession = SessionUtils.getAuthSession();
+        if (taraSession == null || taraSession.getLoginRequestInfo() == null)
             return "#";
+        else
+            return "/auth/init?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge();
     }
 
     public String getServiceName() {
-        TaraSession taraSession = SessionUtils.getOrCreateAuthSession();
-        if (taraSession.getLoginRequestInfo() == null)
+        TaraSession taraSession = SessionUtils.getAuthSession();
+        if (taraSession == null || taraSession.getLoginRequestInfo() == null)
             return null;
 
         String defaultServicename = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getName();
@@ -62,7 +62,11 @@ public class ThymeleafSupport {
     public boolean isAuthMethodAllowed(AuthenticationType method) {
         Assert.notNull(method, "Authentication method can not be null!");
 
-        List<AuthenticationType> clientSpecificAuthMethodList = SessionUtils.getOrCreateAuthSession().getAllowedAuthMethods();
+        TaraSession taraSession = SessionUtils.getAuthSession();
+        if (taraSession == null) {
+            return false;
+        }
+        List<AuthenticationType> clientSpecificAuthMethodList = taraSession.getAllowedAuthMethods();
         if (clientSpecificAuthMethodList == null || clientSpecificAuthMethodList.isEmpty()) {
             return false;
         }

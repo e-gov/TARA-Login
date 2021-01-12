@@ -3,13 +3,11 @@ package ee.ria.taraauthserver.authentication;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.TaraScope;
-import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -19,13 +17,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.view.RedirectView;
 
-import java.util.List;
-
-import static ee.ria.taraauthserver.error.ErrorCode.SESSION_STATE_INVALID;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
+import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 
 @Slf4j
 @Validated
@@ -39,35 +36,20 @@ class AuthAcceptController {
     private RestTemplate hydraService;
 
     @PostMapping("/auth/accept")
-    public RedirectView authAccept() {
-
-        TaraSession taraSession = SessionUtils.getAuthSession();
-
-        if (isLegalPersonAttributesRequested(taraSession))
+    public RedirectView authAccept(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+        SessionUtils.assertSessionInState(taraSession, LEGAL_PERSON_AUTHENTICATION_COMPLETED, NATURAL_PERSON_AUTHENTICATION_COMPLETED);
+        if (isLegalPersonAttributesRequested(taraSession)) {
             return new RedirectView("/auth/legal_person/init");
-
-        if (!List.of(LEGAL_PERSON_AUTHENTICATION_COMPLETED, NATURAL_PERSON_AUTHENTICATION_COMPLETED).contains(taraSession.getState()))
-            throw new BadRequestException(SESSION_STATE_INVALID, String.format("Session in invalid state: '%s'. Expected state: %s", taraSession.getState(), List.of(LEGAL_PERSON_AUTHENTICATION_COMPLETED, NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
-
-        ResponseEntity<LoginAcceptResponseBody> response = hydraService.exchange(
-                getRequestUrl(taraSession.getLoginRequestInfo().getChallenge()),
-                HttpMethod.PUT,
-                createRequestBody(taraSession),
-                LoginAcceptResponseBody.class);
+        }
+        String url = authConfigurationProperties.getHydraService().getAcceptLoginUrl() + "?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge();
+        ResponseEntity<LoginAcceptResponseBody> response = hydraService.exchange(url, HttpMethod.PUT, createRequestBody(taraSession), LoginAcceptResponseBody.class);
 
         if (response.getStatusCode() == HttpStatus.OK && response.getBody().getRedirectUrl() != null) {
             taraSession.setState(AUTHENTICATION_SUCCESS);
-            SessionUtils.updateSession(taraSession);
-            log.info("accepted session: " + taraSession);
             return new RedirectView(response.getBody().getRedirectUrl());
         } else {
             throw new IllegalStateException("Invalid OIDC server response. Redirect URL missing from response.");
         }
-    }
-
-    @NotNull
-    private String getRequestUrl(String loginChallenge) {
-        return authConfigurationProperties.getHydraService().getAcceptLoginUrl() + "?login_challenge=" + loginChallenge;
     }
 
     private HttpEntity<LoginAcceptRequestBody> createRequestBody(TaraSession taraSession) {

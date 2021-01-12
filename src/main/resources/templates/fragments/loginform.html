@@ -31,10 +31,10 @@
                     <div class="alert alert-error alert-popup" aria-hidden="true">
                         <p>
                             <strong>
-                                <span id="error-message-title" th:text="#{message.idc.certificatefailed}"/>
+                                <span id="error-message-title" th:text="#{message.idc.certificate-failed}"/>
                             </strong>
                         </p>
-                        <span id="error-message" th:text="#{message.idc.doesidcardexist}"/>
+                        <span id="error-message" th:text="#{message.idc.does-id-card-exist}"/>
                         <button role="button" class="close" th:aria-label="#{label.alert.close}" data-dismiss="alert">
                             <span aria-hidden="true">&times;</span></button>
                     </div>
@@ -51,41 +51,41 @@
                         <tr>
                             <td class="col-label">
                                 <label for="mid-personal-code" class="form-label"
-                                       th:text="#{label.common.personalCode}"></label>
+                                       th:text="#{label.common.personal-code}"></label>
                             </td>
                             <td>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text"
-                                              th:text="#{label.mobile-id.personalCodePrefix}"></span>
+                                              th:text="#{label.mobile-id.personal-code-prefix}"></span>
                                     </div>
                                     <input type="text" maxlength="11" id="mid-personal-code" class="form-control"
                                            name="idCode">
                                 </div>
                                 <div class="invalid-feedback is-hidden"
-                                     th:text="#{message.common.personalCode-missing}"></div>
+                                     th:text="#{message.common.personal-code-missing}"></div>
                                 <div class="invalid-feedback is-hidden"
-                                     th:text="#{message.common.personalCode-invalid}"></div>
+                                     th:text="#{message.common.personal-code-invalid}"></div>
                             </td>
                         </tr>
                         <tr>
                             <td class="col-label">
                                 <label for="mid-phone-number" class="form-label"
-                                       th:text="#{label.common.phoneNumber}"></label>
+                                       th:text="#{label.common.phone-number}"></label>
                             </td>
                             <td>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text"
-                                              th:text="#{label.mobile-id.phoneNumberPrefix}"></span>
+                                              th:text="#{label.mobile-id.phone-number-prefix}"></span>
                                     </div>
                                     <input type="tel" maxlength="15" id="mid-phone-number" class="form-control"
                                            name="telephoneNumber">
                                 </div>
                                 <div class="invalid-feedback is-hidden"
-                                     th:text="#{message.common.phoneNumber-missing}"></div>
+                                     th:text="#{message.common.phone-number-missing}"></div>
                                 <div class="invalid-feedback is-hidden"
-                                     th:text="#{message.common.phoneNumber-invalid}"></div>
+                                     th:text="#{message.common.phone-number-invalid}"></div>
                             </td>
                         </tr>
                         <tr>
