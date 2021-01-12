@@ -1,0 +1,19 @@
+management:
+  health:
+    defaults:
+      enabled: false
+  info:
+    git:
+      mode: full
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        exclude: "*"
+    jmx:
+      exposure:
+        exclude: "*"
+
+spring:
+  session:
+    timeout: 300s

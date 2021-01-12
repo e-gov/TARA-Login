@@ -1,0 +1,102 @@
+package ee.ria.taraauthserver.config;
+
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.utils.ThymeleafSupport;
+import lombok.extern.slf4j.Slf4j;
+import nz.net.ultraq.thymeleaf.LayoutDialect;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.LocaleResolver;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
+import org.springframework.web.servlet.i18n.SessionLocaleResolver;
+
+import javax.net.ssl.SSLContext;
+import javax.validation.Validator;
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.time.Duration;
+import java.util.Locale;
+
+import static org.springframework.util.ResourceUtils.getFile;
+
+@Slf4j
+@Configuration
+@ConfigurationPropertiesScan
+public class TaraAuthServerConfiguration implements WebMvcConfigurer {
+
+    @Bean
+    public SSLContext trustContext(AuthConfigurationProperties authConfigurationProperties) throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+        return SSLContextBuilder
+                .create().setKeyStoreType(authConfigurationProperties.getTls().getTrustStoreType())
+                .loadTrustMaterial(
+                        getFile(authConfigurationProperties.getTls().getTruststoreLocation()),
+                        authConfigurationProperties.getTls().getTruststorePassword().toCharArray())
+                .build();
+    }
+
+    @Bean
+    public RestTemplate restTemplate(RestTemplateBuilder builder, SSLContext sslContext, AuthConfigurationProperties authConfigurationProperties) {
+        HttpClient client = HttpClients.custom()
+                .setSSLContext(sslContext)
+                .build();
+
+        return builder
+                .setConnectTimeout(Duration.ofSeconds(authConfigurationProperties.getHydraService().getRequestTimeoutInSeconds()))
+                .setReadTimeout(Duration.ofSeconds(authConfigurationProperties.getHydraService().getRequestTimeoutInSeconds()))
+                .requestFactory(() -> new HttpComponentsClientHttpRequestFactory(client))
+                .build();
+    }
+
+    @Bean
+    public Validator defaultValidator(MessageSource messageSource) {
+        LocalValidatorFactoryBean bean = new LocalValidatorFactoryBean();
+        bean.setValidationMessageSource(messageSource);
+        return bean;
+    }
+
+    @Bean
+    public LocaleResolver localeResolver(AuthConfigurationProperties configurationProperties) {
+        SessionLocaleResolver bean = new SessionLocaleResolver();
+        String locale = configurationProperties.getDefaultLocale();
+        log.info("Setting default locale to [{}]", locale);
+        bean.setDefaultLocale(new Locale(locale));
+        return bean;
+    }
+
+    @Bean
+    public LayoutDialect layoutDialect() {
+        return new LayoutDialect();
+    }
+
+    @Bean
+    public ThymeleafSupport thymeleafSupport() {
+        return new ThymeleafSupport();
+    }
+
+    @Bean
+    public LocaleChangeInterceptor localeChangeInterceptor() {
+        log.info("calling locale change interceptor");
+        LocaleChangeInterceptor lci = new LocaleChangeInterceptor();
+        lci.setParamName("lang");
+        return lci;
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(localeChangeInterceptor());
+    }
+}

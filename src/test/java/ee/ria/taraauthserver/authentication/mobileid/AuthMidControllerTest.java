@@ -1,0 +1,422 @@
+package ee.ria.taraauthserver.authentication.mobileid;
+
+import com.github.tomakehurst.wiremock.client.WireMock;
+import ee.ria.taraauthserver.BaseTest;
+import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.session.TaraAuthenticationState;
+import ee.ria.taraauthserver.session.TaraSession;
+import ee.sk.mid.MidAuthenticationHashToSign;
+import ee.sk.mid.MidHashType;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.session.Session;
+import org.springframework.session.SessionRepository;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
+import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static io.restassured.RestAssured.given;
+import static org.awaitility.Awaitility.await;
+import static org.awaitility.Durations.FIVE_SECONDS;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasProperty;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@Slf4j
+class AuthMidControllerTest extends BaseTest {
+    private final MidAuthenticationHashToSign MOCK_HASH_TO_SIGN = new MidAuthenticationHashToSign.MobileIdAuthenticationHashToSignBuilder()
+            .withHashType(MidHashType.SHA512)
+            .withHashInBase64("bT+0Fuuf0QChq/sYb+Nz8vhLE8n3gLeL/wOXKxxE4ao=").build();
+
+    // TODO parameter names (idCode vs id_code)
+
+    @SpyBean
+    private AuthMidService authMidService;
+
+    @Autowired
+    private SessionRepository<Session> sessionRepository;
+
+    @BeforeEach
+    void beforeEach() {
+        Mockito.doReturn(MOCK_HASH_TO_SIGN).when(authMidService).getAuthenticationHash();
+    }
+
+    @AfterEach
+    void afterEach() {
+        Mockito.reset(authMidService);
+    }
+
+    @Test
+    void midAuthInit_session_missing() {
+        given()
+                .when()
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "00000766")
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
+                .body("error", equalTo("Bad Request"));
+
+        assertErrorIsLogged("User exception: Invalid session");
+    }
+
+    @Test
+    void nationalIdNumber_missing() {
+        given()
+                .when()
+                .formParam("telephoneNumber", "00000766")
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Isikukood ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
+
+        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+    }
+
+    @Test
+    void nationalIdNumber_blank() {
+        given()
+                .when()
+                .formParam("idCode", "")
+                .formParam("telephoneNumber", "00000766")
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Isikukood ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
+
+        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+    }
+
+    @Test
+    void nationalIdNumber_invalidLength() {
+        given()
+                .when()
+                .formParam("idCode", "382929292911")
+                .formParam("telephoneNumber", "00000766")
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Isikukood ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
+
+        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+    }
+
+    @Test
+    void nationalIdNumber_invalid() {
+        given()
+                .when()
+                .formParam("idCode", "31107114721")
+                .formParam("telephoneNumber", "00000766")
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Isikukood ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
+
+        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+    }
+
+    @Test
+    void phoneNumber_missing() {
+        given()
+                .when()
+                .formParam("idCode", "60001019906")
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Telefoninumber ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
+    }
+
+    @Test
+    void phoneNumber_blank() {
+        given()
+                .when()
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "")
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Telefoninumber ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
+    }
+
+    @Test
+    void phoneNumber_invalid() {
+        given()
+                .when()
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "123abc456def")
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Telefoninumber ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
+    }
+
+    @Test
+    void phoneNumber_tooShort() {
+        given()
+                .when()
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "+12345")
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Telefoninumber ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
+
+    }
+
+    @Test
+    void phoneNumber_tooLong() {
+        given()
+                .when()
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "000007669837468734593465")
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Telefoninumber ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
+    }
+
+    @Test
+    void phoneNumberAndIdCodeValid() {
+        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 200);
+        createMidApiPollStub("mock_responses/mid/mid_poll_response.json", 200);
+
+        Session session = createNewAuthenticationSession(MOBILE_ID);
+
+        given()
+                .when()
+                .formParam("idCode", "60001019939")
+                .formParam("telephoneNumber", "00000266")
+                .sessionId("SESSION", session.getId())
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(200);
+
+        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
+
+        TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
+        assertEquals("60001019906", result.getIdCode());
+        assertEquals("EE", result.getCountry());
+        assertEquals("MARY ÄNN", result.getFirstName());
+        assertEquals("O’CONNEŽ-ŠUSLIK TESTNUMBER", result.getLastName());
+        assertEquals("+37200000266", result.getPhoneNumber());
+        assertEquals("EE60001019906", result.getSubject());
+        assertEquals("2000-01-01", result.getDateOfBirth().toString());
+        assertEquals(MOBILE_ID, result.getAmr());
+        assertEquals(LevelOfAssurance.HIGH, result.getAcr());
+
+        assertInfoIsLogged("Mid init request: ee.sk.mid.rest.dao.request.MidAuthenticationRequest");
+        assertInfoIsLogged("Mid init response: MidAbstractResponse{sessionID='de305d54-75b4-431b-adb2-eb6b9e546015'}");
+        assertInfoIsLogged("Mobile ID authentication process with MID session id de305d54-75b4-431b-adb2-eb6b9e546015 has been initiated");
+    }
+
+    @Test
+    void midAuthInit_request_language_is_correct() {
+        wireMockServer.stubFor(any(urlPathEqualTo("/mid-api/authentication"))
+                .withRequestBody(matchingJsonPath("$.language", WireMock.equalTo("ENG")))
+                .willReturn(aResponse()
+                        .withBodyFile("mock_responses/mid/mid_authenticate_response.json")
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withStatus(200)));
+
+        Session session = createNewAuthenticationSession(MOBILE_ID);
+
+        given()
+                .when()
+                .formParam("idCode", "60001019939")
+                .formParam("telephoneNumber", "00000266")
+                .sessionId("SESSION", session.getId())
+                .post("/auth/mid/init?lang=en")
+                .then()
+                .assertThat()
+                .statusCode(200);
+    }
+
+    @Test
+    void midAuthInit_session_status_incorrect() {
+        Session session = sessionRepository.createSession();
+        TaraSession testSession = new TaraSession(session.getId());
+        testSession.setState(TaraAuthenticationState.INIT_MID);
+        session.setAttribute(TARA_SESSION, testSession);
+        sessionRepository.save(session);
+
+        given()
+                .when()
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "00000766")
+                .sessionId("SESSION", session.getId())
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
+                .body("error", equalTo("Bad Request"))
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+
+        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [INIT_AUTH_PROCESS]");
+    }
+
+    @Test
+    void midAuthInit_session_mid_not_allowed() {
+        Session session = sessionRepository.createSession();
+        TaraSession testSession = new TaraSession(session.getId());
+        List<AuthenticationType> allowedMethods = new ArrayList<>();
+        allowedMethods.add(AuthenticationType.ID_CARD);
+        testSession.setAllowedAuthMethods(allowedMethods);
+        testSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+        session.setAttribute(TARA_SESSION, testSession);
+        sessionRepository.save(session);
+
+        given()
+                .when()
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "00000766")
+                .sessionId("SESSION", session.getId())
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Ebakorrektne päring."))
+                .body("error", equalTo("Bad Request"))
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+
+        assertErrorIsLogged("User exception: Mobile ID authentication method is not allowed");
+    }
+
+    @Test
+    void midAuthInit_response_400() {
+        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 400);
+
+        given()
+                .when()
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "00000766")
+                .sessionId("SESSION", createNewAuthenticationSession(MOBILE_ID).getId())
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(500);
+
+        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: HTTP 400 Bad Request"); // TODO:
+    }
+
+    @Test
+    void midAuthInit_response_401() {
+        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 401);
+
+        given()
+                .when()
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "00000766")
+                .sessionId("SESSION", createNewAuthenticationSession(MOBILE_ID).getId())
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(500);
+
+        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: Request is unauthorized for URI https://localhost:9877/mid-api/authentication: HTTP 401 Unauthorized"); // TODO:
+    }
+
+    @Test
+    void midAuthInit_response_405() {
+        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 405);
+
+        given()
+                .when()
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "00000766")
+                .sessionId("SESSION", createNewAuthenticationSession(MOBILE_ID).getId())
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(500);
+
+        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: HTTP 405 Method Not Allowed"); // TODO:
+    }
+
+    @Test
+    void midAuthInit_response_500() {
+        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 500);
+
+        given()
+                .when()
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "00000766")
+                .sessionId("SESSION", createNewAuthenticationSession(MOBILE_ID).getId())
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(502);
+
+        assertErrorIsLogged("Service not available: MID service is currently unavailable: Error getting response from cert-store/MSSP for URI https://localhost:9877/mid-api/authentication: HTTP 500 Server Error");
+    }
+
+    @Test
+    void midAuthInit_response_no_certificate() { // TODO: no certificate?
+        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 500);
+
+        given()
+                .when()
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "00000766")
+                .sessionId("SESSION", createNewAuthenticationSession(MOBILE_ID).getId())
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(502);
+
+        assertErrorIsLogged("Service not available: MID service is currently unavailable: Error getting response from cert-store/MSSP for URI https://localhost:9877/mid-api/authentication: HTTP 500 Server Error");
+    }
+
+
+    @Test
+    void midAuthInit_response_timeout() {
+        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 200, 2000);
+
+        given()
+                .when()
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "00000766")
+                .sessionId("SESSION", createNewAuthenticationSession(MOBILE_ID).getId())
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(502)
+                .body("message", equalTo("Mobiil-ID teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti."));
+
+        assertErrorIsLogged("Service not available: MID service is currently unavailable: java.net.SocketTimeoutException: Read timed out");
+    }
+}
