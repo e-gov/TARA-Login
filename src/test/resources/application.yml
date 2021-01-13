@@ -87,19 +87,21 @@ management:
         exclude: "*"
 
 ignite:
-  igniteInstanceName: tara2-ignite
-  discoverySpi:
-    ipFinder:
+  ignite-instance-name: tara2-ignite
+  discovery-spi:
+    ip-finder:
       addresses:
         - 127.0.0.1
-  sslContextFactory:
-    keyStoreType: JKS
-    keyStoreFilePath: src/test/resources/tls-keystore.jks
-    keyStorePassword: changeit
-    trustStoreType: JKS
-    trustStoreFilePath: src/test/resources/tls-truststore.jks
-    trustStorePassword: changeit
+  ssl-context-factory:
+    key-store-type: JKS
+    key-store-file-path: src/test/resources/tls-keystore.jks
+    key-store-password: changeit
+    trust-store-type: JKS
+    trust-store-file-path: src/test/resources/tls-truststore.jks
+    trust-store-password: changeit
     protocol: TLSv1.2
+
+
 
 spring:
   session:
