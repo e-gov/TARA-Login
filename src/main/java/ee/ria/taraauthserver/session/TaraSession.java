@@ -46,8 +46,9 @@ public class TaraSession implements Serializable {
 
     @Data
     @EqualsAndHashCode(callSuper = true)
+    @RequiredArgsConstructor
     public static class MidAuthenticationResult extends AuthenticationResult {
-        private String midSessionId;
+        private final String midSessionId;
     }
 
     @Data

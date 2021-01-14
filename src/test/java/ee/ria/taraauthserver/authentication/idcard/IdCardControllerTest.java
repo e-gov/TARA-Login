@@ -6,6 +6,7 @@ import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
+import io.restassured.RestAssured;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -65,6 +66,7 @@ class IdCardControllerTest extends BaseTest {
         ocspResponseTransformer.setSignerKey(responderKeys.getPrivate());
         ocspResponseTransformer.setThisUpdateProvider(() -> Date.from(Instant.now()));
         ocspResponseTransformer.setNonceResolver(nonce -> nonce);
+        RestAssured.responseSpecification = null;
     }
 
     @Test
@@ -90,7 +92,6 @@ class IdCardControllerTest extends BaseTest {
     @Tag(value = "ESTEID_AUTH_ENDPOINT")
     void idAuth_certificate_incorrect() {
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
-
         given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, "testing")
@@ -110,7 +111,6 @@ class IdCardControllerTest extends BaseTest {
     @Tag(value = "ESTEID_AUTH_ENDPOINT")
     void idAuth_certificate_empty_string() {
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
-
         given()
                 .when()
                 .sessionId("SESSION", sessionId)
@@ -143,7 +143,6 @@ class IdCardControllerTest extends BaseTest {
     @Tag(value = "ESTEID_INIT")
     void idAuth_session_incorrect_authentication_state() {
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_MID);
-
         given()
                 .when()
                 .sessionId("SESSION", sessionId)
@@ -162,7 +161,6 @@ class IdCardControllerTest extends BaseTest {
     @Tag(value = "OCSP_RESPONSE_STATUS_HANDLING")
     @Tag(value = "IDCARD_AUTH_SUCCESSFUL")
     void idAuth_ok() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
-
         KeyPairGenerator rsa = KeyPairGenerator.getInstance("RSA");
         rsa.initialize(2048);
         KeyPair certKeyPair = rsa.generateKeyPair();
@@ -189,6 +187,7 @@ class IdCardControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(200)
+                .headers(EXPECTED_JSON_RESPONSE_HEADERS)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
                 .body("status", equalTo("COMPLETED"))
                 .extract().cookie("SESSION");
@@ -208,7 +207,6 @@ class IdCardControllerTest extends BaseTest {
     @Tag(value = "OCSP_RESPONSE_STATUS_HANDLING")
     @Tag(value = "IDCARD_ERROR_HANDLING")
     void idAuth_response_certificate_status_revoked() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
-
         KeyPairGenerator rsa = KeyPairGenerator.getInstance("RSA");
         rsa.initialize(2048);
         KeyPair certKeyPair = rsa.generateKeyPair();
@@ -228,7 +226,6 @@ class IdCardControllerTest extends BaseTest {
                 ).build(), "/esteid2015");
 
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
-
         given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
@@ -237,6 +234,7 @@ class IdCardControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
+                .headers(EXPECTED_JSON_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
                 .body("errorMessage", equalTo("Teie sertifikaadid ei kehti."));
 
@@ -248,7 +246,6 @@ class IdCardControllerTest extends BaseTest {
     @Tag(value = "OCSP_RESPONSE_STATUS_HANDLING")
     @Tag(value = "IDCARD_ERROR_HANDLING")
     void idAuth_response_certificate_status_unknown() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
-
         KeyPairGenerator rsa = KeyPairGenerator.getInstance("RSA");
         rsa.initialize(2048);
         KeyPair certKeyPair = rsa.generateKeyPair();
@@ -266,7 +263,6 @@ class IdCardControllerTest extends BaseTest {
                 ).build(), "/esteid2015");
 
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
-
         given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
@@ -275,6 +271,7 @@ class IdCardControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
+                .headers(EXPECTED_JSON_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
                 .body("errorMessage", equalTo("Teie sertifikaadid ei kehti."));
 
@@ -288,7 +285,6 @@ class IdCardControllerTest extends BaseTest {
     @Test
     @Tag(value = "OCSP_FAILOVER_CONF")
     void idAuth_response_200_when_response_is_404_and_fallback_service_is_used() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
-
         KeyPairGenerator rsa = KeyPairGenerator.getInstance("RSA");
         rsa.initialize(2048);
         KeyPair certKeyPair = rsa.generateKeyPair();
@@ -306,7 +302,6 @@ class IdCardControllerTest extends BaseTest {
                 ).build(), "/ocsp");
 
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
-
         given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
@@ -315,13 +310,13 @@ class IdCardControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(200)
+                .headers(EXPECTED_JSON_RESPONSE_HEADERS)
                 .body("status", equalTo("COMPLETED"));
     }
 
     @Test
     @Tag(value = "OCSP_CA_WHITELIST")
     void idAuth_response_500_when_issuer_certificate_not_trusted() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
-
         KeyPairGenerator rsa = KeyPairGenerator.getInstance("RSA");
         rsa.initialize(2048);
         KeyPair certKeyPair = rsa.generateKeyPair();
@@ -339,7 +334,6 @@ class IdCardControllerTest extends BaseTest {
                 ).build(), "/esteid2015");
 
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
-
         given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
@@ -347,6 +341,7 @@ class IdCardControllerTest extends BaseTest {
                 .get("/auth/id")
                 .then()
                 .assertThat()
+                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
                 .statusCode(500);
 
         assertErrorIsLogged("Server encountered an unexpected error: OCSP validation failed: Issuer certificate with CN 'WRONG CN' is not a trusted certificate!");
@@ -355,7 +350,6 @@ class IdCardControllerTest extends BaseTest {
     @Test
     @Tag(value = "OCSP_RESPONSE_VALID_SIG")
     void idAuth_response_500_when_responder_certificate_issuer_different_from_user() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
-
         KeyPairGenerator rsa = KeyPairGenerator.getInstance("RSA");
         rsa.initialize(2048);
         KeyPair certKeyPair = rsa.generateKeyPair();
@@ -373,7 +367,6 @@ class IdCardControllerTest extends BaseTest {
                 ).build(), "/esteid2015");
 
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
-
         given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
@@ -381,6 +374,7 @@ class IdCardControllerTest extends BaseTest {
                 .get("/auth/id")
                 .then()
                 .assertThat()
+                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
                 .statusCode(500);
 
         assertErrorIsLogged("Server encountered an unexpected error: OCSP validation failed: In case of AIA OCSP, the OCSP responder certificate must be issued by the authority that issued the user certificate. Expected issuer: 'CN=TEST of ESTEID-SK 2015, OID.2.5.4.97=NTREE-10747013, O=AS Sertifitseerimiskeskus, C=EE', but the OCSP responder signing certificate was issued by 'EMAILADDRESS=pki@sk.ee, CN=TEST of ESTEID-SK 2011, O=AS Sertifitseerimiskeskus, C=EE'");
@@ -399,7 +393,6 @@ class IdCardControllerTest extends BaseTest {
         );
 
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
-
         given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
@@ -407,6 +400,7 @@ class IdCardControllerTest extends BaseTest {
                 .get("/auth/id")
                 .then()
                 .assertThat()
+                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
                 .statusCode(500);
 
         assertErrorIsLogged("Server encountered an unexpected error: OCSP validation failed: malformed response: no response data found");
@@ -421,7 +415,6 @@ class IdCardControllerTest extends BaseTest {
                         .withFixedDelay(2000)));
 
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
-
         given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
@@ -430,6 +423,7 @@ class IdCardControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(502)
+                .headers(EXPECTED_JSON_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
                 .body("errorMessage", equalTo("Sertifikaadi kehtivuse info küsimine ei õnnestunud. Palun proovige mõne aja pärast uuesti."));
 
@@ -446,7 +440,6 @@ class IdCardControllerTest extends BaseTest {
         String cert = formatCrtFileContents(userCert);
 
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
-
         given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, cert)
@@ -455,6 +448,7 @@ class IdCardControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
+                .headers(EXPECTED_JSON_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
                 .body("errorMessage", equalTo("Teie sertifikaadid ei kehti."));
 
@@ -471,7 +465,6 @@ class IdCardControllerTest extends BaseTest {
         String cert = formatCrtFileContents(userCert);
 
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
-
         given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, cert)
@@ -480,6 +473,7 @@ class IdCardControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
+                .headers(EXPECTED_JSON_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
                 .body("errorMessage", equalTo("Teie sertifikaadid ei kehti."));
 

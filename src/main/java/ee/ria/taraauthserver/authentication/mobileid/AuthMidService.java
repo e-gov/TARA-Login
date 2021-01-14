@@ -104,8 +104,7 @@ public class AuthMidService {
     private void updateAuthSessionWithInitResponse(TaraSession taraSession, MidAuthenticationResponse response) {
         log.info("Mobile ID authentication process with MID session id {} has been initiated", response.getSessionID());
         taraSession.setState(POLL_MID_STATUS);
-        TaraSession.MidAuthenticationResult midAuthenticationResult = new TaraSession.MidAuthenticationResult();
-        midAuthenticationResult.setMidSessionId(response.getSessionID());
+        TaraSession.MidAuthenticationResult midAuthenticationResult = new TaraSession.MidAuthenticationResult(response.getSessionID());
         taraSession.setAuthenticationResult(midAuthenticationResult);
     }
 
