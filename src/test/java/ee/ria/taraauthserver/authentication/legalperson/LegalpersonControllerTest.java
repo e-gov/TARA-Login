@@ -522,7 +522,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(302)
                 .headers(EXPECTED_HTML_RESPONSE_HEADERS)
-                .header("Location", Matchers.endsWith("/some/test/url")); // TODO: andExpect(forwardedUrl("/auth/accept")) not possible?
+                .header("Location", Matchers.endsWith("/some/test/url"));
 
         assertInfoIsLogged("Legal person selected: " + MOCK_LEGAL_PERSON_IDENTIFIER);
     }
