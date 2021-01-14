@@ -271,6 +271,7 @@ class AuthMidControllerTest extends BaseTest {
     @Tag(value = "MID_VALID_INPUT_IDCODE")
     void nationalIdNumberinvalid_and_phoneNumberInvalid() {
         given()
+                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
                 .when()
                 .formParam("idCode", "31107114721")
                 .formParam("telephoneNumber", "123abc456def")

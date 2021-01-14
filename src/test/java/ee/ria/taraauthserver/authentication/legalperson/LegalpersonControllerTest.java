@@ -62,7 +62,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .authenticationState(INIT_AUTH_PROCESS)
                         .build())
                 .when()
-                .get("/auth/legal_person/init")
+                .get("/auth/legalperson/init")
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -70,7 +70,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
-                .body("path", equalTo("/auth/legal_person/init"));
+                .body("path", equalTo("/auth/legalperson/init"));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [NATURAL_PERSON_AUTHENTICATION_COMPLETED]");
     }
@@ -85,7 +85,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .clientAllowedScopes(of("mid", "legalperson"))
                         .build())
                 .when()
-                .get("/auth/legal_person/init")
+                .get("/auth/legalperson/init")
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -93,7 +93,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Ebakorrektne päring."))
-                .body("path", equalTo("/auth/legal_person/init"));
+                .body("path", equalTo("/auth/legalperson/init"));
 
         assertErrorIsLogged("User exception: scope 'legalperson' was not requested in the initial OIDC authentication request");
     }
@@ -109,7 +109,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .requestedScopes(of("mid", "legalperson"))
                         .build())
                 .when()
-                .get("/auth/legal_person/init")
+                .get("/auth/legalperson/init")
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -117,7 +117,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Ebakorrektne päring."))
-                .body("path", equalTo("/auth/legal_person/init"));
+                .body("path", equalTo("/auth/legalperson/init"));
 
         assertErrorIsLogged(String.format("User exception: client '%s' is not authorized to use scope 'legalperson'", MOCK_CLIENT_ID));
     }
@@ -135,7 +135,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .requestedScopes(of("mid", "legalperson"))
                         .build())
                 .when()
-                .get("/auth/legal_person/init")
+                .get("/auth/legalperson/init")
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -155,7 +155,7 @@ public class LegalpersonControllerTest extends BaseTest {
         given()
                 .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
                 .when()
-                .get("/auth/legal_person")
+                .get("/auth/legalperson")
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -163,7 +163,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
-                .body("path", equalTo("/auth/legal_person"));
+                .body("path", equalTo("/auth/legalperson"));
 
         assertErrorIsLogged("User exception: Invalid session");
     }
@@ -177,7 +177,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .authenticationState(INIT_AUTH_PROCESS)
                         .build())
                 .when()
-                .get("/auth/legal_person")
+                .get("/auth/legalperson")
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -185,7 +185,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
-                .body("path", equalTo("/auth/legal_person"));
+                .body("path", equalTo("/auth/legalperson"));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [LEGAL_PERSON_AUTHENTICATION_INIT]");
     }
@@ -206,7 +206,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .authenticationResult(buildMockCredential())
                         .build())
                 .when()
-                .get("/auth/legal_person")
+                .get("/auth/legalperson")
                 .then()
                 .assertThat()
                 .statusCode(500)
@@ -214,7 +214,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .body("status", equalTo(500))
                 .body("error", equalTo("Internal Server Error"))
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
-                .body("path", equalTo("/auth/legal_person"));
+                .body("path", equalTo("/auth/legalperson"));
 
         assertErrorIsLogged("Server encountered an unexpected error: XRoad service returned a soap fault: faultcode = 'SOAP-ENV:Server', faultstring = 'Sisendparameetrid vigased: palun sisestage kas äriregistri kood, isikukood või isiku ees- ja perekonnanimi.'");
     }
@@ -236,7 +236,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .authenticationResult(buildMockCredential())
                         .build())
                 .when()
-                .get("/auth/legal_person")
+                .get("/auth/legalperson")
                 .then()
                 .assertThat()
                 .statusCode(500)
@@ -244,7 +244,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .body("status", equalTo(500))
                 .body("error", equalTo("Internal Server Error"))
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
-                .body("path", equalTo("/auth/legal_person"));
+                .body("path", equalTo("/auth/legalperson"));
 
         assertErrorIsLogged("Server encountered an unexpected error: Failed to extract data from response: https://localhost:9877/cgi-bin/consumer_proxy");
     }
@@ -266,7 +266,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .authenticationResult(buildMockCredential())
                         .build())
                 .when()
-                .get("/auth/legal_person")
+                .get("/auth/legalperson")
                 .then()
                 .assertThat()
                 .statusCode(502)
@@ -274,7 +274,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .body("status", equalTo(502))
                 .body("error", equalTo("Bad Gateway"))
                 .body("message", equalTo("Äriregistriga ei saadud ühendust. Palun proovige hiljem uuesti."))
-                .body("path", equalTo("/auth/legal_person"));
+                .body("path", equalTo("/auth/legalperson"));
 
         assertErrorIsLogged("Service not available: Could not connect to business registry. Connection failed: Read timed out");
     }
@@ -295,7 +295,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .authenticationResult(buildMockCredential())
                         .build())
                 .when()
-                .get("/auth/legal_person")
+                .get("/auth/legalperson")
                 .then()
                 .assertThat()
                 .statusCode(404)
@@ -303,7 +303,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .body("status", equalTo(404))
                 .body("error", equalTo("Not Found"))
                 .body("message", equalTo("Current user has no valid legal person records in business registry")) // TODO: NotFoundException -> BadRequestException?
-                .body("path", equalTo("/auth/legal_person"));
+                .body("path", equalTo("/auth/legalperson"));
 
         assertErrorIsLogged("Results not found: Current user has no valid legal person records in business registry");
     }
@@ -325,7 +325,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .authenticationResult(buildMockCredential())
                         .build())
                 .when()
-                .get("/auth/legal_person")
+                .get("/auth/legalperson")
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -353,7 +353,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .authenticationResult(buildMockCredential())
                         .build())
                 .when()
-                .get("/auth/legal_person")
+                .get("/auth/legalperson")
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -383,12 +383,12 @@ public class LegalpersonControllerTest extends BaseTest {
                 .filter(withoutCsrf().sessionRepository(sessionRepository).build())
                 .param("legal_person_identifier", "1234")
                 .when()
-                .post("/auth/legal_person/confirm")
+                .post("/auth/legalperson/confirm")
                 .then()
                 .assertThat()
                 .statusCode(403)
                 .body("message", equalTo("Forbidden"))
-                .body("path", equalTo("/auth/legal_person/confirm"));
+                .body("path", equalTo("/auth/legalperson/confirm"));
     }
 
     @Test
@@ -398,7 +398,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
                 .param("legal_person_identifier", "1234")
                 .when()
-                .post("/auth/legal_person/confirm")
+                .post("/auth/legalperson/confirm")
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -406,7 +406,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
-                .body("path", equalTo("/auth/legal_person/confirm"));
+                .body("path", equalTo("/auth/legalperson/confirm"));
 
         assertErrorIsLogged("User exception: Invalid session");
     }
@@ -421,7 +421,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .build())
                 .param("legal_person_identifier", "1234")
                 .when()
-                .post("/auth/legal_person/confirm")
+                .post("/auth/legalperson/confirm")
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -429,7 +429,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
-                .body("path", equalTo("/auth/legal_person/confirm"));
+                .body("path", equalTo("/auth/legalperson/confirm"));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'LEGAL_PERSON_AUTHENTICATION_INIT', expected one of: [GET_LEGAL_PERSON_LIST]");
     }
@@ -441,7 +441,7 @@ public class LegalpersonControllerTest extends BaseTest {
         given()
                 .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
                 .when()
-                .post("/auth/legal_person/confirm")
+                .post("/auth/legalperson/confirm")
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -449,7 +449,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Required String parameter 'legal_person_identifier' is not present"))
-                .body("path", equalTo("/auth/legal_person/confirm"));
+                .body("path", equalTo("/auth/legalperson/confirm"));
 
         assertErrorIsLogged("User exception: Required String parameter 'legal_person_identifier' is not present");
     }
@@ -461,7 +461,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
                 .param("legal_person_identifier", "<>?=`*,.")
                 .when()
-                .post("/auth/legal_person/confirm")
+                .post("/auth/legalperson/confirm")
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -469,7 +469,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("confirmLegalPerson.legalPersonIdentifier: invalid legal person identifier"))
-                .body("path", equalTo("/auth/legal_person/confirm"));
+                .body("path", equalTo("/auth/legalperson/confirm"));
 
         assertErrorIsLogged("User exception: confirmLegalPerson.legalPersonIdentifier: invalid legal person identifier");
     }
@@ -485,7 +485,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .build())
                 .param("legal_person_identifier", "9876543210")
                 .when()
-                .post("/auth/legal_person/confirm")
+                .post("/auth/legalperson/confirm")
                 .then()
                 .assertThat()
                 .statusCode(400)
@@ -493,7 +493,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Ebakorrektne päring."))
-                .body("path", equalTo("/auth/legal_person/confirm"));
+                .body("path", equalTo("/auth/legalperson/confirm"));
 
         assertErrorIsLogged("User exception: Attempted to select invalid legal person with id: '9876543210'");
     }
@@ -517,7 +517,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .build())
                 .param("legal_person_identifier", MOCK_LEGAL_PERSON_IDENTIFIER)
                 .when()
-                .post("/auth/legal_person/confirm")
+                .post("/auth/legalperson/confirm")
                 .then()
                 .assertThat()
                 .statusCode(302)
