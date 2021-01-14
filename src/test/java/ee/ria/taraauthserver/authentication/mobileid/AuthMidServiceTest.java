@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.authentication.mobileid;
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
+import ee.ria.taraauthserver.session.MockTaraSessionBuilder;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.sk.mid.*;
 import ee.sk.mid.exception.MidInternalErrorException;
@@ -26,6 +27,7 @@ import static ee.ria.taraauthserver.error.ErrorCode.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.lang.String.format;
+import static java.util.List.of;
 import static java.util.Locale.forLanguageTag;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
@@ -114,7 +116,7 @@ public class AuthMidServiceTest extends BaseTest {
     @Test
     @Tag(value = "MID_AUTH_INIT_RESPONSE")
     void unchangedAuthenticationSessionStateWhen_MidApi_MidInternalErrorException() {
-        Session session = createNewAuthenticationSession(MOBILE_ID);
+        Session session = createNewAuthenticationSession();
         Mockito.doReturn(midConnectorMock).when(midClient).getMobileIdConnector();
         Mockito.doThrow(new MidInternalErrorException("MidInternalErrorException")).when(midConnectorMock).authenticate(Mockito.any());
         ServiceNotAvailableException expectedEx = assertThrows(ServiceNotAvailableException.class, () -> {
@@ -128,7 +130,7 @@ public class AuthMidServiceTest extends BaseTest {
     @Test
     @Tag(value = "MID_AUTH_INIT_RESPONSE")
     void unchangedAuthenticationSessionStateWhen_MidApi_ProcessingException() {
-        Session session = createNewAuthenticationSession(MOBILE_ID);
+        Session session = createNewAuthenticationSession();
         Mockito.doReturn(midConnectorMock).when(midClient).getMobileIdConnector();
         Mockito.doThrow(new ProcessingException("ProcessingException")).when(midConnectorMock).authenticate(Mockito.any());
         ServiceNotAvailableException expectedEx = assertThrows(ServiceNotAvailableException.class, () -> {
@@ -142,7 +144,7 @@ public class AuthMidServiceTest extends BaseTest {
     @Test
     @Tag(value = "MID_AUTH_INIT_RESPONSE")
     void unchangedAuthenticationSessionStateWhen_MidApi_RuntimeException() {
-        Session session = createNewAuthenticationSession(MOBILE_ID);
+        Session session = createNewAuthenticationSession();
         Mockito.doReturn(midConnectorMock).when(midClient).getMobileIdConnector();
         Mockito.doThrow(new RuntimeException("RuntimeException")).when(midConnectorMock).authenticate(Mockito.any());
         IllegalStateException expectedEx = assertThrows(IllegalStateException.class, () -> {
@@ -295,10 +297,22 @@ public class AuthMidServiceTest extends BaseTest {
     private String startMidAuthSessionWithPollResponse(String pollResponse, int pollHttpStatus) {
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 200);
         createMidApiPollStub(pollResponse, pollHttpStatus);
-        Session session = createNewAuthenticationSession(MOBILE_ID);
+        Session session = createNewAuthenticationSession();
         MidAuthenticationHashToSign midAuthenticationHashToSign = authMidService.startMidAuthSession(session.getAttribute(TARA_SESSION), "60001019906", "+37200000766");
         assertNotNull(midAuthenticationHashToSign);
         return session.getId();
+    }
+
+    protected Session createNewAuthenticationSession() {
+        Session session = sessionRepository.createSession();
+        TaraSession testSession = MockTaraSessionBuilder.builder()
+                .sessionId(session.getId())
+                .authenticationState(INIT_AUTH_PROCESS)
+                .authenticationTypes(of(MOBILE_ID))
+                .build();
+        session.setAttribute(TARA_SESSION, testSession);
+        sessionRepository.save(session);
+        return session;
     }
 
     private void assertMidApiRequests() {

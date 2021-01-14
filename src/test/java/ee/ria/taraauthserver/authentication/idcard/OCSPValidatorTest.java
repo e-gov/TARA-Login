@@ -63,7 +63,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp;
-import static java.util.Arrays.asList;
+import static java.util.List.of;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -115,15 +115,15 @@ public class OCSPValidatorTest {
 
     @AfterAll
     public static void tearDown() {
-//        mockOcspServer.stop();
-//        mockFallbackOcspServer.stop();
+        mockOcspServer.stop();
+        mockFallbackOcspServer.stop();
     }
 
     @BeforeEach
     public void setUpTest() throws Exception {
         MDC.clear();
         ocspConfiguration = getMockOcspConfiguration(
-                asList("TEST of ESTEID-SK 2015"),
+                of("TEST of ESTEID-SK 2015"),
                 String.format("http://localhost:%d/ocsp", mockOcspServer.port()),
                 "TEST of SK OCSP RESPONDER 2011", false);
 
@@ -135,7 +135,7 @@ public class OCSPValidatorTest {
         ocspResponseTransformer.setThisUpdateProvider(() -> Date.from(Instant.now()));
         ocspResponseTransformer.setNonceResolver(nonce -> nonce);
 
-        Mockito.when(ocspConfigurationResolver.resolve(Mockito.any())).thenReturn(asList(ocspConfiguration));
+        Mockito.when(ocspConfigurationResolver.resolve(Mockito.any())).thenReturn(of(ocspConfiguration));
 
         Mockito.when(trustedCertificates.get("TEST of ESTEID2018")).thenReturn(loadCertificateFromResource(MOCK_ISSUER_CERT_2018_PATH));
         Mockito.when(trustedCertificates.get("TEST of ESTEID-SK 2015")).thenReturn(loadCertificateFromResource(MOCK_ISSUER_CERT_2015_PATH));
@@ -264,13 +264,13 @@ public class OCSPValidatorTest {
     @Tag(value = "OCSP_VALID_RESPONSE")
     public void checkCertShouldThrowExceptionWhenOcspResponseIsMissingResponseStatus() throws Exception {
         String ocspUrl = String.format("http://localhost:%d/ocsp", mockOcspServer.port());
-        Ocsp ocspConfiguration = getMockOcspConfiguration(asList("TEST of ESTEID-SK 2015"),
+        Ocsp ocspConfiguration = getMockOcspConfiguration(of("TEST of ESTEID-SK 2015"),
                 ocspUrl,
                 "TEST of SK OCSP RESPONDER 2011",
                 true);
 
         Mockito.when(ocspConfigurationResolver.resolve(Mockito.any())).thenReturn(
-                asList(ocspConfiguration)
+                of(ocspConfiguration)
         );
 
         setUpMockOcspResponse(99, CertificateStatus.GOOD, ocspConfiguration);
@@ -290,13 +290,13 @@ public class OCSPValidatorTest {
     @Tag(value = "OCSP_VALID_RESPONSE")
     public void checkCertShouldThrowExceptionWhenOcspResponseStatusIsInternalError() throws Exception {
         String ocspUrl = String.format("http://localhost:%d/ocsp", mockOcspServer.port());
-        Ocsp ocspConfiguration = getMockOcspConfiguration(asList("TEST of ESTEID-SK 2015"),
+        Ocsp ocspConfiguration = getMockOcspConfiguration(of("TEST of ESTEID-SK 2015"),
                 ocspUrl,
                 "TEST of SK OCSP RESPONDER 2011",
                 true);
 
         Mockito.when(ocspConfigurationResolver.resolve(Mockito.any())).thenReturn(
-                asList(ocspConfiguration)
+                of(ocspConfiguration)
         );
 
         setUpMockOcspResponse(OCSPResp.INTERNAL_ERROR, CertificateStatus.GOOD, ocspConfiguration);
@@ -316,13 +316,13 @@ public class OCSPValidatorTest {
     @Tag(value = "OCSP_VALID_RESPONSE")
     public void checkCertShouldThrowExceptionWhenOcspResponseStatusIsTryLater() throws Exception {
         String ocspUrl = String.format("http://localhost:%d/ocsp", mockOcspServer.port());
-        Ocsp ocspConfiguration = getMockOcspConfiguration(asList("TEST of ESTEID-SK 2015"),
+        Ocsp ocspConfiguration = getMockOcspConfiguration(of("TEST of ESTEID-SK 2015"),
                 ocspUrl,
                 "TEST of SK OCSP RESPONDER 2011",
                 true);
 
         Mockito.when(ocspConfigurationResolver.resolve(Mockito.any())).thenReturn(
-                asList(ocspConfiguration)
+                of(ocspConfiguration)
         );
 
         setUpMockOcspResponse(OCSPResp.TRY_LATER, CertificateStatus.GOOD, ocspConfiguration);
@@ -464,11 +464,11 @@ public class OCSPValidatorTest {
     @Tag(value = "OCSP_RESPONSE_VALID_SIG")
     public void checkCertShouldThrowExceptionWhenOcspResponseDoesNotContainCertificateReferencedByRespIdUsingImplicitConfiguration() throws Exception {
         Ocsp ocspConfiguration = getMockOcspConfiguration(
-                asList("TEST of ESTEID2018"),
+                of("TEST of ESTEID2018"),
                 String.format("http://localhost:%d/ocsp", mockOcspServer.port()),
                 null, false);
         Mockito.when(ocspConfigurationResolver.resolve(Mockito.any())).thenReturn(
-                asList(
+                of(
                         ocspConfiguration
                 )
         );
@@ -499,11 +499,11 @@ public class OCSPValidatorTest {
     @Tag(value = "OCSP_RESPONSE_VALID_SIG")
     public void checkCertShouldThrowExceptionWhenOcspResponseDoesNotContainCertificateReferencedByRespId() throws Exception {
         Ocsp ocspConfiguration = getMockOcspConfiguration(
-                asList("TEST of ESTEID-SK 2015"),
+                of("TEST of ESTEID-SK 2015"),
                 String.format("http://localhost:%d/ocsp", mockOcspServer.port()),
                 null, false);
         Mockito.when(ocspConfigurationResolver.resolve(Mockito.any())).thenReturn(
-                asList(
+                of(
                         ocspConfiguration
                 )
         );
@@ -566,11 +566,11 @@ public class OCSPValidatorTest {
 
         String ocspUrl = String.format("http://localhost:%d/ocsp", mockOcspServer.port());
         Ocsp ocspConfiguration = getMockOcspConfiguration(
-                asList("TEST of ESTEID2018"),
+                of("TEST of ESTEID2018"),
                 ocspUrl,
                 null, false);
         Mockito.when(ocspConfigurationResolver.resolve(Mockito.any())).thenReturn(
-                asList(
+                of(
                         ocspConfiguration
                 )
         );
@@ -683,13 +683,13 @@ public class OCSPValidatorTest {
     @Tag(value = "SK_OCSP_REQUEST_REQ")
     public void checkCertShouldSucceedWithExplicitResponderCert() throws Exception {
         String ocspUrl = String.format("http://localhost:%d/ocsp", mockOcspServer.port());
-        Ocsp ocspConfiguration = getMockOcspConfiguration(asList("TEST of ESTEID-SK 2015"),
+        Ocsp ocspConfiguration = getMockOcspConfiguration(of("TEST of ESTEID-SK 2015"),
                 ocspUrl,
                 "TEST of SK OCSP RESPONDER 2011",
                 true);
 
         Mockito.when(ocspConfigurationResolver.resolve(Mockito.any())).thenReturn(
-                asList(ocspConfiguration)
+                of(ocspConfiguration)
         );
 
         setUpMockOcspResponse(OCSPResp.SUCCESSFUL, CertificateStatus.GOOD, ocspConfiguration);
@@ -703,9 +703,9 @@ public class OCSPValidatorTest {
     @Tag(value = "OCSP_RESPONSE_VALID_SIG")
     public void checkCertShouldSucceedWhenNoExplicitResponderCertConfiguredAndSignerCertNotInTruststore() throws Exception {
         String ocspUrl = String.format("http://localhost:%d/ocsp", mockOcspServer.port());
-        Ocsp ocspConfiguration = getMockOcspConfiguration(asList("TEST of ESTEID2018"), ocspUrl, null, false);
+        Ocsp ocspConfiguration = getMockOcspConfiguration(of("TEST of ESTEID2018"), ocspUrl, null, false);
         Mockito.when(ocspConfigurationResolver.resolve(Mockito.any())).thenReturn(
-                asList(
+                of(
                         ocspConfiguration
                 )
         );
@@ -739,9 +739,9 @@ public class OCSPValidatorTest {
     @Tag(value = "OCSP_RESPONSE_VALID_SIG")
     public void checkCertShouldSucceedWhenNoExplicitResponderCertConfiguredAndSignerCertFoundInTruststore() throws Exception {
         String ocspUrl = String.format("http://localhost:%d/ocsp", mockOcspServer.port());
-        Ocsp ocspConfiguration = getMockOcspConfiguration(asList("TEST of ESTEID2018"), ocspUrl, null, false);
+        Ocsp ocspConfiguration = getMockOcspConfiguration(of("TEST of ESTEID2018"), ocspUrl, null, false);
         Mockito.when(ocspConfigurationResolver.resolve(Mockito.any())).thenReturn(
-                asList(
+                of(
                         ocspConfiguration
                 )
         );
@@ -778,12 +778,12 @@ public class OCSPValidatorTest {
         String fallbackOcspUrl = String.format("http://localhost:%d/ocsp", mockFallbackOcspServer.port());
 
         Ocsp ocspFallbackConfiguration = getMockOcspConfiguration(
-                asList("SOME TRUSTED ISSUER", "TEST of ESTEID-SK 2015", "SOME OTHER TRUSTED ISSUER"),
+                of("SOME TRUSTED ISSUER", "TEST of ESTEID-SK 2015", "SOME OTHER TRUSTED ISSUER"),
                 fallbackOcspUrl, "TEST of SK OCSP RESPONDER 2011", false
         );
 
         Mockito.when(ocspConfigurationResolver.resolve(Mockito.any())).thenReturn(
-                asList(
+                of(
                         ocspConfiguration,
                         ocspFallbackConfiguration
                 )
@@ -819,12 +819,12 @@ public class OCSPValidatorTest {
 
         String ocspUrl = String.format("http://localhost:%d/ocsp", mockFallbackOcspServer.port());
         Ocsp ocspFallbackConfiguration = getMockOcspConfiguration(
-                asList("SOME TRUSTED ISSUER", "TEST of ESTEID-SK 2015", "SOME OTHER TRUSTED ISSUER"),
+                of("SOME TRUSTED ISSUER", "TEST of ESTEID-SK 2015", "SOME OTHER TRUSTED ISSUER"),
                 ocspUrl, "TEST of SK OCSP RESPONDER 2011", false
         );
 
         Mockito.when(ocspConfigurationResolver.resolve(Mockito.any())).thenReturn(
-                asList(
+                of(
                         ocspConfiguration,
                         ocspFallbackConfiguration
                 )
@@ -860,12 +860,12 @@ public class OCSPValidatorTest {
 
         String ocspUrl = String.format("http://localhost:%d/ocsp", mockFallbackOcspServer.port());
         Ocsp ocspFallbackConfiguration = getMockOcspConfiguration(
-                asList("SOME TRUSTED ISSUER", "TEST of ESTEID-SK 2015", "SOME OTHER TRUSTED ISSUER"),
+                of("SOME TRUSTED ISSUER", "TEST of ESTEID-SK 2015", "SOME OTHER TRUSTED ISSUER"),
                 ocspUrl, "TEST of SK OCSP RESPONDER 2011", false
         );
 
         Mockito.when(ocspConfigurationResolver.resolve(Mockito.any())).thenReturn(
-                asList(
+                of(
                         ocspConfiguration,
                         ocspFallbackConfiguration
                 )

@@ -44,7 +44,7 @@ class AuthAcceptController {
         String url = authConfigurationProperties.getHydraService().getAcceptLoginUrl() + "?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge();
         ResponseEntity<LoginAcceptResponseBody> response = hydraService.exchange(url, HttpMethod.PUT, createRequestBody(taraSession), LoginAcceptResponseBody.class);
 
-        if (response.getStatusCode() == HttpStatus.OK && response.getBody().getRedirectUrl() != null) {
+        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && response.getBody().getRedirectUrl() != null) {
             taraSession.setState(AUTHENTICATION_SUCCESS);
             return new RedirectView(response.getBody().getRedirectUrl());
         } else {

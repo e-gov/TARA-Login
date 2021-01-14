@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
-import static ee.ria.taraauthserver.session.MockSessionUtils.*;
+import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -32,7 +32,7 @@ class ThymeleafSupportTest {
     public void setUp() {
         thymeleafSupport = new ThymeleafSupport();
         LocaleContextHolder.setLocale(Locale.ENGLISH);
-        HttpSession mockHttpSession = createMockHttpSession(getMockLoginRequestInfo());
+        HttpSession mockHttpSession = buildMockHttpSession(buildMockLoginRequestInfo());
         testSession = (TaraSession) mockHttpSession.getAttribute(TARA_SESSION);
     }
 
@@ -62,31 +62,31 @@ class ThymeleafSupportTest {
     @Test
     void getServiceName_returnsNullWhenSessionMissing() {
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(new MockHttpServletRequest(), new MockHttpServletResponse()));
-        assertEquals(null, thymeleafSupport.getServiceName());
+        assertNull(thymeleafSupport.getServiceName());
     }
 
     @Test
     void getServiceName_returnsNullWhenNoClientNameSet() {
-        TaraSession.LoginRequestInfo mockLoginRequestInfo = getMockLoginRequestInfo();
+        TaraSession.LoginRequestInfo mockLoginRequestInfo = buildMockLoginRequestInfo();
         mockLoginRequestInfo.getClient().getMetaData().getOidcClient().setName(null);
-        createMockHttpSession(mockLoginRequestInfo);
-        assertEquals(null, thymeleafSupport.getServiceName());
+        buildMockHttpSession(mockLoginRequestInfo);
+        assertNull(thymeleafSupport.getServiceName());
     }
 
     @Test
     void getServiceName_returnsClientNameWhenClientNameSetWithoutTranslations() {
-        TaraSession.LoginRequestInfo mockLoginRequestInfo = getMockLoginRequestInfo();
+        TaraSession.LoginRequestInfo mockLoginRequestInfo = buildMockLoginRequestInfo();
         mockLoginRequestInfo.getClient().getMetaData().getOidcClient().setName(MOCK_CLIENT_NAME);
         mockLoginRequestInfo.getClient().getMetaData().getOidcClient().setNameTranslations(new HashMap<>());
-        createMockHttpSession(mockLoginRequestInfo);
+        buildMockHttpSession(mockLoginRequestInfo);
         assertEquals(MOCK_CLIENT_NAME, thymeleafSupport.getServiceName());
     }
 
     @Test
     void getServiceName_returnsClientNameWithTranslationWhenTranslationExists() {
-        TaraSession.LoginRequestInfo mockLoginRequestInfo = getMockLoginRequestInfo();
+        TaraSession.LoginRequestInfo mockLoginRequestInfo = buildMockLoginRequestInfo();
         mockLoginRequestInfo.getClient().getMetaData().getOidcClient().setName(MOCK_CLIENT_NAME);
-        createMockHttpSession(mockLoginRequestInfo);
+        buildMockHttpSession(mockLoginRequestInfo);
         assertEquals(MOCK_CLIENT_NAME_EN, thymeleafSupport.getServiceName());
     }
 
@@ -99,27 +99,27 @@ class ThymeleafSupportTest {
 
     @Test
     void getBackUrl_returnsAuthInitWhenSessionPresent() {
-        createMockHttpSession(getMockLoginRequestInfo());
-        assertEquals("/auth/init?login_challenge=" + MOCK_CHALLENGE, thymeleafSupport.getBackUrl());
+        buildMockHttpSession(buildMockLoginRequestInfo());
+        assertEquals("/auth/init?login_challenge=" + MOCK_LOGIN_CHALLENGE, thymeleafSupport.getBackUrl());
     }
 
     @Test
     void getBackUrl_returnsNoUrlWhenSessionMissing() {
-        createMockHttpSession(null);
+        buildMockHttpSession(null);
         assertEquals("#", thymeleafSupport.getBackUrl());
     }
 
     @Test
     void getHomeUrl_returnsLegacyReturnUrlWhenPresent() {
-        createMockHttpSession(getMockLoginRequestInfo());
+        buildMockHttpSession(buildMockLoginRequestInfo());
         assertEquals(MOCK_CLIENT_LEGACY_URL, thymeleafSupport.getHomeUrl());
     }
 
     @Test
     void getHomeUrl_returnsLegacyReturnsUserCancelLinkWhenLegacyNotPresent() {
-        TaraSession.LoginRequestInfo mockLoginRequestInfo = getMockLoginRequestInfo();
+        TaraSession.LoginRequestInfo mockLoginRequestInfo = buildMockLoginRequestInfo();
         mockLoginRequestInfo.getClient().getMetaData().getOidcClient().setLegacyReturnUrl(null);
-        createMockHttpSession(mockLoginRequestInfo);
+        buildMockHttpSession(mockLoginRequestInfo);
         assertEquals("/auth/reject?error_code=user_cancel", thymeleafSupport.getHomeUrl());
     }
 }

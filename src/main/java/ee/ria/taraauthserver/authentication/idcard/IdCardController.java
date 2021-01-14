@@ -51,7 +51,7 @@ public class IdCardController {
     private IdCardAuthConfigurationProperties configurationProperties;
 
     @Autowired
-    OCSPValidator ocspValidator;
+    private OCSPValidator ocspValidator;
 
     public static final String HEADER_SSL_CLIENT_CERT = "XCLIENTCERTIFICATE";
     public static final String CN_SERIALNUMBER = "SERIALNUMBER";

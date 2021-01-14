@@ -124,6 +124,12 @@ Ignite is used for storing user’s session information.
 | `ignite.ssl-context-factory.trust-store-file-path` | Yes | Ignite trust store path. Example value `/test/resources/tls-truststore.p12` |
 | `ignite.ssl-context-factory.trust-store-password` | Yes | Ignite trust store password. |
 
+## 1.7 Security and Session management
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `spring.session.timeout` | No | Session timeout. If a duration suffix is not specified, seconds will be used. Default value `300s` |
+| `tara.content-security-policy` | No | Content security policy. Default value `connect-src 'self'; default-src 'none'; font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; block-all-mixed-content` |
+
 ## 2 TARA login server endpoints
 
 ### 2.1 /auth/init
