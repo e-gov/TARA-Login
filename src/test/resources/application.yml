@@ -1,3 +1,41 @@
+spring:
+  application:
+    name: tara-login-service
+    instance-id: ${APP_INSTANCE_ID:${random.int(100)}}
+  session:
+    timeout: 60s
+
+management:
+  health:
+    defaults:
+      enabled: false
+  info:
+    git:
+      mode: full
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        exclude: "*"
+    jmx:
+      exposure:
+        exclude: "*"
+
+ignite:
+  ignite-instance-name: tara-ignite
+  discovery-spi:
+    ip-finder:
+      addresses:
+        - 127.0.0.1
+  ssl-context-factory:
+    key-store-type: JKS
+    key-store-file-path: src/test/resources/tls-keystore.jks
+    key-store-password: changeit
+    trust-store-type: JKS
+    trust-store-file-path: src/test/resources/tls-truststore.jks
+    trust-store-password: changeit
+    protocol: TLSv1.2
+
 tara:
   hydra-service:
     login-url: https://localhost:9877/oauth2/auth/requests/login
@@ -69,38 +107,3 @@ tara:
     trust-store-location: classpath:tls-truststore.jks
     trust-store-password: changeit
     trust-store-type: jks
-
-management:
-  health:
-    defaults:
-      enabled: false
-  info:
-    git:
-      mode: full
-  endpoints:
-    web:
-      base-path: /
-      exposure:
-        exclude: "*"
-    jmx:
-      exposure:
-        exclude: "*"
-
-ignite:
-  igniteInstanceName: tara2-ignite
-  discoverySpi:
-    ipFinder:
-      addresses:
-        - 127.0.0.1
-  sslContextFactory:
-    keyStoreType: JKS
-    keyStoreFilePath: src/test/resources/tls-keystore.jks
-    keyStorePassword: changeit
-    trustStoreType: JKS
-    trustStoreFilePath: src/test/resources/tls-truststore.jks
-    trustStorePassword: changeit
-    protocol: TLSv1.2
-
-spring:
-  session:
-    timeout: 60s

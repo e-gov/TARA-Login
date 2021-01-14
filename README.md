@@ -1,4 +1,14 @@
 # TARA login server
+## Building the webapp
+
+Requirements:
+* JDK 11
+
+Execute the following command to build the tara-login-server webapp:
+````
+./mvnw clean package
+````
+
 ## 1 TARA login server configuration properties
 
 ### 1.1 hydra service
@@ -6,8 +16,8 @@
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.hydra-service.login-url` | Yes | Url to initialize Hydra OIDC server login process |
-| `tara.hydra-service.accept-login-url` | Yes | Url to accept Hydra OIDC server login |
-| `tara.hydra-service.reject-login-url` | Yes | Url to reject Hydra OIDC server login |
+| `tara.hydra-service.accept-login-url` | Yes | Url to accept Hydra OIDC server login request |
+| `tara.hydra-service.reject-login-url` | Yes | Url to reject Hydra OIDC server login request |
 | `tara.hydra-service.accept-consent-url` | Yes | Url to accept Hydra OIDC server consent |
 | `tara.hydra-service.reject-consent-url` | Yes | Url to reject Hydra OIDC server consent |
 | `tara.hydra-service.request-timeout` | Yes | Hydra service request timeout |
@@ -92,6 +102,27 @@ management:
         exclude: ""
         include: "heartbeat"
 ````
+## 1.7 Security and Session management
+
+### 1.7.1 Ignite configuration
+
+Ignite is used for storing user’s session information.
+
+| Map name        |  Description |
+| :---------------- | :---------- |
+| `spring:session:sessions` | Session cache. Holds users' session information. Default configuration: cacheMode:PARTITIONED, atomicityMode:ATOMIC, backups:0, expiry: 300s |
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `spring.session.timeout` | No | Session timeout. If a duration suffix is not specified, seconds will be used. Default value `300s` |
+| `ignite.ignite-instance-name` | No | Ignite instance name. Default value `tara2-ignite` |
+| `ignite.discovery-spi.ip-finder.addresses` | Yes | Ignite cluster node discovery addresses. Should minimally contain local node ip address. Example value `['192.168.1.1','192.168.1.2']` |
+| `ignite.ssl-context-factory.key-store-type` | Yes | Ignite key store type. Example value `PKCS12` |
+| `ignite.ssl-context-factory.key-store-file-path` | Yes | Ignite key store path. Example value `/test/resources/tls-keystore.p12` |
+| `ignite.ssl-context-factory.key-store-password` | Yes | Ignite key store password. |
+| `ignite.ssl-context-factory.trust-store-type` | Yes | Ignite trust store type. Example value `PKCS12` |
+| `ignite.ssl-context-factory.trust-store-file-path` | Yes | Ignite trust store path. Example value `/test/resources/tls-truststore.p12` |
+| `ignite.ssl-context-factory.trust-store-password` | Yes | Ignite trust store password. |
 
 ## 2 TARA login server endpoints
 
