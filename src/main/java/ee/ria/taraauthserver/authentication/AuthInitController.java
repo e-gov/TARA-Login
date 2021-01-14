@@ -6,10 +6,12 @@ import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.RequestUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -19,11 +21,8 @@ import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
-
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
@@ -67,7 +66,7 @@ public class AuthInitController {
     }
 
     private TaraSession initAuthSession(String loginChallenge) {
-        HttpSession httpSession = resetHttpSession();
+        HttpSession httpSession = SessionUtils.resetHttpSession();
         TaraSession.LoginRequestInfo loginRequestInfo = fetchLoginRequestInfo(loginChallenge);
 
         TaraSession newTaraSession = new TaraSession(httpSession.getId());
@@ -82,18 +81,6 @@ public class AuthInitController {
     private void setLocale(String language, TaraSession taraSession) {
         String locale = getUiLanguage(language, taraSession);
         RequestUtils.setLocale(locale);
-    }
-
-    private HttpSession resetHttpSession() {
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            log.warn("Session '{}' has been reset", session.getId());
-            session.invalidate();
-        }
-
-        session = request.getSession(true);
-        return session;
     }
 
     private String getUiLanguage(String language, TaraSession taraSession) {
@@ -135,11 +122,22 @@ public class AuthInitController {
 
     private List<AuthenticationType> getAllowedAuthenticationMethodsList(TaraSession.LoginRequestInfo loginRequestInfo) {
         LevelOfAssurance requestedAcr = getRequestedAcr(loginRequestInfo);
-
-        //TODO filter out and add warning if requested scopes has scope that isnt in allowed scopes
-
-        List<TaraScope> requestedScopes = parseRequestedScopes(loginRequestInfo.getRequestedScopes());
+        List<String> allowedRequestedScopes = getAllowedRequestedScopes(loginRequestInfo);
+        List<TaraScope> requestedScopes = parseRequestedScopes(allowedRequestedScopes);
         return getAllowedAuthenticationTypes(requestedScopes, requestedAcr);
+    }
+
+    @NotNull
+    private List<String> getAllowedRequestedScopes(TaraSession.LoginRequestInfo loginRequestInfo) {
+        List<String> allowedRequestedScopes = new ArrayList<>();
+        List<String> allowedScopes = Arrays.asList(loginRequestInfo.getClient().getScope().split(" "));
+        for (String scope : loginRequestInfo.getRequestedScopes()) {
+            if (allowedScopes.contains(scope))
+                allowedRequestedScopes.add(scope);
+            else
+                log.warn("Requested scope value '{}' is not allowed, entry ignored!", scope);
+        }
+        return allowedRequestedScopes;
     }
 
     private List<AuthenticationType> getAllowedAuthenticationTypes(List<TaraScope> requestedScopes, LevelOfAssurance requestedLoa) {
@@ -192,14 +190,19 @@ public class AuthInitController {
         String url = taraProperties.getHydraService().getLoginUrl() + "?login_challenge=" + loginChallenge;
         log.info("OIDC login GET request: " + url);
         long startTime = System.currentTimeMillis();
-        ResponseEntity<TaraSession.LoginRequestInfo> response = hydraService.exchange(url, HttpMethod.GET, null, TaraSession.LoginRequestInfo.class);
-        long duration = System.currentTimeMillis() - startTime;
-        log.info("OIDC login response Code: " + response.getStatusCodeValue());
-        log.info("OIDC login response Body: " + response.getBody());
-        log.info("OIDC login request duration: " + duration + " ms");
+        try {
+            ResponseEntity<TaraSession.LoginRequestInfo> response = hydraService.exchange(url, HttpMethod.GET, null, TaraSession.LoginRequestInfo.class);
+            long duration = System.currentTimeMillis() - startTime;
+            log.info("OIDC login response Code: " + response.getStatusCodeValue());
+            log.info("OIDC login response Body: " + response.getBody());
+            log.info("OIDC login request duration: " + duration + " ms");
 
-        validateResponse(response.getBody(), loginChallenge);
-        return response.getBody();
+            validateResponse(response.getBody(), loginChallenge);
+            return response.getBody();
+        } catch (HttpClientErrorException.NotFound e) {
+            log.error(e.toString());
+            throw new BadRequestException("Login challenge not found.");
+        }
     }
 
     private void validateResponse(TaraSession.LoginRequestInfo response, String loginChallenge) {

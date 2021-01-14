@@ -160,8 +160,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE +
-                        ";charset=UTF-8")
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
                 .header(HttpHeaders.CONTENT_LANGUAGE, "et")
                 .body("html.head.title", equalTo("Riigi autentimisteenus - Turvaline autentimine asutuste e-teenustes"))
                 .cookie("SESSION", matchesPattern("[A-Za-z0-9,-]{36,36}"))
@@ -383,7 +382,7 @@ class AuthInitControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "AUTH_INIT_ENABLED_AUTHMETHODS_SCOPES")
-    void authInit_OIDCRequestsScopeThatIsNotAllowedAndIdCard() {
+    void authInit_OIDCRequestsScopeThatIsNotAllowedAndScopeThatIsNotsupported() {
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -405,7 +404,8 @@ class AuthInitControllerTest extends BaseTest {
                 .body(containsString("idCardForm"))
                 .body(not(containsString("mobileIdForm")));
 
-        assertWarningIsLogged("Unsupported scope value 'ldap', entry ignored!");
+        assertWarningIsLogged("Requested scope value 'ldap' is not allowed, entry ignored!");
+        assertWarningIsLogged("Unsupported scope value 'banklink', entry ignored!");
     }
 
     @Test
@@ -460,6 +460,7 @@ class AuthInitControllerTest extends BaseTest {
     }
 
     @Test
+    @DirtiesContext
     @Tag(value = "AUTH_INIT_NO_VALID_AUTHMETHODS")
     void authInit_NoAllowedAuthMethods() {
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
@@ -520,8 +521,8 @@ class AuthInitControllerTest extends BaseTest {
                 .get("/auth/init")
                 .then()
                 .assertThat()
-                .statusCode(500)
-                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
+                .statusCode(400)
+                .body("message", equalTo("Login challenge not found."));
     }
 
     @Test

@@ -35,4 +35,37 @@ public class SessionUtils {
             throw new BadRequestException(ErrorCode.SESSION_STATE_INVALID, String.format("Invalid authentication state: '%s', expected one of: %s", taraSession.getState(), Arrays.toString(validSessionStates)));
         }
     }
+
+    public HttpSession resetHttpSession() {
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            log.warn("Session '{}' has been reset", session.getId());
+            session.invalidate();
+        }
+
+        session = request.getSession(true);
+        return session;
+    }
+
+    public HttpSession resetHttpSession(TaraSession taraSession) {
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            log.warn("Session '{}' has been reset", session.getId());
+            session.invalidate();
+        }
+
+        session = request.getSession(true);
+        TaraSession newTaraSession = new TaraSession(session.getId());
+        newTaraSession.setState(taraSession.getState());
+        newTaraSession.setLoginRequestInfo(taraSession.getLoginRequestInfo());
+        newTaraSession.setAuthenticationResult(taraSession.getAuthenticationResult());
+        newTaraSession.setSelectedLegalPerson(taraSession.getSelectedLegalPerson());
+        newTaraSession.setAllowedAuthMethods(taraSession.getAllowedAuthMethods());
+        newTaraSession.setConsentChallenge(taraSession.getConsentChallenge());
+        newTaraSession.setLegalPersonList(taraSession.getLegalPersonList());
+        session.setAttribute(TARA_SESSION, newTaraSession);
+        return session;
+    }
 }

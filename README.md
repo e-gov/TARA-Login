@@ -7,6 +7,7 @@
 | :---------------- | :---------- | :----------------|
 | `tara.hydra-service.login-url` | Yes | Url to initialize Hydra OIDC server login process |
 | `tara.hydra-service.accept-login-url` | Yes | Url to accept Hydra OIDC server login |
+| `tara.hydra-service.reject-login-url` | Yes | Url to reject Hydra OIDC server login |
 | `tara.hydra-service.accept-consent-url` | Yes | Url to accept Hydra OIDC server consent |
 | `tara.hydra-service.reject-consent-url` | Yes | Url to reject Hydra OIDC server consent |
 | `tara.hydra-service.request-timeout` | Yes | Hydra service request timeout |
@@ -128,7 +129,7 @@ HTML page including a form with a personalized list of authentication methods
 #### Request:
 
 ````
-GET /auth/accept
+POST /auth/accept
 ````
 
 | Cookie        | Mandatory | Description |

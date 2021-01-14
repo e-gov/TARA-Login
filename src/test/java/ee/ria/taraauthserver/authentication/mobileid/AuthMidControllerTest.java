@@ -244,6 +244,23 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_VALID_INPUT_IDCODE")
+    void nationalIdNumberinvalid_and_phoneNumberInvalid() {
+        given()
+                .when()
+                .formParam("idCode", "31107114721")
+                .formParam("telephoneNumber", "123abc456def")
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Isikukood ei ole korrektne.; Telefoninumber ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
+
+        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 2 errors");
+    }
+
+    @Test
     @Tag(value = "MID_AUTH_INIT")
     void midAuthInit_session_mid_not_allowed() {
         Session session = sessionRepository.createSession();

@@ -141,6 +141,7 @@ public class IdCardController {
         authenticationResult.setSubject(authenticationResult.getCountry() + authenticationResult.getIdCode());
         taraSession.setState(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
         taraSession.setAuthenticationResult(authenticationResult);
+        SessionUtils.resetHttpSession(taraSession);
         log.info("updated session in idcard controller is: " + taraSession);
     }
 

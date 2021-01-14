@@ -45,7 +45,7 @@ public class LegalpersonController {
     @Autowired
     private final BusinessRegistryService eBusinessRegistryService;
 
-    @GetMapping(value = "/auth/legal_person/init")
+    @GetMapping(value = "/auth/legalperson/init")
     public String initLegalPerson(Model model, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 
@@ -68,7 +68,7 @@ public class LegalpersonController {
         return "legalPersonView";
     }
 
-    @GetMapping(value = "/auth/legal_person", produces = {MediaType.APPLICATION_JSON_VALUE})
+    @GetMapping(value = "/auth/legalperson", produces = {MediaType.APPLICATION_JSON_VALUE})
     public ModelAndView fetchLegalPersonsList(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, LEGAL_PERSON_AUTHENTICATION_INIT);
         notNull(taraSession.getAuthenticationResult(), "Authentication credentials missing from session!");
@@ -84,7 +84,7 @@ public class LegalpersonController {
         }
     }
 
-    @PostMapping("/auth/legal_person/confirm")
+    @PostMapping("/auth/legalperson/confirm")
     public String confirmLegalPerson(
             @RequestParam(name = "legal_person_identifier")
             @Size(max = 50)

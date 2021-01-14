@@ -51,9 +51,10 @@
                     <p id="error-service-not-available" class="hidden" th:utext="#{label.legal-person.error.service-not-available}"></p>
                     <p id="error-technical-problem" class="hidden" th:utext="#{label.legal-person.error.internal-service-error}"></p>
                 </div>
-                <form method="post" action="/auth/legal_person/confirm" class="c-form" id="selectLegalPerson">
+                <form method="post" action="/auth/legalperson/confirm" class="c-form" id="selectLegalPerson">
                     <input type="hidden" name="legal_person_identifier" value=""/>
-                    <button type="submit" class="c-btn c-btn--primary hidden" id="btn-select-legal-person" th:utext="#{label.common.login}"></button>
+                    <button type="submit" class="c-btn c-btn--primary hidden" id="btn-select-legal-person"
+                            th:utext="#{label.common.login}"></button>
                 </form>
             </div>
 

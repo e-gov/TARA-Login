@@ -181,7 +181,7 @@ class IdCardControllerTest extends BaseTest {
 
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
 
-        given()
+        String newSessionId = given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
                 .sessionId("SESSION", sessionId)
@@ -190,9 +190,10 @@ class IdCardControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
-                .body("status", equalTo("COMPLETED"));
+                .body("status", equalTo("COMPLETED"))
+                .extract().cookie("SESSION");
 
-        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        TaraSession taraSession = sessionRepository.findById(newSessionId).getAttribute(TARA_SESSION);
         TaraSession.AuthenticationResult result = taraSession.getAuthenticationResult();
         assertEquals("47101010033", result.getIdCode());
         assertEquals("MARI-LIIS", result.getFirstName());

@@ -18,10 +18,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.context.request.WebRequest;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 import static java.lang.String.format;
 import static java.lang.String.join;
@@ -102,6 +99,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
         for (ObjectError fe : bindingResult.getGlobalErrors()) {
             errors.add(format("%s", fe.getDefaultMessage()));
         }
+        Collections.sort(errors);
         return join("; ", errors);
     }
 }

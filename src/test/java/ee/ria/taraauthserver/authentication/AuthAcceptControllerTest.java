@@ -150,7 +150,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .session(testSession))
                 .andDo(print())
                 .andExpect(status().is(302))
-                .andExpect(header().string("Location", "/auth/legal_person/init"));
+                .andExpect(header().string("Location", "/auth/legalperson/init"));
     }
 
     @Test
