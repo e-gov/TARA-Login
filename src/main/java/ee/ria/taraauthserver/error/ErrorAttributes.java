@@ -4,6 +4,7 @@ import ee.ria.taraauthserver.error.exceptions.TaraException;
 import ee.ria.taraauthserver.utils.RequestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
@@ -49,6 +50,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
 
         attr.put("locale", webRequest.getLocale().toString());
         attr.remove("errors");
+        attr.put("incident_nr", MDC.get("traceId"));
         return attr;
     }
 

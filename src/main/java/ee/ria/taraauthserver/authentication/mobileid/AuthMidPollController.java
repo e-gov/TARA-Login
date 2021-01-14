@@ -28,7 +28,7 @@ public class AuthMidPollController {
                 ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getMidSessionId());
 
         if (taraSession.getState() == NATURAL_PERSON_AUTHENTICATION_COMPLETED) {
-            SessionUtils.resetHttpSession(taraSession);
+            //SessionUtils.resetHttpSession(taraSession);
             return new ModelAndView(new MappingJackson2JsonView(), Map.of("status", "COMPLETED"));
         } else if (taraSession.getState() == AUTHENTICATION_FAILED)
             throw new BadRequestException(taraSession.getAuthenticationResult().getErrorCode(), "Mid poll failed");
