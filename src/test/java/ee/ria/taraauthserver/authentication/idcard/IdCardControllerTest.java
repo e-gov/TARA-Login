@@ -18,6 +18,7 @@ import org.bouncycastle.cert.ocsp.UnknownStatus;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -179,7 +180,7 @@ class IdCardControllerTest extends BaseTest {
 
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
 
-        String newSessionId = given()
+        given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
                 .sessionId("SESSION", sessionId)
@@ -189,10 +190,9 @@ class IdCardControllerTest extends BaseTest {
                 .statusCode(200)
                 .headers(EXPECTED_JSON_RESPONSE_HEADERS)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
-                .body("status", equalTo("COMPLETED"))
-                .extract().cookie("SESSION");
+                .body("status", equalTo("COMPLETED"));
 
-        TaraSession taraSession = sessionRepository.findById(newSessionId).getAttribute(TARA_SESSION);
+        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         TaraSession.AuthenticationResult result = taraSession.getAuthenticationResult();
         assertEquals("47101010033", result.getIdCode());
         assertEquals("MARI-LIIS", result.getFirstName());

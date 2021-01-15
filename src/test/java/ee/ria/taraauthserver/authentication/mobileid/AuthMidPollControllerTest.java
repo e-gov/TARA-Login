@@ -5,9 +5,9 @@ import ee.ria.taraauthserver.session.MockSessionFilter;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import io.restassured.RestAssured;
-import org.junit.jupiter.api.BeforeEach;
 import io.restassured.http.Cookie;
-import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,6 @@ import static java.util.List.of;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 class AuthMidPollControllerTest extends BaseTest {
 
@@ -98,8 +97,7 @@ class AuthMidPollControllerTest extends BaseTest {
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(MOBILE_ID))
                 .authenticationState(NATURAL_PERSON_AUTHENTICATION_COMPLETED).build();
-        System.out.println(sessionFilter);
-        Cookie cookie = given()
+        given()
                 .filter(sessionFilter)
                 .when()
                 .get("/auth/mid/poll")
@@ -108,19 +106,9 @@ class AuthMidPollControllerTest extends BaseTest {
                 .statusCode(200)
                 .headers(EXPECTED_JSON_RESPONSE_HEADERS)
                 .body("status", equalTo("COMPLETED"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
-                .cookie("SESSION", matchesPattern("[A-Za-z0-9,-]{36,36}"))
-                .extract().detailedCookie("SESSION");
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
 
-        TaraSession taraSession = sessionRepository.findById(cookie.getValue()).getAttribute(TARA_SESSION);
+        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
         assertEquals(NATURAL_PERSON_AUTHENTICATION_COMPLETED, taraSession.getState());
-        assertEquals("/", cookie.getPath());
-        assertEquals("Strict", cookie.getSameSite());
-        assertNotEquals(sessionFilter.getSession().getId(), cookie.getValue());
-        assertEquals(true, cookie.isHttpOnly());
-        assertEquals(true, cookie.isSecured());
-        TaraSession taraSessionAfterResponse = sessionRepository.findById(cookie.getValue()).getAttribute(TARA_SESSION);
-        assertEquals(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, taraSessionAfterResponse.getState());
     }
-
 }
