@@ -480,7 +480,7 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .body("message", equalTo("No authentication methods match the requested level of assurance. Please check your authorization request"))
+                .body("message", equalTo("Autentimispäring ei ole korrektne. Soovitud autentimistasemele vastavaid autentimisvahendeid pole antud infosüsteemile lubatud."))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue());
 
@@ -525,7 +525,7 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .body("incident_nr", notNullValue())
-                .body("message", equalTo("Login challenge not found."));
+                .body("message", equalTo("Vigane päring. Päringu volituskood ei ole korrektne."));
     }
 
     @Test

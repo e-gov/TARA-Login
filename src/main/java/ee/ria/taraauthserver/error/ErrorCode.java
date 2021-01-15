@@ -11,6 +11,8 @@ import java.util.Map;
 @Getter
 @AllArgsConstructor
 public enum ErrorCode {
+    INVALID_LOGIN_CHALLENGE("message.error.invalid-login-challenge"),
+    NO_VALID_AUTHMETHODS_AVAILABLE("message.error.no-allowed-authmethods"),
     ESTEID_INVALID_REQUEST("message.idc.error"),
     MID_USER_CANCEL("message.mid-rest.error.user-cancel"),
     MID_HASH_MISMATCH("message.mid-rest.error.signature-hash-mismatch"),
