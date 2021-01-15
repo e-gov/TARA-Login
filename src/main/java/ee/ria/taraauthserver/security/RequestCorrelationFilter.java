@@ -34,7 +34,7 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull FilterChain filterChain)
             throws ServletException, IOException {
 
-        HttpSession session = request.getSession();
+        HttpSession session = request.getSession(false);
         if(session != null) {
             MDC.put(MDC_ATTRIBUTE_NAME_SESSION_ID, session.getId());
             TaraSession taraSession = (TaraSession) session.getAttribute(TARA_SESSION);
