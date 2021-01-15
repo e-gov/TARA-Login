@@ -10,6 +10,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -47,6 +48,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authInit.loginChallenge: only characters and numbers allowed"))
                 .body("error", equalTo("Bad Request"))
+                .body("incident_nr", notNullValue())
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
     }
 
@@ -61,6 +63,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Required String parameter 'login_challenge' is not present"))
                 .body("error", equalTo("Bad Request"))
+                .body("incident_nr", notNullValue())
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
         assertErrorIsLogged("User exception: Required String parameter 'login_challenge' is not present");
@@ -78,6 +81,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authInit.loginChallenge: only characters and numbers allowed"))
                 .body("error", equalTo("Bad Request"))
+                .body("incident_nr", notNullValue())
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
         assertErrorIsLogged("User exception: authInit.loginChallenge: only characters and numbers allowed");
@@ -95,6 +99,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authInit.loginChallenge: size must be between 0 and 50"))
                 .body("error", equalTo("Bad Request"))
+                .body("incident_nr", notNullValue())
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
         assertErrorIsLogged("User exception: authInit.loginChallenge: size must be between 0 and 50");
@@ -103,6 +108,7 @@ class AuthInitControllerTest extends BaseTest {
     @Test
     @Tag(value = "AUTH_INIT_ENDPOINT")
     void authInit_loginChallenge_DuplicatedParam() {
+
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
                 .param("login_challenge", "abcdefg098AAdsCCasassa")
@@ -113,6 +119,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Multiple request parameters with the same name not allowed"))
                 .body("error", equalTo("Bad Request"))
+                .body("incident_nr", notNullValue())
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
     }
 
@@ -129,6 +136,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authInit.language: supported values are: 'et', 'en', 'ru'"))
                 .body("error", equalTo("Bad Request"))
+                .body("incident_nr", notNullValue())
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
     }
 
@@ -194,6 +202,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
+                .body("incident_nr", notNullValue())
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
     }
 
@@ -213,6 +222,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
+                .body("incident_nr", notNullValue())
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
     }
 
@@ -471,7 +481,8 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body("message", equalTo("No authentication methods match the requested level of assurance. Please check your authorization request"))
-                .body("error", equalTo("Bad Request"));
+                .body("error", equalTo("Bad Request"))
+                .body("incident_nr", notNullValue());
 
     }
 
@@ -491,6 +502,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
+                .body("incident_nr", notNullValue())
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
 
         assertErrorIsLogged("Server encountered an unexpected error: Unsupported acr value requested by client: 'wrongvalue'");
@@ -512,6 +524,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
+                .body("incident_nr", notNullValue())
                 .body("message", equalTo("Login challenge not found."));
     }
 
@@ -531,6 +544,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
+                .body("incident_nr", notNullValue())
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
     }
 
@@ -550,6 +564,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
+                .body("incident_nr", notNullValue())
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
 
         assertErrorIsLogged("Server encountered an unexpected error: Invalid hydra response: client.metaData.oidcClient.institution.sector: invalid sector value, accepted values are: private, public, client.metaData.oidcClient.shortName: size must be between 0 and 40, client.scope: must not be blank");

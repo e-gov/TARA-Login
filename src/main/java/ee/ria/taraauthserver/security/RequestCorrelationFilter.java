@@ -15,9 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
-import static ee.ria.taraauthserver.config.SessionConfiguration.TARA_SESSION_COOKIE_NAME;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
-import static java.util.Arrays.stream;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 @Component
