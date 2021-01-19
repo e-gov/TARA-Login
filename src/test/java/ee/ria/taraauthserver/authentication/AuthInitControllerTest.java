@@ -16,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.session.SessionRepository;
 import org.springframework.test.annotation.DirtiesContext;
 
+import javax.print.attribute.standard.Media;
 import java.net.URL;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -47,7 +48,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authInit.loginChallenge: only characters and numbers allowed"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
     }
 
     @Test
@@ -61,7 +62,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Required String parameter 'login_challenge' is not present"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: Required String parameter 'login_challenge' is not present");
     }
@@ -78,7 +79,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authInit.loginChallenge: only characters and numbers allowed"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: authInit.loginChallenge: only characters and numbers allowed");
     }
@@ -95,7 +96,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authInit.loginChallenge: size must be between 0 and 50"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: authInit.loginChallenge: size must be between 0 and 50");
     }
@@ -129,7 +130,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authInit.language: supported values are: 'et', 'en', 'ru'"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
     }
 
     @SneakyThrows
@@ -258,7 +259,8 @@ class AuthInitControllerTest extends BaseTest {
                         .withBodyFile("mock_responses/oidc/mock_response-ok_ui_locales-not-set.json")));
 
         given().param("login_challenge", TEST_LOGIN_CHALLENGE)
-                .when().get("/auth/init")
+                .when()
+                .get("/auth/init")
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -276,7 +278,8 @@ class AuthInitControllerTest extends BaseTest {
                         .withBodyFile("mock_responses/oidc/mock_response.json")));
 
         given().param("login_challenge", TEST_LOGIN_CHALLENGE)
-                .when().get("/auth/init")
+                .when()
+                .get("/auth/init")
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -296,7 +299,8 @@ class AuthInitControllerTest extends BaseTest {
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
                 .param("lang", "en")
-                .when().get("/auth/init")
+                .when()
+                .get("/auth/init")
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -316,7 +320,8 @@ class AuthInitControllerTest extends BaseTest {
 
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
-                .when().get("/auth/init")
+                .when()
+                .get("/auth/init")
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -469,7 +474,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8)
                 .body("message", equalTo("No authentication methods match the requested level of assurance. Please check your authorization request"))
                 .body("error", equalTo("Bad Request"));
 

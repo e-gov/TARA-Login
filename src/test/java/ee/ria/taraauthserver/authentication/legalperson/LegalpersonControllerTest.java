@@ -492,7 +492,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .headers(EXPECTED_HTML_RESPONSE_HEADERS)
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
-                .body("message", equalTo("Ebakorrektne päring."))
+                .body("message", equalTo("Antud id-ga juriidilist isikut ei leitud."))
                 .body("path", equalTo("/auth/legalperson/confirm"));
 
         assertErrorIsLogged("User exception: Attempted to select invalid legal person with id: '9876543210'");

@@ -22,6 +22,7 @@ public class ErrorHandler {
     @ExceptionHandler({BadRequestException.class, BindException.class, ConstraintViolationException.class, MissingServletRequestParameterException.class})
     public ModelAndView handleBindException(Exception ex, HttpServletResponse response) throws IOException {
         log.error("User exception: {}", ex.getMessage(), ex);
+        response.setContentType("application/json;charset=UTF-8");
         response.sendError(HttpServletResponse.SC_BAD_REQUEST);
         return new ModelAndView();
     }

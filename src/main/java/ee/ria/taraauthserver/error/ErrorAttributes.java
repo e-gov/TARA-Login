@@ -11,6 +11,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.session.SessionRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
@@ -47,7 +48,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
             handle4xxClientError(webRequest, attr);
         }
 
-        attr.put("locale", webRequest.getLocale().toString());
+        attr.put("locale", RequestUtils.getLocale());
         attr.remove("errors");
         return attr;
     }

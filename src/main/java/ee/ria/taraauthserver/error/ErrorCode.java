@@ -26,6 +26,7 @@ public enum ErrorCode {
     SESSION_NOT_FOUND("message.error.session-not-found"),
     SESSION_STATE_INVALID("message.error.session-state-invalid"),
     INVALID_REQUEST("message.error.invalid-request"),
+    INVALID_LEGAL_PERSON("label.legal-person.error.invalid-legal-person"),
     LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE("label.legal-person.error.service-not-available");
 
     private final String message;

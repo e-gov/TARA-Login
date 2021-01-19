@@ -47,7 +47,7 @@ class AuthRejectControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .body("message", equalTo("authReject.errorCode: the only supported value is: 'user_cancel'"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: authReject.errorCode: the only supported value is: 'user_cancel'");
     }

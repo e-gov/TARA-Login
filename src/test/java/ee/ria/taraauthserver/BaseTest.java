@@ -47,6 +47,8 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @Slf4j
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public abstract class BaseTest {
+    public static final String CHARSET_UTF_8 = ";charset=UTF-8";
+
     protected static final Map<String, Object> EXPECTED_HTML_RESPONSE_HEADERS = new HashMap<>() {{
         put("X-XSS-Protection", "1; mode=block");
         put("X-Content-Type-Options", "nosniff");

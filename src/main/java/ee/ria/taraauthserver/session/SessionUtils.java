@@ -38,6 +38,15 @@ public class SessionUtils {
         }
     }
 
+    public void invalidateSession() {
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+            log.warn("Session '{}' has been invalidated", session.getId());
+        }
+    }
+
     public HttpSession resetHttpSession() {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         HttpSession session = request.getSession(false);
