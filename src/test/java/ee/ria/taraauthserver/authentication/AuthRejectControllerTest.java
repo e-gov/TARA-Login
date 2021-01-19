@@ -64,7 +64,7 @@ class AuthRejectControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Multiple request parameters with the same name not allowed"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("Duplicate parameters not allowed in request. Found multiple parameters with name: error_code");
     }

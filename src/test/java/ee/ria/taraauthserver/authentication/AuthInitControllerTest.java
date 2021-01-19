@@ -120,7 +120,7 @@ class AuthInitControllerTest extends BaseTest {
                 .body("message", equalTo("Multiple request parameters with the same name not allowed"))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue())
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
     }
 
     @Test
@@ -484,7 +484,7 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8)
-                .body("message", equalTo("No authentication methods match the requested level of assurance. Please check your authorization request"))
+                .body("message", equalTo("Autentimispäring ei ole korrektne. Soovitud autentimistasemele vastavaid autentimisvahendeid pole antud infosüsteemile lubatud."))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue());
 
