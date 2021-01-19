@@ -116,6 +116,7 @@ class AuthMidPollControllerTest extends BaseTest {
         assertEquals(NATURAL_PERSON_AUTHENTICATION_COMPLETED, taraSession.getState());
         assertEquals("/", cookie.getPath());
         assertEquals("Strict", cookie.getSameSite());
+        assertNotEquals(sessionFilter.getSession().getId(), cookie.getValue());
         assertEquals(true, cookie.isHttpOnly());
         assertEquals(true, cookie.isSecured());
         TaraSession taraSessionAfterResponse = sessionRepository.findById(cookie.getValue()).getAttribute(TARA_SESSION);
