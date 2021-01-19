@@ -35,4 +35,13 @@ public class SessionUtils {
             throw new BadRequestException(ErrorCode.SESSION_STATE_INVALID, String.format("Invalid authentication state: '%s', expected one of: %s", taraSession.getState(), Arrays.toString(validSessionStates)));
         }
     }
+
+    public void invalidateSession() {
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+            log.warn("Session '{}' has been invalidated", session.getId());
+        }
+    }
 }

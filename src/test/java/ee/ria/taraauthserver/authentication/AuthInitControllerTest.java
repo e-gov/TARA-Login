@@ -17,6 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.session.SessionRepository;
 import org.springframework.test.annotation.DirtiesContext;
 
+import javax.print.attribute.standard.Media;
 import java.net.URL;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -49,7 +50,7 @@ class AuthInitControllerTest extends BaseTest {
                 .body("message", equalTo("authInit.loginChallenge: only characters and numbers allowed"))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue())
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
     }
 
     @Test
@@ -64,7 +65,7 @@ class AuthInitControllerTest extends BaseTest {
                 .body("message", equalTo("Required String parameter 'login_challenge' is not present"))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue())
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: Required String parameter 'login_challenge' is not present");
     }
@@ -82,7 +83,7 @@ class AuthInitControllerTest extends BaseTest {
                 .body("message", equalTo("authInit.loginChallenge: only characters and numbers allowed"))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue())
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: authInit.loginChallenge: only characters and numbers allowed");
     }
@@ -100,7 +101,7 @@ class AuthInitControllerTest extends BaseTest {
                 .body("message", equalTo("authInit.loginChallenge: size must be between 0 and 50"))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue())
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: authInit.loginChallenge: size must be between 0 and 50");
     }
@@ -108,7 +109,6 @@ class AuthInitControllerTest extends BaseTest {
     @Test
     @Tag(value = "AUTH_INIT_ENDPOINT")
     void authInit_loginChallenge_DuplicatedParam() {
-
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
                 .param("login_challenge", "abcdefg098AAdsCCasassa")
@@ -120,7 +120,7 @@ class AuthInitControllerTest extends BaseTest {
                 .body("message", equalTo("Multiple request parameters with the same name not allowed"))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue())
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
     }
 
     @Test
@@ -137,7 +137,7 @@ class AuthInitControllerTest extends BaseTest {
                 .body("message", equalTo("authInit.language: supported values are: 'et', 'en', 'ru'"))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue())
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
     }
 
     @SneakyThrows
@@ -266,7 +266,8 @@ class AuthInitControllerTest extends BaseTest {
                         .withBodyFile("mock_responses/oidc/mock_response-ok_ui_locales-not-set.json")));
 
         given().param("login_challenge", TEST_LOGIN_CHALLENGE)
-                .when().get("/auth/init")
+                .when()
+                .get("/auth/init")
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -284,7 +285,8 @@ class AuthInitControllerTest extends BaseTest {
                         .withBodyFile("mock_responses/oidc/mock_response.json")));
 
         given().param("login_challenge", TEST_LOGIN_CHALLENGE)
-                .when().get("/auth/init")
+                .when()
+                .get("/auth/init")
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -304,7 +306,8 @@ class AuthInitControllerTest extends BaseTest {
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
                 .param("lang", "en")
-                .when().get("/auth/init")
+                .when()
+                .get("/auth/init")
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -324,7 +327,8 @@ class AuthInitControllerTest extends BaseTest {
 
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
-                .when().get("/auth/init")
+                .when()
+                .get("/auth/init")
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -477,7 +481,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8)
                 .body("message", equalTo("Autentimispäring ei ole korrektne. Soovitud autentimistasemele vastavaid autentimisvahendeid pole antud infosüsteemile lubatud."))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue());

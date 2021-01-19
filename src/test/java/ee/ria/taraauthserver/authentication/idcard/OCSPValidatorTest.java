@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.authentication.idcard;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.FileSource;
@@ -71,7 +72,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {TaraAuthServerConfiguration.class, OCSPValidator.class, RestTemplate.class}, initializers = ConfigDataApplicationContextInitializer.class)
+@ContextConfiguration(classes = {TaraAuthServerConfiguration.class, OCSPValidator.class, RestTemplate.class, ObjectMapper.class}, initializers = ConfigDataApplicationContextInitializer.class)
 public class OCSPValidatorTest {
     private static final OcspResponseTransformer ocspResponseTransformer = new OcspResponseTransformer(true);
 

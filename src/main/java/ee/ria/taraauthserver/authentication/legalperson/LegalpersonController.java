@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static ee.ria.taraauthserver.config.properties.TaraScope.LEGALPERSON;
+import static ee.ria.taraauthserver.error.ErrorCode.INVALID_LEGAL_PERSON;
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
@@ -102,7 +103,7 @@ public class LegalpersonController {
             log.info("Legal person selected: {}", legalPersonIdentifier);
             return "forward:/auth/accept";
         } else {
-            throw new BadRequestException(INVALID_REQUEST, format("Attempted to select invalid legal person with id: '%s'", legalPersonIdentifier));
+            throw new BadRequestException(INVALID_LEGAL_PERSON, format("Attempted to select invalid legal person with id: '%s'", legalPersonIdentifier));
         }
     }
 
