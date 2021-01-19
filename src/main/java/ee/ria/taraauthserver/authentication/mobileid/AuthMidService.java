@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import javax.ws.rs.ProcessingException;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import static ee.ria.taraauthserver.error.ErrorCode.MID_INTERNAL_ERROR;
 import static ee.ria.taraauthserver.error.ErrorCode.MID_VALIDATION_ERROR;
@@ -54,11 +55,14 @@ public class AuthMidService {
     @Autowired
     private MidAuthConfigurationProperties midAuthConfigurationProperties;
 
+    @Autowired
+    private Executor taskExecutor;
+
     public MidAuthenticationHashToSign startMidAuthSession(TaraSession taraSession, String idCode, String telephoneNumber) {
         try {
             MidAuthenticationHashToSign authenticationHash = getAuthenticationHash();
             MidAuthenticationResponse midAuthentication = initMidAuthentication(taraSession, idCode, telephoneNumber, authenticationHash);
-            CompletableFuture.supplyAsync(() -> pollAuthenticationResult(midAuthentication))
+            CompletableFuture.supplyAsync(() -> pollAuthenticationResult(midAuthentication), taskExecutor)
                     .thenAcceptAsync(midSessionStatus -> handleAuthenticationResult(taraSession, authenticationHash, midSessionStatus, telephoneNumber))
                     .exceptionally(ex -> {
                         handleAuthenticationException(taraSession, ex);
