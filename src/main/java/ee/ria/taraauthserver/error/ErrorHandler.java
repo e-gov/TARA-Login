@@ -22,7 +22,6 @@ public class ErrorHandler {
     @ExceptionHandler({BadRequestException.class, BindException.class, ConstraintViolationException.class, MissingServletRequestParameterException.class})
     public ModelAndView handleBindException(Exception ex, HttpServletResponse response) throws IOException {
         log.error("User exception: {}", ex.getMessage(), ex);
-        response.setContentType("application/json;charset=UTF-8");
         response.sendError(HttpServletResponse.SC_BAD_REQUEST);
         return new ModelAndView();
     }
@@ -30,7 +29,6 @@ public class ErrorHandler {
     @ExceptionHandler({HttpClientErrorException.class})
     public ModelAndView handleHttpClientErrorException(HttpClientErrorException ex, HttpServletResponse response) throws IOException {
         log.error("HTTP client exception: {}", ex.getMessage(), ex);
-        response.setContentType("application/json;charset=UTF-8");
         response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         return new ModelAndView();
     }
@@ -38,7 +36,6 @@ public class ErrorHandler {
     @ExceptionHandler({ServiceNotAvailableException.class})
     public ModelAndView handleDownstreamServiceErrors(Exception ex, HttpServletResponse response) throws IOException {
         log.error("Service not available: {}", ex.getMessage(), ex);
-        response.setContentType("application/json;charset=UTF-8");
         response.sendError(HttpServletResponse.SC_BAD_GATEWAY);
         return new ModelAndView();
     }
@@ -46,7 +43,6 @@ public class ErrorHandler {
     @ExceptionHandler({NotFoundException.class})
     public ModelAndView handleNotFound(Exception ex, HttpServletResponse response) throws IOException {
         log.error("Results not found: {}", ex.getMessage(), ex);
-        response.setContentType("application/json;charset=UTF-8");
         response.sendError(HttpServletResponse.SC_NOT_FOUND);
         return new ModelAndView();
     }
@@ -54,7 +50,6 @@ public class ErrorHandler {
     @ExceptionHandler({Exception.class})
     public ModelAndView handleAll(Exception ex, HttpServletResponse response) throws IOException {
         log.error("Server encountered an unexpected error: {}", ex.getMessage(), ex);
-        response.setContentType("application/json;charset=UTF-8");
         response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         return new ModelAndView();
     }

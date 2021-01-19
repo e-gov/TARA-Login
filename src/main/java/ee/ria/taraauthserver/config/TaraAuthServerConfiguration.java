@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.utils.ThymeleafSupport;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.LocaleResolver;
@@ -24,6 +26,7 @@ import org.springframework.web.servlet.i18n.SessionLocaleResolver;
 import javax.net.ssl.SSLContext;
 import javax.validation.Validator;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -46,6 +49,13 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
                         getFile(authConfigurationProperties.getTls().getTruststoreLocation()),
                         authConfigurationProperties.getTls().getTruststorePassword().toCharArray())
                 .build();
+    }
+
+    @Bean
+    public MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter(ObjectMapper objectMapper) {
+        MappingJackson2HttpMessageConverter jsonConverter = new MappingJackson2HttpMessageConverter(objectMapper);
+        jsonConverter.setDefaultCharset(StandardCharsets.UTF_8);
+        return jsonConverter;
     }
 
     @Bean
