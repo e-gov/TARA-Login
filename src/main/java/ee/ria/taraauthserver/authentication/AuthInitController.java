@@ -5,6 +5,7 @@ import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.config.properties.TaraScope;
+import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
@@ -148,7 +149,7 @@ public class AuthInitController {
                 .collect(Collectors.toList());
 
         if (isEmpty(allowedAuthenticationMethodsList))
-            throw new BadRequestException("No authentication methods match the requested level of assurance. Please check your authorization request");
+            throw new BadRequestException(ErrorCode.NO_VALID_AUTHMETHODS_AVAILABLE, "No authentication methods match the requested level of assurance. Please check your authorization request");
         log.debug("List of authentication methods to display on login page: {}", allowedAuthenticationMethodsList);
         return allowedAuthenticationMethodsList;
     }
@@ -201,7 +202,7 @@ public class AuthInitController {
             return response.getBody();
         } catch (HttpClientErrorException.NotFound e) {
             log.error(e.toString());
-            throw new BadRequestException("Login challenge not found.");
+            throw new BadRequestException(ErrorCode.INVALID_LOGIN_CHALLENGE, "Login challenge not found.");
         }
     }
 

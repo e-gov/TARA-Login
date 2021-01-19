@@ -111,11 +111,12 @@ class AuthMidPollControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
                 .cookie("SESSION", matchesPattern("[A-Za-z0-9,-]{36,36}"))
                 .extract().detailedCookie("SESSION");
-        System.out.println("wee" + sessionFilter.getSession().getId());
+
         TaraSession taraSession = sessionRepository.findById(cookie.getValue()).getAttribute(TARA_SESSION);
         assertEquals(NATURAL_PERSON_AUTHENTICATION_COMPLETED, taraSession.getState());
         assertEquals("/", cookie.getPath());
         assertEquals("Strict", cookie.getSameSite());
+        assertNotEquals(sessionFilter.getSession().getId(), cookie.getValue());
         assertEquals(true, cookie.isHttpOnly());
         assertEquals(true, cookie.isSecured());
         TaraSession taraSessionAfterResponse = sessionRepository.findById(cookie.getValue()).getAttribute(TARA_SESSION);
