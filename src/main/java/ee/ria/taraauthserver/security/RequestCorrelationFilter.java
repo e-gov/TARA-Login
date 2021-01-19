@@ -33,10 +33,10 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         HttpSession session = request.getSession(false);
-        if(session != null) {
+        if (session != null) {
             MDC.put(MDC_ATTRIBUTE_NAME_SESSION_ID, session.getId());
             TaraSession taraSession = (TaraSession) session.getAttribute(TARA_SESSION);
-            if(taraSession != null && taraSession.getState() != null) {
+            if (taraSession != null && taraSession.getState() != null) {
                 MDC.put(MDC_ATTRIBUTE_NAME_SESSION_STATE, taraSession.getState().name());
             }
         }

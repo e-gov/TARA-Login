@@ -254,8 +254,6 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200)
                 .cookie("SESSION", not(equalTo(cookie)));
-
-        assertWarningIsLogged("Session '" + cookie + "' has been reset");
     }
 
     @Test
