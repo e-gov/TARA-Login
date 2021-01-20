@@ -62,6 +62,8 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
     public RestTemplate restTemplate(RestTemplateBuilder builder, SSLContext sslContext, AuthConfigurationProperties authConfigurationProperties) {
         HttpClient client = HttpClients.custom()
                 .setSSLContext(sslContext)
+                .setMaxConnPerRoute(authConfigurationProperties.getHydraService().getMaxConnectionsTotal())
+                .setMaxConnTotal(authConfigurationProperties.getHydraService().getMaxConnectionsTotal())
                 .build();
 
         return builder

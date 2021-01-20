@@ -72,8 +72,10 @@ Example: to deploy the webapp to a standalone Tomcat server
 | `tara.hydra-service.reject-login-url` | Yes | Url to reject Hydra OIDC server login request |
 | `tara.hydra-service.accept-consent-url` | Yes | Url to accept Hydra OIDC server consent |
 | `tara.hydra-service.reject-consent-url` | Yes | Url to reject Hydra OIDC server consent |
-| `tara.hydra-service.request-timeout` | Yes | Hydra service request timeout |
 | `tara.hydra-service.health-url` | Yes | Hydra service health url |
+| `tara.hydra-service.request-timeout-in-seconds` | No | Hydra service request timeout |
+| `tara.hydra-service.max-connections-total` | No | Max connection pool size for hydra requests. Defaults to 50 |
+
 
 <a name="tls_conf"></a>
 ### 1.2 Trusted TLS certificates
