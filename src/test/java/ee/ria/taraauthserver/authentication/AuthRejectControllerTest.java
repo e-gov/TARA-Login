@@ -5,6 +5,7 @@ import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -47,7 +48,7 @@ class AuthRejectControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .body("message", equalTo("authReject.errorCode: the only supported value is: 'user_cancel'"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: authReject.errorCode: the only supported value is: 'user_cancel'");
     }
@@ -64,7 +65,7 @@ class AuthRejectControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Multiple request parameters with the same name not allowed"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("Duplicate parameters not allowed in request. Found multiple parameters with name: error_code");
     }
@@ -88,10 +89,8 @@ class AuthRejectControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(302);
 
-        Session session = sessionRepository.findById(sessionId);
-        TaraSession taraSession = session.getAttribute(TARA_SESSION);
-
-        assertEquals(TaraAuthenticationState.AUTHENTICATION_CANCELED, taraSession.getState());
+        Assert.assertNull(sessionRepository.findById(sessionId));
+        assertWarningIsLogged("Session '" + sessionId + "' has been invalidated");
     }
 
     @Test

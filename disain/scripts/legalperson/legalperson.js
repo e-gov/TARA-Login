@@ -5,7 +5,7 @@ jQuery(function ($) {
         $.ajax({
             type: "GET",
             dataType: "json",
-            url: "/auth/legal_person",
+            url: "/auth/legalperson",
             beforeSend: function() {setup();}
         }).done( function (json) {
             handleSuccessfulResult(json);

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import javax.ws.rs.ProcessingException;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import static ee.ria.taraauthserver.error.ErrorCode.MID_INTERNAL_ERROR;
 import static ee.ria.taraauthserver.error.ErrorCode.MID_VALIDATION_ERROR;
@@ -54,12 +55,15 @@ public class AuthMidService {
     @Autowired
     private MidAuthConfigurationProperties midAuthConfigurationProperties;
 
+    @Autowired
+    private Executor taskExecutor;
+
     public MidAuthenticationHashToSign startMidAuthSession(TaraSession taraSession, String idCode, String telephoneNumber) {
         try {
             MidAuthenticationHashToSign authenticationHash = getAuthenticationHash();
             MidAuthenticationResponse midAuthentication = initMidAuthentication(taraSession, idCode, telephoneNumber, authenticationHash);
-            CompletableFuture.supplyAsync(() -> pollAuthenticationResult(midAuthentication))
-                    .thenAcceptAsync(midSessionStatus -> handleAuthenticationResult(taraSession, authenticationHash, midSessionStatus, telephoneNumber))
+            CompletableFuture.supplyAsync(() -> pollAuthenticationResult(midAuthentication), taskExecutor)
+                    .thenAcceptAsync(midSessionStatus -> handleAuthenticationResult(taraSession, authenticationHash, midSessionStatus, telephoneNumber), taskExecutor)
                     .exceptionally(ex -> {
                         handleAuthenticationException(taraSession, ex);
                         return null;
@@ -119,34 +123,37 @@ public class AuthMidService {
     }
 
     private void handleAuthenticationResult(TaraSession taraSession, MidAuthenticationHashToSign authenticationHash, MidSessionStatus midSessionStatus, String telephoneNumber) {
-        if (midSessionStatus != null && equalsIgnoreCase("COMPLETE", midSessionStatus.getState()) && equalsIgnoreCase("OK", midSessionStatus.getResult())) {
-            MidAuthentication authentication = midClient.createMobileIdAuthentication(midSessionStatus, authenticationHash);
-            MidAuthenticationResult midAuthResult = midAuthenticationResponseValidator.validate(authentication);
-            TaraSession.MidAuthenticationResult taraAuthResult = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
+        if (midSessionStatus != null) {
+            log.info("MID session id {} authentication result: {}", ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getMidSessionId(), midSessionStatus.getState());
+            if (equalsIgnoreCase("COMPLETE", midSessionStatus.getState()) && equalsIgnoreCase("OK", midSessionStatus.getResult())) {
+                MidAuthentication authentication = midClient.createMobileIdAuthentication(midSessionStatus, authenticationHash);
+                MidAuthenticationResult midAuthResult = midAuthenticationResponseValidator.validate(authentication);
+                TaraSession.MidAuthenticationResult taraAuthResult = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
 
-            MidAuthenticationIdentity authIdentity = midAuthResult.getAuthenticationIdentity();
-            if (authIdentity != null) {
-                taraAuthResult.setIdCode(authIdentity.getIdentityCode());
-                taraAuthResult.setCountry(authIdentity.getCountry());
-                taraAuthResult.setFirstName(authIdentity.getGivenName());
-                taraAuthResult.setLastName(authIdentity.getSurName());
-                taraAuthResult.setSubject(authIdentity.getCountry() + authIdentity.getIdentityCode());
-                taraAuthResult.setDateOfBirth(MidNationalIdentificationCodeValidator.getBirthDate(authIdentity.getIdentityCode()));
-            }
-            taraAuthResult.setPhoneNumber(telephoneNumber);
-            taraAuthResult.setAmr(AuthenticationType.MOBILE_ID);
-            taraAuthResult.setAcr(midAuthConfigurationProperties.getLevelOfAssurance());
+                MidAuthenticationIdentity authIdentity = midAuthResult.getAuthenticationIdentity();
+                if (authIdentity != null) {
+                    taraAuthResult.setIdCode(authIdentity.getIdentityCode());
+                    taraAuthResult.setCountry(authIdentity.getCountry());
+                    taraAuthResult.setFirstName(authIdentity.getGivenName());
+                    taraAuthResult.setLastName(authIdentity.getSurName());
+                    taraAuthResult.setSubject(authIdentity.getCountry() + authIdentity.getIdentityCode());
+                    taraAuthResult.setDateOfBirth(MidNationalIdentificationCodeValidator.getBirthDate(authIdentity.getIdentityCode()));
+                }
+                taraAuthResult.setPhoneNumber(telephoneNumber);
+                taraAuthResult.setAmr(AuthenticationType.MOBILE_ID);
+                taraAuthResult.setAcr(midAuthConfigurationProperties.getLevelOfAssurance());
 
-            if (midAuthResult.isValid() && midAuthResult.getErrors().isEmpty()) {
-                taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
-            } else {
-                taraSession.setState(AUTHENTICATION_FAILED);
-                taraAuthResult.setErrorCode(MID_VALIDATION_ERROR);
-                log.error("Authentication result validation failed: {}", midAuthResult.getErrors());
+                if (midAuthResult.isValid() && midAuthResult.getErrors().isEmpty()) {
+                    taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
+                } else {
+                    taraSession.setState(AUTHENTICATION_FAILED);
+                    taraAuthResult.setErrorCode(MID_VALIDATION_ERROR);
+                    log.error("Authentication result validation failed: {}", midAuthResult.getErrors());
+                }
+                Session session = sessionRepository.findById(taraSession.getSessionId());
+                session.setAttribute(TARA_SESSION, taraSession);
+                sessionRepository.save(session);
             }
-            Session session = sessionRepository.findById(taraSession.getSessionId());
-            session.setAttribute(TARA_SESSION, taraSession);
-            sessionRepository.save(session);
         }
     }
 

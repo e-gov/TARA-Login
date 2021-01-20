@@ -15,9 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
-import static ee.ria.taraauthserver.config.SessionConfiguration.TARA_SESSION_COOKIE_NAME;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
-import static java.util.Arrays.stream;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 @Component
@@ -34,11 +32,11 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull FilterChain filterChain)
             throws ServletException, IOException {
 
-        HttpSession session = request.getSession();
-        if(session != null) {
+        HttpSession session = request.getSession(false);
+        if (session != null) {
             MDC.put(MDC_ATTRIBUTE_NAME_SESSION_ID, session.getId());
             TaraSession taraSession = (TaraSession) session.getAttribute(TARA_SESSION);
-            if(taraSession != null && taraSession.getState() != null) {
+            if (taraSession != null && taraSession.getState() != null) {
                 MDC.put(MDC_ATTRIBUTE_NAME_SESSION_STATE, taraSession.getState().name());
             }
         }

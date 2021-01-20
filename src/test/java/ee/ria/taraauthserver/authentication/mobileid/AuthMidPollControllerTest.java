@@ -2,9 +2,12 @@ package ee.ria.taraauthserver.authentication.mobileid;
 
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.session.MockSessionFilter;
+import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import io.restassured.RestAssured;
+import io.restassured.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +23,7 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static java.util.List.of;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class AuthMidPollControllerTest extends BaseTest {
@@ -107,5 +111,4 @@ class AuthMidPollControllerTest extends BaseTest {
         TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
         assertEquals(NATURAL_PERSON_AUTHENTICATION_COMPLETED, taraSession.getState());
     }
-
 }

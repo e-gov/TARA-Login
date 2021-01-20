@@ -1,17 +1,69 @@
 # TARA login server
+
+- [Overview](#overview)
+- [Setting up the webapp](#build)
+    * [Requirements](#build_requirements)
+    * [Building the webapp](#building)
+    * [Deploying the webapp](#deployment)
+- [Configuration parameters](#configuration)
+    * [Integration with Hydra service](#hydra_integration_conf)
+    * [Trusted TLS certificates](#tls_conf)
+    * [Mobile-ID auth method](#mid_conf)
+    * [ID-card auth method](#esteid_conf)
+    * [Monitoring](#monitoring_conf)
+    * [Legal person attributes](#legalperson_conf)
+    * [Security and session managment](#session_and_sec_conf)
+        * [Ignite integration](#ignite_conf)
+        * [Security and session management](#sec_conf)
+
+<a name="overview"></a>
+## Overview
+
+TARA login server is a webapp that integrates with the [ORY Hydra OIDC server](https://github.com/ory/hydra) implementation. TARA login server provides [login](https://www.ory.sh/hydra/docs/concepts/login) and [consent](https://www.ory.sh/hydra/docs/concepts/login) flow implementations. Apache Ignite is used for session persistence between requests. 
+
+The webapp provides implementation for following authentication methods:
+* Estonian ID-card
+* Estonian Mobile-ID
+
+<a name="build"></a>
 ## Building the webapp
 
-Requirements:
-* JDK 11
+<a name="build_requirements"></a>
+### Requirements:
 
-Execute the following command to build the tara-login-server webapp:
+Java (JDK 11+) runtime is required to build and run the webapp. 
+
+<a name="build"></a>
+### Building the webapp:
+
+[Maven](https://maven.apache.org/) is used to build and test the software.
+
+To build the software, execute the following command:
+
 ````
 ./mvnw clean package
 ````
 
+You can find the compiled WAR archive in the target/ directory.
+
+<a name="deploying"></a>
+## Deploying the webapp
+
+TARA login server is distributed as a WAR archive that can be deployed to a web server that supports Java Servlets (ie Apache Tomcat).
+
+Example: to deploy the webapp to a standalone Tomcat server
+
+1. Add the tara-login-server-*.war file to Tomcat's webapp directory
+2. Set the location of the configuration file in Tomcat's setenv.sh (see chapter Configuration properties for further details)
+    ````
+    export JAVA_OPTS="$JAVA_OPTS -Dspring.config.additional-location=file:/etc/tara-login-server/application.yml"
+    ````
+
+<a name="configuration"></a>
 ## 1 TARA login server configuration properties
 
-### 1.1 hydra service
+<a name="hydra_integration_conf"></a>
+### 1.1 Integration with Hydra service
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
@@ -20,10 +72,13 @@ Execute the following command to build the tara-login-server webapp:
 | `tara.hydra-service.reject-login-url` | Yes | Url to reject Hydra OIDC server login request |
 | `tara.hydra-service.accept-consent-url` | Yes | Url to accept Hydra OIDC server consent |
 | `tara.hydra-service.reject-consent-url` | Yes | Url to reject Hydra OIDC server consent |
-| `tara.hydra-service.request-timeout` | Yes | Hydra service request timeout |
 | `tara.hydra-service.health-url` | Yes | Hydra service health url |
+| `tara.hydra-service.request-timeout-in-seconds` | No | Hydra service request timeout |
+| `tara.hydra-service.max-connections-total` | No | Max connection pool size for hydra requests. Defaults to 50 |
 
-### 1.2 trusted TLS certificates
+
+<a name="tls_conf"></a>
+### 1.2 Trusted TLS certificates
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
@@ -31,7 +86,8 @@ Execute the following command to build the tara-login-server webapp:
 | `tara.tls.trust-store-password` | Yes | Truststore password |
 | `tara.tls.trust-store-location` | No | Truststore type (jks, pkcs12). Defaults to PKCS12 if not specified |
 
-### 1.3 mobile id auth method
+<a name="mid_conf"></a>
+### 1.3 Mobile-ID auth method
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
@@ -49,7 +105,8 @@ Execute the following command to build the tara-login-server webapp:
 | `tara.auth-methods.mobile-id.long-polling-timeout-seconds` | No | Long polling timeout period used for MID session status requests. Default `30` |
 | `tara.auth-methods.mobile-id.interval-between-session-status-queries-in-milliseconds` | No | Interval between Mobile-ID status polling queries (from UI to tara-login-service). Default `5000` |
 
-### 1.4 id card auth method
+<a name="esteid_conf"></a>
+### 1.4 ID-card auth method
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
@@ -67,7 +124,8 @@ Execute the following command to build the tara-login-server webapp:
 | `tara.auth-methods.id-card.ocsp[0].read-timeout-in-milliseconds` | No | Default `3000` |
 | `tara.auth-methods.id-card.ocsp[0].responder-certificate-cn` | No | Required responder certificate CN. Example `TEST of SK OCSP RESPONDER 2020` |
 
-## 1.5 Legal person authentication configuration properties
+<a name="legalperson_conf"></a>
+## 1.5 Legal person attributes
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
@@ -85,6 +143,7 @@ Execute the following command to build the tara-login-server webapp:
 | `tara.legal-person-authentication.x-road-server-connect-timeout-in-milliseconds` | No | X-Road security server connect timeout in milliseconds. Defaults to 3000 if not specified.  |
 | `tara.legal-person-authentication.x-road-query-esindus-v2-allowed-types` | No | List of legal person types in arireg.esindus_v2 service response that are considered valid for authentication. Defaults to `TÜ,UÜ, OÜ,AS,TÜH,SA,MTÜ` if not specified.  |
 
+<a name="monitoring_conf"></a>
 ## 1.6 Heartbeat endpoint configuration properties
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
@@ -102,8 +161,11 @@ management:
         exclude: ""
         include: "heartbeat"
 ````
-## 1.7 Security and Session management
 
+<a name="session_and_sec_conf"></a>
+## 1.7 Security and session management
+
+<a name="ignite_conf"></a>
 ### 1.7.1 Ignite configuration
 
 Ignite is used for storing user’s session information.
@@ -124,232 +186,9 @@ Ignite is used for storing user’s session information.
 | `ignite.ssl-context-factory.trust-store-file-path` | Yes | Ignite trust store path. Example value `/test/resources/tls-truststore.p12` |
 | `ignite.ssl-context-factory.trust-store-password` | Yes | Ignite trust store password. |
 
+<a name="sec_conf"></a>
 ## 1.7 Security and Session management
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `spring.session.timeout` | No | Session timeout. If a duration suffix is not specified, seconds will be used. Default value `300s` |
 | `tara.content-security-policy` | No | Content security policy. Default value `connect-src 'self'; default-src 'none'; font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; block-all-mixed-content` |
-
-## 2 TARA login server endpoints
-
-### 2.1 /auth/init
-
-#### Request:
-
-````
-GET /auth/init?login_challenge={login_challenge}
-````
-
-| Parameter        | Mandatory | Description |
-| :---------------- | :---------- | :----------------|
-| `login_challenge` | Yes | Only numbers and characters allowed (a-ZA-Z0-9). Max 50 symbols. |
-
-#### Response:
-
-##### Response Code: 200
-
-##### Headers
-
-````
-Set-Cookie: SESSION={sessionId}; Path=/; HttpOnly; SameSite=Strict
-Content-Type: text/html;charset=UTF-8
-````
-
-##### Body
-
-````
-HTML page including a form with a personalized list of authentication methods
-````
-
-### 2.2 /auth/accept
-
-#### Request:
-
-````
-GET /auth/accept
-````
-
-| Cookie        | Mandatory | Description |
-| :---------------- | :---------- | :----------------|
-| `SESSION` | Yes | id of an existing session |
-
-#### Response:
-
-##### Response Code: 302
-
-##### Headers
-
-````
-Location: {redirectUrl}
-````
-
-### 2.3 /auth/mid/init
-
-#### Request:
-
-````
-POST /auth/mid/init
-````
-
-| Cookie        | Mandatory | Description |
-| :---------------- | :---------- | :----------------|
-| `SESSION` | Yes | id of an existing session |
-
-| Form Parameter        | Mandatory | Description |
-| :---------------- | :---------- | :----------------|
-| `idCode` | Yes | Personal ID code |
-| `telephoneNumber` | Yes | Phone number used for authentication |
-
-#### Response:
-
-##### Response Code: 200
-
-##### Headers
-
-````
-Set-Cookie: SESSION={sessionId}; Path=/; HttpOnly; SameSite=Strict
-Content-Type: text/html;charset=UTF-8
-````
-
-##### Body
-
-````
-HTML page including a control code for mobile authentication
-````
-
-### 2.4 /auth/mid/poll
-
-#### Request:
-
-````
-GET /auth/mid/poll
-````
-
-| Cookie        | Mandatory | Description |
-| :---------------- | :---------- | :----------------|
-| `SESSION` | Yes | id of an existing session |
-
-#### Response:
-
-##### Response Code: 200
-
-##### Headers
-
-````
-Set-Cookie: SESSION={sessionId}; Path=/; HttpOnly; SameSite=Strict
-Content-Type: application/json
-````
-
-##### Body
-
-Example json:
-````
-{"status":"PENDING"}
-````
-
-### 2.5 /auth/id
-
-#### Request:
-
-````
-GET /auth/id
-````
-
-| Cookie        | Mandatory | Description |
-| :---------------- | :---------- | :----------------|
-| `SESSION` | Yes | id of an existing session |
-
-#### Response:
-
-##### Response Code: 200
-
-##### Headers
-
-````
-Set-Cookie: SESSION={sessionId}; Path=/; HttpOnly; SameSite=Strict
-Content-Type: application/json
-````
-
-##### Body
-
-Example json:
-````
-{"status":"COMPLETED"}
-````
-
-##### Response Code: 502, 400
-
-##### Headers
-
-````
-Set-Cookie: SESSION={sessionId}; Path=/; HttpOnly; SameSite=Strict
-Content-Type: application/json
-````
-
-##### Body
-
-Example json:
-````
-{"status":"ERROR", "errorMessage":"Teie sertifikaadid ei kehti."}
-````
-
-### 2.6 /auth/consent
-
-#### Request:
-
-````
-GET /auth/consent
-````
-
-| Cookie        | Mandatory | Description |
-| :---------------- | :---------- | :----------------|
-| `SESSION` | Yes | id of an existing session |
-
-#### Response:
-
-##### Response Code: 200
-
-##### Headers
-
-````
-Set-Cookie: SESSION={sessionId}; Path=/; HttpOnly; SameSite=Strict
-Content-Type: text/html;charset=UTF-8
-````
-
-##### Body
-
-````
-HTML page with user personal details and buttons to refuse or grant consent
-````
-
-##### Response Code: 302
-
-##### Headers
-
-````
-Set-Cookie: SESSION={sessionId}; Path=/; HttpOnly; SameSite=Strict
-Location: {redirectUrl}
-````
-
-### 2.7 /auth/confirm/consent
-
-#### Request:
-
-````
-POST /auth/consent
-````
-
-| Cookie        | Mandatory | Description |
-| :---------------- | :---------- | :----------------|
-| `SESSION` | Yes | id of an existing session |
-
-#### Response:
-
-##### Response Code: 302
-
-##### Headers
-
-````
-Set-Cookie: SESSION={sessionId}; Path=/; HttpOnly; SameSite=Strict
-Location: {redirectUrl}
-````

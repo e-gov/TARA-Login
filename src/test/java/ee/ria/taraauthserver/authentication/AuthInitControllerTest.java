@@ -10,12 +10,14 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.session.SessionRepository;
 import org.springframework.test.annotation.DirtiesContext;
 
+import javax.print.attribute.standard.Media;
 import java.net.URL;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -47,7 +49,8 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authInit.loginChallenge: only characters and numbers allowed"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .body("incident_nr", notNullValue())
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
     }
 
     @Test
@@ -61,7 +64,8 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Required String parameter 'login_challenge' is not present"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .body("incident_nr", notNullValue())
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: Required String parameter 'login_challenge' is not present");
     }
@@ -78,7 +82,8 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authInit.loginChallenge: only characters and numbers allowed"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .body("incident_nr", notNullValue())
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: authInit.loginChallenge: only characters and numbers allowed");
     }
@@ -95,7 +100,8 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authInit.loginChallenge: size must be between 0 and 50"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .body("incident_nr", notNullValue())
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: authInit.loginChallenge: size must be between 0 and 50");
     }
@@ -113,7 +119,8 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Multiple request parameters with the same name not allowed"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .body("incident_nr", notNullValue())
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
     }
 
     @Test
@@ -129,7 +136,8 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authInit.language: supported values are: 'et', 'en', 'ru'"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .body("incident_nr", notNullValue())
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
     }
 
     @SneakyThrows
@@ -150,8 +158,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE +
-                        ";charset=UTF-8")
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
                 .header(HttpHeaders.CONTENT_LANGUAGE, "et")
                 .body("html.head.title", equalTo("Riigi autentimisteenus - Turvaline autentimine asutuste e-teenustes"))
                 .cookie("SESSION", matchesPattern("[A-Za-z0-9,-]{36,36}"))
@@ -195,6 +202,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
+                .body("incident_nr", notNullValue())
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
     }
 
@@ -214,6 +222,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
+                .body("incident_nr", notNullValue())
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
     }
 
@@ -245,8 +254,6 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200)
                 .cookie("SESSION", not(equalTo(cookie)));
-
-        assertWarningIsLogged("Session '" + cookie + "' has been reset");
     }
 
     @Test
@@ -259,7 +266,8 @@ class AuthInitControllerTest extends BaseTest {
                         .withBodyFile("mock_responses/oidc/mock_response-ok_ui_locales-not-set.json")));
 
         given().param("login_challenge", TEST_LOGIN_CHALLENGE)
-                .when().get("/auth/init")
+                .when()
+                .get("/auth/init")
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -277,7 +285,8 @@ class AuthInitControllerTest extends BaseTest {
                         .withBodyFile("mock_responses/oidc/mock_response.json")));
 
         given().param("login_challenge", TEST_LOGIN_CHALLENGE)
-                .when().get("/auth/init")
+                .when()
+                .get("/auth/init")
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -297,7 +306,8 @@ class AuthInitControllerTest extends BaseTest {
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
                 .param("lang", "en")
-                .when().get("/auth/init")
+                .when()
+                .get("/auth/init")
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -317,7 +327,8 @@ class AuthInitControllerTest extends BaseTest {
 
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
-                .when().get("/auth/init")
+                .when()
+                .get("/auth/init")
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -373,7 +384,7 @@ class AuthInitControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "AUTH_INIT_ENABLED_AUTHMETHODS_SCOPES")
-    void authInit_OIDCRequestsScopeThatIsNotAllowedAndIdCard() {
+    void authInit_OIDCRequestsScopeThatIsNotAllowedAndScopeThatIsNotsupported() {
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -395,7 +406,8 @@ class AuthInitControllerTest extends BaseTest {
                 .body(containsString("idCardForm"))
                 .body(not(containsString("mobileIdForm")));
 
-        assertWarningIsLogged("Unsupported scope value 'ldap', entry ignored!");
+        assertWarningIsLogged("Requested scope value 'ldap' is not allowed, entry ignored!");
+        assertWarningIsLogged("Unsupported scope value 'banklink', entry ignored!");
     }
 
     @Test
@@ -450,6 +462,7 @@ class AuthInitControllerTest extends BaseTest {
     }
 
     @Test
+    @DirtiesContext
     @Tag(value = "AUTH_INIT_NO_VALID_AUTHMETHODS")
     void authInit_NoAllowedAuthMethods() {
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
@@ -468,9 +481,10 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .body("message", equalTo("No authentication methods match the requested level of assurance. Please check your authorization request"))
-                .body("error", equalTo("Bad Request"));
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8)
+                .body("message", equalTo("Autentimispäring ei ole korrektne. Soovitud autentimistasemele vastavaid autentimisvahendeid pole antud infosüsteemile lubatud."))
+                .body("error", equalTo("Bad Request"))
+                .body("incident_nr", notNullValue());
 
     }
 
@@ -490,6 +504,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
+                .body("incident_nr", notNullValue())
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
 
         assertErrorIsLogged("Server encountered an unexpected error: Unsupported acr value requested by client: 'wrongvalue'");
@@ -510,8 +525,9 @@ class AuthInitControllerTest extends BaseTest {
                 .get("/auth/init")
                 .then()
                 .assertThat()
-                .statusCode(500)
-                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
+                .statusCode(400)
+                .body("incident_nr", notNullValue())
+                .body("message", equalTo("Vigane päring. Päringu volituskood ei ole korrektne."));
     }
 
     @Test
@@ -530,6 +546,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
+                .body("incident_nr", notNullValue())
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
     }
 
@@ -549,6 +566,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
+                .body("incident_nr", notNullValue())
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
 
         assertErrorIsLogged("Server encountered an unexpected error: Invalid hydra response: client.metaData.oidcClient.institution.sector: invalid sector value, accepted values are: private, public, client.metaData.oidcClient.shortName: size must be between 0 and 40, client.scope: must not be blank");

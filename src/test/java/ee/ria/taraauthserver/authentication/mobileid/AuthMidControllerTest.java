@@ -111,7 +111,7 @@ class AuthMidControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [INIT_AUTH_PROCESS]");
     }
@@ -268,6 +268,24 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_VALID_INPUT_IDCODE")
+    void nationalIdNumberinvalid_and_phoneNumberInvalid() {
+        given()
+                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
+                .when()
+                .formParam("idCode", "31107114721")
+                .formParam("telephoneNumber", "123abc456def")
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Isikukood ei ole korrektne.; Telefoninumber ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
+
+        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 2 errors");
+    }
+
+    @Test
     @Tag(value = "MID_AUTH_INIT")
     void midAuthInit_session_mid_not_allowed() {
         given()
@@ -284,7 +302,7 @@ class AuthMidControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Ebakorrektne päring."))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: Mobile ID authentication method is not allowed");
     }
@@ -388,7 +406,7 @@ class AuthMidControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(500);
 
-        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: Request is unauthorized for URI https://localhost:9877/mid-api/authentication: HTTP 401 Unauthorized"); // TODO:
+        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: Request is unauthorized for URI https://localhost:9877/mid-api/authentication: HTTP 401 Unauthorized");
     }
 
     @Test
@@ -408,7 +426,7 @@ class AuthMidControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(500);
 
-        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: HTTP 405 Method Not Allowed"); // TODO:
+        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: HTTP 405 Method Not Allowed");
     }
 
     @Test

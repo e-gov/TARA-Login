@@ -18,6 +18,7 @@ import org.bouncycastle.cert.ocsp.UnknownStatus;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -178,6 +179,7 @@ class IdCardControllerTest extends BaseTest {
                 ).build(), "/esteid2015");
 
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+
         given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, X509_CERT)

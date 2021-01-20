@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.authentication;
 
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +52,7 @@ public class AuthRejectController {
 
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && response.getBody().get("redirect_to") != null) {
             taraSession.setState(AUTHENTICATION_CANCELED);
+            SessionUtils.invalidateSession();
             return new RedirectView(response.getBody().get("redirect_to").toString());
         } else {
             throw new IllegalStateException("Invalid OIDC server response. Redirect URL missing from response.");
