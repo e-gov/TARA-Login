@@ -1,3 +1,10 @@
+spring:
+  application:
+    name: tara-login-service
+    instance-id: ${APP_INSTANCE_ID:${random.int(100)}}
+  session:
+    timeout: 300s
+
 management:
   health:
     defaults:
@@ -14,6 +21,6 @@ management:
       exposure:
         exclude: "*"
 
-spring:
-  session:
-    timeout: 300s
+ignite:
+  ignite-instance-name: tara-ignite
+  metrics-log-frequency: 300000

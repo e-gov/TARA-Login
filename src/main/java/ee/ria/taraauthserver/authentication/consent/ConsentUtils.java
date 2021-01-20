@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.authentication.consent;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.Data;
@@ -106,6 +107,7 @@ public class ConsentUtils {
         }
 
         @Data
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         public static class ProfileAttributes {
             @JsonProperty("family_name")
             private String familyName;

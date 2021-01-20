@@ -29,6 +29,8 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 @Controller
 public class AuthConsentController {
 
+    private static final String REDIRECT_URL = "redirect_to";
+
     @Autowired
     private AuthConfigurationProperties authConfigurationProperties;
 
@@ -70,8 +72,8 @@ public class AuthConsentController {
         HttpEntity<ConsentUtils.AcceptConsentRequest> request = ConsentUtils.createRequestBody(taraSession);
         String url = authConfigurationProperties.getHydraService().getAcceptConsentUrl() + "?consent_challenge=" + consentChallenge;
         ResponseEntity<Map> response = hydraService.exchange(url, HttpMethod.PUT, request, Map.class);
-        if (response.getStatusCode() == HttpStatus.OK && response.getBody().get("redirect_to") != null) {
-            return "redirect:" + response.getBody().get("redirect_to").toString();
+        if (response.getStatusCode() == HttpStatus.OK && response.getBody().get(REDIRECT_URL) != null) {
+            return "redirect:" + response.getBody().get(REDIRECT_URL).toString();
         } else {
             throw new IllegalStateException("Invalid OIDC server response. Redirect URL missing from response.");
         }

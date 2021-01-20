@@ -9,10 +9,9 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest;
-import ee.ria.taraauthserver.config.properties.AuthenticationType;
-import ee.ria.taraauthserver.session.TaraAuthenticationState;
-import ee.ria.taraauthserver.session.TaraSession;
 import io.restassured.RestAssured;
+import io.restassured.builder.ResponseSpecBuilder;
+import io.restassured.config.SessionConfig;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import lombok.extern.slf4j.Slf4j;
@@ -26,18 +25,17 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static ch.qos.logback.classic.Level.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.DEFAULT_CONTENT_SECURITY_POLICY;
 import static io.restassured.RestAssured.config;
 import static io.restassured.config.RedirectConfig.redirectConfig;
-import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -49,6 +47,23 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @Slf4j
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public abstract class BaseTest {
+    public static final String CHARSET_UTF_8 = ";charset=UTF-8";
+
+    protected static final Map<String, Object> EXPECTED_HTML_RESPONSE_HEADERS = new HashMap<>() {{
+        put("X-XSS-Protection", "1; mode=block");
+        put("X-Content-Type-Options", "nosniff");
+        put("X-Frame-Options", "DENY");
+        put("Content-Security-Policy", DEFAULT_CONTENT_SECURITY_POLICY);
+        put("Pragma", "no-cache");
+        put("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
+    }};
+    protected static final Map<String, Object> EXPECTED_JSON_RESPONSE_HEADERS = new HashMap<>() {{
+        put("X-XSS-Protection", "1; mode=block");
+        put("X-Content-Type-Options", "nosniff");
+        put("X-Frame-Options", "DENY");
+        put("Content-Security-Policy", DEFAULT_CONTENT_SECURITY_POLICY);
+        put("Cache-Control", "no-store");
+    }};
     protected static final OCSPValidatorTest.OcspResponseTransformer ocspResponseTransformer = new OCSPValidatorTest.OcspResponseTransformer(false);
     protected static final WireMockServer wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig()
             .httpDisabled(true)
@@ -59,8 +74,6 @@ public abstract class BaseTest {
             .extensions(ocspResponseTransformer)
             .notifier(new ConsoleNotifier(true))
     );
-
-    protected MockMvc mockMvc;
 
     @Autowired
     private WebApplicationContext webApplicationContext;
@@ -84,7 +97,7 @@ public abstract class BaseTest {
 
     @BeforeEach
     public void beforeEachTest() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        RestAssured.responseSpecification = new ResponseSpecBuilder().expectHeaders(EXPECTED_HTML_RESPONSE_HEADERS).build();
         RestAssured.port = port;
         configureMockLogAppender();
         wireMockServer.resetAll();
@@ -103,7 +116,10 @@ public abstract class BaseTest {
 
     private static void configureRestAssured() {
         RestAssured.filters(new RequestLoggingFilter(), new ResponseLoggingFilter());
-        config = config().redirect(redirectConfig().followRedirects(false));
+        config = config()
+                .redirect(redirectConfig().followRedirects(false))
+                .sessionConfig(new SessionConfig().sessionIdName("SESSION"));
+        ;
     }
 
     protected void assertInfoIsLogged(String... messagesInRelativeOrder) {
@@ -163,24 +179,5 @@ public abstract class BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withStatus(status)
                         .withBodyFile(response)));
-    }
-
-    protected Session createNewAuthenticationSession(AuthenticationType... authenticationTypes) {
-        Session session = sessionRepository.createSession();
-        TaraSession testSession = new TaraSession(session.getId());
-        testSession.setAllowedAuthMethods(asList(authenticationTypes));
-        testSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
-        TaraSession.LoginRequestInfo lri = new TaraSession.LoginRequestInfo();
-        TaraSession.Client client = new TaraSession.Client();
-        TaraSession.MetaData metaData = new TaraSession.MetaData();
-        TaraSession.OidcClient oidcClient = new TaraSession.OidcClient();
-        oidcClient.setShortName("short_name");
-        metaData.setOidcClient(oidcClient);
-        client.setMetaData(metaData);
-        lri.setClient(client);
-        testSession.setLoginRequestInfo(lri);
-        session.setAttribute(TARA_SESSION, testSession);
-        sessionRepository.save(session);
-        return session;
     }
 }

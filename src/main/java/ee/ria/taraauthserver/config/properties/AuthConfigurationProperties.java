@@ -20,18 +20,22 @@ import java.util.stream.Collectors;
 
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.ID_CARD;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
-import static java.util.Arrays.asList;
+import static java.util.List.of;
 
 @Slf4j
 @Data
 @Validated
 @ConfigurationProperties(prefix = "tara")
 public class AuthConfigurationProperties {
+    public static final String DEFAULT_CONTENT_SECURITY_POLICY = "connect-src 'self'; default-src 'none'; font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; block-all-mixed-content";
 
     @Pattern(regexp = "(et|en|ru)", message = "invalid default locale value, accepted values are: et, en, ru")
     private String defaultLocale = "et";
 
-    private List<AuthenticationType> defaultAuthenticationMethods = asList(ID_CARD, MOBILE_ID);
+    @NotEmpty
+    private String contentSecurityPolicy = DEFAULT_CONTENT_SECURITY_POLICY;
+
+    private List<AuthenticationType> defaultAuthenticationMethods = of(ID_CARD, MOBILE_ID);
 
     private HydraConfigurationProperties hydraService = new HydraConfigurationProperties();
 
@@ -63,6 +67,8 @@ public class AuthConfigurationProperties {
         private String rejectLoginUrl;
 
         private int requestTimeoutInSeconds = 3;
+
+        private int maxConnectionsTotal = 50;
     }
 
     @Data

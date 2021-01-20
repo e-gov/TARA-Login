@@ -11,13 +11,13 @@ import org.springframework.util.CollectionUtils;
 
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp;
+import static java.util.List.of;
 
 @Slf4j
 @Component
@@ -58,7 +58,7 @@ public class OCSPConfigurationResolver {
                 "', has no explicitly configured OCSP nor can it be configured automatically since this certificate does not contain " +
                 "the OCSP url in the AIA extension! Please check your configuration");
         Ocsp implicitConfiguration = new Ocsp();
-        implicitConfiguration.setIssuerCn(Arrays.asList(issuerCN));
+        implicitConfiguration.setIssuerCn(of(issuerCN));
         implicitConfiguration.setUrl(url);
         log.debug("Did not find explicit config for issuer '{}' - using default configuration with AIA extension url: {} to verify cert status", issuerCN, url);
         return implicitConfiguration;

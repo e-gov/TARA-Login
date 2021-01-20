@@ -4,6 +4,7 @@ import ee.ria.taraauthserver.error.exceptions.TaraException;
 import ee.ria.taraauthserver.utils.RequestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
@@ -11,6 +12,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.session.SessionRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
@@ -18,10 +20,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.context.request.WebRequest;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 import static java.lang.String.format;
 import static java.lang.String.join;
@@ -50,8 +49,9 @@ public class ErrorAttributes extends DefaultErrorAttributes {
             handle4xxClientError(webRequest, attr);
         }
 
-        attr.put("locale", webRequest.getLocale().toString());
+        attr.put("locale", RequestUtils.getLocale());
         attr.remove("errors");
+        attr.put("incident_nr", MDC.get("traceId"));
         return attr;
     }
 
@@ -102,6 +102,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
         for (ObjectError fe : bindingResult.getGlobalErrors()) {
             errors.add(format("%s", fe.getDefaultMessage()));
         }
+        Collections.sort(errors);
         return join("; ", errors);
     }
 }

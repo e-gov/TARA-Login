@@ -34,8 +34,9 @@ public class AuthMidController {
     @Autowired
     private AuthMidService authMidService;
 
-    @PostMapping(value = "/auth/mid/init", produces = MediaType.TEXT_HTML_VALUE)
+    @PostMapping(value = "/auth/mid/init", produces = MediaType.TEXT_HTML_VALUE, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public String authMidInit(@Validated @ModelAttribute(value = "credential") MidRequest midRequest, Model model, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+
         validateSession(taraSession);
         midRequest.telephoneNumber = "+372" + midRequest.telephoneNumber;
         MidAuthenticationHashToSign authenticationHash = authMidService.startMidAuthSession(taraSession, midRequest.getIdCode(), midRequest.getTelephoneNumber());

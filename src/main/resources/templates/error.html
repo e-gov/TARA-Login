@@ -9,6 +9,7 @@
             <p><strong><span th:text="#{message.error.auth.title}" th:remove="tag"></span></strong></p>
             <p th:if="${message != null}" th:utext="${message}"></p>
             <p th:unless="${message != null}" th:utext="#{message.error.auth.error}"></p>
+            <p th:if="${incident_nr != null}" th:utext="#{label.error.incident-number(${incident_nr})}"></p>
         </div>
         <p th:if="${@thymeleafSupport.getBackUrl() != '#'}" class="link-back">
             <a th:href="${@thymeleafSupport.getBackUrl()}" th:text="#{label.common.back}">Back</a>

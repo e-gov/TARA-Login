@@ -7,6 +7,7 @@ import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -32,9 +33,10 @@ class AuthConsentControllerTest extends BaseTest {
     public static final String MOCK_CONSENT_CHALLENGE = "abcdefg098AAdsCC";
 
     @Autowired
-    SessionRepository sessionRepository;
+    private SessionRepository<Session> sessionRepository;
 
     @Test
+    @Tag(value = "USER_CONSENT_ENDPOINT")
     void authConsent_consentChallenge_EmptyValue() {
         given()
                 .param("consent_challenge", "")
@@ -45,10 +47,11 @@ class AuthConsentControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authConsent.consentChallenge: only characters and numbers allowed"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
     }
 
     @Test
+    @Tag(value = "USER_CONSENT_ENDPOINT")
     void authConsent_consentChallenge_ParamMissing() {
         given()
                 .when()
@@ -58,12 +61,13 @@ class AuthConsentControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Required String parameter 'consent_challenge' is not present"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: Required String parameter 'consent_challenge' is not present");
     }
 
     @Test
+    @Tag(value = "USER_CONSENT_ENDPOINT")
     void authConsent_consentChallenge_InvalidValue() {
         given()
                 .param("consent_challenge", "......")
@@ -74,12 +78,13 @@ class AuthConsentControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authConsent.consentChallenge: only characters and numbers allowed"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: authConsent.consentChallenge: only characters and numbers allowed");
     }
 
     @Test
+    @Tag(value = "USER_CONSENT_ENDPOINT")
     void authConsent_consentChallenge_InvalidLength() {
         given()
                 .param("consent_challenge", "123456789012345678901234567890123456789012345678900")
@@ -90,12 +95,13 @@ class AuthConsentControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authConsent.consentChallenge: size must be between 0 and 50"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: authConsent.consentChallenge: size must be between 0 and 50");
     }
 
     @Test
+    @Tag(value = "USER_CONSENT_ENDPOINT")
     void authConsent_consentChallenge_DuplicatedParam() {
         given()
                 .param("consent_challenge", MOCK_CONSENT_CHALLENGE)
@@ -110,6 +116,7 @@ class AuthConsentControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "USER_CONSENT_ENDPOINT")
     void authConsent_session_missing() {
 
         given()
@@ -126,6 +133,7 @@ class AuthConsentControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "USER_CONSENT_ENDPOINT")
     void authConsent_wrong_authentication_state() {
         Session session = createSession(TaraAuthenticationState.INIT_MID, true);
 
@@ -144,6 +152,9 @@ class AuthConsentControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "USER_CONSENT_ENDPOINT")
+    @Tag(value = "USER_CONSENT_REQUIRED")
+    @Tag(value = "UI_CONSENT_VIEW")
     void authConsent_display() {
         Session session = createSession(TaraAuthenticationState.AUTHENTICATION_SUCCESS, true);
 
@@ -167,6 +178,8 @@ class AuthConsentControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "USER_CONSENT_ENDPOINT")
+    @Tag(value = "USER_CONSENT_NOT_REQUIRED")
     void authConsent_redirect() {
         Session session = createSession(TaraAuthenticationState.AUTHENTICATION_SUCCESS, false);
 
@@ -184,7 +197,8 @@ class AuthConsentControllerTest extends BaseTest {
                 .get("/auth/consent")
                 .then()
                 .assertThat()
-                .statusCode(302);
+                .statusCode(302)
+                .header("Location", "http://localhost:" + port + "/auth/some/test/url");
 
         TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.CONSENT_NOT_REQUIRED, taraSession.getState());

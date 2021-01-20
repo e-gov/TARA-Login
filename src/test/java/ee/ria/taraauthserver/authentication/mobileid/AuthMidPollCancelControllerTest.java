@@ -1,28 +1,50 @@
 package ee.ria.taraauthserver.authentication.mobileid;
 
 import ee.ria.taraauthserver.BaseTest;
+import ee.ria.taraauthserver.session.MockSessionFilter;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
+import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
+import static ee.ria.taraauthserver.session.MockSessionFilter.*;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.COMPLETE;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_MID_STATUS;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
+import static java.util.List.of;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class AuthMidPollCancelControllerTest extends BaseTest {
 
     @Autowired
-    SessionRepository sessionRepository;
+    private SessionRepository<Session> sessionRepository;
 
     @Test
+    @Tag("CSRF_PROTCTION")
+    void authMidPoll_NoCsrf() {
+        given()
+                .filter(withoutCsrf().sessionRepository(sessionRepository).build())
+                .when()
+                .post("/auth/mid/poll/cancel")
+                .then()
+                .assertThat()
+                .statusCode(403)
+                .body("message", equalTo("Forbidden"))
+                .body("path", equalTo("/auth/mid/poll/cancel"));
+    }
+
+    @Test
+    @Tag(value = "MID_AUTH_STATUS_CHECK_VALID_SESSION")
     void authMidPoll_sessionMissing() {
 
         given()
+                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
                 .when()
                 .post("/auth/mid/poll/cancel")
                 .then()
@@ -35,12 +57,15 @@ class AuthMidPollCancelControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_AUTH_STATUS_CHECK_VALID_SESSION")
     void authMidPoll_sessionIncorrectState() {
-        Session session = createSessionInState(TaraAuthenticationState.COMPLETE);
 
         given()
+                .filter(withTaraSession()
+                        .sessionRepository(sessionRepository)
+                        .authenticationTypes(of(MOBILE_ID))
+                        .authenticationState(COMPLETE).build())
                 .when()
-                .sessionId("SESSION", session.getId())
                 .post("/auth/mid/poll/cancel")
                 .then()
                 .assertThat()
@@ -52,36 +77,24 @@ class AuthMidPollCancelControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_AUTH_CANCELED")
+    @Tag(value = "MID_AUTH_STATUS_CHECK_ENDPOINT")
     void authMidPoll_ok() {
-        Session session = createSessionInState(TaraAuthenticationState.POLL_MID_STATUS);
-
+        MockSessionFilter sessionFilter = withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(MOBILE_ID))
+                .authenticationState(POLL_MID_STATUS).build();
         given()
+                .filter(sessionFilter)
                 .when()
-                .sessionId("SESSION", session.getId())
                 .post("/auth/mid/poll/cancel")
                 .then()
                 .assertThat()
+                .header("Location", "http://localhost:" + port + "/auth/init?login_challenge=abcdefg098AAdsCC")
                 .statusCode(302);
 
-        TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
+        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.POLL_MID_STATUS_CANCELED, taraSession.getState());
         assertWarningIsLogged("Mobile ID authentication process with MID session id testSessionId has been canceled");
     }
-
-    @NotNull
-    private Session createSessionInState(TaraAuthenticationState state) {
-        Session session = sessionRepository.createSession();
-        TaraSession.LoginRequestInfo loginRequestInfo = new TaraSession.LoginRequestInfo();
-        loginRequestInfo.setChallenge("123abc");
-        TaraSession taraSession = new TaraSession(session.getId());
-        taraSession.setState(state);
-        taraSession.setLoginRequestInfo(loginRequestInfo);
-        TaraSession.MidAuthenticationResult authenticationResult = new TaraSession.MidAuthenticationResult();
-        authenticationResult.setMidSessionId("testSessionId");
-        taraSession.setAuthenticationResult(authenticationResult);
-        session.setAttribute(TARA_SESSION, taraSession);
-        sessionRepository.save(session);
-        return session;
-    }
-
 }

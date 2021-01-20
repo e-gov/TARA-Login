@@ -1,5 +1,5 @@
 {
-  "challenge": "string",
+  "challenge": "abcdefg098AAdsCC",
   "client": {
     "allowed_cors_origins": [
       "string"
@@ -60,7 +60,7 @@
     "response_types": [
       "string"
     ],
-    "scope": "mID idcard",
+    "scope": "mid idcard",
     "sector_identifier_uri": "string",
     "subject_type": "string",
     "token_endpoint_auth_method": "string",
@@ -83,6 +83,10 @@
   "request_url": "https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et",
   "requested_access_token_audience": [
     "string"
+  ],
+  "requested_scope": [
+    "idcard",
+    "mid"
   ],
   "session_id": "string",
   "skip": true,

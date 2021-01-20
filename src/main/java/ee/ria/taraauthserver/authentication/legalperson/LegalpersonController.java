@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static ee.ria.taraauthserver.config.properties.TaraScope.LEGALPERSON;
+import static ee.ria.taraauthserver.error.ErrorCode.INVALID_LEGAL_PERSON;
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
@@ -45,7 +46,7 @@ public class LegalpersonController {
     @Autowired
     private final BusinessRegistryService eBusinessRegistryService;
 
-    @GetMapping(value = "/auth/legal_person/init")
+    @GetMapping(value = "/auth/legalperson/init")
     public String initLegalPerson(Model model, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 
@@ -68,7 +69,7 @@ public class LegalpersonController {
         return "legalPersonView";
     }
 
-    @GetMapping(value = "/auth/legal_person", produces = {MediaType.APPLICATION_JSON_VALUE})
+    @GetMapping(value = "/auth/legalperson", produces = {MediaType.APPLICATION_JSON_VALUE})
     public ModelAndView fetchLegalPersonsList(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, LEGAL_PERSON_AUTHENTICATION_INIT);
         notNull(taraSession.getAuthenticationResult(), "Authentication credentials missing from session!");
@@ -84,7 +85,7 @@ public class LegalpersonController {
         }
     }
 
-    @PostMapping("/auth/legal_person/confirm")
+    @PostMapping("/auth/legalperson/confirm")
     public String confirmLegalPerson(
             @RequestParam(name = "legal_person_identifier")
             @Size(max = 50)
@@ -102,7 +103,7 @@ public class LegalpersonController {
             log.info("Legal person selected: {}", legalPersonIdentifier);
             return "forward:/auth/accept";
         } else {
-            throw new BadRequestException(INVALID_REQUEST, format("Attempted to select invalid legal person with id: '%s'", legalPersonIdentifier));
+            throw new BadRequestException(INVALID_LEGAL_PERSON, format("Attempted to select invalid legal person with id: '%s'", legalPersonIdentifier));
         }
     }
 

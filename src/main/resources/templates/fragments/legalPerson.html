@@ -1,5 +1,5 @@
 <script src="/scripts/legalperson.js" defer></script>
-<div class="container" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<div class="container" xmlns:th="http://www.w3.org/1999/xhtml">
     <noscript>
         <div class="alert alert-error">
             <p><strong th:utext="#{message.warning.noscript}"></strong></p>
@@ -13,19 +13,19 @@
             <table>
                 <tr>
                     <th th:utext="#{label.natural-person.id-code}"></th>
-                    <td th:text="${idCode}">Personal ID-code</td>
+                    <td id="legal-person-representative-id-code" th:text="${idCode}">Personal ID-code</td>
                 </tr>
                 <tr>
                     <th th:utext="#{label.natural-person.surname}"></th>
-                    <td th:text="${lastName}">Surname</td>
+                    <td id="legal-person-representative-last-name" th:text="${lastName}">Surname</td>
                 </tr>
                 <tr>
                     <th th:utext="#{label.natural-person.given-name}"></th>
-                    <td th:text="${firstName}">Givenname</td>
+                    <td id="legal-person-representative-given-name" th:text="${firstName}">Givenname</td>
                 </tr>
                 <tr>
                     <th th:utext="#{label.natural-person.date-of-birth}"></th>
-                    <td th:text="${#temporals.format(dateOfBirth, 'dd.MM.yyyy')}">Date of birth</td>
+                    <td id="legal-person-representative-date-of-birth" th:text="${#temporals.format(dateOfBirth, 'dd.MM.yyyy')}">Date of birth</td>
                 </tr>
             </table>
 
@@ -51,7 +51,7 @@
                     <p id="error-service-not-available" class="hidden" th:utext="#{label.legal-person.error.service-not-available}"></p>
                     <p id="error-technical-problem" class="hidden" th:utext="#{label.legal-person.error.internal-service-error}"></p>
                 </div>
-                <form method="post" action="/auth/legal_person/confirm" class="c-form" id="selectLegalPerson">
+                <form method="POST" th:action="@{/auth/legalperson/confirm}" class="c-form" id="selectLegalPerson">
                     <input type="hidden" name="legal_person_identifier" value=""/>
                     <button type="submit" class="c-btn c-btn--primary hidden" id="btn-select-legal-person" th:utext="#{label.common.login}"></button>
                 </form>

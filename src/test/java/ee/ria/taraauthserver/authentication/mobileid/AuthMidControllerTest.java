@@ -2,8 +2,8 @@ package ee.ria.taraauthserver.authentication.mobileid;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import ee.ria.taraauthserver.BaseTest;
-import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.session.MockSessionFilter;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.sk.mid.MidAuthenticationHashToSign;
@@ -11,6 +11,7 @@ import ee.sk.mid.MidHashType;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,14 +21,15 @@ import org.springframework.http.MediaType;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static ee.ria.taraauthserver.config.properties.AuthenticationType.ID_CARD;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
+import static ee.ria.taraauthserver.session.MockSessionFilter.*;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
+import static java.util.List.of;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.Matchers.equalTo;
@@ -40,8 +42,8 @@ class AuthMidControllerTest extends BaseTest {
             .withHashType(MidHashType.SHA512)
             .withHashInBase64("bT+0Fuuf0QChq/sYb+Nz8vhLE8n3gLeL/wOXKxxE4ao=").build();
 
-    // TODO parameter names (idCode vs id_code)
 
+    // TODO parameter names (idCode vs id_code)
     @SpyBean
     private AuthMidService authMidService;
 
@@ -59,11 +61,29 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
-    void midAuthInit_session_missing() {
+    @Tag("CSRF_PROTCTION")
+    void midAuthInit_NoCsrf() {
         given()
-                .when()
+                .filter(withoutCsrf().sessionRepository(sessionRepository).build())
                 .formParam("idCode", "60001019906")
                 .formParam("telephoneNumber", "00000766")
+                .when()
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(403)
+                .body("message", equalTo("Forbidden"))
+                .body("path", equalTo("/auth/mid/init"));
+    }
+
+    @Test
+    @Tag(value = "MID_AUTH_INIT")
+    void midAuthInit_session_missing() {
+        given()
+                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "00000766")
+                .when()
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
@@ -75,10 +95,34 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_AUTH_INIT")
+    void midAuthInit_session_status_incorrect() {
+        given()
+                .filter(withTaraSession()
+                        .sessionRepository(sessionRepository)
+                        .authenticationTypes(of(MOBILE_ID))
+                        .authenticationState(TaraAuthenticationState.INIT_MID).build())
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "00000766")
+                .when()
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
+                .body("error", equalTo("Bad Request"))
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
+
+        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [INIT_AUTH_PROCESS]");
+    }
+
+    @Test
+    @Tag(value = "MID_INIT_ENDPOINT")
     void nationalIdNumber_missing() {
         given()
-                .when()
+                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
                 .formParam("telephoneNumber", "00000766")
+                .when()
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
@@ -90,11 +134,13 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_INIT_ENDPOINT")
     void nationalIdNumber_blank() {
         given()
-                .when()
+                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
                 .formParam("idCode", "")
                 .formParam("telephoneNumber", "00000766")
+                .when()
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
@@ -106,11 +152,13 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_VALID_INPUT_IDCODE")
     void nationalIdNumber_invalidLength() {
         given()
-                .when()
+                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
                 .formParam("idCode", "382929292911")
                 .formParam("telephoneNumber", "00000766")
+                .when()
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
@@ -122,11 +170,13 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_VALID_INPUT_IDCODE")
     void nationalIdNumber_invalid() {
         given()
-                .when()
+                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
                 .formParam("idCode", "31107114721")
                 .formParam("telephoneNumber", "00000766")
+                .when()
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
@@ -138,10 +188,12 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_INIT_ENDPOINT")
     void phoneNumber_missing() {
         given()
-                .when()
+                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
                 .formParam("idCode", "60001019906")
+                .when()
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
@@ -151,11 +203,13 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_INIT_ENDPOINT")
     void phoneNumber_blank() {
         given()
-                .when()
+                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
                 .formParam("idCode", "60001019906")
                 .formParam("telephoneNumber", "")
+                .when()
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
@@ -165,67 +219,117 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_VALID_INPUT_TEL")
     void phoneNumber_invalid() {
         given()
-                .when()
+                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
                 .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "123abc456def")
+                .when()
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Telefoninumber ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
+    }
+
+    @Test
+    @Tag(value = "MID_VALID_INPUT_TEL")
+    void phoneNumber_tooShort() {
+        given()
+                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "+12345")
+                .when()
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Telefoninumber ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
+
+    }
+
+    @Test
+    @Tag(value = "MID_VALID_INPUT_TEL")
+    void phoneNumber_tooLong() {
+        given()
+                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "000007669837468734593465")
+                .when()
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Telefoninumber ei ole korrektne."))
+                .body("error", equalTo("Bad Request"));
+    }
+
+    @Test
+    @Tag(value = "MID_VALID_INPUT_IDCODE")
+    void nationalIdNumberinvalid_and_phoneNumberInvalid() {
+        given()
+                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
+                .when()
+                .formParam("idCode", "31107114721")
                 .formParam("telephoneNumber", "123abc456def")
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Telefoninumber ei ole korrektne."))
+                .body("message", equalTo("Isikukood ei ole korrektne.; Telefoninumber ei ole korrektne."))
                 .body("error", equalTo("Bad Request"));
+
+        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 2 errors");
     }
 
     @Test
-    void phoneNumber_tooShort() {
+    @Tag(value = "MID_AUTH_INIT")
+    void midAuthInit_session_mid_not_allowed() {
         given()
-                .when()
+                .filter(withTaraSession()
+                        .sessionRepository(sessionRepository)
+                        .authenticationTypes(of(ID_CARD))
+                        .authenticationState(INIT_AUTH_PROCESS).build())
                 .formParam("idCode", "60001019906")
-                .formParam("telephoneNumber", "+12345")
+                .formParam("telephoneNumber", "00000766")
+                .when()
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Telefoninumber ei ole korrektne."))
-                .body("error", equalTo("Bad Request"));
+                .body("message", equalTo("Ebakorrektne päring."))
+                .body("error", equalTo("Bad Request"))
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
+        assertErrorIsLogged("User exception: Mobile ID authentication method is not allowed");
     }
 
     @Test
-    void phoneNumber_tooLong() {
-        given()
-                .when()
-                .formParam("idCode", "60001019906")
-                .formParam("telephoneNumber", "000007669837468734593465")
-                .post("/auth/mid/init")
-                .then()
-                .assertThat()
-                .statusCode(400)
-                .body("message", equalTo("Telefoninumber ei ole korrektne."))
-                .body("error", equalTo("Bad Request"));
-    }
-
-    @Test
+    @Tag(value = "MID_AUTH_INIT")
+    @Tag(value = "MID_AUTH_INIT_REQUEST")
+    @Tag(value = "MID_AUTH_INIT_RESPONSE")
     void phoneNumberAndIdCodeValid() {
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 200);
         createMidApiPollStub("mock_responses/mid/mid_poll_response.json", 200);
 
-        Session session = createNewAuthenticationSession(MOBILE_ID);
-
+        MockSessionFilter sessionFilter = withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(MOBILE_ID)).build();
         given()
-                .when()
+                .filter(sessionFilter)
                 .formParam("idCode", "60001019939")
                 .formParam("telephoneNumber", "00000266")
-                .sessionId("SESSION", session.getId())
+                .when()
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
                 .statusCode(200);
 
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
-                .until(() -> sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
+                .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
 
         TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
         assertEquals("60001019906", result.getIdCode());
@@ -252,13 +356,13 @@ class AuthMidControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withStatus(200)));
 
-        Session session = createNewAuthenticationSession(MOBILE_ID);
-
         given()
-                .when()
+                .filter(withTaraSession()
+                        .sessionRepository(sessionRepository)
+                        .authenticationTypes(of(MOBILE_ID)).build())
                 .formParam("idCode", "60001019939")
                 .formParam("telephoneNumber", "00000266")
-                .sessionId("SESSION", session.getId())
+                .when()
                 .post("/auth/mid/init?lang=en")
                 .then()
                 .assertThat()
@@ -266,116 +370,77 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
-    void midAuthInit_session_status_incorrect() {
-        Session session = sessionRepository.createSession();
-        TaraSession testSession = new TaraSession(session.getId());
-        testSession.setState(TaraAuthenticationState.INIT_MID);
-        session.setAttribute(TARA_SESSION, testSession);
-        sessionRepository.save(session);
-
-        given()
-                .when()
-                .formParam("idCode", "60001019906")
-                .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", session.getId())
-                .post("/auth/mid/init")
-                .then()
-                .assertThat()
-                .statusCode(400)
-                .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
-                .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-
-        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [INIT_AUTH_PROCESS]");
-    }
-
-    @Test
-    void midAuthInit_session_mid_not_allowed() {
-        Session session = sessionRepository.createSession();
-        TaraSession testSession = new TaraSession(session.getId());
-        List<AuthenticationType> allowedMethods = new ArrayList<>();
-        allowedMethods.add(AuthenticationType.ID_CARD);
-        testSession.setAllowedAuthMethods(allowedMethods);
-        testSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
-        session.setAttribute(TARA_SESSION, testSession);
-        sessionRepository.save(session);
-
-        given()
-                .when()
-                .formParam("idCode", "60001019906")
-                .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", session.getId())
-                .post("/auth/mid/init")
-                .then()
-                .assertThat()
-                .statusCode(400)
-                .body("message", equalTo("Ebakorrektne päring."))
-                .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-
-        assertErrorIsLogged("User exception: Mobile ID authentication method is not allowed");
-    }
-
-    @Test
+    @Tag(value = "MID_AUTH_INIT_RESPONSE")
     void midAuthInit_response_400() {
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 400);
 
         given()
-                .when()
+                .filter(withTaraSession()
+                        .sessionRepository(sessionRepository)
+                        .authenticationTypes(of(MOBILE_ID)).build())
                 .formParam("idCode", "60001019906")
                 .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", createNewAuthenticationSession(MOBILE_ID).getId())
+                .when()
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
                 .statusCode(500);
 
-        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: HTTP 400 Bad Request"); // TODO:
+        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: HTTP 400 Bad Request");
     }
 
     @Test
+    @Tag(value = "MID_AUTH_INIT_RESPONSE")
     void midAuthInit_response_401() {
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 401);
 
         given()
-                .when()
+                .filter(withTaraSession()
+                        .sessionRepository(sessionRepository)
+                        .authenticationTypes(of(MOBILE_ID)).build())
                 .formParam("idCode", "60001019906")
                 .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", createNewAuthenticationSession(MOBILE_ID).getId())
+                .when()
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
                 .statusCode(500);
 
-        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: Request is unauthorized for URI https://localhost:9877/mid-api/authentication: HTTP 401 Unauthorized"); // TODO:
+        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: Request is unauthorized for URI https://localhost:9877/mid-api/authentication: HTTP 401 Unauthorized");
     }
 
     @Test
+    @Tag(value = "MID_AUTH_INIT_RESPONSE")
     void midAuthInit_response_405() {
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 405);
 
         given()
-                .when()
+                .filter(withTaraSession()
+                        .sessionRepository(sessionRepository)
+                        .authenticationTypes(of(MOBILE_ID)).build())
                 .formParam("idCode", "60001019906")
                 .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", createNewAuthenticationSession(MOBILE_ID).getId())
+                .when()
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
                 .statusCode(500);
 
-        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: HTTP 405 Method Not Allowed"); // TODO:
+        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: HTTP 405 Method Not Allowed");
     }
 
     @Test
+    @Tag(value = "MID_AUTH_INIT_RESPONSE")
     void midAuthInit_response_500() {
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 500);
 
         given()
-                .when()
+                .filter(withTaraSession()
+                        .sessionRepository(sessionRepository)
+                        .authenticationTypes(of(MOBILE_ID)).build())
                 .formParam("idCode", "60001019906")
                 .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", createNewAuthenticationSession(MOBILE_ID).getId())
+                .when()
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
@@ -389,10 +454,12 @@ class AuthMidControllerTest extends BaseTest {
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 500);
 
         given()
-                .when()
+                .filter(withTaraSession()
+                        .sessionRepository(sessionRepository)
+                        .authenticationTypes(of(MOBILE_ID)).build())
                 .formParam("idCode", "60001019906")
                 .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", createNewAuthenticationSession(MOBILE_ID).getId())
+                .when()
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
@@ -407,10 +474,12 @@ class AuthMidControllerTest extends BaseTest {
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 200, 2000);
 
         given()
-                .when()
+                .filter(withTaraSession()
+                        .sessionRepository(sessionRepository)
+                        .authenticationTypes(of(MOBILE_ID)).build())
                 .formParam("idCode", "60001019906")
                 .formParam("telephoneNumber", "00000766")
-                .sessionId("SESSION", createNewAuthenticationSession(MOBILE_ID).getId())
+                .when()
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()

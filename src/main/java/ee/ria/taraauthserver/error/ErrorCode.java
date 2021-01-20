@@ -11,6 +11,8 @@ import java.util.Map;
 @Getter
 @AllArgsConstructor
 public enum ErrorCode {
+    INVALID_LOGIN_CHALLENGE("message.error.invalid-login-challenge"),
+    NO_VALID_AUTHMETHODS_AVAILABLE("message.error.no-allowed-authmethods"),
     ESTEID_INVALID_REQUEST("message.idc.error"),
     MID_USER_CANCEL("message.mid-rest.error.user-cancel"),
     MID_HASH_MISMATCH("message.mid-rest.error.signature-hash-mismatch"),
@@ -26,6 +28,7 @@ public enum ErrorCode {
     SESSION_NOT_FOUND("message.error.session-not-found"),
     SESSION_STATE_INVALID("message.error.session-state-invalid"),
     INVALID_REQUEST("message.error.invalid-request"),
+    INVALID_LEGAL_PERSON("label.legal-person.error.invalid-legal-person"),
     LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE("label.legal-person.error.service-not-available");
 
     private final String message;
