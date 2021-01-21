@@ -1,6 +1,5 @@
 package ee.ria.taraauthserver.security;
 
-import ee.ria.taraauthserver.session.TaraSession;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.MDC;
@@ -15,7 +14,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
-import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 @Component
@@ -35,10 +33,6 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
         HttpSession session = request.getSession(false);
         if (session != null) {
             MDC.put(MDC_ATTRIBUTE_NAME_SESSION_ID, session.getId());
-            TaraSession taraSession = (TaraSession) session.getAttribute(TARA_SESSION);
-            if (taraSession != null && taraSession.getState() != null) {
-                MDC.put(MDC_ATTRIBUTE_NAME_SESSION_STATE, taraSession.getState().name());
-            }
         }
 
         // NB! Set traceId also as HttpServletRequest attribute to make it accessible for Tomcat's AccessLogValve

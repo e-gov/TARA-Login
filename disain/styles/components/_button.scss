@@ -20,6 +20,12 @@
       border-color: darken( #008936, 5% );
     }
   }
+  &--primary:disabled, &--primary[disabled] {
+      cursor: default;
+      background-color: #cccccc;
+      color: #666666;
+      border: 2px solid #cccccc;
+    }
   &--cancel {
     color: #003168;
     background-color: #ffffff;
