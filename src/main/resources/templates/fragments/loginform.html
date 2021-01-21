@@ -21,7 +21,7 @@
         </nav>
         <main role="main" class="c-tab-login__main">
             <div th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).ID_CARD)}"
-                 layout:include="~{fragments/logintabs :: content('id-card')}" th:remove="tag"
+                 layout:insert="~{fragments/logintabs :: content('id-card')}" th:remove="tag"
                  aria-hidden="true" aria-labelledby="id-card">
                 <form role="form" th:action="@{/auth/accept}" method="post" id="idCardForm" class="c-form"
                       layout:fragment="login-form-content">
@@ -42,7 +42,7 @@
             </div>
 
             <div th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).MOBILE_ID)}"
-                 layout:include="~{fragments/logintabs :: content('mobile-id')}" th:remove="tag"
+                 layout:insert="~{fragments/logintabs :: content('mobile-id')}" th:remove="tag"
                  aria-hidden="true" aria-labelledby="mobile-id">
                 <form role="form" th:action="@{/auth/mid/init}" method="post" id="mobileIdForm" class="c-form"
                       layout:fragment="login-form-content">
