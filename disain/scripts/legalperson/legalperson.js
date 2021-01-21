@@ -32,12 +32,13 @@ jQuery(function ($) {
                     + legalperson.legalPersonIdentifier + '">' + legalperson.legalName + ', '
                     + legalperson.legalPersonIdentifier + '</label></li>'
             )
-            $('input[name="legalperson"]').on('click', function() {
-                 setSelectedLegalPerson();
-            });
 
             $('#results-legal-person-list').append(legalPersonItem);
         })
+
+        $('input[name="legalperson"]').on('click', function() {
+             setSelectedLegalPerson();
+        });
 
         if (length == 1) {
             $('#' + json.legalPersons[0].legalPersonIdentifier).prop("checked", true);
