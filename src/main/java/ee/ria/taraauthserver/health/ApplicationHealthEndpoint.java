@@ -57,7 +57,13 @@ public class ApplicationHealthEndpoint {
     public ResponseEntity<Map<String, Object>> health() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        return ResponseEntity.ok().headers(headers).body(getHealthDetails());
+        Map<String, Object> details = getHealthDetails();
+        if (details.containsKey("status") && details.get("status").equals(Status.UP.getCode())) {
+            return ResponseEntity.status(200).headers(headers).body(details);
+        } else {
+            return ResponseEntity.status(503).headers(headers).body(details);
+        }
+
     }
 
     private Map<String, Object> getHealthDetails() {
@@ -101,10 +107,10 @@ public class ApplicationHealthEndpoint {
     }
 
     private Status getAggregatedStatus(Map<String, Status> healthIndicatorStatuses) {
-        Optional<Status> anyNotUp = healthIndicatorStatuses.values().stream()
-                .filter(status -> !Status.UP.equals(status))
+        Optional<Status> anyDown = healthIndicatorStatuses.values().stream()
+                .filter(status -> Status.DOWN.equals(status))
                 .findAny();
-        return anyNotUp.isPresent() ? Status.DOWN : Status.UP;
+        return anyDown.isPresent() ? Status.DOWN : Status.UP;
     }
 
     private List<HashMap<String, String>> getFormattedStatuses(Map<String, Status> healthIndicatorStatuses) {
