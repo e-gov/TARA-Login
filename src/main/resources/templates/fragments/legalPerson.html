@@ -6,7 +6,7 @@
         </div>
         <br>
     </noscript>
-    <div class="c-tab-login__content is-active" data-tab="legalperson" aria-hidden="false">
+    <div>
         <div class="alert alert-neutral">
 
             <h2 th:utext="#{label.legal-person-representative}">Header</h2>
@@ -53,7 +53,8 @@
                 </div>
                 <form method="POST" th:action="@{/auth/legalperson/confirm}" class="c-form" id="selectLegalPerson">
                     <input type="hidden" name="legal_person_identifier" value=""/>
-                    <button type="submit" class="c-btn c-btn--primary hidden" id="btn-select-legal-person" th:utext="#{label.common.login}"></button>
+                    <button type="submit" class="c-btn c-btn--primary" disabled id="btn-select-legal-person"
+                            th:utext="#{label.common.login}"></button>
                 </form>
             </div>
 

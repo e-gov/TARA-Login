@@ -16,7 +16,7 @@ jQuery(function ($) {
 
     function setup(){
         $('#results-loading').removeClass('hidden');
-        $('#btn-select-legal-person').hide();
+        $("#btn-select-legal-person").attr('disabled','disabled');
     }
 
     function handleSuccessfulResult(json) {
@@ -31,8 +31,9 @@ jQuery(function ($) {
                     + '" id="' + legalperson.legalPersonIdentifier + '" /> <label for="'
                     + legalperson.legalPersonIdentifier + '">' + legalperson.legalName + ', '
                     + legalperson.legalPersonIdentifier + '</label></li>'
-            ).on('click', function() {
-                setSelectedLegalPerson();
+            )
+            $('input[name="legalperson"]').on('click', function() {
+                 setSelectedLegalPerson();
             });
 
             $('#results-legal-person-list').append(legalPersonItem);
@@ -42,7 +43,7 @@ jQuery(function ($) {
             $('#' + json.legalPersons[0].legalPersonIdentifier).prop("checked", true);
             $('input[name="legal_person_identifier"]').val(json.legalPersons[0].legalPersonIdentifier);
             $('#legalperson-count').text(length);
-            $('#btn-select-legal-person').show();
+            $("#btn-select-legal-person").removeAttr('disabled');
         } else {
             $('#legalperson-count').text(length);
         }
@@ -66,7 +67,8 @@ jQuery(function ($) {
     }
 
     function setSelectedLegalPerson() {
+    console.log("setting selected legal person");
         $('input[name="legal_person_identifier"]').val($("input[name='legalperson']:checked").val());
-        $('#btn-select-legal-person').show();
+        $("#btn-select-legal-person").removeAttr('disabled');
     }
 });
