@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.health;
 
 import ee.ria.taraauthserver.BaseTest;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.boot.info.BuildProperties;
@@ -34,6 +35,8 @@ public class ApplicationHealthEndpointTest extends BaseTest {
     TruststoreHealthIndicator truststoreHealthIndicator;
 
     @Test
+    @Tag(value = "HEALTH_MONITORING_ENDPOINT")
+    @Tag(value = "HEALTH_MONITORING_STATUS")
     void applicationHealth_ok() {
         wireMockServer.stubFor(any(urlPathEqualTo("/health/ready"))
                 .willReturn(aResponse().withStatus(200)));
@@ -64,6 +67,8 @@ public class ApplicationHealthEndpointTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "HEALTH_MONITORING_ENDPOINT")
+    @Tag(value = "HEALTH_MONITORING_STATUS")
     void applicationHealth_Oidc_health_endpoint_response_404() {
         wireMockServer.stubFor(any(urlPathEqualTo("/health/ready"))
                 .willReturn(aResponse().withStatus(404)));
@@ -80,6 +85,8 @@ public class ApplicationHealthEndpointTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "HEALTH_MONITORING_ENDPOINT")
+    @Tag(value = "HEALTH_MONITORING_WARN_KEY_EXPIRATION")
     void applicationHealth_when_certificate_about_to_expire() {
         Instant expectedTime = Instant.parse("2023-09-01T08:50:00Z");
         Mockito.when(truststoreHealthIndicator.getSystemClock()).thenReturn(Clock.fixed(expectedTime, of("UTC")));
@@ -100,6 +107,8 @@ public class ApplicationHealthEndpointTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "HEALTH_MONITORING_ENDPOINT")
+    @Tag(value = "HEALTH_MONITORING_STATUS")
     void applicationHealth_when_certificate_has_expired() {
         Instant expectedTime = Instant.parse("2023-10-01T08:50:00Z");
         Mockito.when(truststoreHealthIndicator.getSystemClock()).thenReturn(Clock.fixed(expectedTime, of("UTC")));
