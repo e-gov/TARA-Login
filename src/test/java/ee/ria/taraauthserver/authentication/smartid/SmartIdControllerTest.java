@@ -1,12 +1,12 @@
 package ee.ria.taraauthserver.authentication.smartid;
 
 import ee.ria.taraauthserver.BaseTest;
+import ee.ria.taraauthserver.session.MockSessionFilter;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
-import static ee.ria.taraauthserver.session.MockSessionFilter.withTaraSession;
 import static io.restassured.RestAssured.given;
 
 class SmartIdControllerTest extends BaseTest {
@@ -17,7 +17,7 @@ class SmartIdControllerTest extends BaseTest {
     @Test
     void smartIdTest() {
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository).build())
                 .formParam("smartIdCode", "10101010005")
                 .when()

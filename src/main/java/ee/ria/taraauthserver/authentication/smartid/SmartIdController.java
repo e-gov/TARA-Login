@@ -2,8 +2,9 @@ package ee.ria.taraauthserver.authentication.smartid;
 
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.ValidNationalIdNumber;
+import ee.sk.mid.rest.MidSessionStatusPoller;
 import ee.sk.smartid.*;
-import ee.sk.smartid.rest.SmartIdRestConnector;
+import ee.sk.smartid.rest.SessionStatusPoller;
 import ee.sk.smartid.rest.dao.*;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -44,10 +45,18 @@ public class SmartIdController {
         SemanticsIdentifier semanticsIdentifier = new SemanticsIdentifier(SemanticsIdentifier.IdentityType.PNO, SemanticsIdentifier.CountryCode.EE, sidRequest.getSmartIdCode());
         AuthenticationSessionResponse response = sidClient.getSmartIdConnector().authenticate(semanticsIdentifier, authenticationSessionRequest);
 
+        SessionStatusPoller sessionStatusPoller = new SessionStatusPoller(sidClient.getSmartIdConnector());
+        SessionStatus sessionStatus = sessionStatusPoller.fetchFinalSessionStatus(response.getSessionID());
 
         log.info("session id and verification code: ");
         log.info(response.getSessionID());
         log.info(verificationCode);
+        log.info(sessionStatus.getState());
+        log.info(sessionStatus.getResult().getEndResult());
+        log.info(sessionStatus.getCert().getValue());
+        log.info(sessionStatus.getSignature().getValue());
+
+        AuthenticationResponseValidator authenticationResponseValidator = new AuthenticationResponseValidator();
 
         return "sidLoginCode";
     }
