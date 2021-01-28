@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.w3.org/1999/xhtml" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="layout" th:with="hideHeaderLanguageSelection=true">
+      layout:decorate="~{layout}" th:with="hideHeaderLanguageSelection=true">
 <head th:replace="~{fragments/head}"></head>
 <body class="is-mobile-subview"
       th:attr="data-check-form-refresh-rate=${@environment.getProperty('tara.auth-methods.mobile-id.interval-between-session-status-queries-in-milliseconds')}">
@@ -14,7 +14,7 @@
                 </ul>
             </div>
             <div class="c-tab-login__main">
-                <div layout:include="~{fragments/logintabs :: content(tab_id = 'mobile-id', instruction = 'instruction-check', static = true)}"
+                <div layout:insert="~{fragments/logintabs :: content(tab_id = 'mobile-id', instruction = 'instruction-check', static = true)}"
                      th:remove="tag">
                     <form role="form" id="midAuthenticationCheckForm" method="post" th:action="@{/auth/mid/poll/cancel}"
                           class="c-form" layout:fragment="login-form-content">

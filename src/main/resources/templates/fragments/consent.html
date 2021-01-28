@@ -4,27 +4,29 @@
         <table class="consent-table">
             <tr>
                 <th th:utext="#{label.natural-person.id-code}"></th>
-                <td th:text="${idCode}">Personal ID-code</td>
+                <td id="natural-person-id-code" th:text="${idCode}">Personal ID-code</td>
             </tr>
             <tr>
                 <th th:utext="#{label.natural-person.surname}"></th>
-                <td th:text="${lastName}">Surname</td>
+                <td id="natural-person-surname" th:text="${lastName}">Surname</td>
             </tr>
             <tr>
                 <th th:utext="#{label.natural-person.given-name}"></th>
-                <td th:text="${firstName}">Givenname</td>
+                <td id="natural-person-given-name" th:text="${firstName}">Givenname</td>
             </tr>
             <tr>
                 <th th:utext="#{label.natural-person.date-of-birth}"></th>
-                <td th:text="${#temporals.format(dateOfBirth, 'dd.MM.yyyy')}">Date of birth</td>
+                <td id="natural-person-date-of-birth" th:text="${#temporals.format(dateOfBirth, 'dd.MM.yyyy')}">Date of
+                    birth
+                </td>
             </tr>
             <tr th:if="${legalPersonName != null}">
                 <th th:utext="#{label.legal-person.legal-person-name}"></th>
-                <td th:text="${legalPersonName}">Legal person name</td>
+                <td id="legal-person-name" th:text="${legalPersonName}">Legal person name</td>
             </tr>
             <tr th:if="${legalPersonRegistryCode != null}">
                 <th th:utext="#{label.legal-person.legal-person-identifier}"></th>
-                <td th:text="${legalPersonRegistryCode}">Legal person registry code</td>
+                <td id="legal-person-identifier" th:text="${legalPersonRegistryCode}">Legal person registry code</td>
             </tr>
         </table>
         <form method="POST" th:action="@{/auth/consent/confirm(consent_given=true)}" class="consent-button c-form">

@@ -31,6 +31,7 @@ import static io.restassured.RestAssured.given;
 import static java.util.List.of;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class AuthConsentConfirmControllerTest extends BaseTest {
     public static final String MOCK_CONSENT_CHALLENGE = "abcdefg098AAdsCC";
@@ -62,7 +63,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Required String parameter 'consent_given' is not present"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: Required String parameter 'consent_given' is not present");
     }
@@ -80,7 +81,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authConsentConfirm.consentGiven: supported values are: 'true', 'false'"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: authConsentConfirm.consentGiven: supported values are: 'true', 'false'");
     }
@@ -142,8 +143,8 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(302);
 
-        TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
-        assertEquals(TaraAuthenticationState.CONSENT_GIVEN, taraSession.getState());
+        assertNull(sessionRepository.findById(session.getId()));
+        assertWarningIsLogged("Session '" + session.getId() + "' has been invalidated");
     }
 
     @Test
@@ -192,8 +193,8 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(302);
 
-        TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
-        assertEquals(TaraAuthenticationState.CONSENT_NOT_GIVEN, taraSession.getState());
+        assertNull(sessionRepository.findById(session.getId()));
+        assertWarningIsLogged("Session '" + session.getId() + "' has been invalidated");
     }
 
     @Test

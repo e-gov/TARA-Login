@@ -48,7 +48,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
             handle4xxClientError(webRequest, attr);
         }
 
-        attr.put("locale", webRequest.getLocale().toString());
+        attr.put("locale", RequestUtils.getLocale());
         attr.remove("errors");
         attr.put("incident_nr", MDC.get("traceId"));
         return attr;
