@@ -118,11 +118,11 @@ Example: to deploy the webapp to a standalone Tomcat server
 | `tara.auth-methods.id-card.truststore-password` | Yes | Password of the truststore from truststore-path. Example `changeit` |
 | `tara.auth-methods.id-card.ocsp[0].issuer-cn` | Yes | Required issuer CN. Example `TEST of ESTEID-SK 2011, TEST of ESTEID-SK 2015` |
 | `tara.auth-methods.id-card.ocsp[0].url` | Yes | Ocsp url. Example `http://aia.demo.sk.ee/esteid2018` |
-| `tara.auth-methods.id-card.ocsp[0].nonce-disabled` | No | Default `false` |
-| `tara.auth-methods.id-card.ocsp[0].accepted-clock-skew-in-seconds` | No | Default `2L` |
-| `tara.auth-methods.id-card.ocsp[0].response-lifetime-in-seconds` | No | Default `900L` |
-| `tara.auth-methods.id-card.ocsp[0].connect-timeout-in-milliseconds` | No | Default `3000` |
-| `tara.auth-methods.id-card.ocsp[0].read-timeout-in-milliseconds` | No | Default `3000` |
+| `tara.auth-methods.id-card.ocsp[0].nonce-disabled` | No | Determines whether the Ocsp nonce extension is enabled. When enabled a random nonce is sent with the OCSP request and verified in response. Default `false` |
+| `tara.auth-methods.id-card.ocsp[0].accepted-clock-skew-in-seconds` | No | Max clock skew when checking Ocsp response age. Default `2` |
+| `tara.auth-methods.id-card.ocsp[0].response-lifetime-in-seconds` | No | Max allowed age of the Ocsp response (age is calculated using `thisUpdate` field int the OCSP response). Default `900` |
+| `tara.auth-methods.id-card.ocsp[0].connect-timeout-in-milliseconds` | No | Max connect timeout for OCSP request. Default `3000` |
+| `tara.auth-methods.id-card.ocsp[0].read-timeout-in-milliseconds` | No | Max read timeout for OCSP request. Default `3000` |
 | `tara.auth-methods.id-card.ocsp[0].responder-certificate-cn` | No | Required responder certificate CN. Example `TEST of SK OCSP RESPONDER 2020` |
 
 <a name="legalperson_conf"></a>
