@@ -34,7 +34,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
     @Autowired
     private MessageSource messageSource;
 
-    public static final String DEFAULT_INTERNAL_EXCEPTION_MSG = "message.error.internal-error";
+    public static final String DEFAULT_INTERNAL_EXCEPTION_MSG = "message.error.general";
 
     // TODO handle org.springframework.context.NoSuchMessageException
 
