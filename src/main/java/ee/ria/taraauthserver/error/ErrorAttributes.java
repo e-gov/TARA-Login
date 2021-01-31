@@ -8,6 +8,7 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
+import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.http.HttpHeaders;
@@ -42,6 +43,10 @@ public class ErrorAttributes extends DefaultErrorAttributes {
     public Map<String, Object> getErrorAttributes(WebRequest webRequest, ErrorAttributeOptions options) {
         Map<String, Object> attr = super.getErrorAttributes(webRequest, options.including(MESSAGE, BINDING_ERRORS));
         HttpStatus status = HttpStatus.valueOf((int) attr.get("status"));
+
+        if (webRequest.getParameter("error") != null)
+            setOidcErrorMessage(webRequest, attr);
+
         if (status.is5xxServerError()) {
             handle5xxError(webRequest, attr);
         } else if (status.is4xxClientError()) {
@@ -51,7 +56,15 @@ public class ErrorAttributes extends DefaultErrorAttributes {
         attr.put("locale", webRequest.getLocale().toString());
         attr.remove("errors");
         attr.put("incident_nr", MDC.get("traceId"));
+
         return attr;
+    }
+
+    private void setOidcErrorMessage(WebRequest webRequest, Map<String, Object> attr) {
+        if (webRequest.getParameter("error").equals("invalid_client"))
+            attr.put("message", translateErrorCode(webRequest, ErrorCode.INVALID_CLIENT.getMessage()));
+        else
+            attr.put("message", translateErrorCode(webRequest, ErrorCode.INVALID_CLIENT.getMessage()));
     }
 
     private void handle4xxClientError(WebRequest webRequest, Map<String, Object> attr) {
