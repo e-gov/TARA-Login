@@ -1,6 +1,8 @@
 package ee.ria.taraauthserver.authentication.smartid;
 
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
 import ee.ria.taraauthserver.session.SessionUtils;
@@ -19,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
+import org.springframework.session.Session;
+import org.springframework.session.SessionRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
@@ -51,6 +55,12 @@ public class SmartIdController {
     @Autowired
     private Executor taskExecutor;
 
+    @Autowired
+    private SessionRepository<Session> sessionRepository;
+
+    @Autowired
+    private SmartIdConfigurationProperties smartIdConfigurationProperties;
+
     @PostMapping(value = "/auth/sid/init", produces = MediaType.TEXT_HTML_VALUE, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public String authSidInit(@Validated @ModelAttribute(value = "credential") SidRequest sidRequest, Model model, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
 
@@ -70,6 +80,10 @@ public class SmartIdController {
                     .withAllowedInteractionsOrder(Collections.singletonList(Interaction.displayTextAndPIN("Log in to self-service?"))).authenticate();
             String sidSessionId = requestBuilder.initiateAuthentication();
 
+            taraSession.setState(POLL_SID_STATUS);
+            TaraSession.SidAuthenticationResult sidAuthenticationResult = new TaraSession.SidAuthenticationResult(sidSessionId);
+            taraSession.setAuthenticationResult(sidAuthenticationResult);
+
             CompletableFuture.supplyAsync(() -> pollSidSessionStatus(sidSessionId), taskExecutor)
                     .thenAcceptAsync(sessionStatus -> handleSidAuthenticationResult(taraSession, sessionStatus, requestBuilder), taskExecutor)
                     .exceptionally(ex -> {
@@ -80,7 +94,7 @@ public class SmartIdController {
             throw new IllegalStateException("Internal error during MID authentication init: " + e.getMessage(), e);
         }
 
-        taraSession.setState(POLL_SID_STATUS);
+
         model.addAttribute("smartIdVerificationCode", verificationCode);
         return "sidLoginCode";
     }
@@ -106,7 +120,7 @@ public class SmartIdController {
         AuthenticationIdentity authIdentity = authenticationResponseValidator.validate(response);
         taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 
-        TaraSession.AuthenticationResult taraAuthResult = taraSession.getAuthenticationResult();
+        TaraSession.SidAuthenticationResult taraAuthResult = (TaraSession.SidAuthenticationResult) taraSession.getAuthenticationResult();
         if (authIdentity != null) {
             taraAuthResult.setIdCode(authIdentity.getIdentityNumber());
             taraAuthResult.setCountry(authIdentity.getCountry());
@@ -115,8 +129,15 @@ public class SmartIdController {
             taraAuthResult.setSubject(authIdentity.getCountry() + authIdentity.getIdentityNumber());
             taraAuthResult.setDateOfBirth(MidNationalIdentificationCodeValidator.getBirthDate(authIdentity.getIdentityNumber()));
         }
+        taraAuthResult.setAmr(AuthenticationType.SMART_ID);
+        taraAuthResult.setAcr(smartIdConfigurationProperties.getLevelOfAssurance());
+
         log.info("identity from response is:");
         log.info(taraSession.toString());
+
+        Session session = sessionRepository.findById(taraSession.getSessionId());
+        session.setAttribute(TARA_SESSION, taraSession);
+        sessionRepository.save(session);
     }
 
     private void handleSidAuthenticationException(TaraSession taraSession, Throwable ex) {
