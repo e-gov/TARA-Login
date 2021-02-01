@@ -4,7 +4,6 @@ import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.session.MockSessionFilter;
-import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Tag;
