@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.authentication.smartid;
 
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
+import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
@@ -70,7 +71,7 @@ public class SmartIdController {
 
         validateSession(taraSession);
 
-        AuthenticationHash authenticationHash = AuthenticationHash.generateRandomHash(HashType.SHA512);
+        AuthenticationHash authenticationHash = getAuthenticationHash();
 
         AuthenticationRequestBuilder requestBuilder = sidClient.createAuthentication();
         String sidSessionId = initiateSidAuthenticationSession(sidCredential, taraSession, authenticationHash, requestBuilder);
@@ -84,6 +85,10 @@ public class SmartIdController {
 
         model.addAttribute("smartIdVerificationCode", authenticationHash.calculateVerificationCode());
         return "sidLoginCode";
+    }
+
+    AuthenticationHash getAuthenticationHash() {
+        return AuthenticationHash.generateRandomHash(HashType.SHA512);
     }
 
     private String initiateSidAuthenticationSession(SidCredential sidCredential, TaraSession taraSession, AuthenticationHash authenticationHash, AuthenticationRequestBuilder requestBuilder) {
@@ -108,8 +113,10 @@ public class SmartIdController {
 
             return sidSessionId;
         } catch (NotAllowedException | SmartIdClientException | NotAuthorizedException e) {
+            log.error("Failed to initiate SID authentication session: " + e.getMessage());
             throw new IllegalStateException(ERROR_GENERAL.getMessage(), e);
         } catch (Exception e) {
+            log.error("Failed to initiate SID authentication session: " + e.getMessage());
             throw new HttpServerErrorException(HttpStatus.BAD_GATEWAY, SID_INTERNAL_ERROR.getMessage());
         }
     }
@@ -158,9 +165,9 @@ public class SmartIdController {
     public void validateSession(TaraSession taraSession) {
         log.info("AuthSession: {}", taraSession);
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
-        if (!taraSession.getAllowedAuthMethods().contains(AuthenticationType.SMART_ID)) {
-            throw new BadRequestException(INVALID_REQUEST, "Smart ID authentication method is not allowed");
-        }
+        //if (!taraSession.getAllowedAuthMethods().contains(AuthenticationType.SMART_ID)) {
+        //throw new BadRequestException(INVALID_REQUEST, "Smart ID authentication method is not allowed");
+        //}
     }
 
     private SessionStatus pollSidSessionStatus(String sidSessionId) {
@@ -171,13 +178,7 @@ public class SmartIdController {
 
     private void handleSidAuthenticationResult(TaraSession taraSession, SessionStatus sessionStatus, AuthenticationRequestBuilder requestBuilder) {
         log.info("handling sid authentication result");
-        log.info(taraSession.toString());
-        try {
-            Thread.sleep(15000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        log.info("sid authentication result handled");
+
         SmartIdAuthenticationResponse response = requestBuilder.createSmartIdAuthenticationResponse(sessionStatus);
         AuthenticationIdentity authIdentity = authenticationResponseValidator.validate(response);
         taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
@@ -200,17 +201,26 @@ public class SmartIdController {
         Session session = sessionRepository.findById(taraSession.getSessionId());
         session.setAttribute(TARA_SESSION, taraSession);
         sessionRepository.save(session);
+
+        log.info("sid authentication result handled");
     }
 
     private void handleSidAuthenticationException(TaraSession taraSession, Throwable ex) {
+        Throwable cause = ex.getCause();
+        log.info(cause.getClass().getName());
+        log.error("received sid poll exception: " + cause.getMessage());
         taraSession.setState(AUTHENTICATION_FAILED);
-        log.info("received sid authentication exception: " + ex.getMessage());
+        taraSession.getAuthenticationResult().setErrorCode(ErrorCode.getErrorCode(cause));
+
+        Session session = sessionRepository.findById(taraSession.getSessionId());
+        session.setAttribute(TARA_SESSION, taraSession);
+        sessionRepository.save(session);
     }
 
     @Data
     public static class SidCredential {
         @ValidNationalIdNumber(message = "{message.mid-rest.error.invalid-identity-code}")
-        private String smartIdCode; //TODO rename this to just idCode?
+        private String smartIdCode;
     }
 
 }

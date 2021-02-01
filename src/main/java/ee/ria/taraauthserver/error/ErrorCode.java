@@ -1,6 +1,10 @@
 package ee.ria.taraauthserver.error;
 
 import ee.sk.mid.exception.*;
+import ee.sk.smartid.exception.SessionNotFoundException;
+import ee.sk.smartid.exception.useraccount.DocumentUnusableException;
+import ee.sk.smartid.exception.useraccount.RequiredInteractionNotSupportedByAppException;
+import ee.sk.smartid.exception.useraction.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -22,7 +26,16 @@ public enum ErrorCode {
     MID_TRANSACTION_EXPIRED("message.mid-rest.error.expired-transaction"),
     NOT_MID_CLIENT("message.mid-rest.error.not-mid-client"),
     MID_INTERNAL_ERROR("message.mid-rest.error.internal-error"),
+    INTERNAL_ERROR("message.error.internal-error"),
     SID_INTERNAL_ERROR("message.sid.error.internal-error"),
+    SID_USER_REFUSED("message.smart-id.error.user-refused-auth"),
+    SID_SESSION_TIMEOUT("message.smart-id.error.session-timed-out"),
+    SID_DOCUMENT_UNUSABLE("message.smart-id.error.user-document-unusable"),
+    SID_WRONG_VC("message.smart-id.error.wrong-vc"),
+    SID_INTERACTION_NOT_SUPPORTED("message.smart-id.error.required-interaction-not-supported-by-app"),
+    SID_USER_REFUSED_CERT_CHOICE("message.smart-id.error.user-refused-cert-choice"),
+    SID_USER_REFUSED_DISAPLAYTEXTANDPIN("message.smart-id.error.user-refused-display-text-and-pin"),
+    SID_USER_REFUSED_VC_CHOICE("message.smart-id.error.user-refused-display-text-and-pin"),
     MID_INTEGRATION_ERROR("message.error.general"),
     MID_VALIDATION_ERROR("message.mid-rest.error.validation-error"),
     ERROR_GENERAL("message.error.general"),
@@ -38,7 +51,16 @@ public enum ErrorCode {
 
     static {
         errorMap = new HashMap<>();
-        errorMap.put(InternalServerErrorException.class, MID_INTERNAL_ERROR);
+        errorMap.put(InternalServerErrorException.class, INTERNAL_ERROR);
+        errorMap.put(UserRefusedException.class, SID_USER_REFUSED);
+        errorMap.put(SessionTimeoutException.class, SID_SESSION_TIMEOUT);
+        errorMap.put(DocumentUnusableException.class, SID_DOCUMENT_UNUSABLE);
+        errorMap.put(UserSelectedWrongVerificationCodeException.class, SID_WRONG_VC);
+        errorMap.put(RequiredInteractionNotSupportedByAppException.class, SID_INTERACTION_NOT_SUPPORTED);
+        errorMap.put(UserRefusedCertChoiceException.class, SID_USER_REFUSED_CERT_CHOICE);
+        errorMap.put(UserRefusedDisplayTextAndPinException.class, SID_USER_REFUSED_DISAPLAYTEXTANDPIN);
+        errorMap.put(UserRefusedVerificationChoiceException.class, SID_USER_REFUSED_VC_CHOICE);
+        errorMap.put(SessionNotFoundException.class, INTERNAL_ERROR);
         errorMap.put(MidInternalErrorException.class, MID_INTERNAL_ERROR);
         errorMap.put(MidSessionNotFoundException.class, MID_INTEGRATION_ERROR);
         errorMap.put(MidMissingOrInvalidParameterException.class, MID_INTEGRATION_ERROR);
