@@ -67,6 +67,8 @@ public class AuthConfigurationProperties {
         private String rejectLoginUrl;
 
         private int requestTimeoutInSeconds = 3;
+
+        private int maxConnectionsTotal = 50;
     }
 
     @Data

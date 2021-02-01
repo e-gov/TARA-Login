@@ -98,18 +98,6 @@ class ThymeleafSupportTest {
     }
 
     @Test
-    void getBackUrl_returnsAuthInitWhenSessionPresent() {
-        buildMockHttpSession(buildMockLoginRequestInfo());
-        assertEquals("/auth/init?login_challenge=" + MOCK_LOGIN_CHALLENGE, thymeleafSupport.getBackUrl());
-    }
-
-    @Test
-    void getBackUrl_returnsNoUrlWhenSessionMissing() {
-        buildMockHttpSession(null);
-        assertEquals("#", thymeleafSupport.getBackUrl());
-    }
-
-    @Test
     void getHomeUrl_returnsLegacyReturnUrlWhenPresent() {
         buildMockHttpSession(buildMockLoginRequestInfo());
         assertEquals(MOCK_CLIENT_LEGACY_URL, thymeleafSupport.getHomeUrl());

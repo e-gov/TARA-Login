@@ -32,14 +32,6 @@ public class ThymeleafSupport {
             return "/auth/reject?error_code=user_cancel";
     }
 
-    public String getBackUrl() {
-        TaraSession taraSession = SessionUtils.getAuthSession();
-        if (taraSession == null || taraSession.getLoginRequestInfo() == null)
-            return "#";
-        else
-            return "/auth/init?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge();
-    }
-
     public String getServiceName() {
         TaraSession taraSession = SessionUtils.getAuthSession();
         if (taraSession == null || taraSession.getLoginRequestInfo() == null)

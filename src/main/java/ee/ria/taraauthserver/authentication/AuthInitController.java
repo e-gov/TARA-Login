@@ -7,7 +7,6 @@ import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
-import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.RequestUtils;
@@ -22,9 +21,10 @@ import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import javax.servlet.http.HttpSession;
+
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import javax.validation.constraints.Pattern;
@@ -40,6 +40,7 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 @Validated
 @Controller
 public class AuthInitController {
+    public static final String AUTH_INIT_REQUEST_MAPPING = "/auth/init";
 
     @Autowired
     private AuthConfigurationProperties taraProperties;
@@ -50,33 +51,22 @@ public class AuthInitController {
     @Autowired
     private Validator validator;
 
-    @GetMapping(value = "/auth/init", produces = MediaType.TEXT_HTML_VALUE)
+    @GetMapping(value = AUTH_INIT_REQUEST_MAPPING, produces = MediaType.TEXT_HTML_VALUE)
     public String authInit(
             @RequestParam(name = "login_challenge") @Size(max = 50)
-            @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed")
-                    String loginChallenge,
+            @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed") String loginChallenge,
             @RequestParam(name = "lang", required = false)
-            @Pattern(regexp = "(et|en|ru)", message = "supported values are: 'et', 'en', 'ru'")
-                    String language) {
+            @Pattern(regexp = "(et|en|ru)", message = "supported values are: 'et', 'en', 'ru'") String language,
+            @SessionAttribute(value = TARA_SESSION) TaraSession newTaraSession) {
 
-        TaraSession taraSession = initAuthSession(loginChallenge);
-
-        setLocale(language, taraSession);
-
-        return "loginView";
-    }
-
-    private TaraSession initAuthSession(String loginChallenge) {
-        HttpSession httpSession = SessionUtils.resetHttpSession();
         TaraSession.LoginRequestInfo loginRequestInfo = fetchLoginRequestInfo(loginChallenge);
-
-        TaraSession newTaraSession = new TaraSession(httpSession.getId());
         newTaraSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
         newTaraSession.setLoginRequestInfo(loginRequestInfo);
         newTaraSession.setAllowedAuthMethods(getAllowedAuthenticationMethodsList(loginRequestInfo));
-        httpSession.setAttribute(TARA_SESSION, newTaraSession);
-        log.info("Created session: {}", newTaraSession);
-        return newTaraSession;
+        log.info("Initialized authentication session: {}", newTaraSession);
+
+        setLocale(language, newTaraSession);
+        return "loginView";
     }
 
     private void setLocale(String language, TaraSession taraSession) {
@@ -217,5 +207,4 @@ public class AuthInitController {
                 .map(cv -> cv == null ? "null" : cv.getPropertyPath() + ": " + cv.getMessage())
                 .sorted().collect(Collectors.joining(", "));
     }
-
 }

@@ -45,6 +45,7 @@ tara:
     reject-consent-url: https://localhost:9877/oauth2/auth/requests/consent/reject
     health-url: https://localhost:9877/health/ready
     request-timeout-in-seconds: 1
+    max-connections-total: 3
 
   default-locale: et
 
@@ -100,8 +101,6 @@ tara:
 
     x-road-server-read-timeout-in-milliseconds: 1000
     x-road-server-connect-timeout-in-milliseconds: 1000
-
-    x-road-query-esindus-v2-allowed-types: SA,AS
 
   tls:
     trust-store-location: classpath:tls-truststore.jks

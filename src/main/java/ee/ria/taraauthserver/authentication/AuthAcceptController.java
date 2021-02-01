@@ -37,7 +37,7 @@ class AuthAcceptController {
 
     @PostMapping("/auth/accept")
     public RedirectView authAccept(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
-        SessionUtils.assertSessionInState(taraSession, LEGAL_PERSON_AUTHENTICATION_COMPLETED, NATURAL_PERSON_AUTHENTICATION_COMPLETED);
+        SessionUtils.assertSessionInState(taraSession, NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED);
         if (isLegalPersonAttributesRequested(taraSession)) {
             return new RedirectView("/auth/legalperson/init");
         }

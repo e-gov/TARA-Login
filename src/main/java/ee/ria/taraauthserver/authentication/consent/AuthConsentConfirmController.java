@@ -70,6 +70,7 @@ public class AuthConsentConfirmController {
         });
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && response.getBody().get("redirect_to") != null) {
             taraSession.setState(taraSessionState);
+            SessionUtils.invalidateSession();
             return new RedirectView(response.getBody().get("redirect_to"));
         } else {
             throw new IllegalStateException("Invalid OIDC server response. Redirect URL missing from response.");

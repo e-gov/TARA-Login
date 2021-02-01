@@ -62,7 +62,7 @@ public class TruststoreHealthIndicator extends AbstractHealthIndicator {
         if (getCertificatesExpiredAt(now(getSystemClock())).isEmpty()) {
             builder.up().withDetails(trustStoreCertificates).build();
         } else {
-            builder.down().withDetails(trustStoreCertificates).build();
+            builder.unknown().withDetails(trustStoreCertificates).build();
         }
     }
 

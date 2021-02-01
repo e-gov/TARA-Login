@@ -1,5 +1,7 @@
 package ee.ria.taraauthserver.session;
 
+import lombok.Data;
+import lombok.experimental.Delegate;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,8 +11,12 @@ import org.springframework.session.SessionRepository;
 import org.springframework.stereotype.Component;
 
 import javax.cache.Cache;
+import java.io.Serializable;
 import java.time.Duration;
 
+/**
+ * @see ee.ria.taraauthserver.config.SessionConfiguration
+ */
 @Slf4j
 @Component
 public class IgniteSessionRepository implements SessionRepository<Session> {
@@ -23,15 +29,19 @@ public class IgniteSessionRepository implements SessionRepository<Session> {
     private Duration sessionTimeout;
 
     @Override
-    public MapSession createSession() {
-        MapSession mapSession = new MapSession();
-        mapSession.setMaxInactiveInterval(sessionTimeout);
-        return mapSession;
+    public IgniteSession createSession() {
+        IgniteSession igniteSession = new IgniteSession();
+        igniteSession.setMaxInactiveInterval(sessionTimeout);
+        return igniteSession;
     }
 
     @Override
     public void save(Session session) {
-        sessionCache.put(session.getId(), session);
+        IgniteSession igniteSession = (IgniteSession) session;
+        if (igniteSession.isChanged()) {
+            igniteSession.setChanged(false);
+            sessionCache.put(session.getId(), session);
+        }
     }
 
     @Override
@@ -48,5 +58,23 @@ public class IgniteSessionRepository implements SessionRepository<Session> {
     @Override
     public void deleteById(String id) {
         sessionCache.remove(id);
+    }
+
+    @Data
+    static final class IgniteSession implements Session, Serializable {
+        private static final long serialVersionUID = 7160779239673823561L;
+        private boolean changed;
+
+        @Delegate(excludes = SetAttribute.class)
+        private final MapSession mapSession = new MapSession();
+
+        public void setAttribute(String attributeName, Object attributeValue) {
+            setChanged(true);
+            mapSession.setAttribute(attributeName, attributeValue);
+        }
+
+        interface SetAttribute {
+            void setAttribute(String attributeName, Object attributeValue);
+        }
     }
 }

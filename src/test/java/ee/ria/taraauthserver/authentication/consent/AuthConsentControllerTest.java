@@ -47,7 +47,7 @@ class AuthConsentControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authConsent.consentChallenge: only characters and numbers allowed"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
     }
 
     @Test
@@ -61,7 +61,7 @@ class AuthConsentControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Required String parameter 'consent_challenge' is not present"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: Required String parameter 'consent_challenge' is not present");
     }
@@ -78,7 +78,7 @@ class AuthConsentControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authConsent.consentChallenge: only characters and numbers allowed"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: authConsent.consentChallenge: only characters and numbers allowed");
     }
@@ -95,7 +95,7 @@ class AuthConsentControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authConsent.consentChallenge: size must be between 0 and 50"))
                 .body("error", equalTo("Bad Request"))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: authConsent.consentChallenge: size must be between 0 and 50");
     }
