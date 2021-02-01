@@ -48,7 +48,7 @@
             }
         };
         xhttp.open('GET', '/auth/mid/poll', true);
-        xhttp.setRequestHeader('Accept', 'text/html;charset=UTF-8');
+        xhttp.setRequestHeader('Accept', 'application/json;charset=UTF-8');
         xhttp.send();
 
     }, timeout);
