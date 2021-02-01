@@ -90,11 +90,24 @@ Example: to deploy the webapp to a standalone Tomcat server
 <a name="mid_conf"></a>
 ### 1.3 Mobile-ID auth method
 
+Table 1.3.1 - Enabling Mobile-ID authentication
+
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `tara.auth-methods.mobile-id.enabled` | No | Enable or disable this auth method. Default `true` |
+| `tara.auth-methods.mobile-id.enabled` | No | Enable or disable Mobile-ID authentication method. Default `true` |
+
+Table 1.3.2 - Assignig the Level of assurance to authentication method
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
 | `tara.auth-methods.mobile-id.level-of-assurance` | Yes | Level of assurance of this auth method. Example `HIGH` |
-| `tara.auth-methods.mobile-id.host-url` | Yes | Mobile id client url |
+
+
+Table 1.3.3 - Integration with the [SK MID service](https://github.com/SK-EID/MID)
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.auth-methods.mobile-id.host-url` | Yes | Mobile-ID authentication service url |
 | `tara.auth-methods.mobile-id.truststore-path` | Yes | Path to truststore file. Example. `file:src/test/resources/mobileid-truststore-test.p12` |
 | `tara.auth-methods.mobile-id.truststore-type` | Yes | Type of the truststore from truststore-path. Example. `PKCS12` |
 | `tara.auth-methods.mobile-id.truststore-password` | Yes | Password of the truststore from truststore-path. Example `changeit` |
@@ -109,28 +122,153 @@ Example: to deploy the webapp to a standalone Tomcat server
 <a name="esteid_conf"></a>
 ### 1.4 ID-card auth method
 
+Table 1.4.1 - Enabling ID-card authentication
+
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `tara.auth-methods.id-card.enabled` | No | Enable or disable this auth method. Default `true` |
-| `tara.auth-methods.id-card.level-of-assurance` | Yes | Level of assurance of this auth method. Example `HIGH` |
-| `tara.auth-methods.id-card.truststore-path` | Yes | Path to truststore file. Example `file:src/test/resources/mobileid-truststore-test.p12` |
+| `tara.auth-methods.id-card.enabled` | No | Enable or disable Id-card authentication method. Default `true` |
+
+
+Table 1.4.2 - Assignig the Level of assurance to authentication method
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.auth-methods.id-card.level-of-assurance` | Yes | Level of assurance of this auth method. Allowed values: `HIGH`, `SUBSTANTIAL`, `LOW`. |
+
+Table 1.4.3 - Configuring truststore for OCSP responder certificates
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.auth-methods.id-card.truststore-path` | Yes | Path to truststore file. Example `file:src/test/resources/idcard-truststore-test.p12` |
 | `tara.auth-methods.id-card.truststore-type` | Yes | Type of the truststore from truststore-path. Example `PKCS12` |
 | `tara.auth-methods.id-card.truststore-password` | Yes | Password of the truststore from truststore-path. Example `changeit` |
+
+Table 1.4.4 - Explicit configuration of the OCSP service(s)
+
+The webapp allows multiple sets of OCSP configurations to be defined by using the `tara.auth-methods.id-card.ocsp[{index}]` notation.
+
+Each OCSP configuration can contain the following set of properties:
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
 | `tara.auth-methods.id-card.ocsp[0].issuer-cn` | Yes | Required issuer CN. Example `TEST of ESTEID-SK 2011, TEST of ESTEID-SK 2015` |
 | `tara.auth-methods.id-card.ocsp[0].url` | Yes | Ocsp url. Example `http://aia.demo.sk.ee/esteid2018` |
-| `tara.auth-methods.id-card.ocsp[0].nonce-disabled` | No | Default `false` |
-| `tara.auth-methods.id-card.ocsp[0].accepted-clock-skew-in-seconds` | No | Default `2L` |
-| `tara.auth-methods.id-card.ocsp[0].response-lifetime-in-seconds` | No | Default `900L` |
-| `tara.auth-methods.id-card.ocsp[0].connect-timeout-in-milliseconds` | No | Default `3000` |
-| `tara.auth-methods.id-card.ocsp[0].read-timeout-in-milliseconds` | No | Default `3000` |
+| `tara.auth-methods.id-card.ocsp[0].nonce-disabled` | No | Determines whether the Ocsp nonce extension is enabled. When enabled a random nonce is sent with the OCSP request and verified in response. Default `false` |
+| `tara.auth-methods.id-card.ocsp[0].accepted-clock-skew-in-seconds` | No | Max clock skew when checking Ocsp response age. Default `2` |
+| `tara.auth-methods.id-card.ocsp[0].response-lifetime-in-seconds` | No | Max allowed age of the Ocsp response (age is calculated using `thisUpdate` field int the OCSP response). Default `900` |
+| `tara.auth-methods.id-card.ocsp[0].connect-timeout-in-milliseconds` | No | Max connect timeout for OCSP request. Default `3000` |
+| `tara.auth-methods.id-card.ocsp[0].read-timeout-in-milliseconds` | No | Max read timeout for OCSP request. Default `3000` |
 | `tara.auth-methods.id-card.ocsp[0].responder-certificate-cn` | No | Required responder certificate CN. Example `TEST of SK OCSP RESPONDER 2020` |
+
+NB! A default configuration is used when a user certificate is encountered by a trusted issuer, that has no matching OCSP configuration by the issuer's CN and the user certificate contains the AIA OCSP URL (the configuration will use the default values of the properties listed in Table 4)
+
+Example 1: using SK AIA OCSP only (a non-commercial, best-effort service):
+
+````
+tara:
+  auth-methods:
+    id-card:
+      enabled: true
+      level-of-assurance: HIGH
+      truststore-path: file:src/test/resources/idcard-truststore-test.p12
+      truststore-type: PKCS12
+      truststore-password: changeit
+      ocsp:
+        - issuer-cn: TEST of ESTEID-SK 2011
+          url: http://aia.sk.ee/esteid2011
+          nonce-disabled: true          
+          responder-certificate-cn: TEST_of_ESTEID-SK_2011.crt
+
+        - issuer-cn: TEST of ESTEID-SK 2015        
+          url: https://localhost:9877/esteid2015
+          nonce-disabled: true
+          connect-timeout-in-milliseconds: 500
+
+        - issuer-cn: TEST of ESTEID-SK2018
+          url: http://aia.demo.sk.ee/esteid2018
+````
+
+Example 2:  using SK's commercial OCSP only (with subscription only):
+
+````
+tara:
+  auth-methods:
+    id-card:
+      enabled: true
+      level-of-assurance: HIGH
+      truststore-path: file:src/test/resources/idcard-truststore-test.p12
+      truststore-type: PKCS12
+      truststore-password: changeit
+      ocsp:
+        - issuer-cn: ESTEID-SK 2011, ESTEID-SK 2015, ESTEID2018
+          url: http://ocsp.sk.ee/          
+          responder-certificate-cn: SK OCSP RESPONDER 2011       
+````
+
+Table 1.4.5 - Configuring fallback OCSP service(s)
+
+When the primary OCSP service is not available (ie returns other than HTTP 200 status code, an invalid response Content-Type or the connection times out) a fallback OCSP connection(s) can be configured to query for the certificate status.
+
+In case of multiple fallback configurations per issuer, the execution order is determined by the order of definition in the configuration.
+
+The following properties can be used to configure a fallback OCSP service:
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.auth-methods.id-card.fallback-ocsp[{index}].issuer-cn` | Yes | A comma separated list of certificate issuer CN's. Determines the issuer(s) this fallback configuration will be applied to. Note that the certificate by CN must be present in the truststore (tara.auth-methods.id-card.truststore-path) |
+| `tara.auth-methods.id-card.fallback-ocsp[{index}].url` | Y | HTTP URL of the OCSP service. |
+| `tara.auth-methods.id-card.fallback-ocsp[{index}].responder-certificate-cn` | N | Explicit OCSP response signing certificate CN. If not provided, OCSP reponse signer certificate is expected to be issued from the same chain as user-certificate. |
+| `tara.auth-methods.id-card.fallback-ocsp[{index}].nonce-disabled` | N | Boolean value, that determines whether the nonce extension usage is disabled. Defaults to `false` if not specified. |
+| `tara.auth-methods.id-card.fallback-ocsp[{index}].accepted-clock-skew-in-seconds` | N | Maximum accepted time difference in seconds between OCSP provider and TARA-Server. Defaults to `2`, if not specified. |
+| `tara.auth-methods.id-card.fallback-ocsp[{index}].response-lifetime-inseconds` | N | Maximum accepted age of an OCSP response in seconds. Defaults to `900` if not specified. |
+| `tara.auth-methods.id-card.fallback-ocsp[{index}].connect-timeout-in-milliseconds` | N | Connection timeout in milliseconds. Defaults to `3000`, if not specified. |
+| `tara.auth-methods.id-card.fallback-ocsp[{index}].read-timeout-in-milliseconds` | N | Connection read timeout in milliseconds. Defaults to `3000` if not specified. |
+
+Example: AIA OCSP by default using a static backup OCSP
+
+````
+tara:
+  auth-methods:
+    id-card:
+      enabled: true
+      level-of-assurance: HIGH
+      truststore-path: file:src/test/resources/idcard-truststore-test.p12
+      truststore-type: PKCS12
+      truststore-password: changeit
+      ocsp:
+        - issuer-cn: TEST of ESTEID-SK 2011
+          url: http://aia.sk.ee/esteid2011
+          nonce-disabled: true          
+          responder-certificate-cn: TEST_of_ESTEID-SK_2011.crt
+
+        - issuer-cn: TEST of ESTEID-SK 2015        
+          url: https://localhost:9877/esteid2015
+          nonce-disabled: true
+          connect-timeout-in-milliseconds: 500
+
+        - issuer-cn: TEST of ESTEID-SK2018
+          url: http://aia.demo.sk.ee/esteid2018
+      fallback-ocsp:
+        - issuer-cn: ESTEID-SK 2011, ESTEID-SK 2015, ESTEID2018
+          url: http://ocsp.sk.ee/          
+          responder-certificate-cn: SK OCSP RESPONDER 2011  
+````
+
 
 <a name="legalperson_conf"></a>
 ## 1.5 Legal person attributes
 
+Table 1.5.1 - Enabling legal-person attribute support 
+
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `tara.legal-person-authentication.enabled` | No | Enables or disables the legalperson authentication functionality and endpoints. Defaults to `true` if not specified.  |
+| `tara.legal-person-authentication.enabled` | No | Enables or disables the legalperson attribute support and endpoints. Defaults to `true` if not specified.  |
+
+
+Table 1.5.2 - Integration with the Estonian business registry
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
 | `tara.legal-person-authentication.x-road-server-url` | Yes | X-Road security request URL. Example `https://localhost:9877/cgi-bin/consumer_proxy`  |
 | `tara.legal-person-authentication.x-road-service-member-class` | Yes | X-Road service member class. Example `GOV`  |
 | `tara.legal-person-authentication.x-road-service-instance` | Yes | X-Road service instance. Example `ee-dev`  |

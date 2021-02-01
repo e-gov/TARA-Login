@@ -240,6 +240,18 @@ public class AuthMidServiceTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_AUTH_POLL_RESPONSE")
+    void authenticationFailsWhen_MidApi_response_times_out() {
+        String sessionId = startMidAuthSessionWithPollResponseWithDelay("mock_responses/mid/mid_poll_empty_response.json", 500, 0 , 5000);
+        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
+        assertWarningIsLogged("Mid polling failed: java.net.SocketTimeoutException: Read timed out");
+        assertEquals(MID_INTERNAL_ERROR, taraSession.getAuthenticationResult().getErrorCode());
+        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
+        assertMidApiRequests();
+    }
+
+    @Test
     @Tag(value = "MID_AUTH_POLL_RESPONSE_COMPLETE")
     void authenticationFailsWhen_MidApi_response_user_cancelled() {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_response_user_cancelled.json", 200);
@@ -295,8 +307,12 @@ public class AuthMidServiceTest extends BaseTest {
     }
 
     private String startMidAuthSessionWithPollResponse(String pollResponse, int pollHttpStatus) {
-        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 200);
-        createMidApiPollStub(pollResponse, pollHttpStatus);
+        return startMidAuthSessionWithPollResponseWithDelay(pollResponse, pollHttpStatus, 0, 0);
+    }
+
+    private String startMidAuthSessionWithPollResponseWithDelay(String pollResponse, int pollHttpStatus, int midInitResponseDelayInMilliseconds, int midPollResponseDelayInMilliseconds) {
+        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 200, midInitResponseDelayInMilliseconds);
+        createMidApiPollStub(pollResponse, pollHttpStatus, midPollResponseDelayInMilliseconds);
         Session session = createNewAuthenticationSession();
         MidAuthenticationHashToSign midAuthenticationHashToSign = authMidService.startMidAuthSession(session.getAttribute(TARA_SESSION), "60001019906", "+37200000766");
         assertNotNull(midAuthenticationHashToSign);

@@ -6,7 +6,7 @@ import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.sk.mid.*;
-import ee.sk.mid.exception.MidInternalErrorException;
+import ee.sk.mid.exception.*;
 import ee.sk.mid.rest.dao.MidSessionStatus;
 import ee.sk.mid.rest.dao.request.MidAuthenticationRequest;
 import ee.sk.mid.rest.dao.response.MidAuthenticationResponse;
@@ -18,13 +18,15 @@ import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 import org.springframework.stereotype.Service;
 
+import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.ProcessingException;
+import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
-import static ee.ria.taraauthserver.error.ErrorCode.MID_INTERNAL_ERROR;
-import static ee.ria.taraauthserver.error.ErrorCode.MID_VALIDATION_ERROR;
+import static ee.ria.taraauthserver.error.ErrorCode.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.util.Arrays.stream;
@@ -42,6 +44,24 @@ public class AuthMidService {
             "et", MidLanguage.EST,
             "en", MidLanguage.ENG,
             "ru", MidLanguage.RUS);
+
+    private static final Map<Class<?>, ErrorCode> errorMap;
+
+    static {
+        errorMap = new HashMap<>();
+        errorMap.put(InternalServerErrorException.class, MID_INTERNAL_ERROR);
+        errorMap.put(MidInternalErrorException.class, MID_INTERNAL_ERROR);
+        errorMap.put(MidSessionNotFoundException.class, MID_INTEGRATION_ERROR);
+        errorMap.put(MidMissingOrInvalidParameterException.class, MID_INTEGRATION_ERROR);
+        errorMap.put(MidUnauthorizedException.class, MID_INTEGRATION_ERROR);
+        errorMap.put(MidNotMidClientException.class, NOT_MID_CLIENT);
+        errorMap.put(MidSessionTimeoutException.class, MID_TRANSACTION_EXPIRED);
+        errorMap.put(MidUserCancellationException.class, MID_USER_CANCEL);
+        errorMap.put(MidInvalidUserConfigurationException.class, MID_HASH_MISMATCH);
+        errorMap.put(MidPhoneNotAvailableException.class, MID_PHONE_ABSENT);
+        errorMap.put(MidDeliveryException.class, MID_DELIVERY_ERROR);
+        errorMap.put(ProcessingException.class, MID_INTERNAL_ERROR);
+    }
 
     @Autowired
     private MidClient midClient;
@@ -161,7 +181,7 @@ public class AuthMidService {
         Throwable cause = ex.getCause();
         log.warn("Mid polling failed: {}", cause.getMessage());
         taraSession.setState(AUTHENTICATION_FAILED);
-        taraSession.getAuthenticationResult().setErrorCode(ErrorCode.getErrorCode(cause));
+        taraSession.getAuthenticationResult().setErrorCode(translateExceptionToErrorCode(cause));
 
         Session session = sessionRepository.findById(taraSession.getSessionId());
         session.setAttribute(TARA_SESSION, taraSession);
@@ -170,5 +190,9 @@ public class AuthMidService {
 
     private MidLanguage getMidLanguage() {
         return midLanguages.get(LocaleContextHolder.getLocale().getLanguage());
+    }
+
+    private ErrorCode translateExceptionToErrorCode(Throwable ex) {
+        return errorMap.getOrDefault(ex.getClass(), ERROR_GENERAL);
     }
 }
