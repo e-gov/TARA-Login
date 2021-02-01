@@ -22,6 +22,7 @@ public enum ErrorCode {
     MID_TRANSACTION_EXPIRED("message.mid-rest.error.expired-transaction"),
     NOT_MID_CLIENT("message.mid-rest.error.not-mid-client"),
     MID_INTERNAL_ERROR("message.mid-rest.error.internal-error"),
+    SID_INTERNAL_ERROR("message.sid.error.internal-error"),
     MID_INTEGRATION_ERROR("message.error.general"),
     MID_VALIDATION_ERROR("message.mid-rest.error.validation-error"),
     ERROR_GENERAL("message.error.general"),

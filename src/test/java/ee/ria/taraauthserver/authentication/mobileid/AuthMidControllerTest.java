@@ -473,6 +473,8 @@ class AuthMidControllerTest extends BaseTest {
     void midAuthInit_response_timeout() {
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 200, 2000);
 
+        wireMockServer.getStubMappings();
+
         given()
                 .filter(withTaraSession()
                         .sessionRepository(sessionRepository)

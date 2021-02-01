@@ -126,6 +126,18 @@ public class TaraSession implements Serializable {
         @Valid
         @JsonProperty("institution")
         private Institution institution = new Institution();
+        @JsonProperty("smartid_settings")
+        private SmartIdSettings smartIdSettings;
+    }
+
+    @Data
+    public static class SmartIdSettings implements Serializable {
+        @JsonProperty("relying_party_UUID")
+        private String relyingPartyUuid;
+        @JsonProperty("relying_party_name")
+        private String relyingPartyName;
+        @JsonProperty("should_use_additional_verifcation_code_check")
+        private Boolean ShouldUseAdditionalVerificationCodeCheck;
     }
 
     @Data

@@ -100,7 +100,7 @@ public abstract class BaseTest {
         RestAssured.responseSpecification = new ResponseSpecBuilder().expectHeaders(EXPECTED_HTML_RESPONSE_HEADERS).build();
         RestAssured.port = port;
         configureMockLogAppender();
-        wireMockServer.resetAll();
+        //wireMockServer.resetAll();
     }
 
     @AfterEach
@@ -173,8 +173,29 @@ public abstract class BaseTest {
                         .withBodyFile(response)));
     }
 
+    protected static void createSidApiAuthenticationStub(String response, int status) {
+        createSidApiAuthenticationStub(response, status, 0);
+    }
+
+    protected static void createSidApiAuthenticationStub(String response, int status, int delayInMilliseconds) {
+        wireMockServer.stubFor(any(urlPathEqualTo("/smart-id-rp/v2/authentication/etsi/PNOEE-60001019939"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withStatus(status)
+                        .withFixedDelay(delayInMilliseconds)
+                        .withBodyFile(response)));
+    }
+
     protected static void createMidApiPollStub(String response, int status) {
         wireMockServer.stubFor(any(urlPathMatching("/mid-api/authentication/session/.*"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withStatus(status)
+                        .withBodyFile(response)));
+    }
+
+    protected static void createSidApiPollStub(String response, int status) {
+        wireMockServer.stubFor(any(urlPathMatching("/smart-id-rp/v2/session/de305d54-75b4-431b-adb2-eb6b9e546014"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withStatus(status)

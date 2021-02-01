@@ -87,7 +87,7 @@ tara:
       interval-between-session-status-queries-in-milliseconds: 1000
     smart-id:
       enabled: true
-      host-url: https://sid.demo.sk.ee/smart-id-rp/v2/
+      host-url: https://localhost:9877/smart-id-rp/v2/
       level-of-assurance: HIGH
       trusted-ca-certificates-location: file:src/test/resources/ocsp/sid-truststore.p12
       relying-party-uuid: 00000000-0000-0000-0000-000000000000
