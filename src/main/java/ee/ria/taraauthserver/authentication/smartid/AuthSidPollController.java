@@ -2,21 +2,19 @@ package ee.ria.taraauthserver.authentication.smartid;
 
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 
 import java.util.Map;
 
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_MID_STATUS;
 
 @Slf4j
 @RestController
@@ -36,7 +34,7 @@ public class AuthSidPollController {
             if (errorCode.equals(ErrorCode.ERROR_GENERAL))
                 throw new IllegalStateException(errorCode.getMessage());
             else if (errorCode.equals(ErrorCode.SID_INTERNAL_ERROR))
-                throw new HttpServerErrorException(HttpStatus.BAD_GATEWAY, errorCode.getMessage());
+                throw new ServiceNotAvailableException(errorCode, "Sid poll failed", null);
             else
                 throw new BadRequestException(taraSession.getAuthenticationResult().getErrorCode(), "Sid poll failed");
         } else

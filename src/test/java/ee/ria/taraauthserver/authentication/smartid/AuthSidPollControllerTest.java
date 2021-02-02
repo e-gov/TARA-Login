@@ -183,7 +183,7 @@ class AuthSidPollControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(502)
                 .body("error", equalTo("Bad Gateway"))
-                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
+                .body("message", equalTo("Smart-ID teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti."))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
 
         TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);

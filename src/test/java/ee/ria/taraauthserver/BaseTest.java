@@ -100,7 +100,7 @@ public abstract class BaseTest {
         RestAssured.responseSpecification = new ResponseSpecBuilder().expectHeaders(EXPECTED_HTML_RESPONSE_HEADERS).build();
         RestAssured.port = port;
         configureMockLogAppender();
-        //wireMockServer.resetAll();
+        wireMockServer.resetAll();
     }
 
     @AfterEach
@@ -119,7 +119,6 @@ public abstract class BaseTest {
         config = config()
                 .redirect(redirectConfig().followRedirects(false))
                 .sessionConfig(new SessionConfig().sessionIdName("SESSION"));
-        ;
     }
 
     protected void assertInfoIsLogged(String... messagesInRelativeOrder) {
