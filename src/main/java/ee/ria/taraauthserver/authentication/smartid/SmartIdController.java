@@ -8,8 +8,13 @@ import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.ValidNationalIdNumber;
 import ee.sk.mid.MidNationalIdentificationCodeValidator;
+import ee.sk.mid.exception.*;
 import ee.sk.smartid.*;
+import ee.sk.smartid.exception.SessionNotFoundException;
 import ee.sk.smartid.exception.permanent.SmartIdClientException;
+import ee.sk.smartid.exception.useraccount.DocumentUnusableException;
+import ee.sk.smartid.exception.useraccount.RequiredInteractionNotSupportedByAppException;
+import ee.sk.smartid.exception.useraction.*;
 import ee.sk.smartid.rest.SessionStatusPoller;
 import ee.sk.smartid.rest.dao.Interaction;
 import ee.sk.smartid.rest.dao.SemanticsIdentifier;
@@ -33,9 +38,8 @@ import org.springframework.web.client.HttpServerErrorException;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotAllowedException;
 import javax.ws.rs.NotAuthorizedException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import javax.ws.rs.ProcessingException;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
@@ -63,6 +67,21 @@ public class SmartIdController {
 
     @Autowired
     private SmartIdConfigurationProperties smartIdConfigurationProperties;
+
+    private static final Map<Class<?>, ErrorCode> errorMap;
+
+    static {
+        errorMap = new HashMap<>();
+        errorMap.put(InternalServerErrorException.class, SID_INTERNAL_ERROR);
+        errorMap.put(UserRefusedException.class, SID_USER_REFUSED);
+        errorMap.put(SessionTimeoutException.class, SID_SESSION_TIMEOUT);
+        errorMap.put(DocumentUnusableException.class, SID_DOCUMENT_UNUSABLE);
+        errorMap.put(UserSelectedWrongVerificationCodeException.class, SID_WRONG_VC);
+        errorMap.put(RequiredInteractionNotSupportedByAppException.class, SID_INTERACTION_NOT_SUPPORTED);
+        errorMap.put(UserRefusedCertChoiceException.class, SID_USER_REFUSED_CERT_CHOICE);
+        errorMap.put(UserRefusedDisplayTextAndPinException.class, SID_USER_REFUSED_DISAPLAYTEXTANDPIN);
+        errorMap.put(UserRefusedVerificationChoiceException.class, SID_USER_REFUSED_VC_CHOICE);
+    }
 
     @PostMapping(value = "/auth/sid/init", produces = MediaType.TEXT_HTML_VALUE, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public String authSidInit(@Validated @ModelAttribute(value = "credential") SidCredential sidCredential, Model model, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
@@ -205,18 +224,17 @@ public class SmartIdController {
 
     private void handleSidAuthenticationException(TaraSession taraSession, Throwable ex) {
         Throwable cause = ex.getCause();
-
-        if (cause instanceof InternalServerErrorException)
-            taraSession.getAuthenticationResult().setErrorCode(SID_INTERNAL_ERROR);
-        else
-            taraSession.getAuthenticationResult().setErrorCode(ErrorCode.getErrorCode(cause));
-
-        log.info(cause.getClass().getName());
         log.error("received sid poll exception: " + cause.getMessage());
         taraSession.setState(AUTHENTICATION_FAILED);
+        taraSession.getAuthenticationResult().setErrorCode(translateExceptionToErrorCode(cause));
+
         Session session = sessionRepository.findById(taraSession.getSessionId());
         session.setAttribute(TARA_SESSION, taraSession);
         sessionRepository.save(session);
+    }
+
+    private ErrorCode translateExceptionToErrorCode(Throwable ex) {
+        return errorMap.getOrDefault(ex.getClass(), ERROR_GENERAL);
     }
 
     @Data
