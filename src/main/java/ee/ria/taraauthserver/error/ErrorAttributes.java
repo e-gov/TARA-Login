@@ -48,7 +48,6 @@ public class ErrorAttributes extends DefaultErrorAttributes {
         if (webRequest.getParameter("error") != null) {
             setOidcErrorMessage(webRequest, attr);
             attr.put("status", 400);
-            webRequest.setAttribute("javax.servlet.error.status_code", 400, 0);
         }
 
         HttpStatus status = HttpStatus.valueOf((int) attr.get("status"));
