@@ -9,6 +9,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import javax.ws.rs.InternalServerErrorException;
+import javax.ws.rs.ProcessingException;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,34 +48,4 @@ public enum ErrorCode {
     LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE("label.legal-person.error.service-not-available");
 
     private final String message;
-
-    public static Map<Class<?>, ErrorCode> errorMap;
-
-    static {
-        errorMap = new HashMap<>();
-        errorMap.put(InternalServerErrorException.class, MID_INTERNAL_ERROR);
-        errorMap.put(UserRefusedException.class, SID_USER_REFUSED);
-        errorMap.put(SessionTimeoutException.class, SID_SESSION_TIMEOUT);
-        errorMap.put(DocumentUnusableException.class, SID_DOCUMENT_UNUSABLE);
-        errorMap.put(UserSelectedWrongVerificationCodeException.class, SID_WRONG_VC);
-        errorMap.put(RequiredInteractionNotSupportedByAppException.class, SID_INTERACTION_NOT_SUPPORTED);
-        errorMap.put(UserRefusedCertChoiceException.class, SID_USER_REFUSED_CERT_CHOICE);
-        errorMap.put(UserRefusedDisplayTextAndPinException.class, SID_USER_REFUSED_DISAPLAYTEXTANDPIN);
-        errorMap.put(UserRefusedVerificationChoiceException.class, SID_USER_REFUSED_VC_CHOICE);
-        errorMap.put(SessionNotFoundException.class, INTERNAL_ERROR);
-        errorMap.put(MidInternalErrorException.class, MID_INTERNAL_ERROR);
-        errorMap.put(MidSessionNotFoundException.class, MID_INTEGRATION_ERROR);
-        errorMap.put(MidMissingOrInvalidParameterException.class, MID_INTEGRATION_ERROR);
-        errorMap.put(MidUnauthorizedException.class, MID_INTEGRATION_ERROR);
-        errorMap.put(MidNotMidClientException.class, NOT_MID_CLIENT);
-        errorMap.put(MidSessionTimeoutException.class, MID_TRANSACTION_EXPIRED);
-        errorMap.put(MidUserCancellationException.class, MID_USER_CANCEL);
-        errorMap.put(MidInvalidUserConfigurationException.class, MID_HASH_MISMATCH);
-        errorMap.put(MidPhoneNotAvailableException.class, MID_PHONE_ABSENT);
-        errorMap.put(MidDeliveryException.class, MID_DELIVERY_ERROR);
-    }
-
-    public static ErrorCode getErrorCode(Throwable ex) {
-        return errorMap.getOrDefault(ex.getClass(), ERROR_GENERAL);
-    }
 }

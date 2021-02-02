@@ -186,10 +186,14 @@ public abstract class BaseTest {
     }
 
     protected static void createMidApiPollStub(String response, int status) {
+        createMidApiPollStub(response, status, 0);
+    }
+    protected static void createMidApiPollStub(String response, int status, int delayInMilliseconds) {
         wireMockServer.stubFor(any(urlPathMatching("/mid-api/authentication/session/.*"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withStatus(status)
+                        .withFixedDelay(delayInMilliseconds)
                         .withBodyFile(response)));
     }
 
