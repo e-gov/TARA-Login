@@ -236,7 +236,7 @@ class IdCardControllerTest extends BaseTest {
                 .statusCode(400)
                 .headers(EXPECTED_JSON_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
-                .body("errorMessage", equalTo("Teie sertifikaadid ei kehti."));
+                .body("errorMessage", equalTo("Kasutaja sertifikaat on tühistatud või peatatud staatuses."));
 
         assertWarningIsLogged("OCSP validation failed: Invalid certificate status <REVOKED> received");
     }
@@ -273,7 +273,7 @@ class IdCardControllerTest extends BaseTest {
                 .statusCode(400)
                 .headers(EXPECTED_JSON_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
-                .body("errorMessage", equalTo("Teie sertifikaadid ei kehti."));
+                .body("errorMessage", equalTo("Kasutaja sertifikaadi staatus on teadmata."));
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
 
