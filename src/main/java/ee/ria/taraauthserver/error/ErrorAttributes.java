@@ -64,7 +64,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
         if (webRequest.getParameter("error").equals("invalid_client"))
             attr.put("message", translateErrorCode(webRequest, ErrorCode.INVALID_CLIENT.getMessage()));
         else
-            attr.put("message", translateErrorCode(webRequest, ErrorCode.INVALID_CLIENT.getMessage()));
+            attr.put("message", translateErrorCode(webRequest, ErrorCode.ERROR_GENERAL.getMessage()));
     }
 
     private void handle4xxClientError(WebRequest webRequest, Map<String, Object> attr) {
