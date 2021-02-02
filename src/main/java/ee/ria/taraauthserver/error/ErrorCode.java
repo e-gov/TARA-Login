@@ -31,7 +31,6 @@ public enum ErrorCode {
     SESSION_STATE_INVALID("message.error.session-state-invalid"),
     INVALID_REQUEST("message.error.invalid-request"),
     INVALID_LEGAL_PERSON("label.legal-person.error.invalid-legal-person"),
-    INTERNAL_ERROR("message.error.internal-error"),
     INVALID_CLIENT("message.error.invalid-client"),
     LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE("label.legal-person.error.service-not-available");
 
