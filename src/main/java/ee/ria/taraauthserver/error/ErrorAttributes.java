@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
 import org.springframework.boot.web.servlet.error.ErrorController;
@@ -18,6 +19,7 @@ import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
+import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.WebRequest;
 
 import java.util.*;
@@ -42,10 +44,14 @@ public class ErrorAttributes extends DefaultErrorAttributes {
     @Override
     public Map<String, Object> getErrorAttributes(WebRequest webRequest, ErrorAttributeOptions options) {
         Map<String, Object> attr = super.getErrorAttributes(webRequest, options.including(MESSAGE, BINDING_ERRORS));
-        HttpStatus status = HttpStatus.valueOf((int) attr.get("status"));
 
-        if (webRequest.getParameter("error") != null)
+        if (webRequest.getParameter("error") != null) {
             setOidcErrorMessage(webRequest, attr);
+            attr.put("status", 400);
+            webRequest.setAttribute("javax.servlet.error.status_code", 400, 0);
+        }
+
+        HttpStatus status = HttpStatus.valueOf((int) attr.get("status"));
 
         if (status.is5xxServerError()) {
             handle5xxError(webRequest, attr);
