@@ -14,10 +14,10 @@ public enum TaraScope {
     OPENID("openid"),
     IDCARD("idcard"),
     MID("mid"),
-    SID("sid"),
+    SMARTID("smartid"),
     LEGALPERSON("legalperson");
 
-    public static final List<TaraScope> SUPPORTS_AUTHENTICATION_METHOD_SELECTION = of(IDCARD, MID, SID);
+    public static final List<TaraScope> SUPPORTS_AUTHENTICATION_METHOD_SELECTION = of(IDCARD, MID, SMARTID);
 
     private final String formalName;
 

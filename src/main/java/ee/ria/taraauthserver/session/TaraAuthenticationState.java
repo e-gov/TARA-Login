@@ -4,6 +4,7 @@ public enum TaraAuthenticationState {
     INIT_AUTH_PROCESS,
     AUTHENTICATION_SUCCESS,
     INIT_MID,
+    INIT_SID,
     POLL_MID_STATUS,
     POLL_MID_STATUS_CANCELED,
     POLL_SID_STATUS,

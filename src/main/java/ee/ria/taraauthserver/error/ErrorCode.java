@@ -51,7 +51,6 @@ public enum ErrorCode {
 
     static {
         errorMap = new HashMap<>();
-        errorMap.put(InternalServerErrorException.class, INTERNAL_ERROR);
         errorMap.put(UserRefusedException.class, SID_USER_REFUSED);
         errorMap.put(SessionTimeoutException.class, SID_SESSION_TIMEOUT);
         errorMap.put(DocumentUnusableException.class, SID_DOCUMENT_UNUSABLE);

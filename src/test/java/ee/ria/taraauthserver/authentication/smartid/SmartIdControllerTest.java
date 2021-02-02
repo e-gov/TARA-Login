@@ -415,7 +415,7 @@ class SmartIdControllerTest extends BaseTest {
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
 
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
-        assertEquals(ErrorCode.INTERNAL_ERROR, taraSession.getAuthenticationResult().getErrorCode());
+        assertEquals(ErrorCode.SID_INTERNAL_ERROR, taraSession.getAuthenticationResult().getErrorCode());
 
         assertErrorIsLogged("received sid poll exception: HTTP 500 Server Error");
     }
@@ -650,6 +650,35 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals(ErrorCode.SID_USER_REFUSED_VC_CHOICE, taraSession.getAuthenticationResult().getErrorCode());
 
         assertErrorIsLogged("received sid poll exception: User cancelled verificationCodeChoice screen");
+    }
+
+    @Test
+    @Tag(value = "SID_AUTH_POLL_RESPONSE_COMPLETED_ERRORS")
+    void sidAuthInit_PollResponse_ok_unknownStatus() {
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(SMART_ID))
+                .authenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS).build();
+
+        createSidApiAuthenticationStub("mock_responses/sid/sid_authentication_init_response.json", 200);
+        createSidApiPollStub("mock_responses/sid/sid_poll_response_unknown_status.json", 200);
+
+        given()
+                .filter(sessionFilter)
+                .when()
+                .formParam(ID_CODE, ID_CODE_VALUE)
+                .post("/auth/sid/init")
+                .then()
+                .assertThat()
+                .statusCode(200);
+
+        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
+
+        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
+        assertEquals(ErrorCode.ERROR_GENERAL, taraSession.getAuthenticationResult().getErrorCode());
+
+        assertErrorIsLogged("received sid poll exception: Session status end result is 'UNKNOWN_STATUS'");
     }
 
 }

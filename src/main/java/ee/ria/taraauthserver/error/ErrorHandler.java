@@ -9,6 +9,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletResponse;
@@ -33,7 +34,7 @@ public class ErrorHandler {
         return new ModelAndView();
     }
 
-    @ExceptionHandler({ServiceNotAvailableException.class})
+    @ExceptionHandler({ServiceNotAvailableException.class, HttpServerErrorException.class})
     public ModelAndView handleDownstreamServiceErrors(Exception ex, HttpServletResponse response) throws IOException {
         log.error("Service not available: {}", ex.getMessage(), ex);
         response.sendError(HttpServletResponse.SC_BAD_GATEWAY);

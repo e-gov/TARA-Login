@@ -66,7 +66,7 @@ class AuthSidPollControllerTest extends BaseTest {
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [POLL_SID_STATUS, AUTHENTICATION_FAILED, NATURAL_PERSON_AUTHENTICATION_COMPLETED]");
+        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [INIT_SID, POLL_SID_STATUS, AUTHENTICATION_FAILED, NATURAL_PERSON_AUTHENTICATION_COMPLETED]");
     }
 
     @Test
@@ -97,7 +97,7 @@ class AuthSidPollControllerTest extends BaseTest {
         given()
                 .filter(sessionFilter)
                 .when()
-                .get("/auth/mid/poll")
+                .get("/auth/sid/poll")
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -124,12 +124,66 @@ class AuthSidPollControllerTest extends BaseTest {
         given()
                 .filter(sessionFilter)
                 .when()
-                .get("/auth/mid/poll")
+                .get("/auth/sid/poll")
                 .then()
                 .assertThat()
                 .statusCode(400)
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Kasutajal on mitu Smart-ID kontot ja ühe kontoga tühistati autentimisprotsess."))
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
+
+        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
+        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
+    }
+
+    @Test
+    @Tag(value = "SID_AUTH_FAILED")
+    void sidAuth_session_status_authentication_general_error() {
+        TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
+        authenticationResult.setErrorCode(ErrorCode.ERROR_GENERAL);
+
+        MockSessionFilter sessionFilter = withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(SMART_ID))
+                .authenticationState(AUTHENTICATION_FAILED)
+                .authenticationResult(authenticationResult).build();
+
+        given()
+                .filter(sessionFilter)
+                .when()
+                .get("/auth/sid/poll")
+                .then()
+                .assertThat()
+                .statusCode(500)
+                .body("error", equalTo("Internal Server Error"))
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
+
+        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
+        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
+    }
+
+    @Test
+    @Tag(value = "SID_AUTH_FAILED")
+    void sidAuth_session_status_authentication_sid_internal_error() {
+        TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
+        authenticationResult.setErrorCode(ErrorCode.SID_INTERNAL_ERROR);
+
+        MockSessionFilter sessionFilter = withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(SMART_ID))
+                .authenticationState(AUTHENTICATION_FAILED)
+                .authenticationResult(authenticationResult).build();
+
+        given()
+                .filter(sessionFilter)
+                .when()
+                .get("/auth/sid/poll")
+                .then()
+                .assertThat()
+                .statusCode(502)
+                .body("error", equalTo("Bad Gateway"))
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
 
         TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);

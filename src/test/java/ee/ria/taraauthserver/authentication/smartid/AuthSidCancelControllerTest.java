@@ -50,7 +50,7 @@ class AuthSidCancelControllerTest extends BaseTest {
                 .post("/auth/sid/poll/cancel")
                 .then()
                 .assertThat()
-                .statusCode(200)
+                .statusCode(400)
                 .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("error", equalTo("Bad Request"));
 
@@ -74,7 +74,7 @@ class AuthSidCancelControllerTest extends BaseTest {
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: Invalid authentication state: 'COMPLETE', expected one of: [INIT_AUTH_PROCESS, POLL_SID_STATUS]");
+        assertErrorIsLogged("User exception: Invalid authentication state: 'COMPLETE', expected one of: [INIT_SID, POLL_SID_STATUS]");
     }
 
     @Test

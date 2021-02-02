@@ -30,12 +30,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.client.HttpServerErrorException;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotAllowedException;
 import javax.ws.rs.NotAuthorizedException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -94,7 +92,7 @@ public class SmartIdController {
     private String initiateSidAuthenticationSession(SidCredential sidCredential, TaraSession taraSession, AuthenticationHash authenticationHash, AuthenticationRequestBuilder requestBuilder) {
         try {
             log.info("Initiating smart-id session...");
-
+            taraSession.setState(INIT_SID);
             SemanticsIdentifier semanticsIdentifier = new SemanticsIdentifier(SemanticsIdentifier.IdentityType.PNO, SemanticsIdentifier.CountryCode.EE, sidCredential.getSmartIdCode());
             requestBuilder
                     .withRelyingPartyUUID(getAppropriateRelyingPartyUuid(taraSession))
@@ -122,7 +120,7 @@ public class SmartIdController {
     }
 
     private List<Interaction> getAppropriateAllowedInteractions(TaraSession taraSession) {
-        List<Interaction> allowedInteractions = new ArrayList();
+        List<Interaction> allowedInteractions = new ArrayList<>();
         allowedInteractions.add(Interaction.displayTextAndPIN(taraSession.getOidcClientTranslatedShortName()));
         if (shouldUseVerificationCodeCheck(taraSession))
             allowedInteractions.add(Interaction.verificationCodeChoice(taraSession.getOidcClientTranslatedShortName()));
@@ -165,9 +163,9 @@ public class SmartIdController {
     public void validateSession(TaraSession taraSession) {
         log.info("AuthSession: {}", taraSession);
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
-        //if (!taraSession.getAllowedAuthMethods().contains(AuthenticationType.SMART_ID)) {
-        //throw new BadRequestException(INVALID_REQUEST, "Smart ID authentication method is not allowed");
-        //}
+        if (!taraSession.getAllowedAuthMethods().contains(AuthenticationType.SMART_ID)) {
+            throw new BadRequestException(INVALID_REQUEST, "Smart ID authentication method is not allowed");
+        }
     }
 
     private SessionStatus pollSidSessionStatus(String sidSessionId) {
@@ -207,11 +205,15 @@ public class SmartIdController {
 
     private void handleSidAuthenticationException(TaraSession taraSession, Throwable ex) {
         Throwable cause = ex.getCause();
+
+        if (cause instanceof InternalServerErrorException)
+            taraSession.getAuthenticationResult().setErrorCode(SID_INTERNAL_ERROR);
+        else
+            taraSession.getAuthenticationResult().setErrorCode(ErrorCode.getErrorCode(cause));
+
         log.info(cause.getClass().getName());
         log.error("received sid poll exception: " + cause.getMessage());
         taraSession.setState(AUTHENTICATION_FAILED);
-        taraSession.getAuthenticationResult().setErrorCode(ErrorCode.getErrorCode(cause));
-
         Session session = sessionRepository.findById(taraSession.getSessionId());
         session.setAttribute(TARA_SESSION, taraSession);
         sessionRepository.save(session);
