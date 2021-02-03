@@ -82,12 +82,8 @@ public class AuthMidService {
         try {
             MidAuthenticationHashToSign authenticationHash = getAuthenticationHash();
             MidAuthenticationResponse midAuthentication = initMidAuthentication(taraSession, idCode, telephoneNumber, authenticationHash);
-            CompletableFuture.supplyAsync(() -> pollAuthenticationResult(midAuthentication), taskExecutor)
-                    .thenAcceptAsync(midSessionStatus -> handleAuthenticationResult(taraSession, authenticationHash, midSessionStatus, telephoneNumber), taskExecutor)
-                    .exceptionally(ex -> {
-                        handleAuthenticationException(taraSession, ex);
-                        return null;
-                    });
+            CompletableFuture.supplyAsync(() -> pollAuthenticationResult(taraSession, midAuthentication), taskExecutor)
+                    .thenAcceptAsync(midSessionStatus -> handleAuthenticationResult(taraSession, authenticationHash, midSessionStatus, telephoneNumber), taskExecutor);
             return authenticationHash;
         } catch (MidInternalErrorException | ProcessingException e) {
             throw new ServiceNotAvailableException(MID_INTERNAL_ERROR, String.format("MID service is currently unavailable: %s", e.getMessage()), e);
@@ -137,9 +133,14 @@ public class AuthMidService {
         return stream(SPECIAL_CHARS).anyMatch(serviceName::contains) || isSpecialCharacterIncluded;
     }
 
-    private MidSessionStatus pollAuthenticationResult(MidAuthenticationResponse response) {
+    private MidSessionStatus pollAuthenticationResult(TaraSession taraSession, MidAuthenticationResponse response) {
         log.info("Polling Mobile ID authentication process with MID session id {}", response.getSessionID());
-        return midClient.getSessionStatusPoller().fetchFinalSessionStatus(response.getSessionID(), "/authentication/session/" + response.getSessionID());
+        try {
+            return midClient.getSessionStatusPoller().fetchFinalSessionStatus(response.getSessionID(), "/authentication/session/" + response.getSessionID());
+        } catch (Exception ex) {
+            handleAuthenticationException(taraSession, ex);
+            return null;
+        }
     }
 
     private void handleAuthenticationResult(TaraSession taraSession, MidAuthenticationHashToSign authenticationHash, MidSessionStatus midSessionStatus, String telephoneNumber) {
@@ -177,11 +178,10 @@ public class AuthMidService {
         }
     }
 
-    private void handleAuthenticationException(TaraSession taraSession, Throwable ex) {
-        Throwable cause = ex.getCause();
+    private void handleAuthenticationException(TaraSession taraSession, Exception ex) {
         taraSession.setState(AUTHENTICATION_FAILED);
-        taraSession.getAuthenticationResult().setErrorCode(translateExceptionToErrorCode(cause));
-        log.warn(append(TARA_SESSION, taraSession), "Mid polling failed: {}", cause.getMessage());
+        taraSession.getAuthenticationResult().setErrorCode(translateExceptionToErrorCode(ex));
+        log.warn(append(TARA_SESSION, taraSession), "Mid polling failed: {}", ex.getMessage());
         Session session = sessionRepository.findById(taraSession.getSessionId());
         session.setAttribute(TARA_SESSION, taraSession);
         sessionRepository.save(session);
