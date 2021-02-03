@@ -6,10 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
-import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.http.HttpHeaders;
@@ -19,7 +17,6 @@ import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
-import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.WebRequest;
 
 import java.util.*;
@@ -47,7 +44,6 @@ public class ErrorAttributes extends DefaultErrorAttributes {
 
         if (webRequest.getParameter("error") != null) {
             setOidcErrorMessage(webRequest, attr);
-            attr.put("status", 400);
         }
 
         HttpStatus status = HttpStatus.valueOf((int) attr.get("status"));
@@ -66,10 +62,14 @@ public class ErrorAttributes extends DefaultErrorAttributes {
     }
 
     private void setOidcErrorMessage(WebRequest webRequest, Map<String, Object> attr) {
-        if (webRequest.getParameter("error").equals("invalid_client"))
+        if (webRequest.getParameter("error").equals("invalid_client")) {
+            attr.put("status", 400);
             attr.put("message", translateErrorCode(webRequest, ErrorCode.INVALID_CLIENT.getMessage()));
-        else
+        } else {
+            attr.put("status", 500);
             attr.put("message", translateErrorCode(webRequest, ErrorCode.ERROR_GENERAL.getMessage()));
+        }
+
     }
 
     private void handle4xxClientError(WebRequest webRequest, Map<String, Object> attr) {

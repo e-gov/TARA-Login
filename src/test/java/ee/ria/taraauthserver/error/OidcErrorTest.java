@@ -31,7 +31,7 @@ public class OidcErrorTest extends BaseTest {
                 .post("/error")
                 .then()
                 .assertThat()
-                .statusCode(400)
+                .statusCode(500)
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
     }
 
