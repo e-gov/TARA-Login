@@ -5,13 +5,10 @@ import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.session.MockSessionFilter;
 import ee.ria.taraauthserver.session.TaraSession;
 import io.restassured.RestAssured;
-import io.restassured.http.Cookie;
-import org.eclipse.jetty.server.Authentication;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.session.Session;
@@ -130,7 +127,7 @@ class AuthMidPollControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("error", equalTo("Internal Server Error"))
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
@@ -158,7 +155,7 @@ class AuthMidPollControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(502)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("error", equalTo("Bad Gateway"))
                 .body("message", equalTo("Mobiil-ID teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti."))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
