@@ -23,7 +23,7 @@ public class AuthSidCancelController {
         SessionUtils.assertSessionInState(taraSession, ALLOWED_STATES);
         taraSession.setState(POLL_SID_STATUS_CANCELED);
         log.warn("Smart ID authentication process with SID session id {} has been canceled",
-                ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getMidSessionId());
+                ((TaraSession.SidAuthenticationResult) taraSession.getAuthenticationResult()).getSidSessionId());
         return new RedirectView("/auth/init?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge());
     }
 }

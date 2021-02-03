@@ -4,6 +4,8 @@ import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import ee.sk.smartid.AuthenticationResponseValidator;
 import ee.sk.smartid.SmartIdClient;
 import lombok.extern.slf4j.Slf4j;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -42,19 +44,25 @@ public class SmartIdConfiguration {
         smartIdClient.setRelyingPartyName(smartIdConfigurationProperties.getRelyingPartyName());
         smartIdClient.setRelyingPartyUUID(smartIdConfigurationProperties.getRelyingPartyUuid());
         smartIdClient.setTrustSslContext(tlsTrustStore);
+        smartIdClient.setNetworkConnectionConfig(clientConfig());
 
         return smartIdClient;
+    }
+
+    private ClientConfig clientConfig() {
+        ClientConfig clientConfig = new ClientConfig();
+        clientConfig.property(ClientProperties.CONNECT_TIMEOUT, smartIdConfigurationProperties.getConnectionTimeoutMilliseconds());
+        clientConfig.property(ClientProperties.READ_TIMEOUT, smartIdConfigurationProperties.getReadTimeoutMilliseconds());
+        return clientConfig;
     }
 
     @Bean
     public AuthenticationResponseValidator authResponseValidator() throws IOException, CertificateException, KeyStoreException, NoSuchAlgorithmException {
         AuthenticationResponseValidator authResponseValidator = new AuthenticationResponseValidator();
         authResponseValidator.clearTrustedCACertificates();
-        Resource resource = resourceLoader.getResource(smartIdConfigurationProperties.getTrustedCaCertificatesLocation());
-
-        File certificateFile = resource.getFile();
-        KeyStore trustStore = KeyStore.getInstance("PKCS12");
-        trustStore.load(resource.getInputStream(), "changeit".toCharArray());
+        Resource resource = resourceLoader.getResource(smartIdConfigurationProperties.getTruststorePath());
+        KeyStore trustStore = KeyStore.getInstance(smartIdConfigurationProperties.getTruststoreType());
+        trustStore.load(resource.getInputStream(), smartIdConfigurationProperties.getTruststorePassword().toCharArray());
         List<String> aliases = Collections.list(trustStore.aliases());
         for (String alias : aliases) {
             authResponseValidator.addTrustedCACertificate(trustStore.getCertificate(alias).getEncoded());

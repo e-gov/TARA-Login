@@ -106,7 +106,7 @@
             </div>
 
             <div th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).SMART_ID)}"
-                 layout:include="~{fragments/logintabs :: content('smart-id')}" th:remove="tag"
+                 layout:insert="~{fragments/logintabs :: content('smart-id')}" th:remove="tag"
                  aria-hidden="true" aria-labelledby="smart-id">
                 <form role="form" th:action="@{/auth/sid/init}" method="post" id="smartIdForm" class="c-form"
                       layout:fragment="login-form-content">
@@ -127,9 +127,9 @@
                                            class="form-control" name="smartIdCode">
                                 </div>
                                 <div class="invalid-feedback is-hidden"
-                                     th:text="#{message.common.personalCode-missing}"></div>
+                                     th:text="#{message.common.personal-code-missing}"></div>
                                 <div class="invalid-feedback is-hidden"
-                                     th:text="#{message.common.personalCode-invalid}"></div>
+                                     th:text="#{message.common.personal-code-invalid}"></div>
                             </td>
                         </tr>
                         <tr>

@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.w3.org/1999/xhtml" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout}" th:with="hideHeaderLanguageSelection=true">
 <head th:replace="~{fragments/head}"></head>
-<body class="is-smart-subview"
+<body class="is-mobile-subview"
       th:attr="data-check-form-refresh-rate=${@environment.getProperty('tara.auth-methods.mobile-id.interval-between-session-status-queries-in-milliseconds')}">
 <div layout:fragment="content" th:with="hideHeaderLanguageSelection=true" th:remove="tag">
     <iframe width="0" height="0" border="0" name="dummyframe" id="dummyframe"></iframe>

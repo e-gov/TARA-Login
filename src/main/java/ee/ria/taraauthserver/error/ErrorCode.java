@@ -32,6 +32,7 @@ public enum ErrorCode {
     SID_INTERNAL_ERROR("message.sid.error.internal-error"),
     SID_USER_REFUSED("message.smart-id.error.user-refused-auth"),
     SID_SESSION_TIMEOUT("message.smart-id.error.session-timed-out"),
+    SID_REQUEST_TIMEOUT("message.smart-id.error.request-timed-out"),
     SID_DOCUMENT_UNUSABLE("message.smart-id.error.user-document-unusable"),
     SID_WRONG_VC("message.smart-id.error.wrong-vc"),
     SID_INTERACTION_NOT_SUPPORTED("message.smart-id.error.required-interaction-not-supported-by-app"),

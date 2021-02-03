@@ -8,9 +8,7 @@ import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.ValidNationalIdNumber;
 import ee.sk.mid.MidNationalIdentificationCodeValidator;
-import ee.sk.mid.exception.*;
 import ee.sk.smartid.*;
-import ee.sk.smartid.exception.SessionNotFoundException;
 import ee.sk.smartid.exception.permanent.SmartIdClientException;
 import ee.sk.smartid.exception.useraccount.DocumentUnusableException;
 import ee.sk.smartid.exception.useraccount.RequiredInteractionNotSupportedByAppException;
@@ -39,6 +37,7 @@ import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotAllowedException;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.ProcessingException;
+import java.net.SocketTimeoutException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -73,6 +72,7 @@ public class SmartIdController {
     static {
         errorMap = new HashMap<>();
         errorMap.put(InternalServerErrorException.class, SID_INTERNAL_ERROR);
+        errorMap.put(ProcessingException.class, SID_REQUEST_TIMEOUT);
         errorMap.put(UserRefusedException.class, SID_USER_REFUSED);
         errorMap.put(SessionTimeoutException.class, SID_SESSION_TIMEOUT);
         errorMap.put(DocumentUnusableException.class, SID_DOCUMENT_UNUSABLE);
@@ -105,7 +105,7 @@ public class SmartIdController {
     }
 
     AuthenticationHash getAuthenticationHash() {
-        return AuthenticationHash.generateRandomHash(HashType.SHA512);
+        return AuthenticationHash.generateRandomHash(HashType.valueOf(smartIdConfigurationProperties.getHashType()));
     }
 
     private String initiateSidAuthenticationSession(SidCredential sidCredential, TaraSession taraSession, AuthenticationHash authenticationHash, AuthenticationRequestBuilder requestBuilder) {
@@ -211,9 +211,6 @@ public class SmartIdController {
         }
         taraAuthResult.setAmr(AuthenticationType.SMART_ID);
         taraAuthResult.setAcr(smartIdConfigurationProperties.getLevelOfAssurance());
-
-        log.info("identity from response is:");
-        log.info(taraSession.toString());
 
         Session session = sessionRepository.findById(taraSession.getSessionId());
         session.setAttribute(TARA_SESSION, taraSession);

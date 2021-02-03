@@ -14,14 +14,8 @@ import java.util.List;
 @ConfigurationProperties(prefix = "tara.auth-methods.smart-id")
 public class SmartIdConfigurationProperties extends AuthConfigurationProperties.AuthMethodProperties {
 
-    @NotNull
-    private String trustedCaCertificatesLocation;
-
     @Pattern(regexp = "(SHA256|SHA384|SHA512)", message = "invalid hash value, accepted values are: SHA256, SHA384, SHA512")
     private String hashType = "SHA512";
-
-    @NotNull
-    private List<String> trustedCaCertificates = new ArrayList<>();
 
     @NotNull
     private String relyingPartyUuid;
@@ -31,4 +25,17 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
 
     @NotNull
     private String hostUrl;
+
+    @NotNull
+    private String truststorePath;
+
+    @NotNull
+    private String truststoreType;
+
+    @NotNull
+    private String truststorePassword;
+
+    private int connectionTimeoutMilliseconds = 5000;
+
+    private int readTimeoutMilliseconds = 30000;
 }
