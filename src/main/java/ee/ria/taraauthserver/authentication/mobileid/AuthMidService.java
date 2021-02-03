@@ -31,6 +31,7 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.util.Arrays.stream;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static java.util.regex.Pattern.compile;
+import static net.logstash.logback.marker.Markers.append;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 
 @Slf4j
@@ -178,10 +179,9 @@ public class AuthMidService {
 
     private void handleAuthenticationException(TaraSession taraSession, Throwable ex) {
         Throwable cause = ex.getCause();
-        log.warn("Mid polling failed: {}", cause.getMessage());
         taraSession.setState(AUTHENTICATION_FAILED);
         taraSession.getAuthenticationResult().setErrorCode(translateExceptionToErrorCode(cause));
-
+        log.warn(append(TARA_SESSION, taraSession), "Mid polling failed: {}", cause.getMessage());
         Session session = sessionRepository.findById(taraSession.getSessionId());
         session.setAttribute(TARA_SESSION, taraSession);
         sessionRepository.save(session);

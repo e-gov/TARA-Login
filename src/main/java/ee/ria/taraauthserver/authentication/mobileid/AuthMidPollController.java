@@ -12,6 +12,8 @@ import java.util.Map;
 
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static java.util.Map.of;
+import static net.logstash.logback.argument.StructuredArguments.value;
+import static net.logstash.logback.marker.Markers.append;
 
 @Slf4j
 @RestController
@@ -23,8 +25,10 @@ public class AuthMidPollController {
         TaraSession taraSession = SessionUtils.getAuthSession();
         SessionUtils.assertSessionInState(taraSession, ALLOWED_STATES);
         if (log.isDebugEnabled()) {
-            log.debug("Polling for response from Mobile ID authentication process with MID session id {}",
-                    ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getMidSessionId());
+            String midSessionId = ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getMidSessionId();
+            log.debug(append("tara.session.state", taraSession.getState()),
+                    "Polling MobileID authentication process with MID session id {}",
+                    value("tara.session.authentication_result.mid_session_id", midSessionId));
         }
 
         if (taraSession.getState() == NATURAL_PERSON_AUTHENTICATION_COMPLETED) {
