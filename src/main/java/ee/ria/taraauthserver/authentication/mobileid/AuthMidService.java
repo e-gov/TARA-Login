@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.ProcessingException;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;

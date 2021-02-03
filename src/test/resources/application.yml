@@ -4,6 +4,8 @@ spring:
     instance-id: ${APP_INSTANCE_ID:${random.int(100)}}
   session:
     timeout: 60s
+    servlet:
+      filter-order: -2147483648
 
 management:
   health:

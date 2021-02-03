@@ -18,7 +18,6 @@ import org.bouncycastle.cert.ocsp.UnknownStatus;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -188,7 +187,7 @@ class IdCardControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .headers(EXPECTED_JSON_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
                 .body("status", equalTo("COMPLETED"));
 
@@ -234,7 +233,7 @@ class IdCardControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .headers(EXPECTED_JSON_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
                 .body("errorMessage", equalTo("Kasutaja sertifikaat on tühistatud või peatatud staatuses."));
 
@@ -271,7 +270,7 @@ class IdCardControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .headers(EXPECTED_JSON_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
                 .body("errorMessage", equalTo("Kasutaja sertifikaadi staatus on teadmata."));
 
@@ -279,7 +278,6 @@ class IdCardControllerTest extends BaseTest {
 
         assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
         assertWarningIsLogged("OCSP validation failed: Invalid certificate status <UNKNOWN> received");
-
     }
 
     @Test
@@ -310,7 +308,7 @@ class IdCardControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .headers(EXPECTED_JSON_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("COMPLETED"));
     }
 
@@ -341,7 +339,7 @@ class IdCardControllerTest extends BaseTest {
                 .get("/auth/id")
                 .then()
                 .assertThat()
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .statusCode(500);
 
         assertErrorIsLogged("Server encountered an unexpected error: OCSP validation failed: Issuer certificate with CN 'WRONG CN' is not a trusted certificate!");
@@ -374,7 +372,7 @@ class IdCardControllerTest extends BaseTest {
                 .get("/auth/id")
                 .then()
                 .assertThat()
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .statusCode(500);
 
         assertErrorIsLogged("Server encountered an unexpected error: OCSP validation failed: In case of AIA OCSP, the OCSP responder certificate must be issued by the authority that issued the user certificate. Expected issuer: 'CN=TEST of ESTEID-SK 2015, OID.2.5.4.97=NTREE-10747013, O=AS Sertifitseerimiskeskus, C=EE', but the OCSP responder signing certificate was issued by 'EMAILADDRESS=pki@sk.ee, CN=TEST of ESTEID-SK 2011, O=AS Sertifitseerimiskeskus, C=EE'");
@@ -400,7 +398,7 @@ class IdCardControllerTest extends BaseTest {
                 .get("/auth/id")
                 .then()
                 .assertThat()
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .statusCode(500);
 
         assertErrorIsLogged("Server encountered an unexpected error: OCSP validation failed: malformed response: no response data found");
@@ -423,11 +421,11 @@ class IdCardControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(502)
-                .headers(EXPECTED_JSON_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
                 .body("errorMessage", equalTo("Sertifikaadi kehtivuse info küsimine ei õnnestunud. Palun proovige mõne aja pärast uuesti."));
 
-        assertWarningIsLogged("OCSP validation failed: OCSP service is currently not available, please try again later");
+        assertWarningIsLogged("OCSP validation failed: OCSP service is currently not available");
     }
 
     @Test
@@ -448,7 +446,7 @@ class IdCardControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .headers(EXPECTED_JSON_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
                 .body("errorMessage", equalTo("Teie sertifikaadid ei kehti."));
 
@@ -473,7 +471,7 @@ class IdCardControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .headers(EXPECTED_JSON_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
                 .body("errorMessage", equalTo("Teie sertifikaadid ei kehti."));
 
