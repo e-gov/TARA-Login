@@ -1,6 +1,8 @@
 package ee.ria.taraauthserver.authentication.mobileid;
 
+import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
@@ -34,9 +36,14 @@ public class AuthMidPollController {
         if (taraSession.getState() == NATURAL_PERSON_AUTHENTICATION_COMPLETED) {
             return of("status", "COMPLETED");
         } else if (taraSession.getState() == AUTHENTICATION_FAILED) {
-            throw new BadRequestException(taraSession.getAuthenticationResult().getErrorCode(), "Mid poll failed");
-        } else {
+            ErrorCode errorCode = taraSession.getAuthenticationResult().getErrorCode();
+            if (errorCode.equals(ErrorCode.ERROR_GENERAL))
+                throw new IllegalStateException(errorCode.getMessage());
+            else if (errorCode.equals(ErrorCode.MID_INTERNAL_ERROR))
+                throw new ServiceNotAvailableException(errorCode, "Sid poll failed", null);
+            else
+                throw new BadRequestException(taraSession.getAuthenticationResult().getErrorCode(), "Sid poll failed");
+        } else
             return of("status", "PENDING");
-        }
     }
 }
