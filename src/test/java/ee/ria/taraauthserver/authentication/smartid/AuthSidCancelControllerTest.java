@@ -28,7 +28,7 @@ class AuthSidCancelControllerTest extends BaseTest {
 
     @Test
     @Tag("CSRF_PROTCTION")
-    void authSidPoll_NoCsrf() {
+    void authSidPollCancel_NoCsrf() {
         given()
                 .filter(withoutCsrf().sessionRepository(sessionRepository).build())
                 .when()
@@ -42,7 +42,7 @@ class AuthSidCancelControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "SID_AUTH_STATUS_CHECK_VALID_SESSION")
-    void authSidPoll_sessionMissing() {
+    void authSidPollCancel_sessionMissing() {
 
         given()
                 .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
@@ -59,7 +59,7 @@ class AuthSidCancelControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "SID_AUTH_STATUS_CHECK_VALID_SESSION")
-    void authSidPoll_sessionIncorrectState() {
+    void authSidPollCancel_sessionIncorrectState() {
 
         given()
                 .filter(withTaraSession()
@@ -80,11 +80,14 @@ class AuthSidCancelControllerTest extends BaseTest {
     @Test
     @Tag(value = "SID_AUTH_CANCELED")
     @Tag(value = "SID_AUTH_STATUS_CHECK_ENDPOINT")
-    void authSidPoll_ok() {
+    void authSidPollCancel_ok() {
+        TaraSession.SidAuthenticationResult sidAuthenticationResult = new TaraSession.SidAuthenticationResult("testSessionId");
+
         MockSessionFilter sessionFilter = withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(SMART_ID))
-                .authenticationState(POLL_SID_STATUS).build();
+                .authenticationState(POLL_SID_STATUS)
+                .authenticationResult(sidAuthenticationResult).build();
         given()
                 .filter(sessionFilter)
                 .when()
