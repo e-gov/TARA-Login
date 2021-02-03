@@ -82,7 +82,8 @@ public class AuthMidService {
         try {
             MidAuthenticationHashToSign authenticationHash = getAuthenticationHash();
             MidAuthenticationResponse midAuthentication = initMidAuthentication(taraSession, idCode, telephoneNumber, authenticationHash);
-            CompletableFuture.supplyAsync(() -> pollAuthenticationResult(taraSession, midAuthentication), taskExecutor)
+            CompletableFuture.supplyAsync(() -> pollAuthenticationResult(midAuthentication), taskExecutor)
+                    .whenCompleteAsync((unused, throwable) -> handleAuthenticationException(taraSession, throwable), taskExecutor)
                     .thenAcceptAsync(midSessionStatus -> handleAuthenticationResult(taraSession, authenticationHash, midSessionStatus, telephoneNumber), taskExecutor);
             return authenticationHash;
         } catch (MidInternalErrorException | ProcessingException e) {
@@ -133,14 +134,9 @@ public class AuthMidService {
         return stream(SPECIAL_CHARS).anyMatch(serviceName::contains) || isSpecialCharacterIncluded;
     }
 
-    private MidSessionStatus pollAuthenticationResult(TaraSession taraSession, MidAuthenticationResponse response) {
+    private MidSessionStatus pollAuthenticationResult(MidAuthenticationResponse response) {
         log.info("Polling Mobile ID authentication process with MID session id {}", response.getSessionID());
-        try {
-            return midClient.getSessionStatusPoller().fetchFinalSessionStatus(response.getSessionID(), "/authentication/session/" + response.getSessionID());
-        } catch (Exception ex) {
-            handleAuthenticationException(taraSession, ex);
-            return null;
-        }
+        return midClient.getSessionStatusPoller().fetchFinalSessionStatus(response.getSessionID(), "/authentication/session/" + response.getSessionID());
     }
 
     private void handleAuthenticationResult(TaraSession taraSession, MidAuthenticationHashToSign authenticationHash, MidSessionStatus midSessionStatus, String telephoneNumber) {
@@ -178,13 +174,16 @@ public class AuthMidService {
         }
     }
 
-    private void handleAuthenticationException(TaraSession taraSession, Exception ex) {
-        taraSession.setState(AUTHENTICATION_FAILED);
-        taraSession.getAuthenticationResult().setErrorCode(translateExceptionToErrorCode(ex));
-        log.warn(append(TARA_SESSION, taraSession), "Mid polling failed: {}", ex.getMessage());
-        Session session = sessionRepository.findById(taraSession.getSessionId());
-        session.setAttribute(TARA_SESSION, taraSession);
-        sessionRepository.save(session);
+    private void handleAuthenticationException(TaraSession taraSession, Throwable ex) {
+        if (ex != null) {
+            Throwable cause = ex.getCause();
+            taraSession.setState(AUTHENTICATION_FAILED);
+            taraSession.getAuthenticationResult().setErrorCode(translateExceptionToErrorCode(cause));
+            log.warn(append(TARA_SESSION, taraSession), "Mid polling failed: {}", cause.getMessage());
+            Session session = sessionRepository.findById(taraSession.getSessionId());
+            session.setAttribute(TARA_SESSION, taraSession);
+            sessionRepository.save(session);
+        }
     }
 
     private MidLanguage getMidLanguage() {
