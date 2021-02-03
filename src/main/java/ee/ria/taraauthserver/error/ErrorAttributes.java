@@ -36,15 +36,9 @@ public class ErrorAttributes extends DefaultErrorAttributes {
 
     public static final String DEFAULT_INTERNAL_EXCEPTION_MSG = "message.error.general";
 
-    // TODO handle org.springframework.context.NoSuchMessageException
-
     @Override
     public Map<String, Object> getErrorAttributes(WebRequest webRequest, ErrorAttributeOptions options) {
         Map<String, Object> attr = super.getErrorAttributes(webRequest, options.including(MESSAGE, BINDING_ERRORS));
-
-        if (webRequest.getParameter("error") != null) {
-            setOidcErrorMessage(webRequest, attr);
-        }
 
         HttpStatus status = HttpStatus.valueOf((int) attr.get("status"));
 
@@ -59,17 +53,6 @@ public class ErrorAttributes extends DefaultErrorAttributes {
         attr.put("incident_nr", MDC.get("traceId"));
 
         return attr;
-    }
-
-    private void setOidcErrorMessage(WebRequest webRequest, Map<String, Object> attr) {
-        if (webRequest.getParameter("error").equals("invalid_client")) {
-            attr.put("status", 400);
-            attr.put("message", translateErrorCode(webRequest, ErrorCode.INVALID_CLIENT.getMessage()));
-        } else {
-            attr.put("status", 500);
-            attr.put("message", translateErrorCode(webRequest, ErrorCode.ERROR_GENERAL.getMessage()));
-        }
-
     }
 
     private void handle4xxClientError(WebRequest webRequest, Map<String, Object> attr) {

@@ -32,7 +32,8 @@ public enum ErrorCode {
     SESSION_STATE_INVALID("message.error.session-state-invalid"),
     INVALID_REQUEST("message.error.invalid-request"),
     INVALID_LEGAL_PERSON("label.legal-person.error.invalid-legal-person"),
-    INVALID_CLIENT("message.error.invalid-client"),
+    INVALID_OIDC_CLIENT("message.error.invalid-oidc-client"),
+    INVALID_OIDC_REQUEST("message.error.invalid-oidc-request"),
     LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE("label.legal-person.error.service-not-available");
 
     private final String message;
