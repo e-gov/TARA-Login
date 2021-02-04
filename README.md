@@ -9,6 +9,7 @@
     * [Integration with Hydra service](#hydra_integration_conf)
     * [Trusted TLS certificates](#tls_conf)
     * [Mobile-ID auth method](#mid_conf)
+    * [Smart-ID auth method](#sid_conf)
     * [ID-card auth method](#esteid_conf)
     * [Monitoring](#monitoring_conf)
         * [Custom application health endpoint configuration](#monitoring_heartbeat_conf)      
@@ -25,6 +26,7 @@ TARA login server is a webapp that integrates with the [ORY Hydra OIDC server](h
 The webapp provides implementation for following authentication methods:
 * Estonian ID-card
 * Estonian Mobile-ID
+* Estonian Smart-ID
 
 <a name="build"></a>
 ## Building the webapp
@@ -119,23 +121,53 @@ Table 1.3.3 - Integration with the [SK MID service](https://github.com/SK-EID/MI
 | `tara.auth-methods.mobile-id.long-polling-timeout-seconds` | No | Long polling timeout period used for MID session status requests. Default `30` |
 | `tara.auth-methods.mobile-id.interval-between-session-status-queries-in-milliseconds` | No | Interval between Mobile-ID status polling queries (from UI to tara-login-service). Default `5000` |
 
-<a name="esteid_conf"></a>
-### 1.4 ID-card auth method
+<a name="sid_conf"></a>
+### 1.4 Smart-ID auth method
 
-Table 1.4.1 - Enabling ID-card authentication
+Table 1.4.1 - Enabling Smart-ID authentication
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.auth-methods.smart-id.enabled` | No | Enable or disable Smart-ID authentication method. Default `true` |
+
+Table 1.4.2 - Assignig the Level of assurance to authentication method
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.auth-methods.smart-id.level-of-assurance` | Yes | Level of assurance of this auth method. Example `HIGH` |
+
+
+Table 1.4.3 - Integration with the [SK SID service](https://github.com/SK-EID/smart-id-documentation)
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.auth-methods.smart-id.host-url` | Yes | Smart-ID authentication service url |
+| `tara.auth-methods.smart-id.truststore-path` | Yes | Path to truststore file. Example. `file:src/test/resources/ocsp/sid-truststore.p12` |
+| `tara.auth-methods.smart-id.truststore-type` | Yes | Type of the truststore from truststore-path. Example. `PKCS12` |
+| `tara.auth-methods.smart-id.truststore-password` | Yes | Password of the truststore from truststore-path. Example `changeit` |
+| `tara.auth-methods.smart-id.relying-party-uuid` | Yes | UUID from RIA smart id contract |
+| `tara.auth-methods.smart-id.relying-party-name` | Yes | Name from RIA smart id contract |
+| `tara.auth-methods.smart-id.hash-type` | No | Type of authentication hash. Possible values `SHA256, SHA384, SHA512` Default `SHA512` |
+| `tara.auth-methods.smart-id.connection-timeout-milliseconds` | No | Connection timeout of the SID session status requests. Default `5000` |
+| `tara.auth-methods.smart-id.read-timeout-milliseconds` | No | Long polling timeout period used for SID session status requests. Default `30000` |
+
+<a name="esteid_conf"></a>
+### 1.5 ID-card auth method
+
+Table 1.5.1 - Enabling ID-card authentication
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.auth-methods.id-card.enabled` | No | Enable or disable Id-card authentication method. Default `true` |
 
 
-Table 1.4.2 - Assignig the Level of assurance to authentication method
+Table 1.5.2 - Assignig the Level of assurance to authentication method
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.auth-methods.id-card.level-of-assurance` | Yes | Level of assurance of this auth method. Allowed values: `HIGH`, `SUBSTANTIAL`, `LOW`. |
 
-Table 1.4.3 - Configuring truststore for OCSP responder certificates
+Table 1.5.3 - Configuring truststore for OCSP responder certificates
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
@@ -143,7 +175,7 @@ Table 1.4.3 - Configuring truststore for OCSP responder certificates
 | `tara.auth-methods.id-card.truststore-type` | Yes | Type of the truststore from truststore-path. Example `PKCS12` |
 | `tara.auth-methods.id-card.truststore-password` | Yes | Password of the truststore from truststore-path. Example `changeit` |
 
-Table 1.4.4 - Explicit configuration of the OCSP service(s)
+Table 1.5.4 - Explicit configuration of the OCSP service(s)
 
 The webapp allows multiple sets of OCSP configurations to be defined by using the `tara.auth-methods.id-card.ocsp[{index}]` notation.
 
@@ -205,7 +237,7 @@ tara:
           responder-certificate-cn: SK OCSP RESPONDER 2011       
 ````
 
-Table 1.4.5 - Configuring fallback OCSP service(s)
+Table 1.5.5 - Configuring fallback OCSP service(s)
 
 When the primary OCSP service is not available (ie returns other than HTTP 200 status code, an invalid response Content-Type or the connection times out) a fallback OCSP connection(s) can be configured to query for the certificate status.
 
@@ -256,16 +288,16 @@ tara:
 
 
 <a name="legalperson_conf"></a>
-## 1.5 Legal person attributes
+## 1.6 Legal person attributes
 
-Table 1.5.1 - Enabling legal-person attribute support 
+Table 1.6.1 - Enabling legal-person attribute support 
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.legal-person-authentication.enabled` | No | Enables or disables the legalperson attribute support and endpoints. Defaults to `true` if not specified.  |
 
 
-Table 1.5.2 - Integration with the Estonian business registry
+Table 1.6.2 - Integration with the Estonian business registry
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
@@ -283,7 +315,7 @@ Table 1.5.2 - Integration with the Estonian business registry
 | `tara.legal-person-authentication.esindus-v2-allowed-types` | No | List of legal person types in arireg.esindus_v2 service response that are considered valid for authentication. Defaults to `TÜ,UÜ, OÜ,AS,TÜH,SA,MTÜ` if not specified.  |
 
 <a name="monitoring_conf"></a>
-## 1.6 Monitoring
+## 1.7 Monitoring
 
 The webapp uses `Spring Boot Actuator` to enable endpoints for monitoring support. To customize Monitoring, Metrics, Auditing, and more see [Spring Boot Actuator documentation](https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#production-ready).
 
@@ -294,7 +326,7 @@ The webapp uses `Spring Boot Actuator` to enable endpoints for monitoring suppor
 | `management.endpoints.web.exposure.include` | No | Endpoint IDs that should be included or `*` for all. Example `heartbeat` |
 
 <a name="monitoring_heartbeat_conf"></a>
-### 1.6.1 Custom application health endpoint configuration
+### 1.7.1 Custom application health endpoint configuration
 
 The webapp implements [custom health endpoint](https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#production-ready-endpoints-custom) with id `heartbeat` and [custom health indicators](https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#writing-custom-healthindicators) with id's `oidcServer`,  `truststore`. This endpoint is disabled by default.
 
@@ -341,10 +373,10 @@ management:
 ````
 
 <a name="session_and_sec_conf"></a>
-## 1.7 Security and session management
+## 1.8 Security and session management
 
 <a name="ignite_conf"></a>
-### 1.7.1 Ignite configuration
+### 1.8.1 Ignite configuration
 
 Ignite is used for storing user’s session information.
 
@@ -365,7 +397,7 @@ Ignite is used for storing user’s session information.
 | `ignite.ssl-context-factory.trust-store-password` | Yes | Ignite trust store password. |
 
 <a name="sec_conf"></a>
-## 1.7 Security and Session management
+## 1.8 Security and Session management
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `spring.session.timeout` | No | Session timeout. If a duration suffix is not specified, seconds will be used. Default value `300s` |

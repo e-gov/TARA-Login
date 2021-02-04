@@ -89,7 +89,6 @@ public class SmartIdController {
         validateSession(taraSession);
 
         AuthenticationHash authenticationHash = getAuthenticationHash();
-
         AuthenticationRequestBuilder requestBuilder = sidClient.createAuthentication();
         String sidSessionId = initiateSidAuthenticationSession(sidCredential, taraSession, authenticationHash, requestBuilder);
 
