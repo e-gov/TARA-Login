@@ -42,7 +42,7 @@ class AuthSidPollControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("error", equalTo("Bad Request"));
 
@@ -62,7 +62,7 @@ class AuthSidPollControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
                 .body("error", equalTo("Bad Request"));
 
@@ -82,7 +82,7 @@ class AuthSidPollControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .headers(EXPECTED_JSON_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("PENDING"));
     }
 
@@ -101,7 +101,7 @@ class AuthSidPollControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .headers(EXPECTED_JSON_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("COMPLETED"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
 

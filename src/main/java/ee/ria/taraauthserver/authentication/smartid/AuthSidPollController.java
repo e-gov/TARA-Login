@@ -15,6 +15,7 @@ import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 import java.util.Map;
 
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
+import static java.util.Map.of;
 
 @Slf4j
 @RestController
@@ -23,12 +24,12 @@ public class AuthSidPollController {
     private static final TaraAuthenticationState[] ALLOWED_STATES = {INIT_SID, POLL_SID_STATUS, AUTHENTICATION_FAILED, NATURAL_PERSON_AUTHENTICATION_COMPLETED};
 
     @GetMapping(value = "/auth/sid/poll")
-    public ModelAndView authSidPoll() {
+    public Map<String, String> authSidPoll() {
         TaraSession taraSession = SessionUtils.getAuthSession();
         SessionUtils.assertSessionInState(taraSession, ALLOWED_STATES);
 
         if (taraSession.getState() == NATURAL_PERSON_AUTHENTICATION_COMPLETED) {
-            return new ModelAndView(new MappingJackson2JsonView(), Map.of("status", "COMPLETED"));
+            return of("status", "COMPLETED");
         } else if (taraSession.getState() == AUTHENTICATION_FAILED) {
             ErrorCode errorCode = taraSession.getAuthenticationResult().getErrorCode();
             if (errorCode.equals(ErrorCode.ERROR_GENERAL))
@@ -38,7 +39,7 @@ public class AuthSidPollController {
             else
                 throw new BadRequestException(taraSession.getAuthenticationResult().getErrorCode(), "Sid poll failed");
         } else
-            return new ModelAndView(new MappingJackson2JsonView(), Map.of("status", "PENDING"));
+            return of("status", "PENDING");
     }
 
 }
