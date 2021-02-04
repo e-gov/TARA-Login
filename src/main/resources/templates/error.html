@@ -8,7 +8,7 @@
         <div class="alert alert-error" role="alert">
             <p><strong><span th:text="#{message.error.auth.title}" th:remove="tag"></span></strong></p>
             <p th:if="${message != null}" th:utext="${message}"></p>
-            <p th:unless="${message != null}" th:utext="#{message.error.auth.error}"></p>
+            <p th:unless="${message != null}" th:utext="#{message.error.general}"></p>
             <p th:if="${incident_nr != null}" th:utext="#{label.error.incident-number(${incident_nr})}"></p>
         </div>
     </div>
