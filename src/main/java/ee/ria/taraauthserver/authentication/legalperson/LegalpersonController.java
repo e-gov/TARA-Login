@@ -13,17 +13,13 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.SessionAttribute;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static ee.ria.taraauthserver.config.properties.TaraScope.LEGALPERSON;
@@ -32,6 +28,7 @@ import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.lang.String.format;
+import static java.util.Map.of;
 import static org.springframework.util.Assert.isTrue;
 import static org.springframework.util.Assert.notNull;
 import static org.springframework.util.CollectionUtils.isEmpty;
@@ -47,7 +44,7 @@ public class LegalpersonController {
     private final BusinessRegistryService eBusinessRegistryService;
 
     @GetMapping(value = "/auth/legalperson/init")
-    public String initLegalPerson(Model model, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+    public ModelAndView initLegalPerson(Model model, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 
         if (!isLegalpersonScopeAllowed(taraSession))
@@ -66,14 +63,15 @@ public class LegalpersonController {
 
         taraSession.setState(LEGAL_PERSON_AUTHENTICATION_INIT);
 
-        return "legalPersonView";
+        return new ModelAndView("legalPersonView");
     }
 
+
     @GetMapping(value = "/auth/legalperson", produces = {MediaType.APPLICATION_JSON_VALUE})
-    public ModelAndView fetchLegalPersonsList(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+    @ResponseBody
+    public Map<String, List<TaraSession.LegalPerson>> fetchLegalPersonsList(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, LEGAL_PERSON_AUTHENTICATION_INIT);
         notNull(taraSession.getAuthenticationResult(), "Authentication credentials missing from session!");
-
         List<TaraSession.LegalPerson> legalPersons = eBusinessRegistryService.executeEsindusV2Service(taraSession.getAuthenticationResult().getIdCode());
 
         if (isEmpty(legalPersons)) {
@@ -81,7 +79,7 @@ public class LegalpersonController {
         } else {
             taraSession.setLegalPersonList(legalPersons);
             taraSession.setState(GET_LEGAL_PERSON_LIST);
-            return new ModelAndView(new MappingJackson2JsonView(), Collections.singletonMap("legalPersons", legalPersons));
+            return of("legalPersons", legalPersons);
         }
     }
 

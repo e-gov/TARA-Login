@@ -1,13 +1,11 @@
 package ee.ria.taraauthserver.authentication.mobileid;
 
 import ee.ria.taraauthserver.BaseTest;
+import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.session.MockSessionFilter;
-import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import io.restassured.RestAssured;
-import io.restassured.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +21,6 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static java.util.List.of;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.matchesPattern;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class AuthMidPollControllerTest extends BaseTest {
@@ -45,7 +42,7 @@ class AuthMidPollControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("error", equalTo("Bad Request"));
 
@@ -65,7 +62,7 @@ class AuthMidPollControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
                 .body("error", equalTo("Bad Request"));
 
@@ -85,7 +82,7 @@ class AuthMidPollControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .headers(EXPECTED_JSON_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("PENDING"));
     }
 
@@ -104,11 +101,67 @@ class AuthMidPollControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .headers(EXPECTED_JSON_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("COMPLETED"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
 
         TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
         assertEquals(NATURAL_PERSON_AUTHENTICATION_COMPLETED, taraSession.getState());
+    }
+
+    @Test
+    @Tag(value = "MID_AUTH_FAILED")
+    void midAuth_session_status_authentication_error_general() {
+        TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
+        authenticationResult.setErrorCode(ErrorCode.ERROR_GENERAL);
+
+        MockSessionFilter sessionFilter = withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(MOBILE_ID))
+                .authenticationState(AUTHENTICATION_FAILED)
+                .authenticationResult(authenticationResult).build();
+        given()
+                .filter(sessionFilter)
+                .when()
+                .get("/auth/mid/poll")
+                .then()
+                .assertThat()
+                .statusCode(500)
+                .headers(EXPECTED_RESPONSE_HEADERS)
+                .body("error", equalTo("Internal Server Error"))
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
+
+        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
+        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
+        assertEquals(ErrorCode.ERROR_GENERAL, taraSession.getAuthenticationResult().getErrorCode());
+    }
+
+    @Test
+    @Tag(value = "MID_AUTH_FAILED")
+    void midAuth_session_status_authentication_mid_internal_error() {
+        TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
+        authenticationResult.setErrorCode(ErrorCode.MID_INTERNAL_ERROR);
+
+        MockSessionFilter sessionFilter = withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(MOBILE_ID))
+                .authenticationState(AUTHENTICATION_FAILED)
+                .authenticationResult(authenticationResult).build();
+        given()
+                .filter(sessionFilter)
+                .when()
+                .get("/auth/mid/poll")
+                .then()
+                .assertThat()
+                .statusCode(502)
+                .headers(EXPECTED_RESPONSE_HEADERS)
+                .body("error", equalTo("Bad Gateway"))
+                .body("message", equalTo("Mobiil-ID teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti."))
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
+
+        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
+        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
+        assertEquals(ErrorCode.MID_INTERNAL_ERROR, taraSession.getAuthenticationResult().getErrorCode());
     }
 }

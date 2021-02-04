@@ -1,21 +1,10 @@
 package ee.ria.taraauthserver.error;
 
-import ee.sk.mid.exception.*;
-import ee.sk.smartid.exception.SessionNotFoundException;
-import ee.sk.smartid.exception.useraccount.DocumentUnusableException;
-import ee.sk.smartid.exception.useraccount.RequiredInteractionNotSupportedByAppException;
-import ee.sk.smartid.exception.useraction.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-
-import javax.ws.rs.InternalServerErrorException;
-import javax.ws.rs.ProcessingException;
-import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.Map;
+import lombok.RequiredArgsConstructor;
 
 @Getter
-@AllArgsConstructor
+@RequiredArgsConstructor
 public enum ErrorCode {
     INVALID_LOGIN_CHALLENGE("message.error.invalid-login-challenge"),
     NO_VALID_AUTHMETHODS_AVAILABLE("message.error.no-allowed-authmethods"),
@@ -41,6 +30,14 @@ public enum ErrorCode {
     SID_USER_REFUSED_VC_CHOICE("message.smart-id.error.user-refused-display-text-and-pin"),
     MID_INTEGRATION_ERROR("message.error.general"),
     MID_VALIDATION_ERROR("message.mid-rest.error.validation-error"),
+    IDC_OCSP_NOT_AVAILABLE("message.idc.error.ocsp.not.available"),
+    IDC_CERT_NOT_YET_VALID("message.idc.cert-not-yet-valid"),
+    IDC_CERT_EXPIRED("message.idc.cert-expired"),
+    IDC_CERTIFICATE_FAILED("message.idc.certificate-failed"),
+    IDC_DOES_ID_CARD_EXIST("message.idc.does-id-card-exist"),
+    IDC_NO_CERTIFICATE("message.idc.no-certificate"),
+    IDC_REVOKED("message.idc.revoked"),
+    IDC_UNKNOWN("message.idc.unknown"),
     ERROR_GENERAL("message.error.general"),
     SESSION_NOT_FOUND("message.error.session-not-found"),
     SESSION_STATE_INVALID("message.error.session-state-invalid"),

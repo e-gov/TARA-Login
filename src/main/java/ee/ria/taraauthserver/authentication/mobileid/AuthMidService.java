@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.ProcessingException;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -32,6 +31,7 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.util.Arrays.stream;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static java.util.regex.Pattern.compile;
+import static net.logstash.logback.marker.Markers.append;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 
 @Slf4j
@@ -83,11 +83,8 @@ public class AuthMidService {
             MidAuthenticationHashToSign authenticationHash = getAuthenticationHash();
             MidAuthenticationResponse midAuthentication = initMidAuthentication(taraSession, idCode, telephoneNumber, authenticationHash);
             CompletableFuture.supplyAsync(() -> pollAuthenticationResult(midAuthentication), taskExecutor)
-                    .thenAcceptAsync(midSessionStatus -> handleAuthenticationResult(taraSession, authenticationHash, midSessionStatus, telephoneNumber), taskExecutor)
-                    .exceptionally(ex -> {
-                        handleAuthenticationException(taraSession, ex);
-                        return null;
-                    });
+                    .whenCompleteAsync((unused, throwable) -> handleAuthenticationException(taraSession, throwable), taskExecutor)
+                    .thenAcceptAsync(midSessionStatus -> handleAuthenticationResult(taraSession, authenticationHash, midSessionStatus, telephoneNumber), taskExecutor);
             return authenticationHash;
         } catch (MidInternalErrorException | ProcessingException e) {
             throw new ServiceNotAvailableException(MID_INTERNAL_ERROR, String.format("MID service is currently unavailable: %s", e.getMessage()), e);
@@ -178,14 +175,15 @@ public class AuthMidService {
     }
 
     private void handleAuthenticationException(TaraSession taraSession, Throwable ex) {
-        Throwable cause = ex.getCause();
-        log.warn("Mid polling failed: {}", cause.getMessage());
-        taraSession.setState(AUTHENTICATION_FAILED);
-        taraSession.getAuthenticationResult().setErrorCode(translateExceptionToErrorCode(cause));
-
-        Session session = sessionRepository.findById(taraSession.getSessionId());
-        session.setAttribute(TARA_SESSION, taraSession);
-        sessionRepository.save(session);
+        if (ex != null) {
+            Throwable cause = ex.getCause();
+            taraSession.setState(AUTHENTICATION_FAILED);
+            taraSession.getAuthenticationResult().setErrorCode(translateExceptionToErrorCode(cause));
+            log.warn(append(TARA_SESSION, taraSession), "Mid polling failed: {}", cause.getMessage());
+            Session session = sessionRepository.findById(taraSession.getSessionId());
+            session.setAttribute(TARA_SESSION, taraSession);
+            sessionRepository.save(session);
+        }
     }
 
     private MidLanguage getMidLanguage() {
