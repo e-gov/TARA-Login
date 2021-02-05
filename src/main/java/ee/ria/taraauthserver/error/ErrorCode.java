@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.error;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @RequiredArgsConstructor
@@ -32,7 +33,11 @@ public enum ErrorCode {
     SESSION_STATE_INVALID("message.error.session-state-invalid"),
     INVALID_REQUEST("message.error.invalid-request"),
     INVALID_LEGAL_PERSON("label.legal-person.error.invalid-legal-person"),
-    LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE("label.legal-person.error.service-not-available");
+    LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE("label.legal-person.error.service-not-available"),
+    INTERNAL_ERROR("message.error.internal-error"),
+    EIDAS_COUNTRY_NOT_SUPPORTED("message.eidas.not-allowed-country");
 
     private final String message;
+    @Setter
+    private Object[] content;
 }

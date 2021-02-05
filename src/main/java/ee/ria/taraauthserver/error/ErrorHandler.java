@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.error;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.NotFoundException;
 import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
+import ee.ria.taraauthserver.error.exceptions.UnauthorizedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -37,6 +38,13 @@ public class ErrorHandler {
     public ModelAndView handleDownstreamServiceErrors(Exception ex, HttpServletResponse response) throws IOException {
         log.error("Service not available: {}", ex.getMessage(), ex);
         response.sendError(HttpServletResponse.SC_BAD_GATEWAY);
+        return new ModelAndView();
+    }
+
+    @ExceptionHandler({UnauthorizedException.class})
+    public ModelAndView handleUnauthorizedException(Exception ex, HttpServletResponse response) throws IOException {
+        log.error("Unauthorized request: {}", ex.getMessage(), ex);
+        response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
         return new ModelAndView();
     }
 

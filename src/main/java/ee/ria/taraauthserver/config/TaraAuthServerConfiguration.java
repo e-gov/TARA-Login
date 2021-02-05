@@ -8,12 +8,15 @@ import nz.net.ultraq.thymeleaf.LayoutDialect;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
+import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.client.RestTemplate;
@@ -32,6 +35,9 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 
 import static org.springframework.util.ResourceUtils.getFile;
@@ -66,7 +72,13 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
                 .setMaxConnTotal(authConfigurationProperties.getHydraService().getMaxConnectionsTotal())
                 .build();
 
+        List<HttpMessageConverter<?>> converters = new ArrayList<HttpMessageConverter<?>>();
+        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+        converter.setSupportedMediaTypes(Collections.singletonList(MediaType.TEXT_HTML));
+        converters.add(converter);
+
         return builder
+                .additionalMessageConverters(converters)
                 .setConnectTimeout(Duration.ofSeconds(authConfigurationProperties.getHydraService().getRequestTimeoutInSeconds()))
                 .setReadTimeout(Duration.ofSeconds(authConfigurationProperties.getHydraService().getRequestTimeoutInSeconds()))
                 .requestFactory(() -> new HttpComponentsClientHttpRequestFactory(client))

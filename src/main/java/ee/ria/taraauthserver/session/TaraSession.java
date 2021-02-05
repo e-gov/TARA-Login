@@ -52,6 +52,13 @@ public class TaraSession implements Serializable {
     }
 
     @Data
+    @EqualsAndHashCode(callSuper = true)
+    @RequiredArgsConstructor
+    public static class EidasAuthenticationResult extends AuthenticationResult {
+        private String relayState;
+    }
+
+    @Data
     public static class LoginRequestInfo implements Serializable {
         @JsonProperty("challenge")
         private String challenge;
