@@ -92,12 +92,7 @@ public class SmartIdController {
         AuthenticationRequestBuilder requestBuilder = sidClient.createAuthentication();
         String sidSessionId = initiateSidAuthenticationSession(sidCredential, taraSession, authenticationHash, requestBuilder);
 
-        CompletableFuture.supplyAsync(() -> pollSidSessionStatus(sidSessionId), taskExecutor)
-                .thenAcceptAsync(sessionStatus -> handleSidAuthenticationResult(taraSession, sessionStatus, requestBuilder), taskExecutor)
-                .exceptionally(ex -> {
-                    handleSidAuthenticationException(taraSession, ex);
-                    return null;
-                });
+        CompletableFuture.runAsync(() -> pollSidSessionStatus(sidSessionId, taraSession, requestBuilder), taskExecutor);
 
         model.addAttribute("smartIdVerificationCode", authenticationHash.calculateVerificationCode());
         return "sidLoginCode";
@@ -186,10 +181,19 @@ public class SmartIdController {
         }
     }
 
-    private SessionStatus pollSidSessionStatus(String sidSessionId) {
+    private void pollSidSessionStatus(String sidSessionId, TaraSession taraSession, AuthenticationRequestBuilder requestBuilder) {
         SessionStatusPoller sessionStatusPoller = new SessionStatusPoller(sidClient.getSmartIdConnector());
         log.info("starting session status polling with id: " + sidSessionId);
-        return sessionStatusPoller.fetchFinalSessionStatus(sidSessionId);
+
+        try {
+            log.info("fetching final session status");
+            SessionStatus sessionStatus = sessionStatusPoller.fetchFinalSessionStatus(sidSessionId);
+            log.info("fetched final session status");
+            handleSidAuthenticationResult(taraSession, sessionStatus, requestBuilder);
+        } catch (Exception ex) {
+            log.info("received exception");
+            handleSidAuthenticationException(taraSession, ex);
+        }
     }
 
     private void handleSidAuthenticationResult(TaraSession taraSession, SessionStatus sessionStatus, AuthenticationRequestBuilder requestBuilder) {
@@ -218,11 +222,10 @@ public class SmartIdController {
         log.info("sid authentication result handled");
     }
 
-    private void handleSidAuthenticationException(TaraSession taraSession, Throwable ex) {
-        Throwable cause = ex.getCause();
-        log.error("received sid poll exception: " + cause.getMessage());
+    private void handleSidAuthenticationException(TaraSession taraSession, Exception ex) {
+        log.error("received sid poll exception: " + ex.getMessage());
         taraSession.setState(AUTHENTICATION_FAILED);
-        taraSession.getAuthenticationResult().setErrorCode(translateExceptionToErrorCode(cause));
+        taraSession.getAuthenticationResult().setErrorCode(translateExceptionToErrorCode(ex));
 
         Session session = sessionRepository.findById(taraSession.getSessionId());
         session.setAttribute(TARA_SESSION, taraSession);
