@@ -18,7 +18,7 @@ public enum ErrorCode {
     NOT_MID_CLIENT("message.mid-rest.error.not-mid-client"),
     MID_INTERNAL_ERROR("message.mid-rest.error.internal-error"),
     INTERNAL_ERROR("message.error.internal-error"),
-    SID_INTERNAL_ERROR("message.sid.error.internal-error"),
+    SID_INTERNAL_ERROR("message.smart-id.error.internal-error"),
     SID_USER_REFUSED("message.smart-id.error.user-refused-auth"),
     SID_SESSION_TIMEOUT("message.smart-id.error.session-timed-out"),
     SID_REQUEST_TIMEOUT("message.smart-id.error.request-timed-out"),

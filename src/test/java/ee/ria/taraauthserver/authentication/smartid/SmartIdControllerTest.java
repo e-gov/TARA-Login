@@ -249,6 +249,27 @@ class SmartIdControllerTest extends BaseTest {
     @Test
     @Tag(value = "SID_AUTH_INIT_REQUEST")
     @Tag(value = "SID_AUTH_POLL_RESPONSE_COMPLETED_OK")
+    void sidAuthInit_timeout() {
+        createSidApiAuthenticationStub("mock_responses/sid/sid_authentication_init_response.json", 200, 2000);
+
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(SMART_ID))
+                .authenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS).build();
+
+        given()
+                .filter(sessionFilter)
+                .when()
+                .formParam(ID_CODE, ID_CODE_VALUE)
+                .post("/auth/sid/init")
+                .then()
+                .assertThat()
+                .statusCode(502);
+    }
+
+    @Test
+    @Tag(value = "SID_AUTH_INIT_REQUEST")
+    @Tag(value = "SID_AUTH_POLL_RESPONSE_COMPLETED_OK")
     void sidAuthInit_signatureAuthentication_fails() {
         AuthenticationHash mockHashToSign = new AuthenticationHash();
         mockHashToSign.setHashInBase64("mri6grZmsF8wXJgTNzGRsoodshrFsdPTorCaBKsDOGsSGCh64R+tPbu+ULVvKIh9QRVu0pLiPx3cpeX/TgsdyNA==");

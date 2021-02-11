@@ -96,6 +96,8 @@ tara:
       truststore-password: changeit
       relying-party-uuid: 00000000-0000-0000-0000-000000000000
       relying-party-name: DEMO
+      connection-timeout-milliseconds: 1000
+      read-timeout-milliseconds: 1000
 
   legal-person-authentication:
     x-road-server-url: https://localhost:9877/cgi-bin/consumer_proxy

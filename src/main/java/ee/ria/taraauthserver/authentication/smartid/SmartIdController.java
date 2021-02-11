@@ -4,6 +4,7 @@ import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.ValidNationalIdNumber;
@@ -84,7 +85,7 @@ public class SmartIdController {
     }
 
     @PostMapping(value = "/auth/sid/init", produces = MediaType.TEXT_HTML_VALUE, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public String authSidInit(@Validated @ModelAttribute(value = "credential") SidCredential sidCredential, Model model, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+    public String authSidInit(@Validated @ModelAttribute(value = "credential") SidCredential sidCredential, Model model, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) throws InterruptedException {
 
         validateSession(taraSession);
 
@@ -95,6 +96,7 @@ public class SmartIdController {
         CompletableFuture.runAsync(() -> pollSidSessionStatus(sidSessionId, taraSession, requestBuilder), taskExecutor);
 
         model.addAttribute("smartIdVerificationCode", authenticationHash.calculateVerificationCode());
+        Thread.sleep(5000);
         return "sidLoginCode";
     }
 
@@ -128,7 +130,7 @@ public class SmartIdController {
             throw new IllegalStateException(ERROR_GENERAL.getMessage(), e);
         } catch (Exception e) {
             log.error("Failed to initiate SID authentication session: " + e.getMessage());
-            throw new HttpServerErrorException(HttpStatus.BAD_GATEWAY, SID_INTERNAL_ERROR.getMessage());
+            throw new ServiceNotAvailableException(SID_INTERNAL_ERROR, "Failed to initiate SID authentication session", e);
         }
     }
 
