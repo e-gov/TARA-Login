@@ -140,7 +140,7 @@ class AuthMidPollControllerTest extends BaseTest {
     @Test
     @Tag(value = "MID_AUTH_FAILED")
     void midAuth_session_status_authentication_mid_internal_error() {
-        TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
+        TaraSession.AuthenticationResult authenticationResult = new TaraSession.MidAuthenticationResult("mid-session-id");
         authenticationResult.setErrorCode(ErrorCode.MID_INTERNAL_ERROR);
 
         MockSessionFilter sessionFilter = withTaraSession()

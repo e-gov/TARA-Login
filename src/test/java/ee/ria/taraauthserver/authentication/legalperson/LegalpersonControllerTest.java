@@ -524,6 +524,6 @@ public class LegalpersonControllerTest extends BaseTest {
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .header("Location", Matchers.endsWith("/some/test/url"));
 
-        assertInfoIsLogged("Legal person selected: " + MOCK_LEGAL_PERSON_IDENTIFIER);
+        assertInfoIsLogged("Legal person confirmed");
     }
 }

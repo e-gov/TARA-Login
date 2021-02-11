@@ -10,6 +10,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -17,6 +18,7 @@ import org.springframework.session.SessionRepository;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URL;
+import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
@@ -172,10 +174,8 @@ class AuthInitControllerTest extends BaseTest {
         assertEquals("mid", taraSession.getLoginRequestInfo().getRequestedScopes().get(1));
         assertEquals("some test client", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getName());
 
-
-        assertInfoIsLogged("OIDC login GET request: https://localhost:9877/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE);
-        assertInfoIsLogged("OIDC login response Code: 200");
-        assertInfoIsLogged("OIDC login response Body: TaraSession.LoginRequestInfo(challenge=abcdefg098AAdsCC, client=TaraSession.Client(clientId=openIdDemo, metaData=TaraSession.MetaData(oidcClient=TaraSession.OidcClient(name=some test client, nameTranslations={et=test client et, en=test client en, ru=test client ru}, shortName=stc, shortNameTranslations={et=short test client et, en=short test client en, ru=short test client ru}, legacyReturnUrl=null, institution=TaraSession.Institution(sector=public)), displayUserConsent=false), scope=idcard mid), requestedScopes=[idcard, mid], oidcContext=TaraSession.OidcContext(acrValues=[low], uiLocales=null), url=https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et)");
+        assertInfoIsLogged("OIDC login request: https://localhost:9877/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE);
+        assertInfoIsLogged("OIDC login challenge 'abcdefg098AAdsCC' response status code: 200");
     }
 
     @Test

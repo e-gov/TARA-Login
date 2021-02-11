@@ -26,12 +26,11 @@ public class AuthMidPollController {
     public Map<String, String> authMidPoll() {
         TaraSession taraSession = SessionUtils.getAuthSession();
         SessionUtils.assertSessionInState(taraSession, ALLOWED_STATES);
-        if (log.isDebugEnabled()) {
-            String midSessionId = ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getMidSessionId();
-            log.debug(append("tara.session.state", taraSession.getState()),
-                    "Polling MobileID authentication process with MID session id {}",
-                    value("tara.session.authentication_result.mid_session_id", midSessionId));
-        }
+
+        String midSessionId = ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getMidSessionId();
+        log.info(append("tara.session.state", taraSession.getState()),
+                "Polling Mobile ID authentication process with MID session id {}",
+                value("tara.session.authentication_result.mid_session_id", midSessionId));
 
         if (taraSession.getState() == NATURAL_PERSON_AUTHENTICATION_COMPLETED) {
             return of("status", "COMPLETED");

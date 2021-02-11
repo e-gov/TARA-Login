@@ -30,6 +30,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static net.logstash.logback.argument.StructuredArguments.value;
+import static net.logstash.logback.marker.Markers.append;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
@@ -66,7 +68,7 @@ public class AuthInitController {
                     "No authentication methods match the requested level of assurance. Please check your authorization request");
 
         newTaraSession.setAllowedAuthMethods(allowedAuthenticationMethodsList);
-        log.info("Initialized authentication session: {}", newTaraSession);
+        log.info(append(TARA_SESSION, newTaraSession), "Initialized authentication session");
 
         setLocale(language, newTaraSession);
         return "loginView";
@@ -90,19 +92,16 @@ public class AuthInitController {
     private TaraSession.LoginRequestInfo fetchLoginRequestInfo(@RequestParam(name = "login_challenge") @Size(max = 50)
                                                                @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed") String loginChallenge) {
         String url = taraProperties.getHydraService().getLoginUrl() + "?login_challenge=" + loginChallenge;
-        log.info("OIDC login GET request: " + url);
-        long startTime = System.currentTimeMillis();
+        log.info("OIDC login request: {}", value("url.full", url));
         try {
             ResponseEntity<TaraSession.LoginRequestInfo> response = hydraService.exchange(url, HttpMethod.GET, null, TaraSession.LoginRequestInfo.class);
-            long duration = System.currentTimeMillis() - startTime;
-            log.info("OIDC login response Code: " + response.getStatusCodeValue());
-            log.info("OIDC login response Body: " + response.getBody());
-            log.info("OIDC login request duration: " + duration + " ms");
-
+            log.info(append("tara.session.login_request_info", response), "OIDC login challenge '{}' response status code: {}",
+                    loginChallenge,
+                    response.getStatusCodeValue());
             validateResponse(response.getBody(), loginChallenge);
             return response.getBody();
         } catch (HttpClientErrorException.NotFound e) {
-            log.error(e.toString());
+            log.error("Unable to fetch login request info!", e);
             throw new BadRequestException(ErrorCode.INVALID_LOGIN_CHALLENGE, "Login challenge not found.");
         }
     }

@@ -13,6 +13,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Locale;
 
+import static net.logstash.logback.argument.StructuredArguments.value;
+
 @Slf4j
 @UtilityClass
 public class RequestUtils {
@@ -21,7 +23,7 @@ public class RequestUtils {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
 
-        log.info("requested locale is: " + requestedLocale);
+        log.info("Requested locale is: {}", value("http.request.locale", requestedLocale));
         Locale locale = StringUtils.parseLocaleString(requestedLocale);
         LocaleResolver localeResolver = RequestContextUtils.getLocaleResolver(request);
         Assert.notNull(localeResolver, "No LocaleResolver found in request: not in a DispatcherServlet request?");

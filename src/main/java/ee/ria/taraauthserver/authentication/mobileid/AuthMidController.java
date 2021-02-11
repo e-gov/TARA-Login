@@ -36,7 +36,6 @@ public class AuthMidController {
 
     @PostMapping(value = "/auth/mid/init", produces = MediaType.TEXT_HTML_VALUE, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public String authMidInit(@Validated @ModelAttribute(value = "credential") MidRequest midRequest, Model model, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
-
         validateSession(taraSession);
         midRequest.telephoneNumber = "+372" + midRequest.telephoneNumber;
         MidAuthenticationHashToSign authenticationHash = authMidService.startMidAuthSession(taraSession, midRequest.getIdCode(), midRequest.getTelephoneNumber());
@@ -46,7 +45,7 @@ public class AuthMidController {
     }
 
     public void validateSession(TaraSession taraSession) {
-        log.info("AuthSession: {}", taraSession);
+        log.info("Validating tara session");
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
         if (!taraSession.getAllowedAuthMethods().contains(AuthenticationType.MOBILE_ID)) {
             throw new BadRequestException(INVALID_REQUEST, "Mobile ID authentication method is not allowed");
