@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.authentication.eidas;
 
+import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 
@@ -105,10 +107,10 @@ public class EidasController {
     public void validateSession(TaraSession taraSession) {
         log.info("AuthSession: {}", taraSession);
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
-        /*if (!(taraSession.getAllowedAuthMethods().contains(AuthenticationType.EIDAS) ||
+        if (!(taraSession.getAllowedAuthMethods().contains(AuthenticationType.EIDAS) ||
                 taraSession.getAllowedAuthMethods().contains(AuthenticationType.EIDAS_ONLY))) {
             throw new BadRequestException(INVALID_REQUEST, "Eidas authentication method is not allowed");
-        }*/
+        }
     }
 
     @Data
