@@ -172,11 +172,14 @@ class AuthInitControllerTest extends BaseTest {
         assertEquals("idcard", taraSession.getLoginRequestInfo().getRequestedScopes().get(0));
         assertEquals("mid", taraSession.getLoginRequestInfo().getRequestedScopes().get(1));
         assertEquals("some test client", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getName());
+        assertEquals("testRelyingPartyName", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getRelyingPartyName());
+        assertEquals("testRelyingPartyId123", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getRelyingPartyUuid());
+        assertEquals(true, taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getShouldUseAdditionalVerificationCodeCheck());
 
 
         assertInfoIsLogged("OIDC login GET request: https://localhost:9877/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE);
         assertInfoIsLogged("OIDC login response Code: 200");
-        assertInfoIsLogged("OIDC login response Body: TaraSession.LoginRequestInfo(challenge=abcdefg098AAdsCC, client=TaraSession.Client(clientId=openIdDemo, metaData=TaraSession.MetaData(oidcClient=TaraSession.OidcClient(name=some test client, nameTranslations={et=test client et, en=test client en, ru=test client ru}, shortName=stc, shortNameTranslations={et=short test client et, en=short test client en, ru=short test client ru}, legacyReturnUrl=null, institution=TaraSession.Institution(sector=public), smartIdSettings=null), displayUserConsent=false), scope=idcard mid), requestedScopes=[idcard, mid], oidcContext=TaraSession.OidcContext(acrValues=[low], uiLocales=null), url=https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et)");
+        assertInfoIsLogged("OIDC login response Body: TaraSession.LoginRequestInfo(challenge=abcdefg098AAdsCC, client=TaraSession.Client(clientId=openIdDemo, metaData=TaraSession.MetaData(oidcClient=TaraSession.OidcClient(name=some test client, nameTranslations={et=test client et, en=test client en, ru=test client ru}, shortName=stc, shortNameTranslations={et=short test client et, en=short test client en, ru=short test client ru}, legacyReturnUrl=null, institution=TaraSession.Institution(sector=public), smartIdSettings=TaraSession.SmartIdSettings(relyingPartyUuid=testRelyingPartyId123, relyingPartyName=testRelyingPartyName, ShouldUseAdditionalVerificationCodeCheck=true)), displayUserConsent=false), scope=idcard mid), requestedScopes=[idcard, mid], oidcContext=TaraSession.OidcContext(acrValues=[low], uiLocales=null), url=https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et)");
     }
 
     @Test

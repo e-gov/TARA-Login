@@ -150,7 +150,7 @@ public class SmartIdController {
                 .map(TaraSession.MetaData::getOidcClient)
                 .map(TaraSession.OidcClient::getSmartIdSettings)
                 .map(TaraSession.SmartIdSettings::getShouldUseAdditionalVerificationCodeCheck)
-                .orElse(false);
+                .orElse(true);
     }
 
     private String getAppropriateRelyingPartyName(TaraSession taraSession) {
