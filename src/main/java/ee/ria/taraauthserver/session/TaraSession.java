@@ -62,6 +62,7 @@ public class TaraSession implements Serializable {
     public static class LoginRequestInfo implements Serializable {
         @JsonProperty("challenge")
         private String challenge;
+        private boolean isLoginChallengeExpired = false;
         @Valid
         @JsonProperty("client")
         private Client client = new Client();
