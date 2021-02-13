@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.security;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.MDC;
 import org.springframework.boot.info.BuildProperties;
@@ -14,7 +15,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Locale;
 
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 @Component
@@ -30,11 +33,13 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull FilterChain filterChain)
             throws ServletException, IOException {
 
-        // NB! Set traceId also as HttpServletRequest attribute to make it accessible for Tomcat's AccessLogValve
         String requestId = MDC.get("trace.id");
-        if (isNotEmpty(requestId)) {
-            request.setAttribute(REQUEST_ATTRIBUTE_NAME_REQUEST_ID, requestId);
+        if (isEmpty(requestId)) {
+            MDC.put("trace.id", RandomStringUtils.randomAlphanumeric(16).toLowerCase());
         }
+
+        // NB! Set traceId also as HttpServletRequest attribute to make it accessible for Tomcat's AccessLogValve
+        request.setAttribute(REQUEST_ATTRIBUTE_NAME_REQUEST_ID, requestId);
 
         if (buildProperties != null) {
             MDC.put(MDC_ATTRIBUTE_NAME_VERSION, buildProperties.getVersion());

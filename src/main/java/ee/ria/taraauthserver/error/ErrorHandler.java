@@ -21,7 +21,11 @@ public class ErrorHandler {
 
     @ExceptionHandler({BadRequestException.class, BindException.class, ConstraintViolationException.class, MissingServletRequestParameterException.class})
     public ModelAndView handleBindException(Exception ex, HttpServletResponse response) throws IOException {
-        log.error("User exception: {}", ex.getMessage(), ex);
+        if (log.isDebugEnabled())
+            log.error("User exception: {}", ex.getMessage(), ex);
+        else
+            log.error("User exception: {}", ex.getMessage());
+
         response.sendError(HttpServletResponse.SC_BAD_REQUEST);
         return new ModelAndView();
     }
@@ -42,7 +46,11 @@ public class ErrorHandler {
 
     @ExceptionHandler({NotFoundException.class})
     public ModelAndView handleNotFound(Exception ex, HttpServletResponse response) throws IOException {
-        log.error("Results not found: {}", ex.getMessage(), ex);
+        if (log.isDebugEnabled())
+            log.error("Results not found: {}", ex.getMessage(), ex);
+        else
+            log.error("Results not found: {}", ex.getMessage());
+
         response.sendError(HttpServletResponse.SC_NOT_FOUND);
         return new ModelAndView();
     }

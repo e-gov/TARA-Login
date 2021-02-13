@@ -68,9 +68,8 @@ public class AuthInitController {
                     "No authentication methods match the requested level of assurance. Please check your authorization request");
 
         newTaraSession.setAllowedAuthMethods(allowedAuthenticationMethodsList);
-        log.info(append(TARA_SESSION, newTaraSession), "Initialized authentication session");
-
         setLocale(language, newTaraSession);
+        log.info(append(TARA_SESSION, newTaraSession).and(append("http.request.locale", RequestUtils.getLocale())), "Initialized authentication session");
         return "loginView";
     }
 

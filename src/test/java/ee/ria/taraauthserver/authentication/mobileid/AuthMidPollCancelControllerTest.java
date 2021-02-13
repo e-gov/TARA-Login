@@ -35,8 +35,10 @@ class AuthMidPollCancelControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(403)
-                .body("message", equalTo("Forbidden"))
-                .body("path", equalTo("/auth/mid/poll/cancel"));
+                .body("error", equalTo("Forbidden"))
+                .body("message", equalTo("Keelatud päring. Päring esitati topelt, sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."));
+
+        assertErrorIsLogged("Access denied: Invalid CSRF token.");
     }
 
     @Test

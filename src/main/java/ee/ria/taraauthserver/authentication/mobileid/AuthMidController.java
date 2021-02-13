@@ -45,7 +45,6 @@ public class AuthMidController {
     }
 
     public void validateSession(TaraSession taraSession) {
-        log.info("Validating tara session");
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
         if (!taraSession.getAllowedAuthMethods().contains(AuthenticationType.MOBILE_ID)) {
             throw new BadRequestException(INVALID_REQUEST, "Mobile ID authentication method is not allowed");
