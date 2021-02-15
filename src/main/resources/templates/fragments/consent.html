@@ -3,29 +3,29 @@
         <h2 th:utext="#{label.consent.header}"></h2>
         <table class="consent-table">
             <tr>
-                <th class="consent-table-row" th:utext="#{label.natural-person.id-code}"></th>
+                <th class="consent-table-row"><b th:utext="#{label.natural-person.id-code}"></b></th>
                 <td id="natural-person-id-code" th:text="${idCode}">Personal ID-code</td>
             </tr>
             <tr>
-                <th class="consent-table-row" th:utext="#{label.natural-person.surname}"></th>
+                <th class="consent-table-row"><b th:utext="#{label.natural-person.surname}"></b></th>
                 <td id="natural-person-surname" th:text="${lastName}">Surname</td>
             </tr>
             <tr>
-                <th class="consent-table-row" th:utext="#{label.natural-person.given-name}"></th>
+                <th class="consent-table-row"><b th:utext="#{label.natural-person.given-name}"></b></th>
                 <td id="natural-person-given-name" th:text="${firstName}">Givenname</td>
             </tr>
             <tr>
-                <th class="consent-table-row" th:utext="#{label.natural-person.date-of-birth}"></th>
+                <th class="consent-table-row"><b th:utext="#{label.natural-person.date-of-birth}"></b></th>
                 <td id="natural-person-date-of-birth" th:text="${#temporals.format(dateOfBirth, 'dd.MM.yyyy')}">Date of
                     birth
                 </td>
             </tr>
             <tr th:if="${legalPersonName != null}">
-                <th class="consent-table-row" th:utext="#{label.legal-person.legal-person-name}"></th>
+                <th class="consent-table-row"><b th:utext="#{label.legal-person.legal-person-name}"></b></th>
                 <td id="legal-person-name" th:text="${legalPersonName}">Legal person name</td>
             </tr>
             <tr class="consent-table-row" th:if="${legalPersonRegistryCode != null}">
-                <th class="consent-table-row" th:utext="#{label.legal-person.legal-person-identifier}"></th>
+                <th class="consent-table-row"><b th:utext="#{label.legal-person.legal-person-identifier}"></b></th>
                 <td id="legal-person-identifier" th:text="${legalPersonRegistryCode}">Legal person registry code</td>
             </tr>
         </table>
