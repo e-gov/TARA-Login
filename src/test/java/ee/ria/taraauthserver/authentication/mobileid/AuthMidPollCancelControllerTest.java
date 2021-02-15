@@ -73,7 +73,7 @@ class AuthMidPollCancelControllerTest extends BaseTest {
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: Invalid authentication state: 'COMPLETE', expected one of: [INIT_MID, POLL_MID_STATUS]");
+        assertErrorIsLogged("User exception: Invalid authentication state: 'COMPLETE', expected one of: [INIT_MID, POLL_MID_STATUS, AUTHENTICATION_FAILED]");
     }
 
     @Test
