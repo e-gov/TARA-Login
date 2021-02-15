@@ -46,13 +46,12 @@ public class ThymeleafSupport {
         return serviceNameTranslations.getOrDefault(locale.getLanguage(), defaultServicename);
     }
 
-    public String getLocaleUrl(String locale) { // TODO test this part
+    public String getLocaleUrl(String locale) {
         UriComponents uriComponents = ServletUriComponentsBuilder.fromCurrentRequest().replaceQueryParam("lang", locale).build();
         return uriComponents.getPath() + "?" + uriComponents.getQuery();
     }
 
     public String getBackUrl() {
-        log.info("GETTING BACK URL");
         TaraSession taraSession = SessionUtils.getAuthSession();
         if (taraSession == null || taraSession.getLoginRequestInfo() == null || taraSession.getLoginRequestInfo().isLoginChallengeExpired())
             return "#";

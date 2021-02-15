@@ -26,6 +26,7 @@ import static java.util.List.of;
 import static java.util.stream.Collectors.toList;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
+@Slf4j
 @Data
 @RequiredArgsConstructor
 public class TaraSession implements Serializable {
