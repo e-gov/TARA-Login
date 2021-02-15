@@ -23,6 +23,8 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static net.logstash.logback.argument.StructuredArguments.value;
+import static net.logstash.logback.marker.Markers.append;
 
 @Slf4j
 @Validated
@@ -42,10 +44,12 @@ class AuthAcceptController {
             return new RedirectView("/auth/legalperson/init");
         }
         String url = authConfigurationProperties.getHydraService().getAcceptLoginUrl() + "?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge();
+        log.info("OIDC login accept request: {}", value("url.full", url));
         ResponseEntity<LoginAcceptResponseBody> response = hydraService.exchange(url, HttpMethod.PUT, createRequestBody(taraSession), LoginAcceptResponseBody.class);
 
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && response.getBody().getRedirectUrl() != null) {
             taraSession.setState(AUTHENTICATION_SUCCESS);
+            log.info(append(TARA_SESSION, taraSession), "Successful authentication");
             return new RedirectView(response.getBody().getRedirectUrl());
         } else {
             throw new IllegalStateException("Invalid OIDC server response. Redirect URL missing from response.");
@@ -53,7 +57,6 @@ class AuthAcceptController {
     }
 
     private HttpEntity<LoginAcceptRequestBody> createRequestBody(TaraSession taraSession) {
-        log.info("authsession: " + taraSession.toString());
         TaraSession.AuthenticationResult authenticationResult = taraSession.getAuthenticationResult();
         Assert.notNull(authenticationResult.getAcr(), "Mandatory 'acr' value is missing from authentication!");
         Assert.notNull(authenticationResult.getSubject(), "Mandatory 'subject' value is missing from authentication!");

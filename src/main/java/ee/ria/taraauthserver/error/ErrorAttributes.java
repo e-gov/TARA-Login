@@ -50,7 +50,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
 
         attr.put("locale", RequestUtils.getLocale());
         attr.remove("errors");
-        attr.put("incident_nr", MDC.get("traceId"));
+        attr.put("incident_nr", MDC.get("trace.id"));
 
         return attr;
     }

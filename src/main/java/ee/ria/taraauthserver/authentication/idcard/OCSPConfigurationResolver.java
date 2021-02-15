@@ -7,17 +7,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
 
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp;
 import static java.util.List.of;
+import static java.util.stream.Collectors.toList;
+import static net.logstash.logback.argument.StructuredArguments.fields;
+import static net.logstash.logback.argument.StructuredArguments.value;
+import static org.springframework.util.CollectionUtils.isEmpty;
 
 @Slf4j
 @Component
@@ -29,26 +31,29 @@ public class OCSPConfigurationResolver {
     private final IdCardAuthConfigurationProperties configurationProperties;
 
     public List<Ocsp> resolve(X509Certificate userCert) {
-        log.debug("Determining the OCSP configuration");
         Assert.notNull(userCert, "User certificate is missing!");
+        log.debug("Determining the OCSP configuration for certificate serial number: {}", value("x509.serial_number", userCert.getSerialNumber()));
         final List<Ocsp> ocspConfiguration = new ArrayList<>();
 
         String issuerCN = X509Utils.getIssuerCNFromCertificate(userCert);
 
         Ocsp primaryConf = getOcspConfiguration(issuerCN, configurationProperties.getOcsp())
                 .orElseGet(() -> getDefaultConf(userCert, issuerCN));
-        log.debug("Primary ocsp configuration to verify cert issued by '{}': {}", issuerCN, primaryConf);
+        log.debug("Primary ocsp configuration to verify cert issued by '{}': {}", value("x509.issuer.common_name", issuerCN), value("ocsp.conf", primaryConf));
         ocspConfiguration.add(primaryConf);
 
-        if (!CollectionUtils.isEmpty(configurationProperties.getFallbackOcsp())) {
-            List<Ocsp> secondaryConfs = configurationProperties.getFallbackOcsp().stream().filter(
-                    e -> e.getIssuerCn().stream().anyMatch(b -> b.equals(issuerCN))
-            ).collect(Collectors.toList());
-            log.debug("Secondary ocsp configurations to verify cert issued by '{}': {}", issuerCN, secondaryConfs);
+        if (!isEmpty(configurationProperties.getFallbackOcsp())) {
+            List<Ocsp> secondaryConfs = configurationProperties.getFallbackOcsp()
+                    .stream()
+                    .filter(e -> e.getIssuerCn().stream().anyMatch(b -> b.equals(issuerCN)))
+                    .collect(toList());
+
+            secondaryConfs.forEach(secondaryConf ->
+                    log.debug("Secondary ocsp configurations to verify cert issued by '{}': {}", value("x509.issuer.common_name", issuerCN),
+                            fields(secondaryConf)));
             ocspConfiguration.addAll(secondaryConfs);
         }
 
-        log.debug("OCSP configurations: {}", ocspConfiguration);
         return ocspConfiguration;
     }
 
@@ -60,7 +65,8 @@ public class OCSPConfigurationResolver {
         Ocsp implicitConfiguration = new Ocsp();
         implicitConfiguration.setIssuerCn(of(issuerCN));
         implicitConfiguration.setUrl(url);
-        log.debug("Did not find explicit config for issuer '{}' - using default configuration with AIA extension url: {} to verify cert status", issuerCN, url);
+        log.debug("Did not find explicit config for issuer '{}' - using default configuration with AIA extension url: {} to verify cert status",
+                value("x509.issuer.common_name", issuerCN), value("url.full", url));
         return implicitConfiguration;
     }
 

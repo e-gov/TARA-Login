@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.ID_CARD;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
 import static java.util.List.of;
+import static net.logstash.logback.marker.Markers.append;
 
 @Slf4j
 @Data
@@ -161,7 +162,7 @@ public class AuthConfigurationProperties {
             } else {
                 log.warn("OCSP verification has been DISABLED! User certificates will not be checked for revocation!");
             }
-            log.info("Using id-card configuration: " + this);
+            log.info(append("tara.conf.auth-methods.id-card", this), "Using id-card configuration");
         }
 
         private Set<String> getFindDuplicateConfigurations() {
