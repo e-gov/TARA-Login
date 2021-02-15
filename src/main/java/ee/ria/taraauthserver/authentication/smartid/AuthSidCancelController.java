@@ -16,7 +16,7 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 @Slf4j
 @RestController
 public class AuthSidCancelController {
-    private static final TaraAuthenticationState[] ALLOWED_STATES = {INIT_SID, POLL_SID_STATUS};
+    private static final TaraAuthenticationState[] ALLOWED_STATES = {INIT_SID, POLL_SID_STATUS, AUTHENTICATION_FAILED};
 
     @PostMapping(value = "/auth/sid/poll/cancel", produces = MediaType.APPLICATION_JSON_VALUE)
     public RedirectView authSidPollCancel(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {

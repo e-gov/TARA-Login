@@ -134,9 +134,9 @@ public class SmartIdController {
 
     private List<Interaction> getAppropriateAllowedInteractions(TaraSession taraSession) {
         List<Interaction> allowedInteractions = new ArrayList<>();
-        allowedInteractions.add(Interaction.displayTextAndPIN(taraSession.getOidcClientTranslatedShortName()));
         if (shouldUseVerificationCodeCheck(taraSession))
             allowedInteractions.add(Interaction.verificationCodeChoice(taraSession.getOidcClientTranslatedShortName()));
+        allowedInteractions.add(Interaction.displayTextAndPIN(taraSession.getOidcClientTranslatedShortName()));
         return allowedInteractions;
     }
 
