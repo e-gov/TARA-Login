@@ -10,7 +10,6 @@ import static java.util.List.of;
 @Getter
 @AllArgsConstructor
 public enum TaraScope {
-
     OPENID("openid"),
     IDCARD("idcard"),
     MID("mid"),
@@ -25,7 +24,6 @@ public enum TaraScope {
         for (TaraScope v : values())
             if (v.formalName.equals(value))
                 return v;
-
-        throw new IllegalArgumentException();
+        return null;
     }
 }
