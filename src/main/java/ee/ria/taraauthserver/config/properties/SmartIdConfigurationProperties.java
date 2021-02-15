@@ -38,4 +38,6 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
     private int connectionTimeoutMilliseconds = 5000;
 
     private int readTimeoutMilliseconds = 30000;
+
+    private int delayStatusPollingStartInMilliseconds = 500;
 }

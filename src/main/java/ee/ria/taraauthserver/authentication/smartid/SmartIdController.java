@@ -22,7 +22,6 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
@@ -32,13 +31,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.SessionAttribute;
-import org.springframework.web.client.HttpServerErrorException;
 
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotAllowedException;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.ProcessingException;
-import java.net.SocketTimeoutException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -46,6 +43,7 @@ import java.util.concurrent.Executor;
 import static ee.ria.taraauthserver.error.ErrorCode.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 @Slf4j
 @Validated
@@ -85,7 +83,7 @@ public class SmartIdController {
     }
 
     @PostMapping(value = "/auth/sid/init", produces = MediaType.TEXT_HTML_VALUE, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public String authSidInit(@Validated @ModelAttribute(value = "credential") SidCredential sidCredential, Model model, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) throws InterruptedException {
+    public String authSidInit(@Validated @ModelAttribute(value = "credential") SidCredential sidCredential, Model model, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
 
         validateSession(taraSession);
 
@@ -93,10 +91,10 @@ public class SmartIdController {
         AuthenticationRequestBuilder requestBuilder = sidClient.createAuthentication();
         String sidSessionId = initiateSidAuthenticationSession(sidCredential, taraSession, authenticationHash, requestBuilder);
 
-        CompletableFuture.runAsync(() -> pollSidSessionStatus(sidSessionId, taraSession, requestBuilder), taskExecutor);
+        CompletableFuture.runAsync(() -> pollSidSessionStatus(sidSessionId, taraSession, requestBuilder),
+                CompletableFuture.delayedExecutor(smartIdConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLISECONDS, taskExecutor));
 
         model.addAttribute("smartIdVerificationCode", authenticationHash.calculateVerificationCode());
-        Thread.sleep(5000);
         return "sidLoginCode";
     }
 
