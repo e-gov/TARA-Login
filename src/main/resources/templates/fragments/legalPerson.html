@@ -13,14 +13,14 @@
 
             <div th:if="${session.containsKey('authentication')}">
                 <div id="results-container" class="alert alert-neutral">
-                                <span id="results-loading" class="hidden">
-                                    <div class="loadersmall"></div>
-                                    <div th:utext="#{label.legal-person.loading}"></div>
-                                </span>
+                    <span id="results-loading" class="hidden">
+                        <div class="loadersmall"></div>
+                        <div th:utext="#{label.legal-person.loading}"></div>
+                    </span>
                     <span id="results-summary" class="hidden">
-                                    <div th:utext="#{label.legal-person.loading-result}"></div>
-                                    <br>
-                                </span>
+                        <div><b th:utext="#{label.legal-person.loading-result}"></b></div>
+                        <br>
+                    </span>
                     <ul id="results-legal-person-list"></ul>
                 </div>
                 <div id="error-results-container" class="alert alert-error hidden">
