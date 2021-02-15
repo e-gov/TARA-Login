@@ -114,9 +114,17 @@ body {
 .consent-button {
   display: inline-block;
   margin-right: 20px;
+  @media (max-width: $breakpoint-mobile) {
+      display: block;
+      width: 100%;
+      padding: 12px 0px;
+    }
 }
 .consent-table {
   padding-bottom: 20px;
+}
+.consent-table-row {
+  text-align: left !important;
 }
 
 // Mobile
