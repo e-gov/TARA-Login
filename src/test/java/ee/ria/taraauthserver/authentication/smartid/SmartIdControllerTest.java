@@ -43,7 +43,7 @@ class SmartIdControllerTest extends BaseTest {
     @Autowired
     private SessionRepository<Session> sessionRepository;
 
-    private static final String ID_CODE = "smartIdCode";
+    private static final String ID_CODE = "idCode";
     private static final String ID_CODE_VALUE = "10101010005";
 
     @BeforeEach
