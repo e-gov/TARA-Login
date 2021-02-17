@@ -37,8 +37,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .addFilterBefore(new SessionManagementFilter(), CsrfFilter.class)
                 .addFilterAfter(new RequestCorrelationFilter(buildProperties), SessionManagementFilter.class)
                 .csrf(csrf -> csrf
-                        .csrfTokenRepository(csrfTokenRepository())
-                        .ignoringAntMatchers("/auth/eidas/callback**"))
+                        .csrfTokenRepository(csrfTokenRepository()))
                 .headers()
                 .frameOptions().deny()
                 .contentSecurityPolicy(authConfigurationProperties.getContentSecurityPolicy())

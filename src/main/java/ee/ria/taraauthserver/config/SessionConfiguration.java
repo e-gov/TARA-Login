@@ -77,7 +77,7 @@ public class SessionConfiguration {
         DefaultCookieSerializer serializer = new DefaultCookieSerializer();
         serializer.setCookiePath("/");
         serializer.setUseSecureCookie(true);
-        serializer.setSameSite("None");
+        serializer.setSameSite("Strict");
         serializer.setUseHttpOnlyCookie(true);
         serializer.setUseBase64Encoding(false);
         serializer.setCookieName(TARA_SESSION_COOKIE_NAME);

@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.security;
 
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -22,6 +23,11 @@ public class SessionManagementFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+
+        if (request.getServletPath().startsWith("/auth/eidas/callback")) {
+            request.setAttribute("SHOULD_NOT_FILTER" + CsrfFilter.class.getName(), Boolean.TRUE);
+        }
+
         HttpSession session = request.getSession(false);
         if (AUTH_INIT_REQUEST_MATCHER.matches(request)) {
             createNewSession(request, session);

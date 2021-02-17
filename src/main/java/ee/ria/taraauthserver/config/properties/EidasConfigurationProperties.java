@@ -19,7 +19,13 @@ public class EidasConfigurationProperties {
 
     int refreshCountriesInterval = 300000;
 
-    List<String> countries;
+    List<String> availableCountries;
+
+    private int requestTimeoutInSeconds = 3;
+
+    private int readTimeoutInSeconds = 3;
+
+    private int maxConnectionsTotal = 50;
 
     @NotNull
     private String clientUrl;

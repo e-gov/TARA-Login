@@ -1,10 +1,7 @@
 package ee.ria.taraauthserver.authentication;
 
 
-import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
-import ee.ria.taraauthserver.config.properties.AuthenticationType;
-import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
-import ee.ria.taraauthserver.config.properties.TaraScope;
+import ee.ria.taraauthserver.config.properties.*;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
@@ -46,6 +43,9 @@ public class AuthInitController {
     private AuthConfigurationProperties taraProperties;
 
     @Autowired
+    private EidasConfigurationProperties eidasConfigurationProperties;
+
+    @Autowired
     private RestTemplate hydraService;
 
     @Autowired
@@ -66,7 +66,12 @@ public class AuthInitController {
         log.info("Initialized authentication session: {}", newTaraSession);
 
         setLocale(language, newTaraSession);
-        return "loginView";
+
+        if (eidasOnlyRequested(loginRequestInfo)) {
+            return "forward:/auth/eidas/init?country=" + getAllowedEidasCountryCode(loginRequestInfo.getRequestedScopes());
+        } else {
+            return "loginView";
+        }
     }
 
     private void setLocale(String language, TaraSession taraSession) {
@@ -206,5 +211,25 @@ public class AuthInitController {
         return constraintViolations.stream()
                 .map(cv -> cv == null ? "null" : cv.getPropertyPath() + ": " + cv.getMessage())
                 .sorted().collect(Collectors.joining(", "));
+    }
+
+    public boolean eidasOnlyRequested(TaraSession.LoginRequestInfo loginRequestInfo) {
+        List<String> requestedScopes = loginRequestInfo.getRequestedScopes();
+        if (requestedScopes.contains("eidasonly") && getAllowedEidasCountryCode(requestedScopes) != null)
+            return true;
+        else
+            return false;
+    }
+
+    private String getAllowedEidasCountryCode(List<String> requestedScopes) {
+        String regex = "eidas:country:[a-z]{2}$";
+        for (int i = 0; i < requestedScopes.size(); ++i)
+            if (requestedScopes.get(i).matches(regex) && eidasConfigurationProperties.getAvailableCountries().stream().anyMatch(getCountryCodeFromScope(requestedScopes.get(i))::equalsIgnoreCase))
+                return getCountryCodeFromScope(requestedScopes.get(i));
+        return null;
+    }
+
+    private String getCountryCodeFromScope(String eidasCountryScope) {
+        return eidasCountryScope.replace("eidas:country:", "").toUpperCase();
     }
 }

@@ -12,7 +12,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponents;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class ThymeleafSupport {
@@ -56,7 +55,7 @@ public class ThymeleafSupport {
     }
 
     public List<String> getListOfCountries() {
-        List<String> countries = eidasConfigurationProperties.getCountries();
+        List<String> countries = eidasConfigurationProperties.getAvailableCountries();
         return countries;
     }
 

@@ -35,7 +35,9 @@ public enum ErrorCode {
     INVALID_LEGAL_PERSON("label.legal-person.error.invalid-legal-person"),
     LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE("label.legal-person.error.service-not-available"),
     INTERNAL_ERROR("message.error.internal-error"),
-    EIDAS_COUNTRY_NOT_SUPPORTED("message.eidas.not-allowed-country");
+    EIDAS_COUNTRY_NOT_SUPPORTED("message.eidas.not-allowed-country"),
+    EIDAS_USER_CONSENT_NOT_GIVEN("message.eidas.error.user-consent-not-given"),
+    EIDAS_AUTHENTICATION_FAILED("message.eidas.error.authentication-failed");
 
     private final String message;
     @Setter

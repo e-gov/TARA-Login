@@ -109,7 +109,7 @@
                  layout:include="~{fragments/logintabs :: content(tab_id = 'eu-citizen', title = 'title-long')}"
                  th:remove="tag"
                  aria-hidden="true" aria-labelledby="eu-citizen">
-                <form role="form" method="post" id="eidasForm" th:action="@{/auth/eidas/init}" class="c-form"
+                <form role="form" method="get" id="eidasForm" th:action="@{/auth/eidas/init}" class="c-form"
                       layout:fragment="login-form-content">
                     <table>
                         <tbody>

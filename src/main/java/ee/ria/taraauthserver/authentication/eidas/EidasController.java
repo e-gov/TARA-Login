@@ -7,28 +7,29 @@ import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.EidasInternalException;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.MessageSource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import javax.cache.Cache;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotNull;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.WAITING_EIDAS_RESPONSE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 
 @Slf4j
@@ -36,52 +37,55 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 @ConditionalOnProperty(value = "tara.auth-methods.eidas.enabled", matchIfMissing = true)
 public class EidasController {
 
+    public static final String CONTENT_SECURITY_POLICY_WITH_UNSAFE_INLINE = "connect-src 'self'; default-src 'none'; font-src 'self'; img-src 'self'; script-src 'self' 'unsafe-inline';; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; block-all-mixed-content";
+
     @Autowired
     private EidasConfigurationProperties eidasConfigurationProperties;
 
     @Autowired
+    @Qualifier("eidasRestTemplate")
     RestTemplate restTemplate;
 
-    @PostMapping(value = "/auth/eidas/init", produces = MediaType.TEXT_HTML_VALUE)
-    public String EidasInit(@Validated @ModelAttribute(value = "credential") Credential credential, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession, HttpServletResponse servletResponse) {
+    @Autowired
+    private Cache<String, String> eidasRelayStateCache;
+
+    @GetMapping(value = "/auth/eidas/init", produces = MediaType.TEXT_HTML_VALUE)
+    public String EidasInit(@RequestParam("country") String country, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession, HttpServletResponse servletResponse) {
 
         validateSession(taraSession);
-
         String relayState = UUID.randomUUID().toString();
+        eidasRelayStateCache.put(relayState, taraSession.getSessionId());
 
-        if (!eidasConfigurationProperties.getCountries().contains(credential.getCountry()))
+        if (!eidasConfigurationProperties.getAvailableCountries().contains(country))
             throw new BadRequestException(getAppropriateErrorCode(), "Requested country not supported.");
 
-        String url = createRequestUrl(credential, taraSession, relayState);
-
         try {
-            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, null, String.class);
-            updateSession(credential, taraSession, relayState);
+            ResponseEntity<String> response = restTemplate.exchange(createRequestUrl(country, taraSession, relayState), HttpMethod.GET, null, String.class);
+            updateSession(country, taraSession, relayState);
             return getHtmlRedirectPageFromResponse(servletResponse, response);
         } catch (Exception e) {
-            log.error("Initializing the eidas authentication process failed - " + e.getMessage());
             throw new EidasInternalException(ErrorCode.ERROR_GENERAL, e.getMessage());
         }
     }
 
     @Nullable
     private String getHtmlRedirectPageFromResponse(HttpServletResponse servletResponse, ResponseEntity<String> response) {
-        servletResponse.setHeader("Content-Security-Policy", "connect-src 'self'; default-src 'none'; font-src 'self'; img-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; block-all-mixed-content");
+        servletResponse.setHeader("Content-Security-Policy", CONTENT_SECURITY_POLICY_WITH_UNSAFE_INLINE);
         return response.getBody();
     }
 
-    private void updateSession(Credential credential, TaraSession taraSession, String relayState) {
+    private void updateSession(String country, TaraSession taraSession, String relayState) {
         TaraSession.EidasAuthenticationResult authenticationResult = new TaraSession.EidasAuthenticationResult();
         authenticationResult.setRelayState(relayState);
-        authenticationResult.setCountry(credential.getCountry());
+        authenticationResult.setCountry(country);
         taraSession.setState(WAITING_EIDAS_RESPONSE);
         taraSession.setAuthenticationResult(authenticationResult);
     }
 
-    private String createRequestUrl(Credential credential, TaraSession taraSession, String relayState) {
+    private String createRequestUrl(String country, TaraSession taraSession, String relayState) {
         String url = eidasConfigurationProperties.getClientUrl() + "/login";
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
-                .queryParam("Country", credential.getCountry())
+                .queryParam("Country", country)
                 .queryParam("RelayState", relayState);
         List<String> acr = getAcrFromSessionOidcContext(taraSession);
         if (acr != null)
@@ -90,7 +94,7 @@ public class EidasController {
     }
 
     private ErrorCode getAppropriateErrorCode() {
-        Object[] allowedCountries = eidasConfigurationProperties.getCountries().toArray(new Object[eidasConfigurationProperties.getCountries().size()]);
+        Object[] allowedCountries = eidasConfigurationProperties.getAvailableCountries().toArray(new Object[eidasConfigurationProperties.getAvailableCountries().size()]);
         ErrorCode test = ErrorCode.EIDAS_COUNTRY_NOT_SUPPORTED;
         test.setContent(allowedCountries);
         return test;
@@ -107,16 +111,15 @@ public class EidasController {
     public void validateSession(TaraSession taraSession) {
         log.info("AuthSession: {}", taraSession);
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
-        if (!(taraSession.getAllowedAuthMethods().contains(AuthenticationType.EIDAS) ||
-                taraSession.getAllowedAuthMethods().contains(AuthenticationType.EIDAS_ONLY))) {
-            throw new BadRequestException(INVALID_REQUEST, "Eidas authentication method is not allowed");
+        if (!(getAllowedRequestedScopes(taraSession.getLoginRequestInfo()).contains("eidas") ||
+                getAllowedRequestedScopes(taraSession.getLoginRequestInfo()).contains("eidasonly"))) {
+            throw new BadRequestException(INVALID_REQUEST, "Neither eidas or eidasonly scope is allowed.");
         }
     }
 
-    @Data
-    public static class Credential {
-        @NotNull(message = "{message.eidas.invalid-country}")
-        private String country;
+    @NotNull
+    private List<String> getAllowedRequestedScopes(TaraSession.LoginRequestInfo loginRequestInfo) {
+        return Arrays.asList(loginRequestInfo.getClient().getScope().split(" "));
     }
 
 }
