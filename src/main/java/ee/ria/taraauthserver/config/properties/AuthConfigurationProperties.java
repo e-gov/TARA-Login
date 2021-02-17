@@ -29,7 +29,7 @@ import static net.logstash.logback.marker.Markers.append;
 @Validated
 @ConfigurationProperties(prefix = "tara")
 public class AuthConfigurationProperties {
-    public static Set<String> MASKED_FIELD_NAMES = Set.of("session_id");
+    public static final Set<String> MASKED_FIELD_NAMES = new HashSet<>();
     public static final String DEFAULT_CONTENT_SECURITY_POLICY = "connect-src 'self'; default-src 'none'; font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; block-all-mixed-content";
 
     @Pattern(regexp = "(et|en|ru)", message = "invalid default locale value, accepted values are: et, en, ru")
@@ -46,9 +46,9 @@ public class AuthConfigurationProperties {
 
     private EnumMap<AuthenticationType, AuthMethodProperties> authMethods = new EnumMap<>(AuthenticationType.class);
 
-    @Value("${tara.masked_field_names}")
+    @Value("${tara.masked_field_names:session_id}")
     public void setMaskedFieldNames(Set<String> maskedFieldNames) {
-        MASKED_FIELD_NAMES = maskedFieldNames;
+        MASKED_FIELD_NAMES.addAll(maskedFieldNames);
     }
 
     @Data

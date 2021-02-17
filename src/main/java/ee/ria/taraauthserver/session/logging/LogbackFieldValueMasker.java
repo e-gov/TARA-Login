@@ -14,7 +14,7 @@ public class LogbackFieldValueMasker implements ValueMasker {
     @Override
     public Object mask(JsonStreamContext context, Object value) {
         // NOTE: Can be further constrained by using context.getParent().getCurrentName() + context.getCurrentName()
-        if (context.hasCurrentName() && MASKED_FIELD_NAMES.contains(context.getCurrentName())) {
+        if (context.hasCurrentName() && MASKED_FIELD_NAMES != null && MASKED_FIELD_NAMES.contains(context.getCurrentName())) {
             if (value instanceof String) {
                 return DigestUtils.sha256Hex((String) value);
             } else {
