@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.Data;
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpEntity;
 import org.springframework.util.Assert;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 
 import static java.util.List.of;
 
+@Slf4j
 @UtilityClass
 public class ConsentUtils {
 
@@ -30,6 +32,16 @@ public class ConsentUtils {
         profileAttributes.setGivenName(taraSession.getAuthenticationResult().getFirstName());
         profileAttributes.setFamilyName(taraSession.getAuthenticationResult().getLastName());
         profileAttributes.setDateOfBirth(taraSession.getAuthenticationResult().getDateOfBirth().toString());
+
+        if (phoneNumberIsRequested(taraSession)) {
+            profileAttributes.setPhoneNr(taraSession.getAuthenticationResult().getPhoneNumber());
+            profileAttributes.setPhoneNrVerified(true);
+        }
+
+        if (emailIsRequested(taraSession)) {
+            profileAttributes.setEmail(taraSession.getAuthenticationResult().getEmail());
+            profileAttributes.setEmailVerified(false);
+        }
 
         TaraSession.LegalPerson legalPerson = taraSession.getSelectedLegalPerson();
         if (legalPerson != null) {
@@ -56,6 +68,7 @@ public class ConsentUtils {
         scope.add("openid");
 
         acceptConsentRequest.setGrantScope(scope);
+        log.info("accepting consent from: " + acceptConsentRequest);
         return new HttpEntity<>(acceptConsentRequest);
     }
 
@@ -77,6 +90,20 @@ public class ConsentUtils {
             map.put(name, value);
         }
         return map;
+    }
+
+    private boolean emailIsRequested(TaraSession taraSession) {
+        if (taraSession.getLoginRequestInfo().getClient().getScope().contains("email"))
+            return true;
+        else
+            return false;
+    }
+
+    private boolean phoneNumberIsRequested(TaraSession taraSession) {
+        if (taraSession.getLoginRequestInfo().getClient().getScope().contains("phone"))
+            return true;
+        else
+            return false;
     }
 
     @Data
@@ -117,6 +144,14 @@ public class ConsentUtils {
             private String dateOfBirth;
             @JsonProperty("represents_legal_person")
             private RepresentsLegalPerson representsLegalPerson;
+            @JsonProperty("email")
+            private String email;
+            @JsonProperty("email_verified")
+            private Boolean emailVerified;
+            @JsonProperty("phone_number")
+            private String phoneNr;
+            @JsonProperty("phone_number_verified")
+            private Boolean phoneNrVerified;
         }
 
         @Data

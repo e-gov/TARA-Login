@@ -132,7 +132,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
 
-        Session session = createSession();
+        Session session = createSession("mid idcard");
         given()
                 .filter(new MockSessionFilter(session))
                 .queryParam("consent_given", "true")
@@ -141,6 +141,60 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(302);
+
+        assertInfoIsLogged(OIDC_CONSENT_REQUEST_BODY);
+
+        assertNull(sessionRepository.findById(session.getId()));
+        assertWarningIsLogged("Session '" + session.getId() + "' has been invalidated");
+    }
+
+    @Test
+    @Tag(value = "USER_CONSENT_CONFIRM_ENDPOINT")
+    @Tag(value = "USER_CONSENT_POST_ACCEPT")
+    void authConsent_acceptSuccessful_phone_requested() {
+        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
+
+        Session session = createSession("mid idcard phone");
+        given()
+                .filter(new MockSessionFilter(session))
+                .queryParam("consent_given", "true")
+                .when()
+                .post("/auth/consent/confirm")
+                .then()
+                .assertThat()
+                .statusCode(302);
+
+        assertInfoIsLogged(OIDC_CONSENT_REQUEST_BODY_WITH_PHONE);
+
+        assertNull(sessionRepository.findById(session.getId()));
+        assertWarningIsLogged("Session '" + session.getId() + "' has been invalidated");
+    }
+
+    @Test
+    @Tag(value = "USER_CONSENT_CONFIRM_ENDPOINT")
+    @Tag(value = "USER_CONSENT_POST_ACCEPT")
+    void authConsent_acceptSuccessful_email_requested() {
+        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
+
+        Session session = createSession("mid idcard email");
+        given()
+                .filter(new MockSessionFilter(session))
+                .queryParam("consent_given", "true")
+                .when()
+                .post("/auth/consent/confirm")
+                .then()
+                .assertThat()
+                .statusCode(302);
+
+        assertInfoIsLogged(OIDC_CONSENT_REQUEST_BODY_WITH_EMAIL);
 
         assertNull(sessionRepository.findById(session.getId()));
         assertWarningIsLogged("Session '" + session.getId() + "' has been invalidated");
@@ -155,7 +209,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/incorrectMockLoginAcceptResponse.json")));
 
-        Session session = createSession();
+        Session session = createSession("mid idcard");
         given()
                 .filter(new MockSessionFilter(session))
                 .when()
@@ -182,7 +236,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                         .withHeader(HttpHeaders.CONNECTION, "close")
                         .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
 
-        Session session = createSession();
+        Session session = createSession("mid idcard");
         given()
                 .filter(new MockSessionFilter(session))
                 .when()
@@ -205,7 +259,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/incorrectMockLoginAcceptResponse.json")));
 
-        Session session = createSession();
+        Session session = createSession("mid idcard");
         given()
                 .filter(new MockSessionFilter(session))
                 .when()
@@ -223,7 +277,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     }
 
     @SneakyThrows
-    private Session createSession() {
+    private Session createSession(String scope) {
         Session session = sessionRepository.createSession();
         TaraSession authSession = new TaraSession(session.getId());
         authSession.setState(INIT_CONSENT_PROCESS);
@@ -232,7 +286,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
         TaraSession.Client client = new TaraSession.Client();
         md.setDisplayUserConsent(true);
         client.setMetaData(md);
-        client.setScope("mid idcard");
+        client.setScope(scope);
         lri.setClient(client);
         lri.setUrl(new URL("https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c80393c7-6666-4dd2-b890-0ada47161cfa&nonce=fa97f828-eda3-4975-bca2-4bfbb9b24d28&ui_locales=et"));
         authSession.setLoginRequestInfo(lri);
@@ -243,6 +297,8 @@ class AuthConsentConfirmControllerTest extends BaseTest {
         ar.setDateOfBirth(LocalDate.of(1992, 12, 17));
         ar.setAcr(LevelOfAssurance.HIGH);
         ar.setAmr(AuthenticationType.MOBILE_ID);
+        ar.setPhoneNumber("112233");
+        ar.setEmail("test@test.ee");
         authSession.setAuthenticationResult(ar);
         authSession.setConsentChallenge(MOCK_CONSENT_CHALLENGE);
         List<AuthenticationType> allowedMethods = new ArrayList<>();
@@ -253,4 +309,8 @@ class AuthConsentConfirmControllerTest extends BaseTest {
         sessionRepository.save(session);
         return session;
     }
+
+    private static final String OIDC_CONSENT_REQUEST_BODY = "accepting consent from: ConsentUtils.AcceptConsentRequest(remember=false, session=ConsentUtils.AcceptConsentRequest.LoginSession(idToken=ConsentUtils.AcceptConsentRequest.IdToken(profileAttributes=ConsentUtils.AcceptConsentRequest.ProfileAttributes(familyName=lastname, givenName=firstname, dateOfBirth=1992-12-17, representsLegalPerson=null, email=null, emailVerified=null, phoneNr=null, phoneNrVerified=null), acr=high, amr=[mID], state=c80393c7-6666-4dd2-b890-0ada47161cfa)), grantScope=[openid])";
+    private static final String OIDC_CONSENT_REQUEST_BODY_WITH_PHONE = "accepting consent from: ConsentUtils.AcceptConsentRequest(remember=false, session=ConsentUtils.AcceptConsentRequest.LoginSession(idToken=ConsentUtils.AcceptConsentRequest.IdToken(profileAttributes=ConsentUtils.AcceptConsentRequest.ProfileAttributes(familyName=lastname, givenName=firstname, dateOfBirth=1992-12-17, representsLegalPerson=null, email=null, emailVerified=null, phoneNr=112233, phoneNrVerified=true), acr=high, amr=[mID], state=c80393c7-6666-4dd2-b890-0ada47161cfa)), grantScope=[openid])";
+    private static final String OIDC_CONSENT_REQUEST_BODY_WITH_EMAIL = "accepting consent from: ConsentUtils.AcceptConsentRequest(remember=false, session=ConsentUtils.AcceptConsentRequest.LoginSession(idToken=ConsentUtils.AcceptConsentRequest.IdToken(profileAttributes=ConsentUtils.AcceptConsentRequest.ProfileAttributes(familyName=lastname, givenName=firstname, dateOfBirth=1992-12-17, representsLegalPerson=null, email=test@test.ee, emailVerified=false, phoneNr=null, phoneNrVerified=null), acr=high, amr=[mID], state=c80393c7-6666-4dd2-b890-0ada47161cfa)), grantScope=[openid])";
 }

@@ -28,7 +28,9 @@ import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static ee.ria.taraauthserver.authentication.idcard.CertificateStatus.REVOKED;
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
@@ -108,10 +110,15 @@ public class IdCardController {
     }
 
     private void addAuthResultToSession(TaraSession taraSession, X509Certificate certificate) {
+
         Map<String, String> params = getCertificateParams(certificate);
         String idCode = EstonianIdCodeUtil.getEstonianIdCode(params.get(CN_SERIALNUMBER));
-
         TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
+
+        if (emailIsRequested(taraSession)) {
+            String email = X509Utils.getRfc822NameSubjectAltName(certificate);
+            authenticationResult.setEmail(email);
+        }
         authenticationResult.setFirstName(params.get(CN_GIVEN_NAME));
         authenticationResult.setLastName(params.get(CN_SURNAME));
         authenticationResult.setIdCode(idCode);
@@ -122,6 +129,18 @@ public class IdCardController {
         authenticationResult.setSubject(authenticationResult.getCountry() + authenticationResult.getIdCode());
         taraSession.setState(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
         taraSession.setAuthenticationResult(authenticationResult);
+    }
+
+    private boolean emailIsRequested(TaraSession taraSession) {
+        String scopes = Optional.of(taraSession)
+                .map(TaraSession::getLoginRequestInfo)
+                .map(TaraSession.LoginRequestInfo::getClient)
+                .map(TaraSession.Client::getScope)
+                .orElse(null);
+        if (scopes != null && scopes.contains("email"))
+            return true;
+        else
+            return false;
     }
 
     @NotNull
