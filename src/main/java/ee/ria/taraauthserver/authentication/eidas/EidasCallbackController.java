@@ -92,9 +92,9 @@ public class EidasCallbackController {
         taraSession.setState(AUTHENTICATION_FAILED);
         session.setAttribute(TARA_SESSION, taraSession);
         sessionRepository.save(session);
-        if (e.getMessage().contains("\"message\":\"Authentication failed\""))
+        if (e.getMessage().contains("Authentication failed"))
             throw new BadRequestException(EIDAS_AUTHENTICATION_FAILED, e.getMessage(), e);
-        else if (e.getMessage().contains("\"message\":\"No user consent received. User denied access.\""))
+        else if (e.getMessage().contains("No user consent received. User denied access."))
             throw new BadRequestException(EIDAS_USER_CONSENT_NOT_GIVEN, e.getMessage(), e);
         else
             throw new BadRequestException(ERROR_GENERAL, e.getMessage(), e);

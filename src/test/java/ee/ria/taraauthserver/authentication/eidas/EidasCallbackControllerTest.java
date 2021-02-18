@@ -221,7 +221,7 @@ class EidasCallbackControllerTest extends BaseTest {
         TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
 
-        assertErrorIsLogged("User exception: 401 Unauthorized: [{\"error\":\"Unauthorized\",\"message\":\"Authentication failed\"}]");
+        assertErrorIsLogged("User exception: 401 Unauthorized:");
     }
 
     @Test
@@ -256,7 +256,7 @@ class EidasCallbackControllerTest extends BaseTest {
         TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
 
-        assertErrorIsLogged("User exception: 401 Unauthorized: [{\"error\":\"Unauthorized\",\"message\":\"No user consent received. User denied access.\"}]");
+        assertErrorIsLogged("User exception: 401 Unauthorized:");
     }
 
     @Test
