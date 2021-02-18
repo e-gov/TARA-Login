@@ -6,6 +6,7 @@ import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.EidasInternalException;
+import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.Data;
@@ -26,6 +27,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -33,6 +35,7 @@ import javax.cache.Cache;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.io.IOException;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Map;
@@ -71,6 +74,8 @@ public class EidasCallbackController {
             updateSession(session, response);
         } catch (HttpClientErrorException.Unauthorized e) {
             handle401Exception(session, e);
+        } catch (ResourceAccessException e) {
+            handleIOException(session, e);
         } catch (Exception e) {
             handleOtherExceptions(session, e);
         }
@@ -79,25 +84,31 @@ public class EidasCallbackController {
         return new ModelAndView("eidas", Map.of("token", csrf.getToken()));
     }
 
+    private void handleIOException(Session session, Exception e) {
+        updateSession(session);
+        throw new ServiceNotAvailableException(EIDAS_INTERNAL_ERROR, "Eidas service did not respond: " + e.getMessage(), e);
+    }
+
     private void handleOtherExceptions(Session session, Exception e) {
-        TaraSession taraSession = session.getAttribute(TARA_SESSION);
-        taraSession.setState(AUTHENTICATION_FAILED);
-        session.setAttribute(TARA_SESSION, taraSession);
-        sessionRepository.save(session);
-        throw new EidasInternalException(ERROR_GENERAL, e.getMessage(), e);
+        updateSession(session);
+        throw new EidasInternalException(ERROR_GENERAL, "Unexpected error from eidas client: " + e.getMessage(), e);
     }
 
     private void handle401Exception(Session session, HttpClientErrorException.Unauthorized e) {
-        TaraSession taraSession = session.getAttribute(TARA_SESSION);
-        taraSession.setState(AUTHENTICATION_FAILED);
-        session.setAttribute(TARA_SESSION, taraSession);
-        sessionRepository.save(session);
+        updateSession(session);
         if (e.getMessage().contains("Authentication failed"))
             throw new BadRequestException(EIDAS_AUTHENTICATION_FAILED, e.getMessage(), e);
         else if (e.getMessage().contains("No user consent received. User denied access."))
             throw new BadRequestException(EIDAS_USER_CONSENT_NOT_GIVEN, e.getMessage(), e);
         else
             throw new BadRequestException(ERROR_GENERAL, e.getMessage(), e);
+    }
+
+    private void updateSession(Session session) {
+        TaraSession taraSession = session.getAttribute(TARA_SESSION);
+        taraSession.setState(AUTHENTICATION_FAILED);
+        session.setAttribute(TARA_SESSION, taraSession);
+        sessionRepository.save(session);
     }
 
     private void updateSession(Session session, EidasClientResponse response) {

@@ -46,7 +46,7 @@ public class EidasConfiguration {
     @Qualifier("restTemplate")
     private RestTemplate restTemplate;
 
-    @Scheduled(fixedRateString = "${tara.auth-methods.eidas.refresh-countries-interval}")
+    @Scheduled(fixedRateString = "${tara.auth-methods.eidas.refresh-countries-interval-in-milliseconds}")
     public void scheduleFixedDelayTask() {
         log.info("starting fixed delay task");
         try {

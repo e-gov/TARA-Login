@@ -91,7 +91,9 @@ tara:
       enabled: true
       level-of-assurance: HIGH
       client-url: https://localhost:9877
-      refresh-countries-interval: 1000
+      refresh-countries-interval-in-milliseconds: 1000
+      request-timeout-in-seconds: 1
+      read-timeout-in-seconds: 1
 
   legal-person-authentication:
     x-road-server-url: https://localhost:9877/cgi-bin/consumer_proxy

@@ -37,7 +37,8 @@ public enum ErrorCode {
     INTERNAL_ERROR("message.error.internal-error"),
     EIDAS_COUNTRY_NOT_SUPPORTED("message.eidas.not-allowed-country"),
     EIDAS_USER_CONSENT_NOT_GIVEN("message.eidas.error.user-consent-not-given"),
-    EIDAS_AUTHENTICATION_FAILED("message.eidas.error.authentication-failed");
+    EIDAS_AUTHENTICATION_FAILED("message.eidas.error.authentication-failed"),
+    EIDAS_INTERNAL_ERROR("message.eidas.error.internal-error");
 
     private final String message;
     @Setter

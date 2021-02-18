@@ -186,7 +186,7 @@ class EidasCallbackControllerTest extends BaseTest {
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("error", equalTo("Internal Server Error"));
 
-        assertErrorIsLogged("Server encountered an unexpected error: 500 Server Error:");
+        assertErrorIsLogged("Server encountered an unexpected error: Unexpected error from eidas client: 500 Server Error:");
     }
 
     @Test
@@ -293,12 +293,38 @@ class EidasCallbackControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
     }
 
-    protected static void createEidasReturnUrlStub(String response, int status) {
-        wireMockServer.stubFor(any(urlPathMatching("/returnUrl"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withStatus(status)
-                        .withBodyFile(response)));
+    @Test
+    @Tag(value = "EIDAS_AUTH_CALLBACK_RESPONSE_HANDLING")
+    void eidasAuthCallback_returnUrl_doesnt_respond() {
+        createEidasCountryStub("mock_responses/eidas/eidas-response.json", 200);
+        createEidasReturnUrlStub("mock_responses/eidas/eidas-returnurl-response.json", 404, 2000);
+
+        TaraSession.EidasAuthenticationResult eidasAuthenticationResult = new TaraSession.EidasAuthenticationResult();
+
+        eidasAuthenticationResult.setRelayState(UUID.randomUUID().toString());
+
+        MockSessionFilter sessionFilter = withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(EIDAS))
+                .authenticationResult(eidasAuthenticationResult)
+                .authenticationState(TaraAuthenticationState.WAITING_EIDAS_RESPONSE).build();
+
+        eidasRelayStateCache.put(MOCK_RELAY_STATE_VALUE, sessionFilter.getSession().getId());
+
+        given()
+                .filter(sessionFilter)
+                .when()
+                .formParam("RelayState", MOCK_RELAY_STATE_VALUE)
+                .formParam("SAMLResponse", "123test")
+                .post("/auth/eidas/callback")
+                .then()
+                .assertThat()
+                .statusCode(502)
+                .body("message", equalTo("Eidas teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti."))
+                .body("error", equalTo("Bad Gateway"));
+
+        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
+        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
     }
 
     protected static void createEidasCountryStub(String response, int status) {
@@ -306,6 +332,19 @@ class EidasCallbackControllerTest extends BaseTest {
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withStatus(status)
+                        .withBodyFile(response)));
+    }
+
+    protected static void createEidasReturnUrlStub(String response, int status) {
+        createEidasReturnUrlStub(response, status, 0);
+    }
+
+    protected static void createEidasReturnUrlStub(String response, int status, int delayInMilliseconds) {
+        wireMockServer.stubFor(any(urlPathMatching("/returnUrl"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withStatus(status)
+                        .withFixedDelay(delayInMilliseconds)
                         .withBodyFile(response)));
     }
 }

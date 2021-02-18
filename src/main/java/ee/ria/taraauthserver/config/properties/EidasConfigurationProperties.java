@@ -17,7 +17,7 @@ public class EidasConfigurationProperties {
 
     boolean enabled = true;
 
-    int refreshCountriesInterval = 300000;
+    int refreshCountriesIntervalInMilliseconds = 300000;
 
     List<String> availableCountries;
 
