@@ -51,7 +51,7 @@ public class SessionManagementFilter extends OncePerRequestFilter {
 
     private HttpSession createNewSession(HttpServletRequest request, HttpSession session) {
         if (session != null) {
-            log.info("Session '{}' has been invalidated", value("tara.session.session_id", session.getId()));
+            log.info("Session has been invalidated: {}", value("tara.session.session_id", session.getId()));
             session.invalidate();
         }
         session = request.getSession(true);

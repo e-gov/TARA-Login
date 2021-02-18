@@ -16,7 +16,6 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.csrf.CsrfException;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
-import org.springframework.security.web.csrf.InvalidCsrfTokenException;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
 
 import javax.servlet.RequestDispatcher;
@@ -72,7 +71,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                            AccessDeniedException accessDeniedException)
                 throws IOException, ServletException {
 
-            if(accessDeniedException instanceof CsrfException) {
+            if (accessDeniedException instanceof CsrfException) {
                 setErrorAttributes(request, ErrorCode.INVALID_CSRF_TOKEN, "Invalid CSRF token.");
             } else
                 setErrorAttributes(request, ErrorCode.INVALID_REQUEST, "Invalid request: " + accessDeniedException.getMessage());
