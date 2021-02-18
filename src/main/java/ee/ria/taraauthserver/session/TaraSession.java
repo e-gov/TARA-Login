@@ -33,7 +33,6 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 @Data
 @RequiredArgsConstructor
 public class TaraSession implements Serializable {
-    public static final Set<String> MASKED_FIELD_NAMES = Set.of("session_id", "national_identity_number", "id_code", "first_name", "last_name", "phone_number", "subject");
     public static final String TARA_SESSION = "tara.session";
     private final String sessionId;
 
