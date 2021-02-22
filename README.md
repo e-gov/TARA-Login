@@ -11,6 +11,7 @@
     * [Mobile-ID auth method](#mid_conf)
     * [Smart-ID auth method](#sid_conf)
     * [ID-card auth method](#esteid_conf)
+    * [Eidas auth method](#eidas_conf)
     * [Monitoring](#monitoring_conf)
         * [Custom application health endpoint configuration](#monitoring_heartbeat_conf)      
     * [Legal person attributes](#legalperson_conf)
@@ -29,6 +30,7 @@ The webapp provides implementation for following authentication methods:
 * Estonian ID-card
 * Estonian Mobile-ID
 * Estonian Smart-ID
+* Estonian EIDAS
 
 <a name="build"></a>
 ## Building the webapp
@@ -288,18 +290,39 @@ tara:
           responder-certificate-cn: SK OCSP RESPONDER 2011  
 ````
 
+<a name="eidas_conf"></a>
+### 1.6 Eidas auth method
+
+Table 1.6.1 - Enabling Eidas authentication
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.auth-methods.eidas.enabled` | No | Enable or disable Eidas authentication method. Default `true` |
+
+Table 1.6.2 - Assignig the Level of assurance to authentication method
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.auth-methods.eidas.level-of-assurance` | Yes | Level of assurance of this auth method. Example `HIGH` |
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.auth-methods.eidas.client-url` | Yes | Eidas client url. Example. `https://eidas-client:8889` |
+| `tara.auth-methods.eidas.refresh-countries-interval-in-milliseconds` | No | How often allowed countries are requested from Eidas client. Default. `300000` |
+| `tara.auth-methods.eidas.request-timeout-in-seconds` | No | Eidas client request timeout. Default. `3` |
+| `tara.auth-methods.eidas.read-timeout-in-seconds` | No | Eidas client read timeout. Default. `3` |
 
 <a name="legalperson_conf"></a>
-## 1.6 Legal person attributes
+## 1.7 Legal person attributes
 
-Table 1.6.1 - Enabling legal-person attribute support 
+Table 1.7.1 - Enabling legal-person attribute support 
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.legal-person-authentication.enabled` | No | Enables or disables the legalperson attribute support and endpoints. Defaults to `true` if not specified.  |
 
 
-Table 1.6.2 - Integration with the Estonian business registry
+Table 1.7.2 - Integration with the Estonian business registry
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
@@ -317,7 +340,7 @@ Table 1.6.2 - Integration with the Estonian business registry
 | `tara.legal-person-authentication.esindus-v2-allowed-types` | No | List of legal person types in arireg.esindus_v2 service response that are considered valid for authentication. Defaults to `TÜ,UÜ, OÜ,AS,TÜH,SA,MTÜ` if not specified.  |
 
 <a name="monitoring_conf"></a>
-## 1.7 Monitoring
+## 1.8 Monitoring
 
 The webapp uses `Spring Boot Actuator` to enable endpoints for monitoring support. To customize Monitoring, Metrics, Auditing, and more see [Spring Boot Actuator documentation](https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#production-ready).
 
@@ -328,7 +351,7 @@ The webapp uses `Spring Boot Actuator` to enable endpoints for monitoring suppor
 | `management.endpoints.web.exposure.include` | No | Endpoint IDs that should be included or `*` for all. Example `heartbeat` |
 
 <a name="monitoring_heartbeat_conf"></a>
-### 1.7.1 Custom application health endpoint configuration
+### 1.8.1 Custom application health endpoint configuration
 
 The webapp implements [custom health endpoint](https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#production-ready-endpoints-custom) with id `heartbeat` and [custom health indicators](https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#writing-custom-healthindicators) with id's `oidcServer`,  `truststore`. This endpoint is disabled by default.
 
@@ -375,10 +398,10 @@ management:
 ````
 
 <a name="session_and_sec_conf"></a>
-## 1.8 Security and session management
+## 1.9 Security and session management
 
 <a name="ignite_conf"></a>
-### 1.8.1 Ignite configuration
+### 1.9.1 Ignite configuration
 
 Ignite is used for storing user’s session information.
 
@@ -399,7 +422,7 @@ Ignite is used for storing user’s session information.
 | `ignite.ssl-context-factory.trust-store-password` | Yes | Ignite trust store password. |
 
 <a name="sec_conf"></a>
-## 1.8 Security and Session management
+## 1.10 Security and Session management
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `spring.session.timeout` | No | Session timeout. If a duration suffix is not specified, seconds will be used. Default value `300s` |
