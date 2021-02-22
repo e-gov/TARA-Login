@@ -64,6 +64,10 @@ public class AuthConsentController {
             model.addAttribute("legalPersonName", legalPerson.getLegalName());
             model.addAttribute("legalPersonRegistryCode", legalPerson.getLegalPersonIdentifier());
         }
+        if (taraSession.getAuthenticationResult().getEmail() != null)
+            model.addAttribute("email", taraSession.getAuthenticationResult().getEmail());
+        if (taraSession.getAuthenticationResult().getPhoneNumber() != null)
+            model.addAttribute("phoneNumber", taraSession.getAuthenticationResult().getPhoneNumber());
         return "consentView";
     }
 

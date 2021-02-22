@@ -132,15 +132,11 @@ public class IdCardController {
     }
 
     private boolean emailIsRequested(TaraSession taraSession) {
-        String scopes = Optional.of(taraSession)
+        List<String> scopes = Optional.of(taraSession)
                 .map(TaraSession::getLoginRequestInfo)
-                .map(TaraSession.LoginRequestInfo::getClient)
-                .map(TaraSession.Client::getScope)
+                .map(TaraSession.LoginRequestInfo::getRequestedScopes)
                 .orElse(null);
-        if (scopes != null && scopes.contains("email"))
-            return true;
-        else
-            return false;
+        return scopes != null && scopes.contains("email");
     }
 
     @NotNull

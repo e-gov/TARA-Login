@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.authentication.consent;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.Data;
 import lombok.experimental.UtilityClass;
@@ -33,12 +34,12 @@ public class ConsentUtils {
         profileAttributes.setFamilyName(taraSession.getAuthenticationResult().getLastName());
         profileAttributes.setDateOfBirth(taraSession.getAuthenticationResult().getDateOfBirth().toString());
 
-        if (phoneNumberIsRequested(taraSession)) {
+        if (phoneNumberIsRequested(taraSession) && taraSession.getAuthenticationResult().getAmr().equals(AuthenticationType.MOBILE_ID)) {
             profileAttributes.setPhoneNr(taraSession.getAuthenticationResult().getPhoneNumber());
             profileAttributes.setPhoneNrVerified(true);
         }
 
-        if (emailIsRequested(taraSession)) {
+        if (emailIsRequested(taraSession) && taraSession.getAuthenticationResult().getAmr().equals(AuthenticationType.ID_CARD)) {
             profileAttributes.setEmail(taraSession.getAuthenticationResult().getEmail());
             profileAttributes.setEmailVerified(false);
         }
@@ -93,17 +94,11 @@ public class ConsentUtils {
     }
 
     private boolean emailIsRequested(TaraSession taraSession) {
-        if (taraSession.getLoginRequestInfo().getClient().getScope().contains("email"))
-            return true;
-        else
-            return false;
+        return taraSession.getLoginRequestInfo().getRequestedScopes().contains("email");
     }
 
     private boolean phoneNumberIsRequested(TaraSession taraSession) {
-        if (taraSession.getLoginRequestInfo().getClient().getScope().contains("phone"))
-            return true;
-        else
-            return false;
+        return taraSession.getLoginRequestInfo().getRequestedScopes().contains("phone");
     }
 
     @Data
