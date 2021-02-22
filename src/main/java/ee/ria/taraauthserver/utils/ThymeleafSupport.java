@@ -49,7 +49,7 @@ public class ThymeleafSupport {
         return serviceNameTranslations.getOrDefault(locale.getLanguage(), defaultServicename);
     }
 
-    public String getLocaleUrl(String locale) { // TODO test this part
+    public String getLocaleUrl(String locale) {
         UriComponents uriComponents = ServletUriComponentsBuilder.fromCurrentRequest().replaceQueryParam("lang", locale).build();
         return uriComponents.getPath() + "?" + uriComponents.getQuery();
     }
@@ -57,6 +57,14 @@ public class ThymeleafSupport {
     public List<String> getListOfCountries() {
         List<String> countries = eidasConfigurationProperties.getAvailableCountries();
         return countries;
+    }
+
+    public String getBackUrl() {
+        TaraSession taraSession = SessionUtils.getAuthSession();
+        if (taraSession == null || taraSession.getLoginRequestInfo() == null || taraSession.getLoginRequestInfo().isLoginChallengeExpired())
+            return "#";
+        else
+            return "/auth/init?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge();
     }
 
     public boolean isAuthMethodAllowed(AuthenticationType method) {

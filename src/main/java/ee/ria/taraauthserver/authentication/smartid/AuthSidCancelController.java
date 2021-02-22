@@ -1,4 +1,4 @@
-package ee.ria.taraauthserver.authentication.mobileid;
+package ee.ria.taraauthserver.authentication.smartid;
 
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
@@ -15,15 +15,15 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 
 @Slf4j
 @RestController
-public class AuthMidPollCancelController {
-    private static final TaraAuthenticationState[] ALLOWED_STATES = {INIT_MID, POLL_MID_STATUS, AUTHENTICATION_FAILED};
+public class AuthSidCancelController {
+    private static final TaraAuthenticationState[] ALLOWED_STATES = {INIT_SID, POLL_SID_STATUS, AUTHENTICATION_FAILED};
 
-    @PostMapping(value = "/auth/mid/poll/cancel", produces = MediaType.APPLICATION_JSON_VALUE)
-    public RedirectView authMidPollCancel(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+    @PostMapping(value = "/auth/sid/poll/cancel", produces = MediaType.APPLICATION_JSON_VALUE)
+    public RedirectView authSidPollCancel(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, ALLOWED_STATES);
-        taraSession.setState(POLL_MID_STATUS_CANCELED);
-        log.warn("Mobile ID authentication process with MID session id {} has been canceled",
-                ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getMidSessionId());
+        taraSession.setState(POLL_SID_STATUS_CANCELED);
+        log.warn("Smart ID authentication process with SID session id {} has been canceled",
+                ((TaraSession.SidAuthenticationResult) taraSession.getAuthenticationResult()).getSidSessionId());
         return new RedirectView("/auth/init?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge());
     }
 }

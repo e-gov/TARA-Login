@@ -34,14 +34,14 @@ public class ErrorAttributes extends DefaultErrorAttributes {
     @Autowired
     private MessageSource messageSource;
 
-    public static final String DEFAULT_INTERNAL_EXCEPTION_MSG = "message.error.internal-error";
-
-    // TODO handle org.springframework.context.NoSuchMessageException
+    public static final String DEFAULT_INTERNAL_EXCEPTION_MSG = "message.error.general";
 
     @Override
     public Map<String, Object> getErrorAttributes(WebRequest webRequest, ErrorAttributeOptions options) {
         Map<String, Object> attr = super.getErrorAttributes(webRequest, options.including(MESSAGE, BINDING_ERRORS));
+
         HttpStatus status = HttpStatus.valueOf((int) attr.get("status"));
+
         if (status.is5xxServerError()) {
             handle5xxError(webRequest, attr);
         } else if (status.is4xxClientError()) {
@@ -51,6 +51,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
         attr.put("locale", RequestUtils.getLocale());
         attr.remove("errors");
         attr.put("incident_nr", MDC.get("traceId"));
+
         return attr;
     }
 

@@ -125,8 +125,8 @@ public class LegalpersonControllerTest extends BaseTest {
     @Test
     @Tag(value = "LEGAL_PERSON_AUTH_START")
     @Tag(value = "UI_LEGALPERSON_AUTHENTICATION_VIEW")
-    void getAuthLegalPersonInit_Ok() throws Exception {
-        XmlPath response = given()
+    void getAuthLegalPersonInit_Ok() {
+        given()
                 .filter(withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(NATURAL_PERSON_AUTHENTICATION_COMPLETED)
@@ -141,12 +141,6 @@ public class LegalpersonControllerTest extends BaseTest {
                 .statusCode(200)
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .extract().response().htmlPath();
-
-        assertThat(response.getString("**.findAll { it.td.@id == 'legal-person-representative-id-code'}")).endsWith(MOCK_NATURAL_PERSON_ID_CODE);
-        assertThat(response.getString("**.findAll { it.td.@id == 'legal-person-representative-given-name'}")).endsWith(MOCK_NATURAL_PERSON_FIRSTNAME);
-        assertThat(response.getString("**.findAll { it.td.@id == 'legal-person-representative-last-name'}")).endsWith(MOCK_NATURAL_PERSON_LASTNAME);
-        assertThat(response.getString("**.findAll { it.td.@id == 'legal-person-representative-date-of-birth'}"))
-                .endsWith(MOCK_NATURAL_PERSON_DATE_OF_BIRTH.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
     }
 
     @Test

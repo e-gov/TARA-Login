@@ -47,6 +47,7 @@ class AuthAcceptController {
 
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && response.getBody().getRedirectUrl() != null) {
             taraSession.setState(AUTHENTICATION_SUCCESS);
+            taraSession.getLoginRequestInfo().setLoginChallengeExpired(true);
             return new RedirectView(response.getBody().getRedirectUrl());
         } else {
             throw new IllegalStateException("Invalid OIDC server response. Redirect URL missing from response.");

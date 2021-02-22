@@ -1,6 +1,8 @@
 package ee.ria.taraauthserver.authentication;
 
 
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.*;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
@@ -8,13 +10,11 @@ import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.RequestUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -26,7 +26,8 @@ import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
@@ -62,7 +63,13 @@ public class AuthInitController {
         TaraSession.LoginRequestInfo loginRequestInfo = fetchLoginRequestInfo(loginChallenge);
         newTaraSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
         newTaraSession.setLoginRequestInfo(loginRequestInfo);
-        newTaraSession.setAllowedAuthMethods(getAllowedAuthenticationMethodsList(loginRequestInfo));
+        List<AuthenticationType> allowedAuthenticationMethodsList = loginRequestInfo.getAllowedAuthenticationMethodsList(taraProperties);
+
+        if (isEmpty(allowedAuthenticationMethodsList))
+            throw new BadRequestException(ErrorCode.NO_VALID_AUTHMETHODS_AVAILABLE,
+                    "No authentication methods match the requested level of assurance. Please check your authorization request");
+
+        newTaraSession.setAllowedAuthMethods(allowedAuthenticationMethodsList);
         log.info("Initialized authentication session: {}", newTaraSession);
 
         setLocale(language, newTaraSession);
@@ -89,100 +96,8 @@ public class AuthInitController {
         }
     }
 
-    private TaraSession.LoginRequestInfo fetchLoginRequestInfo(@RequestParam(name = "login_challenge") @Size(max = 50) @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed") String loginChallenge) {
-        return doRequest(loginChallenge);
-    }
-
-    private LevelOfAssurance getRequestedAcr(TaraSession.LoginRequestInfo loginRequestInfo) {
-        List<String> requestedAcr = loginRequestInfo.getOidcContext().getAcrValues();
-        if (requestedAcr == null || requestedAcr.isEmpty())
-            return null;
-        LevelOfAssurance acr = LevelOfAssurance.findByAcrName(requestedAcr.get(0));
-        Assert.notNull(acr, "Unsupported acr value requested by client: '" + requestedAcr.get(0) + "'");
-        return acr;
-    }
-
-    private List<TaraScope> parseRequestedScopes(List<String> requestedScopes) {
-        return requestedScopes != null ? requestedScopes.stream()
-                .map(scope -> {
-                    try {
-                        return TaraScope.getScope(scope);
-                    } catch (IllegalArgumentException e) {
-                        log.warn("Unsupported scope value '{}', entry ignored!", scope);
-                        return null;
-                    }
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList()) : new ArrayList<>();
-    }
-
-    private List<AuthenticationType> getAllowedAuthenticationMethodsList(TaraSession.LoginRequestInfo loginRequestInfo) {
-        LevelOfAssurance requestedAcr = getRequestedAcr(loginRequestInfo);
-        List<String> allowedRequestedScopes = getAllowedRequestedScopes(loginRequestInfo);
-        List<TaraScope> requestedScopes = parseRequestedScopes(allowedRequestedScopes);
-        return getAllowedAuthenticationTypes(requestedScopes, requestedAcr);
-    }
-
-    @NotNull
-    private List<String> getAllowedRequestedScopes(TaraSession.LoginRequestInfo loginRequestInfo) {
-        List<String> allowedRequestedScopes = new ArrayList<>();
-        List<String> allowedScopes = Arrays.asList(loginRequestInfo.getClient().getScope().split(" "));
-        for (String scope : loginRequestInfo.getRequestedScopes()) {
-            if (allowedScopes.contains(scope))
-                allowedRequestedScopes.add(scope);
-            else
-                log.warn("Requested scope value '{}' is not allowed, entry ignored!", scope);
-        }
-        return allowedRequestedScopes;
-    }
-
-    private List<AuthenticationType> getAllowedAuthenticationTypes(List<TaraScope> requestedScopes, LevelOfAssurance requestedLoa) {
-        List<AuthenticationType> requestedAuthMethods = getRequestedAuthenticationMethodList(requestedScopes);
-        List<AuthenticationType> allowedAuthenticationMethodsList = requestedAuthMethods.stream()
-                .filter(this::isAuthenticationMethodEnabled)
-                .filter(authMethod -> isAuthenticationMethodAllowedByRequestedLoa(requestedLoa, authMethod))
-                .collect(Collectors.toList());
-
-        if (isEmpty(allowedAuthenticationMethodsList))
-            throw new BadRequestException(ErrorCode.NO_VALID_AUTHMETHODS_AVAILABLE, "No authentication methods match the requested level of assurance. Please check your authorization request");
-        log.debug("List of authentication methods to display on login page: {}", allowedAuthenticationMethodsList);
-        return allowedAuthenticationMethodsList;
-    }
-
-    private List<AuthenticationType> getRequestedAuthenticationMethodList(List<TaraScope> scopes) {
-        List<AuthenticationType> clientRequestedAuthMethods = Arrays.stream(AuthenticationType.values())
-                .filter(e -> scopes.contains(e.getScope())).collect(Collectors.toList());
-
-        if (isEmpty(clientRequestedAuthMethods)) {
-            return taraProperties.getDefaultAuthenticationMethods();
-        } else {
-            return clientRequestedAuthMethods;
-        }
-    }
-
-    private boolean isAuthenticationMethodAllowedByRequestedLoa(LevelOfAssurance requestedLoa, AuthenticationType autMethod) {
-        if (requestedLoa == null)
-            return true;
-
-        return isAllowedByRequestedLoa(requestedLoa, autMethod);
-    }
-
-    private boolean isAllowedByRequestedLoa(LevelOfAssurance requestedLoa, AuthenticationType authenticationMethod) {
-        LevelOfAssurance authenticationMethodLoa = taraProperties.getAuthMethods().get(authenticationMethod).getLevelOfAssurance();
-        boolean isAllowed = authenticationMethodLoa.ordinal() >= requestedLoa.ordinal();
-
-        if (!isAllowed) {
-            log.warn("Ignoring authentication method since it's level of assurance is lower than requested. Authentication method: {} with assigned LoA: {}, requested level of assurance: {}", authenticationMethod, authenticationMethodLoa, requestedLoa);
-        }
-
-        return isAllowed;
-    }
-
-    private boolean isAuthenticationMethodEnabled(AuthenticationType method) {
-        return taraProperties.getAuthMethods().get(method).isEnabled();
-    }
-
-    private TaraSession.LoginRequestInfo doRequest(String loginChallenge) {
+    private TaraSession.LoginRequestInfo fetchLoginRequestInfo(@RequestParam(name = "login_challenge") @Size(max = 50)
+                                                               @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed") String loginChallenge) {
         String url = taraProperties.getHydraService().getLoginUrl() + "?login_challenge=" + loginChallenge;
         log.info("OIDC login GET request: " + url);
         long startTime = System.currentTimeMillis();

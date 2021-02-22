@@ -1,0 +1,1258 @@
+openapi: 3.0.0
+info:
+  description: TARA login service
+  version: 1.0.0-oas3
+  title: TARA login service
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+tags:
+  - name: oidc-server-integration
+    description: Operations related to integration with the OIDC service
+  - name: id-card
+    description: ID-card authentication operations
+  - name: mobile-id
+    description: Mobile-ID authentication operations
+  - name: smart-id
+    description: Smart-ID authentication operations
+  - name: eidas
+    description: EU cross-border (eIDAS) authentication
+  - name: legalperson
+    description: Legal person attribute listing and selection
+  - name: monitoring
+    description: Service health monitoring
+paths:
+  /auth/init:
+    get:
+      tags:
+        - oidc-server-integration
+      summary: Start the login session
+      operationId: init
+      description: |
+        Verifies the authentication request.
+        Initializes the authentication flow.
+      parameters:
+        - in: query
+          name: login_challenge
+          description: The login challenge from the OIDC service to initialize login session
+          required: true
+          schema:
+            type: string
+            pattern: 'a-zA-Z0-9'
+            minimum: 0
+            maximum: 50
+            example: '824113da6da44889943b98715a06d699'
+        - in: query
+          name: lang
+          description: Language for UI initialization
+          schema:
+            type: string
+            enum: [et, en, ru]
+      responses:
+        '200':
+          description: HTML response with a list of eligible login methods
+          headers:
+            Set-Cookie:
+              description: SESSION=abcde12345; Path=/; HttpOnly; Secure
+              schema:
+                type: string
+          content:
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML login view is displayed'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '500':
+          description: An internal error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+  /auth/accept:
+    post:
+      tags:
+        - oidc-server-integration
+      summary: Complete the login session and accept the OIDC request
+      operationId: acceptLogin
+      description: |
+        Completes the login process
+      parameters:
+        - name: Cookie
+          in: header
+          required: true
+          description: Session cookie
+          schema:
+            type: string
+      requestBody:
+        description: Optional description in *Markdown*
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                _csrf:
+                  type: string
+                  example: 'c316e550-23e3-4fee-8cee-f8079a630fba'
+              required:
+                - _csrf
+      responses:
+        '302':
+          description: Redirects user's browser to OIDC service or /legalperson/init
+          headers:
+            Location:
+              schema:
+                type: string
+              description: /auth/init?login_challenge=123
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '403':
+          description: Forbidden (invalid CSRF token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '500':
+          description: An internal error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+  /auth/reject:
+    get:
+      tags:
+        - oidc-server-integration
+      summary: Cancels the login session and rejects the OIDC authentication query
+      operationId: rejectLogin
+      description: |
+        Cancels the login process
+      parameters:
+        - name: Cookie
+          in: header
+          required: true
+          description: Session cookie
+          schema:
+            type: string
+        - in: query
+          name: error_code
+          description: Error code to be returned to the OIDC client
+          schema:
+            type: string
+            enum: [user_cancel]
+      responses:
+        '302':
+          description: A redirect to OIDC service
+          headers:
+            Set-Cookie:
+              description: SESSION=abcde12345; Path=/; HttpOnly; Secure
+              schema:
+                type: string
+          content:
+            text/html:
+              schema:
+                type: string
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '500':
+          description: An internal error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+  /auth/mid/init:
+    post:
+      tags:
+        - mobile-id
+      summary: Start's the Mobile-ID authentication process
+      operationId: startMidAuth
+      description: |
+        Starts MID authentication
+      parameters:
+        - name: Cookie
+          in: header
+          required: true
+          description: Session cookie
+          schema:
+            type: string
+      requestBody:
+        description: Optional description in *Markdown*
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                _csrf:
+                  type: string
+                  example: 'c316e550-23e3-4fee-8cee-f8079a630fba'
+                id_code:
+                  type: string
+                  minimum: 0
+                  maximum: 11
+                  example: '60001019906'
+                telephone_number:
+                  type: string
+                  minimum: 0
+                  maximum: 15
+                  example: '00000766'
+              required:
+                - _csrf
+                - id_code
+                - telephone_number
+      responses:
+        '200':
+          description: HTML view with the verification code
+          content:
+            text/html:
+              schema:
+                type: string
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '403':
+          description: Forbidden (invalid CSRF token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '500':
+          description: An internal error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '502':
+          description: External service is not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+  /auth/mid/poll:
+    get:
+      tags:
+        - mobile-id
+      summary: Poll for the Mobile-ID authentication process result
+      operationId: checkMidAuthStatus
+      description: |
+        Poll the MID authentication status.
+      parameters:
+        - name: Cookie
+          in: header
+          required: true
+          description: Session cookie
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Response status of Mobile-ID authentication polling
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    enum: [PENDING, COMPLETED]
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '500':
+          description: An internal error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+  /auth/mid/poll/cancel:
+    post:
+      tags:
+        - mobile-id
+      summary: Cancel the Mobile-ID authentication poll process
+      operationId: checkMidAuthStatusCancel
+      description: |
+        Cancel MID authentication result polling
+      parameters:
+        - name: Cookie
+          in: header
+          required: true
+          description: Session cookie
+          schema:
+            type: string
+      requestBody:
+        description: Optional description in *Markdown*
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                _csrf:
+                  type: string
+                  example: 'c316e550-23e3-4fee-8cee-f8079a630fba'
+              required:
+                - _csrf
+      responses:
+        '302':
+          description: Mobile-ID authentication canceled
+          headers:
+            Location:
+              schema:
+                type: string
+              description: /auth/init?login_challenge=123
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '403':
+          description: Forbidden (invalid CSRF token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '500':
+          description: An internal error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+  /auth/id:
+    get:
+      tags:
+        - id-card
+      summary: ID-card authentication
+      operationId: idCardAuthenticationInit
+      description: |
+        Performs additional checks on the ID-card's user certificate.
+
+        Use a reverse-proxy of firewall to conduct a two-way TLS handshake prior to connecting this endpoint.
+
+        NB! Important - NEVER expose this endpoint directly to the public. Always remove XCLIENTCERTIFICATE header sent directly from the client.
+      parameters:
+        - name: Cookie
+          in: header
+          required: true
+          description: Session cookie
+          schema:
+            type: string
+        - name: XCLIENTCERTIFICATE
+          in: header
+          required: true
+          description: User's certificate from ID-card
+          schema:
+            type: string
+      responses:
+        '200':
+          description: JSON response with validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    enum: [COMPLETED]
+        '400':
+          description: Bad request. The user's client certificate is expired, or has been revoked, or has an unknown status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdCardErrorResponse'
+        '500':
+          description: An internal error occurred. Invalid configuration or other integration issues.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdCardErrorResponse'
+        '502':
+          description: External service is not available. OCSP service is not responding.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdCardErrorResponse'
+  /auth/sid/init:
+    post:
+      tags:
+        - smart-id
+      summary: Start's the Smart-ID authentication process
+      operationId: startSidAuth
+      description: |
+        Starts Smart-ID authentication
+      parameters:
+        - name: Cookie
+          in: header
+          required: true
+          description: Session cookie
+          schema:
+            type: string
+      requestBody:
+        description: Optional description in *Markdown*
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                _csrf:
+                  type: string
+                  example: 'c316e550-23e3-4fee-8cee-f8079a630fba'
+                id_code:
+                  type: string
+                  minimum: 0
+                  maximum: 11
+                  example: '60001019906'
+              required:
+                - _csrf
+                - id_code
+      responses:
+        '200':
+          description: HTML view with the verification code
+          content:
+            text/html:
+              schema:
+                type: string
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '403':
+          description: Forbidden (invalid CSRF token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '500':
+          description: An internal error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '502':
+          description: External service is not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+  /auth/sid/poll:
+    get:
+      tags:
+        - smart-id
+      summary: Poll for the Smart-ID authentication process result
+      operationId: checkSidAuthStatus
+      description: |
+        Poll the Smart-ID authentication status.
+      parameters:
+        - name: Cookie
+          in: header
+          required: true
+          description: Session cookie
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Response status of Smart-ID authentication polling
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    enum: [PENDING, COMPLETED]
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '500':
+          description: An internal error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+  /auth/sid/poll/cancel:
+    post:
+      tags:
+        - smart-id
+      summary: Cancel the Smart-ID authentication poll process
+      operationId: checkSidAuthStatusCancel
+      description: |
+        Cancel Smart-ID authentication result polling
+      parameters:
+        - name: Cookie
+          in: header
+          required: true
+          description: Session cookie
+          schema:
+            type: string
+      requestBody:
+        description: Optional description in *Markdown*
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                _csrf:
+                  type: string
+                  example: 'c316e550-23e3-4fee-8cee-f8079a630fba'
+              required:
+                - _csrf
+      responses:
+        '302':
+          description: Smart-ID authentication canceled
+          headers:
+            Location:
+              schema:
+                type: string
+              description: /auth/init?login_challenge=123
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '403':
+          description: Forbidden (invalid CSRF token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '500':
+          description: An internal error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+  /auth/eidas/init:
+    get:
+      tags:
+        - eidas
+      summary: Start's the cross-border authentication process (eidas)
+      operationId: eidasAuthInit
+      description: |
+        Starts eIDAS authentication
+      parameters:
+        - name: Cookie
+          in: header
+          required: true
+          description: Session cookie
+          schema:
+            type: string
+        - in: query
+          name: country
+          required: true
+          description: Country code
+          schema:
+            type: string
+            pattern: 'A-Z{2,2}'
+      responses:
+        '200':
+          description: Redirect form with SAML request to external eIDAS Node
+          content:
+            text/html:
+              schema:
+                type: string
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '500':
+          description: An internal error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+  /auth/eidas/callback:
+    post:
+      tags:
+        - eidas
+      summary: Start's the eIDAS authentication process
+      operationId: eidasAuthCallback
+      description: |
+        Handle eIDAS authentication callback
+      parameters:
+        - name: Cookie
+          in: header
+          required: true
+          description: Session cookie
+          schema:
+            type: string
+      requestBody:
+        description: Optional description in *Markdown*
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                SAMLResponse:
+                  type: string
+                  pattern: '^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$'
+                  maximum: 10000
+                  description: 'SAML response token. Base64 encoded'
+                RelayState:
+                  type: string
+                  pattern: ''
+                  description: 'Unique status code sent with the original authentication request'
+
+      responses:
+        '200':
+          description: Redirect form with SAML request to external eIDAS Node
+          content:
+            text/html:
+              schema:
+                type: string
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '500':
+          description: An internal error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+  /auth/legalperson/init:
+    get:
+      tags:
+        - legalperson
+      summary: Initialize legal person view, enabling user to select a valid legal person.
+      operationId: legalpersonInit
+      description: |
+        Initialize legal person view, enabling user to select a valid legal person.
+      parameters:
+        - name: Cookie
+          in: header
+          required: true
+          description: Session cookie
+          schema:
+            type: string
+      responses:
+        '200':
+          description: HTML view legal person selection
+          content:
+            text/html:
+              schema:
+                type: string
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '500':
+          description: An internal error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+  /auth/legalperson:
+    get:
+      tags:
+        - legalperson
+      summary: Get a list of user related legal persons
+      operationId: legalpersonList
+      description: |
+        Get a list of user related legal persons
+      parameters:
+        - name: Cookie
+          in: header
+          required: true
+          description: Session cookie
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of company details that the active user is eligible to represent.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  legalPersons:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        legalName:
+                          type: string
+                          example: 'Acme OÜ'
+                          description: 'Company name (from the Estonian Business Registry)'
+                        legalPersonIdentifier:
+                          type: string
+                          description: 'Registry code of the company (from the Estonian Business Registry)'
+                          example: '20090008'
+        '404':
+          description: No legalpersons found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '500':
+          description: An internal error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '502':
+          description: External service is not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+  /auth/legalperson/confirm:
+    post:
+      tags:
+        - legalperson
+      summary: Initialize legal person view, enabling user to select a valid legal person.
+      operationId: legalpersonConfirm
+      description: |
+        Initialize legal person view, enabling user to select a valid legal person.
+      parameters:
+        - name: Cookie
+          in: header
+          required: true
+          description: Session cookie
+          schema:
+            type: string
+      requestBody:
+        description: Optional description in *Markdown*
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                _csrf:
+                  type: string
+                  example: 'c316e550-23e3-4fee-8cee-f8079a630fba'
+                legal_person_identifier:
+                  type: string
+                  pattern: 'a-zA-Z0-9'
+                  minimum: 0
+                  maximum: 50
+                  example: '60001019906'
+              required:
+                - _csrf
+                - legal_person_identifier
+      responses:
+        '302':
+          description: Legal person selection successfully confirmed
+          headers:
+            Location:
+              schema:
+                type: string
+              description: a redirect to OIDC service
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '403':
+          description: Forbidden (invalid CSRF token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '500':
+          description: An internal error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+  /auth/consent:
+    get:
+      tags:
+        - oidc-server-integration
+      summary: Start the user consent aquiring process
+      operationId: consentInit
+      description: |
+        Checks whether the user consent is necessary.
+        Checks the consent_challenge in the OIDC server
+        Performs checks whether the OIDC client requires explicit user consent
+        Constructs the ID-Token
+      parameters:
+        - name: Cookie
+          in: header
+          required: true
+          description: Session cookie
+          schema:
+            type: string
+        - in: query
+          name: consent_challenge
+          description: The consent challenge from the OIDC service to initialize login session
+          required: true
+          schema:
+            type: string
+            pattern: 'a-zA-Z0-9'
+            minimum: 0
+            maximum: 50
+            example: '824113da6da44889943b98715a06d699'
+      responses:
+        '200':
+          description: If explicit user consent is required a HTML view with user details is displayed.
+          headers:
+            Set-Cookie:
+              description: SESSION=abcde12345; Path=/; HttpOnly; Secure
+              schema:
+                type: string
+          content:
+            text/html:
+              schema:
+                type: string
+        '302':
+          description: If explicit user consent not required the user is redirected back to OIDC service.
+          headers:
+            Location:
+              schema:
+                type: string
+              description: a redirect to OIDC service
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '500':
+          description: An internal error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+  /auth/consent/confirm:
+    post:
+      tags:
+        - oidc-server-integration
+      summary: Handle user's acceptance or rejection to issue information about his/her identity to a OIDC client
+      operationId: consentConfirm
+      description: |
+        Initialize legal person view, enabling user to select a valid legal person.
+      parameters:
+        - name: Cookie
+          in: header
+          required: true
+          description: Session cookie
+          schema:
+            type: string
+      requestBody:
+        description: Optional description in *Markdown*
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                _csrf:
+                  type: string
+                  example: 'c316e550-23e3-4fee-8cee-f8079a630fba'
+                consent_given:
+                  type: boolean
+              required:
+                - consent_given
+                - _csrf
+      responses:
+        '302':
+          description: Acceptance or rejection of the OIDC authentication request.
+          headers:
+            Location:
+              schema:
+                type: string
+              description: a redirect to OIDC service
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '403':
+          description: Forbidden (invalid CSRF token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '500':
+          description: An internal error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+  /heartbeat:
+    get:
+      tags:
+        - monitoring
+      summary: Returns the detailed health status of TARA login service
+      operationId: heartbeat
+      description: |
+        Return service health information
+      responses:
+        '200':
+          description: Monitoring info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeartbeatResponse'
+        '503':
+          description: Tara-login is not ready to serve requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeartbeatResponse'
+  /oidc-error:
+    get:
+      tags:
+        - error
+      summary: Translates an error code to a human readable error page
+      operationId: error
+      description: |
+        Returns detailed error page
+      parameters:
+        - in: query
+          name: error
+          description: The error code
+          required: true
+          schema:
+            type: string
+            maximum: 50
+            example: 'invalid_client'
+        - in: query
+          name: error_description
+          description: Error description (optional)
+          schema:
+            type: string
+        - in: query
+          name: error_hint
+          description: More detailed error description (optional)
+          schema:
+            type: string
+      responses:
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The JSON error view is displayed'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: ''
+servers:
+  - url: 'https://localhost:8443'
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          description: The time the error occurred
+          example: '2020-12-22T09:09:23.463+00:00'
+        status:
+          type: string
+          description: The HTTP statuscode
+          example: '400'
+        error:
+          type: string
+          description: Short error message
+          example: 'Bad Request'
+        message:
+          type: string
+          description: Human readable error description
+          example: Required String parameter 'sample_parameter' is not present
+        path:
+          type: string
+          description: The path that returned the error
+          example: '/sample/path'
+        locale:
+          type: string
+          description: The locale from the user session (if present)
+          example: 'en_US'
+        incident_number:
+          type: string
+          description: Unique ID to identify the error in logs
+          example: 98JAE6AL9VGY2OFQ
+    IdCardErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: 'ERROR'
+        errorMessage:
+          type: string
+          description: 'Human readable error message. Translated according to active locale in user session'
+          example: 'Error description'
+    Dependency:
+      type: object
+      properties:
+        status:
+          type: string
+          description: The status of the service
+          enum: [UP, DOWN]
+        name:
+          type: string
+          description: The name of the dependency
+          enum: [truststore, oidcServer]
+          example: 'truststore'
+    HeartbeatResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          description: The status of the service
+          enum: [UP, DOWN]
+        name:
+          type: string
+          description: The name of the application
+          example: 'tara-login-service'
+        version:
+          type: string
+          description: The version number of the service
+          example: '1.0.0'
+        commitId:
+          type: string
+          description: Git hash of the specific commit
+          example: 'ca9e44921174b25c1470e8e1fabe1bf4545513f8'
+        commitBranch:
+          type: string
+          description: Git branch name
+          example: 'master'
+        startTime:
+          type: string
+          description: The service start time
+          example: '2020-12-18T15:18:21.918Z'
+        currentTime:
+          type: string
+          description: Current date and time
+          example: '2020-12-22T08:47:58.350Z'
+        upTime:
+          type: string
+          description: Uptime in ISO 8601 format
+          example: 'PT89H29M36S'
+        buildTime:
+          type: string
+          description: Build time
+          example: '2020-12-18T15:07:51.626Z'
+        dependencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Dependency'
+        warnings:
+          type: array
+          items:
+            type: string
+            example: Truststore certificate 'oidc-tls' with serial number '192940911122987043582' is expiring at %s

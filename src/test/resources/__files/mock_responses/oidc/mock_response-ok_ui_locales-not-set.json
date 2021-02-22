@@ -42,6 +42,11 @@
         },
         "institution": {
           "sector": "public"
+        },
+        "smartid_settings": {
+          "relying_party_name": "testRelyingPartyName",
+          "relying_party_UUID": "testRelyingPartyId123",
+          "should_use_additional_verifcation_code_check": true
         }
       }
     },

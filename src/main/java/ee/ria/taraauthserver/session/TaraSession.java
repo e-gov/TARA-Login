@@ -1,11 +1,15 @@
 package ee.ria.taraauthserver.session;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.util.Assert;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -17,6 +21,12 @@ import java.net.URL;
 import java.time.LocalDate;
 import java.util.*;
 
+import static java.util.Arrays.stream;
+import static java.util.List.of;
+import static java.util.stream.Collectors.toList;
+import static org.springframework.util.CollectionUtils.isEmpty;
+
+@Slf4j
 @Data
 @RequiredArgsConstructor
 public class TaraSession implements Serializable {
@@ -51,6 +61,14 @@ public class TaraSession implements Serializable {
         private final String midSessionId;
     }
 
+    @Slf4j
+    @Data
+    @EqualsAndHashCode(callSuper = true)
+    @RequiredArgsConstructor
+    public static class SidAuthenticationResult extends AuthenticationResult {
+        private final String sidSessionId;
+    }
+
     @Data
     @EqualsAndHashCode(callSuper = true)
     @RequiredArgsConstructor
@@ -62,6 +80,7 @@ public class TaraSession implements Serializable {
     public static class LoginRequestInfo implements Serializable {
         @JsonProperty("challenge")
         private String challenge;
+        private boolean isLoginChallengeExpired = false;
         @Valid
         @JsonProperty("client")
         private Client client = new Client();
@@ -72,6 +91,79 @@ public class TaraSession implements Serializable {
         private OidcContext oidcContext = new OidcContext();
         @JsonProperty("request_url")
         private URL url;
+
+        public List<AuthenticationType> getAllowedAuthenticationMethodsList(AuthConfigurationProperties taraProperties) {
+            List<AuthenticationType> requestedAuthMethods = getRequestedAuthenticationMethodList(taraProperties);
+            List<AuthenticationType> allowedAuthenticationMethodsList = requestedAuthMethods.stream()
+                    .filter(method -> isAuthenticationMethodEnabled(method, taraProperties))
+                    .filter(authMethod -> isAuthenticationMethodAllowedByRequestedLoa(authMethod, taraProperties))
+                    .collect(toList());
+
+            log.debug("List of authentication methods to display on login page: {}", allowedAuthenticationMethodsList);
+            return allowedAuthenticationMethodsList;
+        }
+
+        private List<AuthenticationType> getRequestedAuthenticationMethodList(AuthConfigurationProperties taraProperties) {
+            List<TaraScope> requestedTaraScopes = getRequestedTaraScopes();
+            List<AuthenticationType> clientRequestedAuthMethods = stream(AuthenticationType.values())
+                    .filter(authenticationType -> requestedTaraScopes.contains(authenticationType.getScope()))
+                    .collect(toList());
+
+            if (isEmpty(clientRequestedAuthMethods)) {
+                return taraProperties.getDefaultAuthenticationMethods();
+            } else {
+                return clientRequestedAuthMethods;
+            }
+        }
+
+        private List<TaraScope> getRequestedTaraScopes() {
+            List<TaraScope> allowedRequestedScopes = new ArrayList<>();
+            List<String> allowedScopes = of(client.getScope().split(" "));
+            for (String requestedScope : requestedScopes) {
+                if (allowedScopes.contains(requestedScope)) {
+                    TaraScope taraScope = TaraScope.getScope(requestedScope);
+                    if (taraScope != null) {
+                        allowedRequestedScopes.add(taraScope);
+                    } else {
+                        log.warn("Unsupported scope value '{}', entry ignored!", requestedScope);
+                    }
+                } else {
+                    log.warn("Requested scope value '{}' is not allowed, entry ignored!", requestedScope);
+                }
+            }
+            return allowedRequestedScopes;
+        }
+
+        private boolean isAuthenticationMethodAllowedByRequestedLoa(AuthenticationType autMethod, AuthConfigurationProperties taraProperties) {
+            LevelOfAssurance requestedLoa = getRequestedAcr();
+            if (requestedLoa == null)
+                return true;
+            return isAllowedByRequestedLoa(requestedLoa, autMethod, taraProperties);
+        }
+
+        private LevelOfAssurance getRequestedAcr() {
+            List<String> requestedAcr = getOidcContext().getAcrValues();
+            if (requestedAcr == null || requestedAcr.isEmpty())
+                return null;
+            LevelOfAssurance acr = LevelOfAssurance.findByAcrName(requestedAcr.get(0));
+            Assert.notNull(acr, "Unsupported acr value requested by client: '" + requestedAcr.get(0) + "'");
+            return acr;
+        }
+
+        private boolean isAllowedByRequestedLoa(LevelOfAssurance requestedLoa, AuthenticationType authenticationMethod, AuthConfigurationProperties taraProperties) {
+            LevelOfAssurance authenticationMethodLoa = taraProperties.getAuthMethods().get(authenticationMethod).getLevelOfAssurance();
+            boolean isAllowed = authenticationMethodLoa.ordinal() >= requestedLoa.ordinal();
+
+            if (!isAllowed) {
+                log.warn("Ignoring authentication method since it's level of assurance is lower than requested. Authentication method: {} with assigned LoA: {}, requested level of assurance: {}",
+                        authenticationMethod, authenticationMethodLoa, requestedLoa);
+            }
+            return isAllowed;
+        }
+
+        private boolean isAuthenticationMethodEnabled(AuthenticationType method, AuthConfigurationProperties taraProperties) {
+            return taraProperties.getAuthMethods().get(method).isEnabled();
+        }
     }
 
     @Data
@@ -126,6 +218,18 @@ public class TaraSession implements Serializable {
         @Valid
         @JsonProperty("institution")
         private Institution institution = new Institution();
+        @JsonProperty("smartid_settings")
+        private SmartIdSettings smartIdSettings;
+    }
+
+    @Data
+    public static class SmartIdSettings implements Serializable {
+        @JsonProperty("relying_party_UUID")
+        private String relyingPartyUuid;
+        @JsonProperty("relying_party_name")
+        private String relyingPartyName;
+        @JsonProperty("should_use_additional_verifcation_code_check")
+        private Boolean ShouldUseAdditionalVerificationCodeCheck;
     }
 
     @Data
