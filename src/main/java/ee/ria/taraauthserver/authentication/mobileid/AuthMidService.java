@@ -193,18 +193,22 @@ public class AuthMidService {
     }
 
     private void handleAuthenticationException(TaraSession taraSession, Exception ex) {
-        taraSession.setState(AUTHENTICATION_FAILED);
-        ErrorCode errorCode = translateExceptionToErrorCode(ex);
-        taraSession.getAuthenticationResult().setErrorCode(errorCode);
-        log.warn(append(TARA_SESSION, taraSession)
-                        .and(append("error.code", errorCode.name())),
-                "Mobile ID polling failed: {}", value("error.message", ex.getMessage()));
-        Session session = sessionRepository.findById(taraSession.getSessionId());
-        if (session != null) {
-            session.setAttribute(TARA_SESSION, taraSession);
-            sessionRepository.save(session);
-        } else {
-            log.debug("Session not found: {}", taraSession.getSessionId());
+        try {
+            taraSession.setState(AUTHENTICATION_FAILED);
+            ErrorCode errorCode = translateExceptionToErrorCode(ex);
+            taraSession.getAuthenticationResult().setErrorCode(errorCode);
+            log.warn(append(TARA_SESSION, taraSession)
+                            .and(append("error.code", errorCode.name())),
+                    "Mobile ID polling failed: {}", value("error.message", ex.getMessage()));
+            Session session = sessionRepository.findById(taraSession.getSessionId());
+            if (session != null) {
+                session.setAttribute(TARA_SESSION, taraSession);
+                sessionRepository.save(session);
+            } else {
+                log.debug("Session not found: {}", taraSession.getSessionId());
+            }
+        } catch (Exception e) {
+            log.error("Failed to write session: " + ex.getMessage(), e);
         }
     }
 
