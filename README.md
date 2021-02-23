@@ -17,6 +17,7 @@
     * [Security and session managment](#session_and_sec_conf)
         * [Ignite integration](#ignite_conf)
         * [Security and session management](#sec_conf)
+    * [Alerts](#alerts_conf)
 - [APPENDIX](#api_docs)
     * [API specification](#api_docs)
 
@@ -404,6 +405,16 @@ Ignite is used for storing user’s session information.
 | :---------------- | :---------- | :----------------|
 | `spring.session.timeout` | No | Session timeout. If a duration suffix is not specified, seconds will be used. Default value `300s` |
 | `tara.content-security-policy` | No | Content security policy. Default value `connect-src 'self'; default-src 'none'; font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; block-all-mixed-content` |
+
+<a name="alerts_conf"></a>
+## 1.9 Alerts config
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.alerts.host-url` | Yes | Request url used when refreshing alerts list. Example value `http://alerts-mock:8080/alerts` |
+| `tara.alerts.connection-timeout-milliseconds` | No | Connection timeout in milliseconds. Default value `3000`|
+| `tara.alerts.read-timeout-milliseconds` | No | Read timeout in milliseconds. Default value `3000`|
+| `tara.alerts.refresh-alerts-interval-in-milliseconds` | No | How often alerts are requested from the configured alerts url. Default. `600000` |
+
 
 ## APPENDIX
 
