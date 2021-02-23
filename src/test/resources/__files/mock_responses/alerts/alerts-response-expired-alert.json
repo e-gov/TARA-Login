@@ -1,0 +1,42 @@
+[
+  {
+    "id": "1234567",
+    "title": "Plaaniline katkestus SK teenustes",
+    "start_time": "2019-08-24T14:15:22Z",
+    "end_time": "2019-08-24T14:15:22Z",
+    "login_page_notification_settings": {
+      "notify_clients_on_tara_login_page": true,
+      "notification_text": "Seoses SK plaaniliste hooldustöödega on ID kaardi teenuste kasutamine häiritud vahemikus 12.01.2020 00:00 kuni 13.01.2020 01:00",
+      "display_only_for_authmethods": [
+        "idcard"
+      ]
+    },
+    "email_notification_settings": {
+      "notify_clients_by_email": true,
+      "send_at": "2019-08-24T14:15:22Z",
+      "email_template": "string"
+    },
+    "created_at": "2019-08-24T14:15:22Z",
+    "updated_at": "2019-08-24T14:15:22Z"
+  },
+  {
+    "id": "1234567",
+    "title": "Plaaniline katkestus SK teenustes",
+    "start_time": "2019-08-24T14:15:22Z",
+    "end_time": "2025-08-24T14:15:22Z",
+    "login_page_notification_settings": {
+      "notify_clients_on_tara_login_page": true,
+      "notification_text": "Seoses SK plaaniliste hooldustöödega on Mobiil-ID teenuste kasutamine häiritud vahemikus 12.01.2020 00:00 kuni 13.01.2020 01:00",
+      "display_only_for_authmethods": [
+        "mID"
+      ]
+    },
+    "email_notification_settings": {
+      "notify_clients_by_email": true,
+      "send_at": "2019-08-24T14:15:22Z",
+      "email_template": "string"
+    },
+    "created_at": "2019-08-24T14:15:22Z",
+    "updated_at": "2019-08-24T14:15:22Z"
+  }
+]
