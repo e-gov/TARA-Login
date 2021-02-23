@@ -9,6 +9,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest;
+import ee.ria.taraauthserver.utils.TestIDCardConfiguration;
 import io.restassured.RestAssured;
 import io.restassured.builder.ResponseSpecBuilder;
 import io.restassured.config.SessionConfig;
@@ -20,12 +21,13 @@ import org.hamcrest.Matcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
-import org.springframework.web.context.WebApplicationContext;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.util.HashMap;
 import java.util.List;
@@ -46,10 +48,11 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 @Slf4j
 @SpringBootTest(webEnvironment = RANDOM_PORT)
+@ContextConfiguration(classes = {BaseTestConfiguration.class})
 public abstract class BaseTest {
     public static final String CHARSET_UTF_8 = ";charset=UTF-8";
 
-    protected static final Map<String, Object> EXPECTED_HTML_RESPONSE_HEADERS = new HashMap<>() {{
+    protected static final Map<String, Object> EXPECTED_RESPONSE_HEADERS = new HashMap<>() {{
         put("X-XSS-Protection", "1; mode=block");
         put("X-Content-Type-Options", "nosniff");
         put("X-Frame-Options", "DENY");
@@ -57,13 +60,7 @@ public abstract class BaseTest {
         put("Pragma", "no-cache");
         put("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
     }};
-    protected static final Map<String, Object> EXPECTED_JSON_RESPONSE_HEADERS = new HashMap<>() {{
-        put("X-XSS-Protection", "1; mode=block");
-        put("X-Content-Type-Options", "nosniff");
-        put("X-Frame-Options", "DENY");
-        put("Content-Security-Policy", DEFAULT_CONTENT_SECURITY_POLICY);
-        put("Cache-Control", "no-store");
-    }};
+
     protected static final OCSPValidatorTest.OcspResponseTransformer ocspResponseTransformer = new OCSPValidatorTest.OcspResponseTransformer(false);
     protected static final WireMockServer wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig()
             .httpDisabled(true)
@@ -74,17 +71,12 @@ public abstract class BaseTest {
             .extensions(ocspResponseTransformer)
             .notifier(new ConsoleNotifier(true))
     );
-
-    @Autowired
-    private WebApplicationContext webApplicationContext;
-
+    private static ListAppender<ILoggingEvent> mockAppender;
     @Autowired
     protected SessionRepository<Session> sessionRepository;
 
     @LocalServerPort
     protected int port;
-
-    private static ListAppender<ILoggingEvent> mockAppender;
 
     @BeforeAll
     static void setUpAll() {
@@ -95,9 +87,44 @@ public abstract class BaseTest {
         wireMockServer.start();
     }
 
+    private static void configureRestAssured() {
+        RestAssured.filters(new RequestLoggingFilter(), new ResponseLoggingFilter());
+        config = config()
+                .redirect(redirectConfig().followRedirects(false))
+                .sessionConfig(new SessionConfig().sessionIdName("SESSION"));
+        ;
+    }
+
+    protected static void createMidApiAuthenticationStub(String response, int status) {
+        createMidApiAuthenticationStub(response, status, 0);
+    }
+
+    protected static void createMidApiAuthenticationStub(String response, int status, int delayInMilliseconds) {
+        wireMockServer.stubFor(any(urlPathEqualTo("/mid-api/authentication"))
+                .withRequestBody(matchingJsonPath("$.language", WireMock.equalTo("EST")))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withStatus(status)
+                        .withFixedDelay(delayInMilliseconds)
+                        .withBodyFile(response)));
+    }
+
+    protected static void createMidApiPollStub(String response, int status) {
+        createMidApiPollStub(response, status, 0);
+    }
+
+    protected static void createMidApiPollStub(String response, int status, int delayInMilliseconds) {
+        wireMockServer.stubFor(any(urlPathMatching("/mid-api/authentication/session/.*"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withStatus(status)
+                        .withFixedDelay(delayInMilliseconds)
+                        .withBodyFile(response)));
+    }
+
     @BeforeEach
     public void beforeEachTest() {
-        RestAssured.responseSpecification = new ResponseSpecBuilder().expectHeaders(EXPECTED_HTML_RESPONSE_HEADERS).build();
+        RestAssured.responseSpecification = new ResponseSpecBuilder().expectHeaders(EXPECTED_RESPONSE_HEADERS).build();
         RestAssured.port = port;
         configureMockLogAppender();
         wireMockServer.resetAll();
@@ -112,14 +139,6 @@ public abstract class BaseTest {
         mockAppender = new ListAppender<>();
         mockAppender.start();
         ((Logger) getLogger(ROOT_LOGGER_NAME)).addAppender(mockAppender);
-    }
-
-    private static void configureRestAssured() {
-        RestAssured.filters(new RequestLoggingFilter(), new ResponseLoggingFilter());
-        config = config()
-                .redirect(redirectConfig().followRedirects(false))
-                .sessionConfig(new SessionConfig().sessionIdName("SESSION"));
-        ;
     }
 
     protected void assertInfoIsLogged(String... messagesInRelativeOrder) {
@@ -157,27 +176,5 @@ public abstract class BaseTest {
 
         assertThat("Expected log messages not found in output.\n\tExpected log messages: " + List.of(messagesInRelativeOrder) + ",\n\tActual log messages: " + events, events, containsInRelativeOrder(stream(messagesInRelativeOrder)
                 .map(CoreMatchers::startsWith).toArray(Matcher[]::new)));
-    }
-
-    protected static void createMidApiAuthenticationStub(String response, int status) {
-        createMidApiAuthenticationStub(response, status, 0);
-    }
-
-    protected static void createMidApiAuthenticationStub(String response, int status, int delayInMilliseconds) {
-        wireMockServer.stubFor(any(urlPathEqualTo("/mid-api/authentication"))
-                .withRequestBody(matchingJsonPath("$.language", WireMock.equalTo("EST")))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withStatus(status)
-                        .withFixedDelay(delayInMilliseconds)
-                        .withBodyFile(response)));
-    }
-
-    protected static void createMidApiPollStub(String response, int status) {
-        wireMockServer.stubFor(any(urlPathMatching("/mid-api/authentication/session/.*"))
-                .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withStatus(status)
-                        .withBodyFile(response)));
     }
 }

@@ -4,6 +4,8 @@ spring:
     instance-id: ${APP_INSTANCE_ID:${random.int(100)}}
   session:
     timeout: 60s
+    servlet:
+      filter-order: -2147483648
 
 management:
   health:
@@ -101,8 +103,6 @@ tara:
 
     x-road-server-read-timeout-in-milliseconds: 1000
     x-road-server-connect-timeout-in-milliseconds: 1000
-
-    x-road-query-esindus-v2-allowed-types: SA,AS
 
   tls:
     trust-store-location: classpath:tls-truststore.jks

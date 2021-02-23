@@ -4,7 +4,6 @@ import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.session.MockSessionFilter;
-import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Tag;
@@ -47,8 +46,11 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(403)
-                .body("message", equalTo("Forbidden"))
-                .body("path", equalTo("/auth/consent/confirm"));
+                .body("error", equalTo("Forbidden"))
+                .body("message", equalTo("Keelatud päring. Päring esitati topelt, sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."));
+
+        assertErrorIsLogged("Access denied: Invalid CSRF token.");
+
     }
 
     @Test

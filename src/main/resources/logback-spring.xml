@@ -15,7 +15,7 @@
     <property name="log.level.tara-login-service" value="${LOG_FILE_LEVEL:-INFO}"/>
 
     <property name="log.console.pattern"
-              value="${LOG_CONSOLE_PATTERN:-%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z',GMT} [${springAppName}-${springAppInstanceId}] [%15.15t] %highlight(%-5level) %-40.40logger{39} %green(%marker) [%X{traceId},%X{spanId}] -%X{sessionId} -%X{remoteHost} -%msg%n}"/>
+              value="${LOG_CONSOLE_PATTERN:-%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z',GMT} [${springAppName}-${springAppInstanceId}] [%15.15t] %highlight(%-5level) %-40.40logger{39} %green(%marker) [%X{trace.id},%X{transaction.id}] -%X{remoteHost} -%msg%n}"/>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
@@ -28,9 +28,9 @@
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${log.files.dir}/TaraLoginService.%d{yyyy-MM-dd,GMT}.log</file>
-        <param name="Append" value="true"/>
         <!-- Support multiple-JVM writing to the same log file -->
         <prudent>true</prudent>
+        <append>true</append>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${log.files.dir}/TaraLoginService.%d{yyyy-MM-dd,GMT}.log</fileNamePattern>
             <maxHistory>${log.files.max.count}</maxHistory>
@@ -39,12 +39,17 @@
             <level>${log.level.tara-login-service}</level>
         </filter>
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <jsonFactoryDecorator class="ee.ria.taraauthserver.session.logging.LogbackJsonFactoryDecorator"/>
+            <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
+                <valueMasker class="ee.ria.taraauthserver.session.logging.LogbackFieldValueMasker"/>
+            </jsonGeneratorDecorator>
             <providers>
                 <timestamp>
                     <fieldName>@timestamp</fieldName>
                     <pattern>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</pattern>
                     <timeZone>UTC</timeZone>
                 </timestamp>
+                <message/>
                 <pattern>
                     <omitEmptyFields>true</omitEmptyFields>
                     <pattern>
@@ -55,12 +60,7 @@
                         "process.thread.name": "%thread",
                         "service.name": "${springAppName}",
                         "service.type": "tara",
-                        "service.node.name": "${springAppName}-${springAppInstanceId}",
-                        "service.version": "%X{serviceVersion}",
-                        "session.id": "%X{sessionId}",
-                        "trace.id": "%X{spanId}",
-                        "transaction.id": "%X{traceId}",
-                        "message": "%message"
+                        "service.node.name": "${springAppName}-${springAppInstanceId}"
                         }
                     </pattern>
                 </pattern>
@@ -75,10 +75,13 @@
                         <rootCauseFirst>true</rootCauseFirst>
                     </throwableConverter>
                 </stackTrace>
+                <stackHash/>
+                <rootStackTraceElement/>
                 <throwableRootCauseClassName>
                     <fieldName>error.type</fieldName>
                 </throwableRootCauseClassName>
                 <logstashMarkers/>
+                <mdc/>
                 <arguments/>
             </providers>
         </encoder>

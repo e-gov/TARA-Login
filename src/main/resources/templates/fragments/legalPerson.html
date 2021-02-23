@@ -9,41 +9,18 @@
     <div>
         <div class="alert alert-neutral">
 
-            <h2 th:utext="#{label.legal-person-representative}">Header</h2>
-            <table>
-                <tr>
-                    <th th:utext="#{label.natural-person.id-code}"></th>
-                    <td id="legal-person-representative-id-code" th:text="${idCode}">Personal ID-code</td>
-                </tr>
-                <tr>
-                    <th th:utext="#{label.natural-person.surname}"></th>
-                    <td id="legal-person-representative-last-name" th:text="${lastName}">Surname</td>
-                </tr>
-                <tr>
-                    <th th:utext="#{label.natural-person.given-name}"></th>
-                    <td id="legal-person-representative-given-name" th:text="${firstName}">Givenname</td>
-                </tr>
-                <tr>
-                    <th th:utext="#{label.natural-person.date-of-birth}"></th>
-                    <td id="legal-person-representative-date-of-birth" th:text="${#temporals.format(dateOfBirth, 'dd.MM.yyyy')}">Date of birth</td>
-                </tr>
-            </table>
-
-            <hr>
-
             <h2 th:utext="#{label.legal-person.h2}"></h2>
-
 
             <div th:if="${session.containsKey('authentication')}">
                 <div id="results-container" class="alert alert-neutral">
-                                <span id="results-loading" class="hidden">
-                                    <div class="loadersmall"></div>
-                                    <div th:utext="#{label.legal-person.loading}"></div>
-                                </span>
+                    <span id="results-loading" class="hidden">
+                        <div class="loadersmall"></div>
+                        <div th:utext="#{label.legal-person.loading}"></div>
+                    </span>
                     <span id="results-summary" class="hidden">
-                                    <div th:utext="#{label.legal-person.loading-result}"></div>
-                                    <br>
-                                </span>
+                        <div><b th:utext="#{label.legal-person.loading-result}"></b></div>
+                        <br>
+                    </span>
                     <ul id="results-legal-person-list"></ul>
                 </div>
                 <div id="error-results-container" class="alert alert-error hidden">

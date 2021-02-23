@@ -44,7 +44,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
@@ -66,7 +66,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
@@ -89,7 +89,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Ebakorrektne päring."))
@@ -113,7 +113,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Ebakorrektne päring."))
@@ -125,8 +125,8 @@ public class LegalpersonControllerTest extends BaseTest {
     @Test
     @Tag(value = "LEGAL_PERSON_AUTH_START")
     @Tag(value = "UI_LEGALPERSON_AUTHENTICATION_VIEW")
-    void getAuthLegalPersonInit_Ok() throws Exception {
-        XmlPath response = given()
+    void getAuthLegalPersonInit_Ok() {
+        given()
                 .filter(withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(NATURAL_PERSON_AUTHENTICATION_COMPLETED)
@@ -139,14 +139,8 @@ public class LegalpersonControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .extract().response().htmlPath();
-
-        assertThat(response.getString("**.findAll { it.td.@id == 'legal-person-representative-id-code'}")).endsWith(MOCK_NATURAL_PERSON_ID_CODE);
-        assertThat(response.getString("**.findAll { it.td.@id == 'legal-person-representative-given-name'}")).endsWith(MOCK_NATURAL_PERSON_FIRSTNAME);
-        assertThat(response.getString("**.findAll { it.td.@id == 'legal-person-representative-last-name'}")).endsWith(MOCK_NATURAL_PERSON_LASTNAME);
-        assertThat(response.getString("**.findAll { it.td.@id == 'legal-person-representative-date-of-birth'}"))
-                .endsWith(MOCK_NATURAL_PERSON_DATE_OF_BIRTH.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
     }
 
     @Test
@@ -159,7 +153,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
@@ -181,7 +175,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
@@ -210,7 +204,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo(500))
                 .body("error", equalTo("Internal Server Error"))
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
@@ -240,7 +234,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo(500))
                 .body("error", equalTo("Internal Server Error"))
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
@@ -270,7 +264,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(502)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo(502))
                 .body("error", equalTo("Bad Gateway"))
                 .body("message", equalTo("Äriregistriga ei saadud ühendust. Palun proovige hiljem uuesti."))
@@ -299,7 +293,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(404)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo(404))
                 .body("error", equalTo("Not Found"))
                 .body("message", equalTo("Current user has no valid legal person records in business registry")) // TODO: NotFoundException -> BadRequestException?
@@ -329,7 +323,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .headers(EXPECTED_JSON_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .extract().jsonPath();
 
         assertThat(response.getString("legalPersons[0].legalName")).isEqualTo("Acme INC OÜ");
@@ -357,7 +351,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .headers(EXPECTED_JSON_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .extract().jsonPath();
 
         assertThat(response.getString("legalPersons[0].legalName")).isEqualTo("Acme INC OÜ 1");
@@ -387,8 +381,10 @@ public class LegalpersonControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(403)
-                .body("message", equalTo("Forbidden"))
-                .body("path", equalTo("/auth/legalperson/confirm"));
+                .body("error", equalTo("Forbidden"))
+                .body("message", equalTo("Keelatud päring. Päring esitati topelt, sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."));
+
+        assertErrorIsLogged("Access denied: Invalid CSRF token.");
     }
 
     @Test
@@ -402,7 +398,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
@@ -425,7 +421,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
@@ -445,7 +441,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Required String parameter 'legal_person_identifier' is not present"))
@@ -465,7 +461,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("confirmLegalPerson.legalPersonIdentifier: invalid legal person identifier"))
@@ -489,7 +485,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Antud id-ga juriidilist isikut ei leitud."))
@@ -521,9 +517,9 @@ public class LegalpersonControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(302)
-                .headers(EXPECTED_HTML_RESPONSE_HEADERS)
+                .headers(EXPECTED_RESPONSE_HEADERS)
                 .header("Location", Matchers.endsWith("/some/test/url"));
 
-        assertInfoIsLogged("Legal person selected: " + MOCK_LEGAL_PERSON_IDENTIFIER);
+        assertInfoIsLogged("Legal person confirmed");
     }
 }

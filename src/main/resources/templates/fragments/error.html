@@ -1,0 +1,11 @@
+<div class="container" xmlns:th="http://www.w3.org/1999/xhtml">
+    <div class="alert alert-error" role="alert">
+        <p><strong><span th:class="error-title" th:text="#{message.error.auth.title}" th:remove="tag"></span></strong></p>
+        <p id="error-message">
+        </p>
+        <p>
+            <label th:utext="#{label.error.incident-number('')}" for="error-incident-number"></label>
+            <span id="error-incident-number"></span>
+        </p>
+    </div>
+</div>

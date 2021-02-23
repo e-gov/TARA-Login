@@ -32,14 +32,17 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
 
+import static java.lang.String.format;
+import static java.util.Arrays.stream;
 import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toList;
+import static net.logstash.logback.argument.StructuredArguments.value;
+import static org.apache.commons.lang3.StringUtils.join;
 import static org.unbescape.xml.XmlEscape.escapeXml11;
 
 @Slf4j
 public class BusinessRegistryService {
-
     private static final String SOAP_REQUEST_TEMPLATE = "xtee-arireg.esindus_v2.v1.ftl";
 
     @NonNull
@@ -72,7 +75,7 @@ public class BusinessRegistryService {
         Assert.isTrue(idCode.matches("^[0-9]{11,11}$"), "idCode has invalid format! Must contain only numbers");
 
         String request = getEsindusV2Request(idCode, UUID.randomUUID().toString());
-        NodeList response = send(request, String.format(xpathFilterForEttevotjad, idCode));
+        NodeList response = send(request, format(xpathFilterForEttevotjad, idCode));
         if (response != null) {
             return extractResults(response);
         } else {
@@ -120,7 +123,9 @@ public class BusinessRegistryService {
 
     protected NodeList send(String request, String filterExpression) {
         try {
-            log.info("Sending 'POST' request to URL: {}, body: {}  ", legalPersonProperties.getXRoadServerUrl(), request);
+            log.info("Sending X-Road Business registry request to URL: {}, body: {}  ",
+                    value("url.full", legalPersonProperties.getXRoadServerUrl()),
+                    value("http.request.body.content", request));
             URL obj = new URL(legalPersonProperties.getXRoadServerUrl());
             HttpURLConnection con = (HttpURLConnection) getHttpURLConnection(obj);
             con.setReadTimeout(legalPersonProperties.getXRoadServerReadTimeoutInMilliseconds());
@@ -137,7 +142,9 @@ public class BusinessRegistryService {
             try (InputStream in = (InputStream) con.getContent()) {
                 int responseCode = con.getResponseCode();
                 String response = IOUtils.toString(in, StandardCharsets.UTF_8);
-                log.info("Response received. Code: {}, Response body: {}", responseCode, response);
+                log.info("X-Road Business registry response received. Response code: {}, Response body: {}",
+                        value("http.response.status_code", responseCode),
+                        value("http.response.body.content", response));
 
                 DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
                 builderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -179,7 +186,7 @@ public class BusinessRegistryService {
     }
 
     private String getConditionList(String[] type, String parameter) {
-        return StringUtils.join(Arrays.stream(type).map(str -> String.format(parameter, str)).collect(Collectors.toList()), " or ");
+        return join(stream(type).map(str -> format(parameter, str)).collect(toList()), " or ");
     }
 }
 

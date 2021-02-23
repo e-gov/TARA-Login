@@ -14,6 +14,9 @@ import javax.cache.Cache;
 import java.io.Serializable;
 import java.time.Duration;
 
+import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static net.logstash.logback.marker.Markers.append;
+
 /**
  * @see ee.ria.taraauthserver.config.SessionConfiguration
  */
@@ -40,6 +43,9 @@ public class IgniteSessionRepository implements SessionRepository<Session> {
         IgniteSession igniteSession = (IgniteSession) session;
         if (igniteSession.isChanged()) {
             igniteSession.setChanged(false);
+            if (log.isDebugEnabled()) {
+                log.debug(append(TARA_SESSION, session.getAttribute(TARA_SESSION)), "Save session: {}", session.getId());
+            }
             sessionCache.put(session.getId(), session);
         }
     }

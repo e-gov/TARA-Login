@@ -1,15 +1,10 @@
 package ee.ria.taraauthserver.error;
 
-import ee.sk.mid.exception.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-
-import javax.ws.rs.InternalServerErrorException;
-import java.util.HashMap;
-import java.util.Map;
+import lombok.RequiredArgsConstructor;
 
 @Getter
-@AllArgsConstructor
+@RequiredArgsConstructor
 public enum ErrorCode {
     INVALID_LOGIN_CHALLENGE("message.error.invalid-login-challenge"),
     NO_VALID_AUTHMETHODS_AVAILABLE("message.error.no-allowed-authmethods"),
@@ -24,33 +19,23 @@ public enum ErrorCode {
     MID_INTERNAL_ERROR("message.mid-rest.error.internal-error"),
     MID_INTEGRATION_ERROR("message.error.general"),
     MID_VALIDATION_ERROR("message.mid-rest.error.validation-error"),
+    IDC_OCSP_NOT_AVAILABLE("message.idc.error.ocsp.not.available"),
+    IDC_CERT_NOT_YET_VALID("message.idc.cert-not-yet-valid"),
+    IDC_CERT_EXPIRED("message.idc.cert-expired"),
+    IDC_CERTIFICATE_FAILED("message.idc.certificate-failed"),
+    IDC_DOES_ID_CARD_EXIST("message.idc.does-id-card-exist"),
+    IDC_NO_CERTIFICATE("message.idc.no-certificate"),
+    IDC_REVOKED("message.idc.revoked"),
+    IDC_UNKNOWN("message.idc.unknown"),
     ERROR_GENERAL("message.error.general"),
     SESSION_NOT_FOUND("message.error.session-not-found"),
     SESSION_STATE_INVALID("message.error.session-state-invalid"),
     INVALID_REQUEST("message.error.invalid-request"),
+    INVALID_CSRF_TOKEN("message.error.invalid-csrf-token"),
     INVALID_LEGAL_PERSON("label.legal-person.error.invalid-legal-person"),
+    INVALID_OIDC_CLIENT("message.error.invalid-oidc-client"),
+    INVALID_OIDC_REQUEST("message.error.invalid-oidc-request"),
     LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE("label.legal-person.error.service-not-available");
 
     private final String message;
-
-    public static Map<Class<?>, ErrorCode> errorMap;
-
-    static {
-        errorMap = new HashMap<>();
-        errorMap.put(InternalServerErrorException.class, MID_INTERNAL_ERROR);
-        errorMap.put(MidInternalErrorException.class, MID_INTERNAL_ERROR);
-        errorMap.put(MidSessionNotFoundException.class, MID_INTEGRATION_ERROR);
-        errorMap.put(MidMissingOrInvalidParameterException.class, MID_INTEGRATION_ERROR);
-        errorMap.put(MidUnauthorizedException.class, MID_INTEGRATION_ERROR);
-        errorMap.put(MidNotMidClientException.class, NOT_MID_CLIENT);
-        errorMap.put(MidSessionTimeoutException.class, MID_TRANSACTION_EXPIRED);
-        errorMap.put(MidUserCancellationException.class, MID_USER_CANCEL);
-        errorMap.put(MidInvalidUserConfigurationException.class, MID_HASH_MISMATCH);
-        errorMap.put(MidPhoneNotAvailableException.class, MID_PHONE_ABSENT);
-        errorMap.put(MidDeliveryException.class, MID_DELIVERY_ERROR);
-    }
-
-    public static ErrorCode getErrorCode(Throwable ex) {
-        return errorMap.getOrDefault(ex.getClass(), ERROR_GENERAL);
-    }
 }

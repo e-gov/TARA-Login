@@ -15,6 +15,7 @@ import java.util.Arrays;
 import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.util.Arrays.stream;
+import static net.logstash.logback.argument.StructuredArguments.value;
 
 @Slf4j
 @UtilityClass
@@ -41,7 +42,7 @@ public class SessionUtils {
         HttpSession session = request.getSession(false);
         if (session != null) {
             session.invalidate();
-            log.warn("Session '{}' has been invalidated", session.getId());
+            log.warn("Session '{}' has been invalidated", value("tara.session.session_id", session.getId()));
         }
     }
 }

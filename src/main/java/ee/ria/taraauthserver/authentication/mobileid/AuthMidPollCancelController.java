@@ -12,6 +12,7 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static net.logstash.logback.argument.StructuredArguments.value;
 
 @Slf4j
 @RestController
@@ -22,8 +23,9 @@ public class AuthMidPollCancelController {
     public RedirectView authMidPollCancel(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, ALLOWED_STATES);
         taraSession.setState(POLL_MID_STATUS_CANCELED);
+        String midSessionId = ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getMidSessionId();
         log.warn("Mobile ID authentication process with MID session id {} has been canceled",
-                ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getMidSessionId());
+                value("tara.session.authentication_result.mid_session_id", midSessionId));
         return new RedirectView("/auth/init?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge());
     }
 }
