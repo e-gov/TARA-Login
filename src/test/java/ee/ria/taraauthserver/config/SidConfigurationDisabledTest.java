@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.config;
 
 import ee.ria.taraauthserver.authentication.smartid.SmartIdController;
+import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,5 +20,6 @@ public class SidConfigurationDisabledTest extends DisabledConfigurationTest {
     public void whenLegalPersonDisabledThenBeansNotLoaded() {
         assertBeanNotInitiated(SmartIdController.class);
         assertBeanNotInitiated(SmartIdConfiguration.class);
+        assertBeanNotInitiated(SmartIdConfigurationProperties.class);
     }
 }
