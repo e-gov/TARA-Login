@@ -14,6 +14,7 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 import org.springframework.test.annotation.DirtiesContext;
 
@@ -32,7 +33,7 @@ class AuthInitControllerTest extends BaseTest {
     private static final String TEST_LOGIN_CHALLENGE = "abcdefg098AAdsCC";
 
     @Autowired
-    private SessionRepository sessionRepository;
+    private SessionRepository<Session> sessionRepository;
 
     @Autowired
     private AuthConfigurationProperties authConfigurationProperties;
@@ -173,6 +174,9 @@ class AuthInitControllerTest extends BaseTest {
         assertEquals("idcard", taraSession.getLoginRequestInfo().getRequestedScopes().get(0));
         assertEquals("mid", taraSession.getLoginRequestInfo().getRequestedScopes().get(1));
         assertEquals("some test client", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getName());
+        assertEquals("testRelyingPartyName", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getRelyingPartyName());
+        assertEquals("testRelyingPartyId123", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getRelyingPartyUuid());
+        assertEquals(true, taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getShouldUseAdditionalVerificationCodeCheck());
 
         assertInfoIsLogged("OIDC login request: https://localhost:9877/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE);
         assertInfoIsLogged("OIDC login challenge 'abcdefg098AAdsCC' response status code: 200");

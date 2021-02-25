@@ -49,6 +49,7 @@ class AuthAcceptController {
 
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && response.getBody().getRedirectUrl() != null) {
             taraSession.setState(AUTHENTICATION_SUCCESS);
+            taraSession.getLoginRequestInfo().setLoginChallengeExpired(true);
             log.info(append(TARA_SESSION, taraSession), "Successful authentication");
             return new RedirectView(response.getBody().getRedirectUrl());
         } else {

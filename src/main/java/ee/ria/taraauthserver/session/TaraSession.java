@@ -74,9 +74,17 @@ public class TaraSession implements Serializable {
 
     @Slf4j
     @Data
+    @EqualsAndHashCode(callSuper = true)
+    @RequiredArgsConstructor
+    public static class SidAuthenticationResult extends AuthenticationResult {
+        private final String sidSessionId;
+    }
+
+    @Data
     public static class LoginRequestInfo implements Serializable {
         @JsonProperty("challenge")
         private String challenge;
+        private boolean isLoginChallengeExpired = false;
         @Valid
         @JsonProperty("client")
         private Client client = new Client();
@@ -220,6 +228,18 @@ public class TaraSession implements Serializable {
         @Valid
         @JsonProperty("institution")
         private Institution institution = new Institution();
+        @JsonProperty("smartid_settings")
+        private SmartIdSettings smartIdSettings;
+    }
+
+    @Data
+    public static class SmartIdSettings implements Serializable {
+        @JsonProperty("relying_party_UUID")
+        private String relyingPartyUuid;
+        @JsonProperty("relying_party_name")
+        private String relyingPartyName;
+        @JsonProperty("should_use_additional_verifcation_code_check")
+        private Boolean ShouldUseAdditionalVerificationCodeCheck;
     }
 
     @Data
