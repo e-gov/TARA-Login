@@ -12,11 +12,12 @@
     * [Smart-ID auth method](#sid_conf)
     * [ID-card auth method](#esteid_conf)
     * [Monitoring](#monitoring_conf)
-        * [Custom application health endpoint configuration](#monitoring_heartbeat_conf)      
+        * [Custom application health endpoint configuration](#monitoring_heartbeat_conf)
     * [Legal person attributes](#legalperson_conf)
     * [Security and session managment](#session_and_sec_conf)
         * [Ignite integration](#ignite_conf)
         * [Security and session management](#sec_conf)
+    * [Logging](#logging_conf)
 - [APPENDIX](#api_docs)
     * [API specification](#api_docs)
 
@@ -404,6 +405,20 @@ Ignite is used for storing user’s session information.
 | :---------------- | :---------- | :----------------|
 | `spring.session.timeout` | No | Session timeout. If a duration suffix is not specified, seconds will be used. Default value `300s` |
 | `tara.content-security-policy` | No | Content security policy. Default value `connect-src 'self'; default-src 'none'; font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; block-all-mixed-content` |
+
+<a name="logging_conf"></a>
+## 1.8 Logging configuration
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.masked_field_names` | No | Comma separated field names to mask when structurally logging objects. Default value `session_id` |
+
+| Environment variable        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `LOG_HOME` | No | Log files path. Default value `/var/log` |
+| `LOG_FILES_MAX_COUNT` | No | Rolling file appender max files history. Default value `31` |
+| `LOG_FILE_LEVEL` | No | Log level for file logging. Default value `INFO` |
+| `LOG_CONSOLE_PATTERN` | No | Log files path. Default value `%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z',GMT} [${springAppName}-${springAppInstanceId}] [%15.15t] %highlight(%-5level) %-40.40logger{39} %green(%marker) [%X{trace.id},%X{transaction.id}] -%X{remoteHost} -%msg%n}` |
+| `LOG_CONSOLE_LEVEL` | No | Log files path. Default value `OFF` |
 
 ## APPENDIX
 

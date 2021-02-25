@@ -38,6 +38,7 @@ import java.time.Instant;
 import java.util.*;
 
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp;
+import static net.logstash.logback.argument.StructuredArguments.value;
 
 @Slf4j
 @Component
@@ -62,7 +63,9 @@ public class OCSPValidator {
     public void checkCert(X509Certificate userCert) {
         Assert.notNull(userCert, "User certificate cannot be null!");
         log.info("OCSP certificate validation. Serialnumber=<{}>, SubjectDN=<{}>, issuerDN=<{}>",
-                userCert.getSerialNumber(), userCert.getSubjectDN().getName(), userCert.getIssuerDN().getName());
+                value("x509.serial_number", userCert.getSerialNumber().toString()),
+                value("x509.subject.distinguished_name", userCert.getSubjectDN().getName()),
+                value("x509.issuer.distinguished_name", userCert.getIssuerDN().getName()));
         List<Ocsp> ocspConfiguration = ocspConfigurationResolver.resolve(userCert);
         Assert.isTrue(!CollectionUtils.isEmpty(ocspConfiguration), "At least one OCSP configuration must be present");
 
@@ -73,7 +76,9 @@ public class OCSPValidator {
             Ocsp ocspConf = ocspConfiguration.get(count);
             try {
                 if (count > 0) {
-                    log.info("Retrying OCSP request with {}. Configuration: {}", ocspConf.getUrl(), ocspConf);
+                    log.info("Retrying OCSP request with {}. Configuration: {}",
+                            value("url.full", ocspConf.getUrl()),
+                            value("ocsp.conf", ocspConf));
                 }
                 checkCert(userCert, ocspConf);
                 return;
@@ -124,7 +129,9 @@ public class OCSPValidator {
 
     private BasicOCSPResp getResponse(OCSPResp response, Ocsp ocspConf)
             throws IOException, OCSPException {
-        log.info("OCSP response received: {}", Base64.getEncoder().encodeToString(response.getEncoded()));
+        log.info("OCSP issuerCN=<{}> response received: {}",
+                value("x509.issuer.common_name", ocspConf.getIssuerCn()),
+                value("ocsp.response", Base64.getEncoder().encodeToString(response.getEncoded())));
         BasicOCSPResp basicOCSPResponse = (BasicOCSPResp) response.getResponseObject();
         Assert.notNull(basicOCSPResponse, "Invalid OCSP response! OCSP response object bytes could not be read!");
         Assert.notNull(basicOCSPResponse.getCerts(), "Invalid OCSP response! OCSP response is missing mandatory element - the signing certificate");
@@ -170,7 +177,11 @@ public class OCSPValidator {
         connection.setReadTimeout(conf.getReadTimeoutInMilliseconds());
         connection.setDoOutput(true);
 
-        log.info("Sending OCSP request to <{}>. Request payload: <{}>. OCSP configuration: <{}>", conf.getUrl(), Base64.getEncoder().encodeToString(bytes), conf);
+        log.info("Sending OCSP request to <{}>. Request payload: <{}>. OCSP configuration: <{}>",
+                value("url.full", conf.getUrl()),
+                value("http.request.body.content", Base64.getEncoder().encodeToString(bytes)),
+                value("ocsp.conf", conf));
+
         try (DataOutputStream outputStream = new DataOutputStream(new BufferedOutputStream(connection.getOutputStream()))) {
             outputStream.write(bytes);
             outputStream.flush();
@@ -188,7 +199,8 @@ public class OCSPValidator {
             }
         } else {
             log.error("OCSP request has failed (HTTP {}) - {}",
-                    connection.getResponseCode(), connection.getResponseMessage());
+                    value("http.response.status_code", connection.getResponseCode()),
+                    value("http.response.body.content", connection.getResponseMessage()));
             throw new OCSPServiceNotAvailableException(String.format("Service returned HTTP status code %d",
                     connection.getResponseCode()));
         }
@@ -323,7 +335,7 @@ public class OCSPValidator {
 
     private X509Certificate findIssuerCertificate(X509Certificate certificate) {
         String issuerCN = X509Utils.getIssuerCNFromCertificate(certificate);
-        log.debug("IssuerCN extracted: {}", issuerCN);
+        log.debug("IssuerCN extracted: {}", value("x509.issuer.common_name", issuerCN));
         X509Certificate issuerCert = trustedCertificates.get(issuerCN);
         Assert.notNull(issuerCert, "Issuer certificate with CN '" + issuerCN + "' is not a trusted certificate!");
         return issuerCert;

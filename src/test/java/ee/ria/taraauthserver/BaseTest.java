@@ -9,6 +9,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest;
+import ee.ria.taraauthserver.utils.TestIDCardConfiguration;
 import io.restassured.RestAssured;
 import io.restassured.builder.ResponseSpecBuilder;
 import io.restassured.config.SessionConfig;
@@ -20,12 +21,13 @@ import org.hamcrest.Matcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
-import org.springframework.web.context.WebApplicationContext;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.util.HashMap;
 import java.util.List;
@@ -46,6 +48,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 @Slf4j
 @SpringBootTest(webEnvironment = RANDOM_PORT)
+@ContextConfiguration(classes = {BaseTestConfiguration.class})
 public abstract class BaseTest {
     public static final String CHARSET_UTF_8 = ";charset=UTF-8";
 
@@ -74,8 +77,6 @@ public abstract class BaseTest {
 
     @LocalServerPort
     protected int port;
-    @Autowired
-    private WebApplicationContext webApplicationContext;
 
     @BeforeAll
     static void setUpAll() {
