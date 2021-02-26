@@ -182,8 +182,12 @@ public class AuthMidService {
                             value("tara.session.authentication_result.mid_errors", midAuthResult.getErrors()));
                 }
                 Session session = sessionRepository.findById(taraSession.getSessionId());
-                session.setAttribute(TARA_SESSION, taraSession);
-                sessionRepository.save(session);
+                if (session != null) {
+                    session.setAttribute(TARA_SESSION, taraSession);
+                    sessionRepository.save(session);
+                } else {
+                    log.debug("Session not found: {}", taraSession.getSessionId());
+                }
             }
         }
     }
@@ -197,8 +201,12 @@ public class AuthMidService {
                             .and(append("error.code", errorCode.name())),
                     "Mobile ID polling failed: {}", value("error.message", ex.getMessage()));
             Session session = sessionRepository.findById(taraSession.getSessionId());
-            session.setAttribute(TARA_SESSION, taraSession);
-            sessionRepository.save(session);
+            if (session != null) {
+                session.setAttribute(TARA_SESSION, taraSession);
+                sessionRepository.save(session);
+            } else {
+                log.debug("Session not found: {}", taraSession.getSessionId());
+            }
         } catch (Exception e) {
             log.error("Failed to write session: " + ex.getMessage(), e);
         }

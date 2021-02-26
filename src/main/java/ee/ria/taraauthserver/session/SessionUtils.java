@@ -42,7 +42,7 @@ public class SessionUtils {
         HttpSession session = request.getSession(false);
         if (session != null) {
             session.invalidate();
-            log.warn("Session '{}' has been invalidated", value("tara.session.session_id", session.getId()));
+            log.warn("Session has been invalidated: {}", value("tara.session.session_id", session.getId()));
         }
     }
 }

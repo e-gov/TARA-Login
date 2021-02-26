@@ -89,10 +89,14 @@ public class AuthMidServiceTest extends BaseTest {
         assertEquals(MOBILE_ID, result.getAmr());
         assertEquals(LevelOfAssurance.HIGH, result.getAcr());
 
+        assertInfoIsLogged("Tara session state change: NOT_SET -> INIT_AUTH_PROCESS");
+        assertInfoIsLogged("Tara session state change: INIT_AUTH_PROCESS -> INIT_MID");
         assertInfoIsLogged("Mobile ID authentication init request");
+        assertInfoIsLogged("Tara session state change: INIT_MID -> POLL_MID_STATUS");
         assertInfoIsLogged("Mobile ID authentication process with MID session id de305d54-75b4-431b-adb2-eb6b9e546015 has been initiated");
         assertInfoIsLogged("Polling Mobile ID authentication process with MID session id de305d54-75b4-431b-adb2-eb6b9e546015");
         assertInfoIsLogged("MID session id de305d54-75b4-431b-adb2-eb6b9e546015 authentication result: OK, status: COMPLETE");
+        assertInfoIsLogged("Tara session state change: POLL_MID_STATUS -> NATURAL_PERSON_AUTHENTICATION_COMPLETED");
         assertMidApiRequests();
     }
 

@@ -3,8 +3,10 @@ package ee.ria.taraauthserver.authentication;
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
+import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -17,6 +19,7 @@ import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.MOCK_LOGIN_CH
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @Slf4j
 class AuthRejectControllerTest extends BaseTest {
@@ -85,10 +88,14 @@ class AuthRejectControllerTest extends BaseTest {
                 .get("/auth/reject")
                 .then()
                 .assertThat()
-                .statusCode(302);
+                .statusCode(302)
+                .header("Location", Matchers.endsWith("some/test/url"));
 
-        Assert.assertNull(sessionRepository.findById(sessionId));
-        assertWarningIsLogged("Session '" + sessionId + "' has been invalidated");
+        assertNull(sessionRepository.findById(sessionId));
+        assertInfoIsLogged("OIDC login reject request: https://localhost:9877/oauth2/auth/requests/login/reject?login_challenge=abcdefg098AAdsCC");
+        assertInfoIsLogged("Tara session state change: NOT_SET -> AUTHENTICATION_CANCELED");
+        assertWarningIsLogged("Session has been invalidated: " + sessionId);
+        assertInfoIsLogged("Session is removed from cache: " + sessionId);
     }
 
     @Test

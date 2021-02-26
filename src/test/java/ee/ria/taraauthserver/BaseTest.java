@@ -92,7 +92,6 @@ public abstract class BaseTest {
         config = config()
                 .redirect(redirectConfig().followRedirects(false))
                 .sessionConfig(new SessionConfig().sessionIdName("SESSION"));
-        ;
     }
 
     protected static void createMidApiAuthenticationStub(String response, int status) {
