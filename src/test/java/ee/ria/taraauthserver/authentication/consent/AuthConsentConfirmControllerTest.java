@@ -6,6 +6,7 @@ import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.session.MockSessionFilter;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.SneakyThrows;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
@@ -46,8 +47,11 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(403)
-                .body("message", equalTo("Forbidden"))
-                .body("path", equalTo("/auth/consent/confirm"));
+                .body("error", equalTo("Forbidden"))
+                .body("message", equalTo("Keelatud päring. Päring esitati topelt, sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."));
+
+        assertErrorIsLogged("Access denied: Invalid CSRF token.");
+
     }
 
     @Test
@@ -140,10 +144,15 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .post("/auth/consent/confirm")
                 .then()
                 .assertThat()
-                .statusCode(302);
+                .statusCode(302)
+                .header("Location", Matchers.endsWith("some/test/url"));
 
         assertNull(sessionRepository.findById(session.getId()));
-        assertWarningIsLogged("Session '" + session.getId() + "' has been invalidated");
+        assertInfoIsLogged("Tara session state change: NOT_SET -> INIT_CONSENT_PROCESS");
+        assertInfoIsLogged("Consent accepted: https://localhost:9877/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC");
+        assertInfoIsLogged("Tara session state change: INIT_CONSENT_PROCESS -> CONSENT_GIVEN");
+        assertWarningIsLogged("Session has been invalidated: " + session.getId());
+        assertInfoIsLogged("Session is removed from cache: " + session.getId());
     }
 
     @Test
@@ -167,9 +176,11 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("error", equalTo("Internal Server Error"));
 
+        assertInfoIsLogged("Tara session state change: NOT_SET -> INIT_CONSENT_PROCESS");
+        assertInfoIsLogged("Consent accepted: https://localhost:9877/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC");
         assertErrorIsLogged("Server encountered an unexpected error: Invalid OIDC server response. Redirect URL missing from response.");
-        TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
-        assertEquals(INIT_CONSENT_PROCESS, taraSession.getState());
+        assertWarningIsLogged("Session has been invalidated: " + session.getId());
+        assertInfoIsLogged("Session is removed from cache: " + session.getId());
     }
 
     @Test
@@ -190,10 +201,15 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .post("/auth/consent/confirm")
                 .then()
                 .assertThat()
-                .statusCode(302);
+                .statusCode(302)
+                .header("Location", Matchers.endsWith("some/test/url"));
 
         assertNull(sessionRepository.findById(session.getId()));
-        assertWarningIsLogged("Session '" + session.getId() + "' has been invalidated");
+        assertInfoIsLogged("Tara session state change: NOT_SET -> INIT_CONSENT_PROCESS");
+        assertInfoIsLogged("Consent rejected: https://localhost:9877/oauth2/auth/requests/consent/reject?consent_challenge=abcdefg098AAdsCC");
+        assertInfoIsLogged("Tara session state change: INIT_CONSENT_PROCESS -> CONSENT_NOT_GIVEN");
+        assertWarningIsLogged("Session has been invalidated: " + session.getId());
+        assertInfoIsLogged("Session is removed from cache: " + session.getId());
     }
 
     @Test
@@ -217,9 +233,11 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("error", equalTo("Internal Server Error"));
 
+        assertInfoIsLogged("Tara session state change: NOT_SET -> INIT_CONSENT_PROCESS");
+        assertInfoIsLogged("Consent rejected: https://localhost:9877/oauth2/auth/requests/consent/reject?consent_challenge=abcdefg098AAdsCC");
         assertErrorIsLogged("Server encountered an unexpected error: Invalid OIDC server response. Redirect URL missing from response.");
-        TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
-        assertEquals(INIT_CONSENT_PROCESS, taraSession.getState());
+        assertWarningIsLogged("Session has been invalidated: " + session.getId());
+        assertInfoIsLogged("Session is removed from cache: " + session.getId());
     }
 
     @SneakyThrows
