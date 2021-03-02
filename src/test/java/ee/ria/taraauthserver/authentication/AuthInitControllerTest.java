@@ -587,7 +587,7 @@ class AuthInitControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
-    void authInit_redirectToAuthEidasInit() {
+    void authInit_redirectToAuthEidasInit_and_uppercaseCountryCodeIsIgnored() {
         createEidasCountryStub("mock_responses/eidas/eidas-response.json", 200);
 
         RestAssured.responseSpecification = null;
@@ -610,6 +610,39 @@ class AuthInitControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
                 .statusCode(200)
                 .body(containsString("<input type=\"hidden\" name=\"country\" value=\"CA\"/>"))
+                .body(containsString("Redirecting, please wait..."))
+                .extract().cookie("SESSION");
+
+        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
+    void authInit_displayEidasAuthenticationPageWhenRequestedCountryIsInvalid() {
+        createEidasCountryStub("mock_responses/eidas/eidas-response.json", 200);
+
+        RestAssured.responseSpecification = null;
+
+        await().atMost(FIVE_SECONDS)
+                .until(() -> eidasConfigurationProperties.getAvailableCountries(), Matchers.notNullValue());
+
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response_eidasonly_with_invalid_country.json")));
+
+        String sessionId = given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
+                .statusCode(200)
+                .body(containsString("European Union member state's eID"))
+                .body(containsString("<option value=\"CA\">Test (CA)</option>"))
                 .extract().cookie("SESSION");
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);

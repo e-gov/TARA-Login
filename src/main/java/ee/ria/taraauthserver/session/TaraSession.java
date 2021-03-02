@@ -93,6 +93,9 @@ public class TaraSession implements Serializable {
         private URL url;
 
         public List<AuthenticationType> getAllowedAuthenticationMethodsList(AuthConfigurationProperties taraProperties) {
+            if (requestedScopes.contains("eidasonly"))
+                return List.of(AuthenticationType.EIDAS);
+
             List<AuthenticationType> requestedAuthMethods = getRequestedAuthenticationMethodList(taraProperties);
             List<AuthenticationType> allowedAuthenticationMethodsList = requestedAuthMethods.stream()
                     .filter(method -> isAuthenticationMethodEnabled(method, taraProperties))
@@ -100,6 +103,7 @@ public class TaraSession implements Serializable {
                     .collect(toList());
 
             log.debug("List of authentication methods to display on login page: {}", allowedAuthenticationMethodsList);
+
             return allowedAuthenticationMethodsList;
         }
 

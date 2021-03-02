@@ -81,7 +81,7 @@ public class AuthInitController {
 
         setLocale(language, newTaraSession);
 
-        if (eidasOnlyRequested(loginRequestInfo)) {
+        if (eidasOnlyWithCountryRequested(loginRequestInfo)) {
             CsrfToken csrf = (CsrfToken) session.getAttribute("tara.csrf");
             model.addAttribute("token", csrf.getToken());
             model.addAttribute("country", getAllowedEidasCountryCode(loginRequestInfo.getRequestedScopes()));
@@ -138,7 +138,7 @@ public class AuthInitController {
                 .sorted().collect(Collectors.joining(", "));
     }
 
-    public boolean eidasOnlyRequested(TaraSession.LoginRequestInfo loginRequestInfo) {
+    public boolean eidasOnlyWithCountryRequested(TaraSession.LoginRequestInfo loginRequestInfo) {
         List<String> requestedScopes = loginRequestInfo.getRequestedScopes();
         return requestedScopes.contains("eidasonly") && getAllowedEidasCountryCode(requestedScopes) != null;
     }

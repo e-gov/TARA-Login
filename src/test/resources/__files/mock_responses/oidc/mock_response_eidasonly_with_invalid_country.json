@@ -90,7 +90,7 @@
     "mid",
     "eidasonly",
     "eidas:country:DE",
-    "eidas:country:ca"
+    "eidas:country:ee"
   ],
   "session_id": "string",
   "skip": true,
