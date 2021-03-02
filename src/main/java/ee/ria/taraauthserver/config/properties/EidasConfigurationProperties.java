@@ -12,12 +12,11 @@ import java.util.List;
 @ConfigurationProperties(prefix = "tara.auth-methods.eidas")
 public class EidasConfigurationProperties {
 
-    @NotNull
-    LevelOfAssurance levelOfAssurance;
-
     boolean enabled = true;
 
-    int refreshCountriesIntervalInMilliseconds = 300000;
+    String scriptHash = "sha256-8lDeP0UDwCO6/RhblgeH/ctdBzjVpJxrXizsnIk3cEQ=";
+
+    int refreshCountriesIntervalInMilliseconds;
 
     List<String> availableCountries;
 
@@ -26,6 +25,8 @@ public class EidasConfigurationProperties {
     private int readTimeoutInSeconds = 3;
 
     private int maxConnectionsTotal = 50;
+
+    private int relayStateCacheDurationInSeconds = 300;
 
     @NotNull
     private String clientUrl;

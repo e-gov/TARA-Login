@@ -1,6 +1,5 @@
 package ee.ria.taraauthserver.authentication.eidas;
 
-import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
@@ -16,16 +15,16 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.SessionAttribute;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.cache.Cache;
 import javax.servlet.http.HttpServletResponse;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
@@ -37,7 +36,6 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 @ConditionalOnProperty(value = "tara.auth-methods.eidas.enabled", matchIfMissing = true)
 public class EidasController {
 
-    public static final String CONTENT_SECURITY_POLICY_WITH_UNSAFE_INLINE = "connect-src 'self'; default-src 'none'; font-src 'self'; img-src 'self'; script-src 'self' 'unsafe-inline';; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; block-all-mixed-content";
 
     @Autowired
     private EidasConfigurationProperties eidasConfigurationProperties;
@@ -49,7 +47,7 @@ public class EidasController {
     @Autowired
     private Cache<String, String> eidasRelayStateCache;
 
-    @GetMapping(value = "/auth/eidas/init", produces = MediaType.TEXT_HTML_VALUE)
+    @PostMapping(value = "/auth/eidas/init", produces = MediaType.TEXT_HTML_VALUE)
     public String EidasInit(@RequestParam("country") String country, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession, HttpServletResponse servletResponse) {
 
         validateSession(taraSession);
@@ -70,7 +68,7 @@ public class EidasController {
 
     @Nullable
     private String getHtmlRedirectPageFromResponse(HttpServletResponse servletResponse, ResponseEntity<String> response) {
-        servletResponse.setHeader("Content-Security-Policy", CONTENT_SECURITY_POLICY_WITH_UNSAFE_INLINE);
+        servletResponse.setHeader("Content-Security-Policy", "connect-src 'self'; default-src 'none'; font-src 'self'; img-src 'self'; script-src '" + eidasConfigurationProperties.getScriptHash() + "' 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; block-all-mixed-content");
         return response.getBody();
     }
 
@@ -89,15 +87,15 @@ public class EidasController {
                 .queryParam("RelayState", relayState);
         List<String> acr = getAcrFromSessionOidcContext(taraSession);
         if (acr != null)
-            builder.queryParam("LoA", acr.get(0));
+            builder.queryParam("LoA", acr.get(0).toUpperCase());
         return builder.toUriString();
     }
 
     private ErrorCode getAppropriateErrorCode() {
         Object[] allowedCountries = eidasConfigurationProperties.getAvailableCountries().toArray(new Object[eidasConfigurationProperties.getAvailableCountries().size()]);
-        ErrorCode test = ErrorCode.EIDAS_COUNTRY_NOT_SUPPORTED;
-        test.setContent(allowedCountries);
-        return test;
+        ErrorCode errorCode = ErrorCode.EIDAS_COUNTRY_NOT_SUPPORTED;
+        errorCode.setMessageParameters(allowedCountries);
+        return errorCode;
     }
 
     private List<String> getAcrFromSessionOidcContext(TaraSession taraSession) {
@@ -111,8 +109,8 @@ public class EidasController {
     public void validateSession(TaraSession taraSession) {
         log.info("AuthSession: {}", taraSession);
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
-        if (!(getAllowedRequestedScopes(taraSession.getLoginRequestInfo()).contains("eidas") ||
-                getAllowedRequestedScopes(taraSession.getLoginRequestInfo()).contains("eidasonly"))) {
+        List<String> allowedScopes = getAllowedRequestedScopes(taraSession.getLoginRequestInfo());
+        if (!(allowedScopes.contains("eidas") || allowedScopes.contains("eidasonly"))) {
             throw new BadRequestException(INVALID_REQUEST, "Neither eidas or eidasonly scope is allowed.");
         }
     }

@@ -14,19 +14,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.session.Session;
+import org.springframework.session.SessionRepository;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.HttpSession;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -58,7 +65,7 @@ public class AuthInitController {
             @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed") String loginChallenge,
             @RequestParam(name = "lang", required = false)
             @Pattern(regexp = "(et|en|ru)", message = "supported values are: 'et', 'en', 'ru'") String language,
-            @SessionAttribute(value = TARA_SESSION) TaraSession newTaraSession) {
+            @SessionAttribute(value = TARA_SESSION) TaraSession newTaraSession, Model model, HttpSession session) {
 
         TaraSession.LoginRequestInfo loginRequestInfo = fetchLoginRequestInfo(loginChallenge);
         newTaraSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
@@ -75,7 +82,10 @@ public class AuthInitController {
         setLocale(language, newTaraSession);
 
         if (eidasOnlyRequested(loginRequestInfo)) {
-            return "forward:/auth/eidas/init?country=" + getAllowedEidasCountryCode(loginRequestInfo.getRequestedScopes());
+            CsrfToken csrf = (CsrfToken) session.getAttribute("tara.csrf");
+            model.addAttribute("token", csrf.getToken());
+            model.addAttribute("country", getAllowedEidasCountryCode(loginRequestInfo.getRequestedScopes()));
+            return "redirectToEidasInit";
         } else {
             return "loginView";
         }
@@ -130,10 +140,7 @@ public class AuthInitController {
 
     public boolean eidasOnlyRequested(TaraSession.LoginRequestInfo loginRequestInfo) {
         List<String> requestedScopes = loginRequestInfo.getRequestedScopes();
-        if (requestedScopes.contains("eidasonly") && getAllowedEidasCountryCode(requestedScopes) != null)
-            return true;
-        else
-            return false;
+        return requestedScopes.contains("eidasonly") && getAllowedEidasCountryCode(requestedScopes) != null;
     }
 
     private String getAllowedEidasCountryCode(List<String> requestedScopes) {

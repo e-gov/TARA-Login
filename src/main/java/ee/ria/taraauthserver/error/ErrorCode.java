@@ -54,5 +54,5 @@ public enum ErrorCode {
 
     private final String message;
     @Setter
-    private Object[] content;
+    private Object[] messageParameters;
 }

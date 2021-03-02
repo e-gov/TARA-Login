@@ -82,7 +82,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
     private String translateErrorCode(WebRequest webRequest, ErrorCode errorCode) {
         Locale locale = webRequest.getHeader(HttpHeaders.ACCEPT) != null ? RequestUtils.getLocale() : Locale.ENGLISH;
         try {
-            return messageSource.getMessage(errorCode.getMessage(), errorCode.getContent(), locale);
+            return messageSource.getMessage(errorCode.getMessage(), errorCode.getMessageParameters(), locale);
         } catch (NoSuchMessageException ex) {
             return "???" + errorCode + "???";
         }

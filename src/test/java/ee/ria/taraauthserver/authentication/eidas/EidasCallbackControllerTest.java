@@ -22,6 +22,7 @@ import static io.restassured.RestAssured.given;
 import static java.util.List.of;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class EidasCallbackControllerTest extends BaseTest {
 
@@ -152,8 +153,9 @@ class EidasCallbackControllerTest extends BaseTest {
         assertEquals(LevelOfAssurance.HIGH, (taraSession.getAuthenticationResult()).getAcr());
         assertEquals("Javier", (taraSession.getAuthenticationResult()).getFirstName());
         assertEquals("Garcia", (taraSession.getAuthenticationResult()).getLastName());
-        assertEquals("CA/EE/12345", (taraSession.getAuthenticationResult()).getIdCode());
+        assertEquals("CA12345", (taraSession.getAuthenticationResult()).getIdCode());
         assertEquals("1965-01-01", (taraSession.getAuthenticationResult()).getDateOfBirth().toString());
+        assertNull(eidasRelayStateCache.get(MOCK_RELAY_STATE_VALUE));
     }
 
     @Test

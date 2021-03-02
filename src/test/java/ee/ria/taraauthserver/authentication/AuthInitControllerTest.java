@@ -589,7 +589,6 @@ class AuthInitControllerTest extends BaseTest {
     @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
     void authInit_redirectToAuthEidasInit() {
         createEidasCountryStub("mock_responses/eidas/eidas-response.json", 200);
-        createEidasLoginStub("mock_responses/eidas/eidas-login-response.json", 200);
 
         RestAssured.responseSpecification = null;
 
@@ -610,11 +609,10 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
                 .statusCode(200)
+                .body(containsString("<input type=\"hidden\" name=\"country\" value=\"CA\"/>"))
                 .extract().cookie("SESSION");
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
-        assertEquals(TaraAuthenticationState.WAITING_EIDAS_RESPONSE, taraSession.getState());
-        assertNotNull(((TaraSession.EidasAuthenticationResult) taraSession.getAuthenticationResult()).getRelayState());
-        assertEquals("CA", (taraSession.getAuthenticationResult()).getCountry());
+        assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
     }
 }

@@ -311,6 +311,8 @@ Table 1.6.2 - Assignig the Level of assurance to authentication method
 | `tara.auth-methods.eidas.refresh-countries-interval-in-milliseconds` | No | How often allowed countries are requested from Eidas client. Default. `300000` |
 | `tara.auth-methods.eidas.request-timeout-in-seconds` | No | Eidas client request timeout. Default. `3` |
 | `tara.auth-methods.eidas.read-timeout-in-seconds` | No | Eidas client read timeout. Default. `3` |
+| `tara.auth-methods.eidas.relay-state-cache-duration-in-seconds` | No | Eidas client read timeout. Default. `30` |
+| `tara.auth-methods.eidas.script-hash` | No | hash to allow inline javascript for eidas redirect. Default. `sha256-8lDeP0UDwCO6/RhblgeH/ctdBzjVpJxrXizsnIk3cEQ=` |
 
 <a name="legalperson_conf"></a>
 ## 1.7 Legal person attributes

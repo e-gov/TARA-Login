@@ -7,6 +7,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.configuration.CacheConfiguration;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -25,11 +26,13 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.client.RestTemplate;
 
 import javax.cache.Cache;
+import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.net.ssl.SSLContext;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.ignite.cache.CacheAtomicityMode.ATOMIC;
 import static org.apache.ignite.cache.CacheMode.PARTITIONED;
@@ -46,7 +49,7 @@ public class EidasConfiguration {
     @Qualifier("restTemplate")
     private RestTemplate restTemplate;
 
-    @Scheduled(fixedRateString = "${tara.auth-methods.eidas.refresh-countries-interval-in-milliseconds}")
+    @Scheduled(fixedRateString = "${tara.auth-methods.eidas.refresh-countries-interval-in-milliseconds:30000}")
     public void scheduleFixedDelayTask() {
         log.info("starting fixed delay task");
         try {
@@ -70,7 +73,13 @@ public class EidasConfiguration {
                 .setName("eidasRelayState")
                 .setCacheMode(PARTITIONED)
                 .setAtomicityMode(ATOMIC)
+                .setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(getDuration()))
                 .setBackups(0));
+    }
+
+    @NotNull
+    private javax.cache.expiry.Duration getDuration() {
+        return new javax.cache.expiry.Duration(TimeUnit.SECONDS, eidasConfigurationProperties.getRelayStateCacheDurationInSeconds());
     }
 
     @LoadBalanced

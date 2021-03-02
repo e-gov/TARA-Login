@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.EidasInternalException;
 import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
@@ -39,6 +40,8 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static ee.ria.taraauthserver.error.ErrorCode.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
@@ -48,6 +51,8 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 @Controller
 @ConditionalOnProperty(value = "tara.auth-methods.eidas.enabled", matchIfMissing = true)
 public class EidasCallbackController {
+
+    public static final Pattern VALID_PERSON_IDENTIFIER_PATTERN = Pattern.compile("^([A-Z]{2,2})\\/([A-Z]{2,2})\\/(.*)$");
 
     @Autowired
     @Qualifier("eidasRestTemplate")
@@ -63,14 +68,14 @@ public class EidasCallbackController {
     public ModelAndView eidasCallback(@RequestParam(name = "SAMLResponse") String samlResponse, @RequestParam(name = "RelayState") String relayState) {
 
         if (!eidasRelayStateCache.containsKey(relayState))
-            throw new BadRequestException(ERROR_GENERAL, "relayState not found in relayState map");
+            throw new BadRequestException(INVALID_REQUEST, "relayState not found in relayState map");
 
-        Session session = sessionRepository.findById(eidasRelayStateCache.get(relayState));
+        Session session = sessionRepository.findById(eidasRelayStateCache.getAndRemove(relayState));
         validateSession(session);
 
         try {
             EidasClientResponse response = restTemplate.exchange(eidasConfigurationProperties.getClientUrl() + "/returnUrl", HttpMethod.POST, createRequestEntity(samlResponse), EidasClientResponse.class).getBody();
-            log.info("received response from eidas client: " + response.toString());
+            log.info("Received response from eidas client: " + response.toString());
             updateSession(session, response);
         } catch (HttpClientErrorException.Unauthorized e) {
             handle401Exception(session, e);
@@ -91,7 +96,7 @@ public class EidasCallbackController {
 
     private void handleOtherExceptions(Session session, Exception e) {
         updateSession(session);
-        throw new EidasInternalException(ERROR_GENERAL, "Unexpected error from eidas client: " + e.getMessage(), e);
+        throw new IllegalStateException("Unexpected error from eidas client: " + e.getMessage(), e);
     }
 
     private void handle401Exception(Session session, HttpClientErrorException.Unauthorized e) {
@@ -117,7 +122,7 @@ public class EidasCallbackController {
         TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
         authenticationResult.setFirstName(response.getAttributes().getFirstName());
         authenticationResult.setLastName(response.getAttributes().getFamilyName());
-        authenticationResult.setIdCode(response.getAttributes().getPersonIdentifier());
+        authenticationResult.setIdCode(getFormattedPersonIdentifier(response.getAttributes().getPersonIdentifier()));
         authenticationResult.setDateOfBirth(LocalDate.parse(response.getAttributes().getDateOfBirth()));
         authenticationResult.setAcr(LevelOfAssurance.findByFormalName(response.getLevelOfAssurance()));
         authenticationResult.setAmr(AuthenticationType.EIDAS);
@@ -125,6 +130,15 @@ public class EidasCallbackController {
         taraSession.setAuthenticationResult(authenticationResult);
         session.setAttribute(TARA_SESSION, taraSession);
         sessionRepository.save(session);
+    }
+
+    private String getFormattedPersonIdentifier(String personIdentifier) {
+        Matcher matcher = VALID_PERSON_IDENTIFIER_PATTERN.matcher(personIdentifier);
+        if (matcher.matches()) {
+            return matcher.group(1) + matcher.group(3);
+        } else {
+            throw new BadRequestException(EIDAS_AUTHENTICATION_FAILED, "The person identifier has invalid format! <" + personIdentifier + ">");
+        }
     }
 
     @org.jetbrains.annotations.NotNull
