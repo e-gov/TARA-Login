@@ -42,6 +42,7 @@ public enum ErrorCode {
     SESSION_NOT_FOUND("message.error.session-not-found"),
     SESSION_STATE_INVALID("message.error.session-state-invalid"),
     INVALID_REQUEST("message.error.invalid-request"),
+    INVALID_CSRF_TOKEN("message.error.invalid-csrf-token"),
     INVALID_LEGAL_PERSON("label.legal-person.error.invalid-legal-person"),
     INVALID_OIDC_CLIENT("message.error.invalid-oidc-client"),
     INVALID_OIDC_REQUEST("message.error.invalid-oidc-request"),

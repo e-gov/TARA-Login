@@ -20,8 +20,6 @@ public class RequestUtils {
     public void setLocale(String requestedLocale) {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
-
-        log.info("requested locale is: " + requestedLocale);
         Locale locale = StringUtils.parseLocaleString(requestedLocale);
         LocaleResolver localeResolver = RequestContextUtils.getLocaleResolver(request);
         Assert.notNull(localeResolver, "No LocaleResolver found in request: not in a DispatcherServlet request?");

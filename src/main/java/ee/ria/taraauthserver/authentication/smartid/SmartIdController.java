@@ -106,7 +106,7 @@ public class SmartIdController {
         try {
             log.info("Initiating smart-id session...");
             taraSession.setState(INIT_SID);
-            SemanticsIdentifier semanticsIdentifier = new SemanticsIdentifier(SemanticsIdentifier.IdentityType.PNO, SemanticsIdentifier.CountryCode.EE, sidCredential.getSmartIdCode());
+            SemanticsIdentifier semanticsIdentifier = new SemanticsIdentifier(SemanticsIdentifier.IdentityType.PNO, SemanticsIdentifier.CountryCode.EE, sidCredential.getIdCode());
             requestBuilder
                     .withRelyingPartyUUID(getAppropriateRelyingPartyUuid(taraSession))
                     .withRelyingPartyName(getAppropriateRelyingPartyName(taraSession))
@@ -239,7 +239,7 @@ public class SmartIdController {
     @Data
     public static class SidCredential {
         @ValidNationalIdNumber(message = "{message.mid-rest.error.invalid-identity-code}")
-        private String smartIdCode;
+        private String idCode;
     }
 
 }

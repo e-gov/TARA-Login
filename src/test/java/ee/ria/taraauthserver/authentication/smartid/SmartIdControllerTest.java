@@ -43,7 +43,7 @@ class SmartIdControllerTest extends BaseTest {
     @Autowired
     private SessionRepository<Session> sessionRepository;
 
-    private static final String ID_CODE = "smartIdCode";
+    private static final String ID_CODE = "idCode";
     private static final String ID_CODE_VALUE = "10101010005";
 
     @BeforeEach
@@ -65,8 +65,7 @@ class SmartIdControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(403)
-                .body("message", equalTo("Forbidden"))
-                .body("path", equalTo("/auth/sid/init"));
+                .body("message", equalTo("Keelatud päring. Päring esitati topelt, sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."));
     }
 
     @Test

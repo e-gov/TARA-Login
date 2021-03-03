@@ -8,11 +8,8 @@ import io.restassured.RestAssured;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.session.Session;
-import org.springframework.session.SessionRepository;
 
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
 import static ee.ria.taraauthserver.session.MockSessionFilter.*;
@@ -22,11 +19,9 @@ import static io.restassured.RestAssured.given;
 import static java.util.List.of;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class AuthMidPollControllerTest extends BaseTest {
-
-    @Autowired
-    private SessionRepository<Session> sessionRepository;
 
     @BeforeEach
     void beforeEach() {
@@ -112,7 +107,7 @@ class AuthMidPollControllerTest extends BaseTest {
     @Test
     @Tag(value = "MID_AUTH_FAILED")
     void midAuth_session_status_authentication_error_general() {
-        TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
+        TaraSession.AuthenticationResult authenticationResult = new TaraSession.MidAuthenticationResult("mid_session_id");
         authenticationResult.setErrorCode(ErrorCode.ERROR_GENERAL);
 
         MockSessionFilter sessionFilter = withTaraSession()
@@ -132,15 +127,18 @@ class AuthMidPollControllerTest extends BaseTest {
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
 
-        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
-        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
-        assertEquals(ErrorCode.ERROR_GENERAL, taraSession.getAuthenticationResult().getErrorCode());
+        String sessionId = sessionFilter.getSession().getId();
+        assertNull(sessionRepository.findById(sessionId));
+        assertInfoIsLogged("Tara session state change: NOT_SET -> AUTHENTICATION_FAILED");
+        assertErrorIsLogged("Server encountered an unexpected error");
+        assertWarningIsLogged("Session has been invalidated: " + sessionId);
+        assertInfoIsLogged("Session is removed from cache: " + sessionId);
     }
 
     @Test
     @Tag(value = "MID_AUTH_FAILED")
     void midAuth_session_status_authentication_mid_internal_error() {
-        TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
+        TaraSession.AuthenticationResult authenticationResult = new TaraSession.MidAuthenticationResult("mid-session-id");
         authenticationResult.setErrorCode(ErrorCode.MID_INTERNAL_ERROR);
 
         MockSessionFilter sessionFilter = withTaraSession()
@@ -160,8 +158,11 @@ class AuthMidPollControllerTest extends BaseTest {
                 .body("message", equalTo("Mobiil-ID teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti."))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
 
-        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
-        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
-        assertEquals(ErrorCode.MID_INTERNAL_ERROR, taraSession.getAuthenticationResult().getErrorCode());
+        String sessionId = sessionFilter.getSession().getId();
+        assertNull(sessionRepository.findById(sessionId));
+        assertInfoIsLogged("Tara session state change: NOT_SET -> AUTHENTICATION_FAILED");
+        assertErrorIsLogged("Service not available: Sid poll failed");
+        assertWarningIsLogged("Session has been invalidated: " + sessionId);
+        assertInfoIsLogged("Session is removed from cache: " + sessionId);
     }
 }

@@ -9,48 +9,63 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import javax.validation.ConstraintViolationException;
 import java.io.IOException;
+
+import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static net.logstash.logback.marker.Markers.append;
 
 @Slf4j
 @ControllerAdvice
 public class ErrorHandler {
 
+    private void invalidateSessionAndSendError(HttpServletRequest request, HttpServletResponse response, int status) throws IOException {
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            Object taraSession = session.getAttribute(TARA_SESSION);
+            session.invalidate();
+            log.warn(append(TARA_SESSION, taraSession), "Session has been invalidated: {}", session.getId());
+        }
+        response.sendError(status);
+    }
+
     @ExceptionHandler({BadRequestException.class, BindException.class, ConstraintViolationException.class, MissingServletRequestParameterException.class})
-    public ModelAndView handleBindException(Exception ex, HttpServletResponse response) throws IOException {
-        log.error("User exception: {}", ex.getMessage(), ex);
-        response.sendError(HttpServletResponse.SC_BAD_REQUEST);
-        return new ModelAndView();
+    public void handleBindException(Exception ex, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        if (log.isDebugEnabled())
+            log.error("User exception: {}", ex.getMessage(), ex);
+        else
+            log.error("User exception: {}", ex.getMessage());
+        invalidateSessionAndSendError(request, response, HttpServletResponse.SC_BAD_REQUEST);
     }
 
     @ExceptionHandler({HttpClientErrorException.class})
-    public ModelAndView handleHttpClientErrorException(HttpClientErrorException ex, HttpServletResponse response) throws IOException {
+    public void handleHttpClientErrorException(HttpClientErrorException ex, HttpServletRequest request, HttpServletResponse response) throws IOException {
         log.error("HTTP client exception: {}", ex.getMessage(), ex);
-        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        return new ModelAndView();
+        invalidateSessionAndSendError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler({ServiceNotAvailableException.class})
-    public ModelAndView handleDownstreamServiceErrors(Exception ex, HttpServletResponse response) throws IOException {
+    public void handleDownstreamServiceErrors(Exception ex, HttpServletRequest request, HttpServletResponse response) throws IOException {
         log.error("Service not available: {}", ex.getMessage(), ex);
-        response.sendError(HttpServletResponse.SC_BAD_GATEWAY);
-        return new ModelAndView();
+        invalidateSessionAndSendError(request, response, HttpServletResponse.SC_BAD_GATEWAY);
     }
 
     @ExceptionHandler({NotFoundException.class})
-    public ModelAndView handleNotFound(Exception ex, HttpServletResponse response) throws IOException {
-        log.error("Results not found: {}", ex.getMessage(), ex);
-        response.sendError(HttpServletResponse.SC_NOT_FOUND);
-        return new ModelAndView();
+    public void handleNotFound(Exception ex, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        if (log.isDebugEnabled())
+            log.error("Results not found: {}", ex.getMessage(), ex);
+        else
+            log.error("Results not found: {}", ex.getMessage());
+        invalidateSessionAndSendError(request, response, HttpServletResponse.SC_NOT_FOUND);
     }
 
     @ExceptionHandler({Exception.class})
-    public ModelAndView handleAll(Exception ex, HttpServletResponse response) throws IOException {
+    public void handleAll(Exception ex, HttpServletRequest request, HttpServletResponse response) throws IOException {
         log.error("Server encountered an unexpected error: {}", ex.getMessage(), ex);
-        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        return new ModelAndView();
+        invalidateSessionAndSendError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
 }

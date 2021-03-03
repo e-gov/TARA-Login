@@ -4,6 +4,7 @@ import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
@@ -22,7 +23,9 @@ import java.util.Map;
 
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static net.logstash.logback.argument.StructuredArguments.value;
 
+@Slf4j
 @Validated
 @Controller
 public class AuthConsentConfirmController {
@@ -49,6 +52,7 @@ public class AuthConsentConfirmController {
     @NotNull
     private RedirectView rejectConsent(TaraSession taraSession) {
         String requestUrl = authConfigurationProperties.getHydraService().getRejectConsentUrl() + "?consent_challenge=" + taraSession.getConsentChallenge();
+        log.info("Consent rejected: {}", value("url.full", requestUrl));
         Map<String, String> requestParams = new HashMap<>();
         requestParams.put("error", "user_cancel");
         requestParams.put("error_debug", "Consent not given. User canceled the authentication process.");
@@ -60,6 +64,7 @@ public class AuthConsentConfirmController {
     @NotNull
     private RedirectView acceptConsent(TaraSession taraSession) {
         String requestUrl = authConfigurationProperties.getHydraService().getAcceptConsentUrl() + "?consent_challenge=" + taraSession.getConsentChallenge();
+        log.info("Consent accepted: {}", value("url.full", requestUrl));
         HttpEntity<ConsentUtils.AcceptConsentRequest> requestEntity = ConsentUtils.createRequestBody(taraSession);
         return getRedirectView(taraSession, CONSENT_GIVEN, requestUrl, requestEntity);
     }

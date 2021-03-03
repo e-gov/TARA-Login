@@ -24,6 +24,9 @@ import java.util.*;
 import static java.util.Arrays.stream;
 import static java.util.List.of;
 import static java.util.stream.Collectors.toList;
+import static net.logstash.logback.argument.StructuredArguments.array;
+import static net.logstash.logback.argument.StructuredArguments.value;
+import static net.logstash.logback.marker.Markers.append;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 @Slf4j
@@ -32,6 +35,7 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 public class TaraSession implements Serializable {
     public static final String TARA_SESSION = "tara.session";
     private final String sessionId;
+
     private TaraAuthenticationState state;
     private LoginRequestInfo loginRequestInfo;
     private List<AuthenticationType> allowedAuthMethods;
@@ -39,6 +43,13 @@ public class TaraSession implements Serializable {
     private List<LegalPerson> legalPersonList;
     private LegalPerson selectedLegalPerson;
     private String consentChallenge;
+
+    public void setState(TaraAuthenticationState newState) {
+        log.info(append("tara.session.session_id", this.sessionId), "Tara session state change: {} -> {}",
+                value("tara.session.old_state", state != null ? state.name() : "NOT_SET"),
+                value("tara.session.state", newState.name()));
+        this.state = newState;
+    }
 
     @Data
     public static class AuthenticationResult implements Serializable {
@@ -93,7 +104,8 @@ public class TaraSession implements Serializable {
                     .filter(authMethod -> isAuthenticationMethodAllowedByRequestedLoa(authMethod, taraProperties))
                     .collect(toList());
 
-            log.debug("List of authentication methods to display on login page: {}", allowedAuthenticationMethodsList);
+            log.debug("List of authentication methods to display on login page: {}",
+                    array("tara.session.login_request_info.requested_scope", allowedAuthenticationMethodsList));
             return allowedAuthenticationMethodsList;
         }
 
@@ -119,10 +131,12 @@ public class TaraSession implements Serializable {
                     if (taraScope != null) {
                         allowedRequestedScopes.add(taraScope);
                     } else {
-                        log.warn("Unsupported scope value '{}', entry ignored!", requestedScope);
+                        log.warn("Unsupported scope value '{}', entry ignored!",
+                                value("tara.session.login_request_info.requested_scope", requestedScope));
                     }
                 } else {
-                    log.warn("Requested scope value '{}' is not allowed, entry ignored!", requestedScope);
+                    log.warn("Requested scope value '{}' is not allowed, entry ignored!",
+                            value("tara.session.login_request_info.requested_scope", requestedScope));
                 }
             }
             return allowedRequestedScopes;
@@ -149,8 +163,11 @@ public class TaraSession implements Serializable {
             boolean isAllowed = authenticationMethodLoa.ordinal() >= requestedLoa.ordinal();
 
             if (!isAllowed) {
-                log.warn("Ignoring authentication method since it's level of assurance is lower than requested. Authentication method: {} with assigned LoA: {}, requested level of assurance: {}",
-                        authenticationMethod, authenticationMethodLoa, requestedLoa);
+                log.warn(append("tara.session.login_request_info", this),
+                        "Ignoring authentication method since it's level of assurance is lower than requested. Authentication method: {} with assigned LoA: {}, requested level of assurance: {}",
+                        value("tara.session.login_request_info.authentication_method", authenticationMethod),
+                        value("tara.session.login_request_info.authentication_method_loa", authenticationMethodLoa),
+                        value("tara.session.login_request_info.requested_loa", requestedLoa));
             }
             return isAllowed;
         }

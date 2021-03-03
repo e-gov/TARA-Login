@@ -38,6 +38,8 @@ import static ee.ria.taraauthserver.error.ErrorCode.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.util.Map.of;
+import static net.logstash.logback.argument.StructuredArguments.value;
+import static net.logstash.logback.marker.Markers.append;
 import static org.springframework.context.i18n.LocaleContextHolder.getLocale;
 import static org.springframework.http.HttpStatus.BAD_GATEWAY;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -97,7 +99,7 @@ public class IdCardController {
 
     @NotNull
     private ResponseEntity<Map<String, String>> createErrorResponse(ErrorCode errorCode, String logMessage, HttpStatus httpStatus) {
-        log.warn("OCSP validation failed: " + logMessage);
+        log.warn(append("error.code", errorCode.name()), "OCSP validation failed: {}", value("error.message", logMessage));
         String errorMessage = messageSource.getMessage(errorCode.getMessage(), null, getLocale());
         return ResponseEntity.status(httpStatus).body(of("status", "ERROR", "errorMessage", errorMessage));
     }

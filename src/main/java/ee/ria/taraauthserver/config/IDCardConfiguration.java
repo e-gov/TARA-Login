@@ -17,6 +17,7 @@ import java.util.Map;
 
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
 import static java.util.stream.Collectors.toMap;
+import static net.logstash.logback.argument.StructuredArguments.value;
 
 @Slf4j
 @ConditionalOnProperty(value = "id-card.enabled", matchIfMissing = true)
@@ -44,7 +45,10 @@ public class IDCardConfiguration {
             Map<String, X509Certificate> trustedCertificates = params.getTrustAnchors().stream()
                     .collect(toMap(trustAnchor -> X509Utils.getSubjectCNFromCertificate(trustAnchor.getTrustedCert()), TrustAnchor::getTrustedCert));
             trustedCertificates.forEach((key, value) -> log.info("Trusted OCSP responder certificate added to configuration - CN: {}, serialnumber: {}, validFrom: {}, validTo: {}",
-                    key, value.getSerialNumber(), value.getNotBefore(), value.getNotAfter()));
+                    value("x509.subject.common_name", key),
+                    value("x509.serial_number", value.getSerialNumber().toString()),
+                    value("x509.not_before", value.getNotBefore()),
+                    value("x509.not_after", value.getNotAfter())));
             return trustedCertificates;
         } catch (Exception e) {
             throw new IllegalArgumentException("Failed to read trusted certificates from id-card truststore: " + e.getMessage(), e);
