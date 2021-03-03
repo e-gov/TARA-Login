@@ -1,6 +1,5 @@
 package ee.ria.taraauthserver.config;
 
-import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpClient;
@@ -12,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -82,7 +80,6 @@ public class EidasConfiguration {
         return new javax.cache.expiry.Duration(TimeUnit.SECONDS, eidasConfigurationProperties.getRelayStateCacheDurationInSeconds());
     }
 
-    @LoadBalanced
     @Bean(value = "eidasRestTemplate")
     public RestTemplate eidasRestTemplate(RestTemplateBuilder builder, SSLContext sslContext, EidasConfigurationProperties eidasConfigurationProperties) {
         HttpClient client = HttpClients.custom()

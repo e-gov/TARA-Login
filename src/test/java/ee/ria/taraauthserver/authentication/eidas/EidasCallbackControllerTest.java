@@ -220,9 +220,7 @@ class EidasCallbackControllerTest extends BaseTest {
                 .body("message", equalTo("Eidas autentimine ebaõnnestus."))
                 .body("error", equalTo("Bad Request"));
 
-        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
-        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
-
+        assertWarningIsLogged("Session has been invalidated: " + sessionFilter.getSession().getId());
         assertErrorIsLogged("User exception: 401 Unauthorized:");
     }
 
@@ -255,9 +253,7 @@ class EidasCallbackControllerTest extends BaseTest {
                 .body("message", equalTo("Kasutaja nõusolekut ei antud."))
                 .body("error", equalTo("Bad Request"));
 
-        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
-        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
-
+        assertWarningIsLogged("Session has been invalidated: " + sessionFilter.getSession().getId());
         assertErrorIsLogged("User exception: 401 Unauthorized:");
     }
 
@@ -291,8 +287,7 @@ class EidasCallbackControllerTest extends BaseTest {
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("error", equalTo("Internal Server Error"));
 
-        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
-        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
+        assertWarningIsLogged("Session has been invalidated: " + sessionFilter.getSession().getId());
     }
 
     @Test
@@ -325,8 +320,7 @@ class EidasCallbackControllerTest extends BaseTest {
                 .body("message", equalTo("Eidas teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti."))
                 .body("error", equalTo("Bad Gateway"));
 
-        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
-        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
+        assertWarningIsLogged("Session has been invalidated: " + sessionFilter.getSession().getId());
     }
 
     protected static void createEidasCountryStub(String response, int status) {
