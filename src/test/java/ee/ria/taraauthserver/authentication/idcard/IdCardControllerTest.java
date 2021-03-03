@@ -38,6 +38,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
+import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static ee.ria.taraauthserver.authentication.idcard.IdCardController.HEADER_SSL_CLIENT_CERT;
@@ -231,6 +232,7 @@ class IdCardControllerTest extends BaseTest {
         TaraSession.Client client = new TaraSession.Client();
         client.setScope("openid email");
         loginRequestInfo.setClient(client);
+        loginRequestInfo.setRequestedScopes(List.of("email", "openid"));
         authSession.setLoginRequestInfo(loginRequestInfo);
         session.setAttribute(TARA_SESSION, authSession);
         sessionRepository.save(session);
