@@ -5,11 +5,8 @@ import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.MDC;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
@@ -25,8 +22,6 @@ import static net.logstash.logback.argument.StructuredArguments.value;
 import static net.logstash.logback.marker.Markers.append;
 
 @Slf4j
-@Component
-@Order(Ordered.HIGHEST_PRECEDENCE + 1)
 public class SessionManagementFilter extends OncePerRequestFilter {
     private static final RequestMatcher AUTH_INIT_REQUEST_MATCHER = new AntPathRequestMatcher(AUTH_INIT_REQUEST_MAPPING);
     private static final RequestMatcher AUTH_REQUEST_MATCHER = new AntPathRequestMatcher("/auth/**");

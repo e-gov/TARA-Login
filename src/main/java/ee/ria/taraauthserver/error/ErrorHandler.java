@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.error;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.NotFoundException;
 import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -15,17 +16,23 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.validation.ConstraintViolationException;
 import java.io.IOException;
+import java.util.Locale;
 
+import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_LOCALE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static net.logstash.logback.marker.Markers.append;
+import static org.springframework.web.servlet.i18n.SessionLocaleResolver.LOCALE_SESSION_ATTRIBUTE_NAME;
 
 @Slf4j
 @ControllerAdvice
+@RequiredArgsConstructor
 public class ErrorHandler {
 
     private void invalidateSessionAndSendError(HttpServletRequest request, HttpServletResponse response, int status) throws IOException {
         HttpSession session = request.getSession(false);
         if (session != null) {
+            Locale locale = (Locale) session.getAttribute(LOCALE_SESSION_ATTRIBUTE_NAME);
+            request.setAttribute(ERROR_ATTR_LOCALE, locale);
             Object taraSession = session.getAttribute(TARA_SESSION);
             session.invalidate();
             log.warn(append(TARA_SESSION, taraSession), "Session has been invalidated: {}", session.getId());
