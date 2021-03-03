@@ -32,7 +32,7 @@ public class AuthConfigurationProperties {
     public static final Set<String> MASKED_FIELD_NAMES = new HashSet<>();
     public static final String DEFAULT_CONTENT_SECURITY_POLICY = "connect-src 'self'; default-src 'none'; font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; block-all-mixed-content";
 
-    @Pattern(regexp = "(et|en|ru)", message = "invalid default locale value, accepted values are: et, en, ru")
+    @Pattern(regexp = "(?i)(et|en|ru)", message = "invalid default locale value, accepted values are case insensitive: et, en, ru")
     private String defaultLocale = "et";
 
     @NotEmpty

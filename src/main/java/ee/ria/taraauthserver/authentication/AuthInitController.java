@@ -55,7 +55,7 @@ public class AuthInitController {
             @RequestParam(name = "login_challenge") @Size(max = 50)
             @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed") String loginChallenge,
             @RequestParam(name = "lang", required = false)
-            @Pattern(regexp = "(et|en|ru)", message = "supported values are: 'et', 'en', 'ru'") String language,
+            @Pattern(regexp = "(?i)(et|en|ru)", message = "supported values are case insensitive: 'et', 'en', 'ru'") String language,
             @SessionAttribute(value = TARA_SESSION) TaraSession newTaraSession) {
 
         TaraSession.LoginRequestInfo loginRequestInfo = fetchLoginRequestInfo(loginChallenge);
@@ -81,11 +81,25 @@ public class AuthInitController {
     private String getUiLanguage(String language, TaraSession taraSession) {
         if (isNotEmpty(language)) {
             return language;
-        } else if (taraSession.getLoginRequestInfo().getOidcContext().getUiLocales() != null && taraSession.getLoginRequestInfo().getOidcContext().getUiLocales().get(0).matches("(et|en|ru)")) {
-            return taraSession.getLoginRequestInfo().getOidcContext().getUiLocales().get(0);
+        } else if (hasValidRequestedLocale(taraSession)) {
+            return getAppropriateLocale(taraSession);
         } else {
             return taraProperties.getDefaultLocale();
         }
+    }
+
+    private boolean hasValidRequestedLocale(TaraSession taraSession) {
+        return taraSession.getLoginRequestInfo().getOidcContext().getUiLocales() != null
+                && getAppropriateLocale(taraSession) != null;
+    }
+
+    private String getAppropriateLocale(TaraSession taraSession) {
+        List<String> locales = taraSession.getLoginRequestInfo().getOidcContext().getUiLocales();
+        for (String locale : locales) {
+            if (locale.matches("(?i)(et|en|ru)"))
+                return locale;
+        }
+        return null;
     }
 
     private TaraSession.LoginRequestInfo fetchLoginRequestInfo(@RequestParam(name = "login_challenge") @Size(max = 50)
