@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.authentication.idcard;
 
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.OCSPServiceNotAvailableException;
@@ -138,7 +139,7 @@ public class IdCardController {
                 .map(TaraSession::getLoginRequestInfo)
                 .map(TaraSession.LoginRequestInfo::getRequestedScopes)
                 .orElse(null);
-        return scopes != null && scopes.contains("email");
+        return scopes != null && scopes.contains(TaraScope.EMAIL.getFormalName());
     }
 
     @NotNull

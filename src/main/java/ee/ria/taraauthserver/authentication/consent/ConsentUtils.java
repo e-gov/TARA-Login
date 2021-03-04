@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.authentication.consent;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.Data;
 import lombok.experimental.UtilityClass;
@@ -18,6 +19,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.util.List.of;
+import static net.logstash.logback.argument.StructuredArguments.value;
 
 @Slf4j
 @UtilityClass
@@ -35,13 +37,13 @@ public class ConsentUtils {
         profileAttributes.setDateOfBirth(taraSession.getAuthenticationResult().getDateOfBirth().toString());
 
         if (phoneNumberIsRequested(taraSession) && taraSession.getAuthenticationResult().getAmr().equals(AuthenticationType.MOBILE_ID)) {
-            profileAttributes.setPhoneNr(taraSession.getAuthenticationResult().getPhoneNumber());
-            profileAttributes.setPhoneNrVerified(true);
+            idToken.setPhoneNr(taraSession.getAuthenticationResult().getPhoneNumber());
+            idToken.setPhoneNrVerified(true);
         }
 
         if (emailIsRequested(taraSession) && taraSession.getAuthenticationResult().getAmr().equals(AuthenticationType.ID_CARD)) {
-            profileAttributes.setEmail(taraSession.getAuthenticationResult().getEmail());
-            profileAttributes.setEmailVerified(false);
+            idToken.setEmail(taraSession.getAuthenticationResult().getEmail());
+            idToken.setEmailVerified(false);
         }
 
         TaraSession.LegalPerson legalPerson = taraSession.getSelectedLegalPerson();
@@ -69,7 +71,7 @@ public class ConsentUtils {
         scope.add("openid");
 
         acceptConsentRequest.setGrantScope(scope);
-        log.info("accepting consent from: " + acceptConsentRequest);
+        log.info("accepting consent from: {}", value("tara.session.accept_consent_request", acceptConsentRequest));
         return new HttpEntity<>(acceptConsentRequest);
     }
 
@@ -93,12 +95,12 @@ public class ConsentUtils {
         return map;
     }
 
-    private boolean emailIsRequested(TaraSession taraSession) {
-        return taraSession.getLoginRequestInfo().getRequestedScopes().contains("email");
+    public boolean emailIsRequested(TaraSession taraSession) {
+        return taraSession.getLoginRequestInfo().getRequestedScopes().contains(TaraScope.EMAIL.getFormalName());
     }
 
-    private boolean phoneNumberIsRequested(TaraSession taraSession) {
-        return taraSession.getLoginRequestInfo().getRequestedScopes().contains("phone");
+    public boolean phoneNumberIsRequested(TaraSession taraSession) {
+        return taraSession.getLoginRequestInfo().getRequestedScopes().contains(TaraScope.PHONE.getFormalName());
     }
 
     @Data
@@ -117,6 +119,7 @@ public class ConsentUtils {
         }
 
         @Data
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         public static class IdToken {
             @JsonProperty("profile_attributes")
             private ProfileAttributes profileAttributes;
@@ -126,6 +129,14 @@ public class ConsentUtils {
             private List<String> amr;
             @JsonProperty("state")
             private String state;
+            @JsonProperty("email")
+            private String email;
+            @JsonProperty("email_verified")
+            private Boolean emailVerified;
+            @JsonProperty("phone_number")
+            private String phoneNr;
+            @JsonProperty("phone_number_verified")
+            private Boolean phoneNrVerified;
         }
 
         @Data
@@ -139,14 +150,6 @@ public class ConsentUtils {
             private String dateOfBirth;
             @JsonProperty("represents_legal_person")
             private RepresentsLegalPerson representsLegalPerson;
-            @JsonProperty("email")
-            private String email;
-            @JsonProperty("email_verified")
-            private Boolean emailVerified;
-            @JsonProperty("phone_number")
-            private String phoneNr;
-            @JsonProperty("phone_number_verified")
-            private Boolean phoneNrVerified;
         }
 
         @Data
