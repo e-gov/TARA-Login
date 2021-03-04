@@ -554,6 +554,26 @@ class AuthInitControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
+    void authInit_NoRequestedScope() {
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_no_requested_scope.json")));
+
+        given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("incident_nr", notNullValue())
+                .body("message", equalTo("Päringus puudub scope parameeter."));
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
     void authInit_OidcResponseBodyContainsInvalidParameters() {
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()

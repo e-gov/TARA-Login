@@ -46,7 +46,8 @@ public enum ErrorCode {
     INVALID_LEGAL_PERSON("label.legal-person.error.invalid-legal-person"),
     INVALID_OIDC_CLIENT("message.error.invalid-oidc-client"),
     INVALID_OIDC_REQUEST("message.error.invalid-oidc-request"),
-    LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE("label.legal-person.error.service-not-available");
+    LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE("label.legal-person.error.service-not-available"),
+    MISSING_SCOPE("message.error.missing-scope");
 
     private final String message;
 }
