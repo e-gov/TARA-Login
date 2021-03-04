@@ -55,7 +55,7 @@ public class AuthInitController {
             @RequestParam(name = "login_challenge") @Size(max = 50)
             @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed") String loginChallenge,
             @RequestParam(name = "lang", required = false)
-            @Pattern(regexp = "(?i)(et|en|ru)", message = "supported values are case insensitive: 'et', 'en', 'ru'") String language,
+            @Pattern(regexp = "(et|en|ru|ET|EN|RU)", message = "supported values are: 'et', 'en', 'ru', 'ET', 'EN', 'RU'") String language,
             @SessionAttribute(value = TARA_SESSION) TaraSession newTaraSession) {
 
         TaraSession.LoginRequestInfo loginRequestInfo = fetchLoginRequestInfo(loginChallenge);
@@ -96,7 +96,7 @@ public class AuthInitController {
     private String getAppropriateLocale(TaraSession taraSession) {
         List<String> locales = taraSession.getLoginRequestInfo().getOidcContext().getUiLocales();
         for (String locale : locales) {
-            if (locale.matches("(?i)(et|en|ru)"))
+            if (locale.matches("(et|en|ru|ET|EN|RU)"))
                 return locale;
         }
         return null;

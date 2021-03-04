@@ -135,7 +135,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("authInit.language: supported values are: 'et', 'en', 'ru'"))
+                .body("message", equalTo("authInit.language: supported values are: 'et', 'en', 'ru', 'ET', 'EN', 'RU'"))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue())
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
