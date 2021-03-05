@@ -230,6 +230,8 @@ public class TaraSession implements Serializable {
         private Institution institution = new Institution();
         @JsonProperty("smartid_settings")
         private SmartIdSettings smartIdSettings;
+        @JsonProperty("mid_settings")
+        private SmartIdSettings midSettings;
     }
 
     @Data

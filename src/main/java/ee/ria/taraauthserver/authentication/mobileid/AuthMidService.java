@@ -7,11 +7,14 @@ import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.sk.mid.*;
 import ee.sk.mid.exception.*;
+import ee.sk.mid.rest.MidLoggingFilter;
 import ee.sk.mid.rest.dao.MidSessionStatus;
 import ee.sk.mid.rest.dao.request.MidAuthenticationRequest;
 import ee.sk.mid.rest.dao.response.MidAuthenticationResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -20,10 +23,12 @@ import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 import org.springframework.stereotype.Service;
 
+import javax.net.ssl.SSLContext;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.ProcessingException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
@@ -70,6 +75,9 @@ public class AuthMidService {
     private MidClient midClient;
 
     @Autowired
+    private SSLContext sslContext;
+
+    @Autowired
     private SessionRepository<Session> sessionRepository;
 
     @Autowired
@@ -103,7 +111,7 @@ public class AuthMidService {
         String translatedShortName = taraSession.getOidcClientTranslatedShortName();
 
         MidAuthenticationRequest midRequest = createMidAuthenticationRequest(idCode, telephoneNumber, authenticationHash, translatedShortName);
-        MidAuthenticationResponse response = midClient.getMobileIdConnector().authenticate(midRequest);
+        MidAuthenticationResponse response = getAppropriateMidClient(taraSession).getMobileIdConnector().authenticate(midRequest);
         updateAuthSessionWithInitResponse(taraSession, response);
         return response;
     }
@@ -218,5 +226,55 @@ public class AuthMidService {
 
     private ErrorCode translateExceptionToErrorCode(Throwable ex) {
         return errorMap.getOrDefault(ex.getClass(), ERROR_GENERAL);
+    }
+
+    private MidClient getAppropriateMidClient(TaraSession taraSession) {
+        String relyingPartyUuid = getRelyingPartyUuidFromClientRequest(taraSession);
+        String relyingPartyName = getRelyingPartyNameFromClientRequest(taraSession);
+        if (relyingPartyUuid == null || relyingPartyName == null)
+            return midClient;
+        else
+            return createNewMidClient(relyingPartyUuid, relyingPartyName);
+    }
+
+    private MidClient createNewMidClient(String relyingPartyUuid, String relyingPartyName) {
+        return MidClient.newBuilder()
+                .withHostUrl(midAuthConfigurationProperties.getHostUrl())
+                .withRelyingPartyUUID(relyingPartyUuid)
+                .withRelyingPartyName(relyingPartyName)
+                .withTrustSslContext(sslContext)
+                .withNetworkConnectionConfig(createMidClientConfig())
+                .withLongPollingTimeoutSeconds(midAuthConfigurationProperties.getLongPollingTimeoutSeconds())
+                .build();
+    }
+
+    private ClientConfig createMidClientConfig() {
+        ClientConfig clientConfig = new ClientConfig();
+        clientConfig.property(ClientProperties.CONNECT_TIMEOUT, midAuthConfigurationProperties.getConnectionTimeoutMilliseconds());
+        clientConfig.property(ClientProperties.READ_TIMEOUT, midAuthConfigurationProperties.getReadTimeoutMilliseconds());
+        clientConfig.register(new MidLoggingFilter());
+        return clientConfig;
+    }
+
+    private String getRelyingPartyUuidFromClientRequest(TaraSession taraSession) {
+        return Optional.of(taraSession)
+                .map(TaraSession::getLoginRequestInfo)
+                .map(TaraSession.LoginRequestInfo::getClient)
+                .map(TaraSession.Client::getMetaData)
+                .map(TaraSession.MetaData::getOidcClient)
+                .map(TaraSession.OidcClient::getSmartIdSettings)
+                .map(TaraSession.SmartIdSettings::getRelyingPartyUuid)
+                .orElse(null);
+    }
+
+    private String getRelyingPartyNameFromClientRequest(TaraSession taraSession) {
+        return Optional.of(taraSession)
+                .map(TaraSession::getLoginRequestInfo)
+                .map(TaraSession.LoginRequestInfo::getClient)
+                .map(TaraSession.Client::getMetaData)
+                .map(TaraSession.MetaData::getOidcClient)
+                .map(TaraSession.OidcClient::getSmartIdSettings)
+                .map(TaraSession.SmartIdSettings::getRelyingPartyUuid)
+                .orElse(null);
     }
 }
