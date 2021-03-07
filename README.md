@@ -414,6 +414,7 @@ Ignite is used for storing user’s session information.
 | `tara.alerts.connection-timeout-milliseconds` | No | Connection timeout in milliseconds. Default value `3000`|
 | `tara.alerts.read-timeout-milliseconds` | No | Read timeout in milliseconds. Default value `3000`|
 | `tara.alerts.refresh-alerts-interval-in-milliseconds` | No | How often alerts are requested from the configured alerts url. Default. `600000` |
+| `tara.alerts.alerts-cache-duration-in-seconds` | No | How long alerts are kept in cache. Default. `3600` |
 
 
 ## APPENDIX

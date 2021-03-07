@@ -20,4 +20,6 @@ public class AlertsConfigurationProperties {
 
     private int refreshAlertsIntervalInMilliseconds;
 
+    private int alertsCacheDurationInSeconds = 3600;
+
 }

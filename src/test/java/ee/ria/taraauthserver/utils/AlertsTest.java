@@ -13,7 +13,6 @@ import javax.cache.Cache;
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.MOCK_CLIENT_NAME;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
