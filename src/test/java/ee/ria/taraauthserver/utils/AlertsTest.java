@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.utils;
 
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.AlertsConfig;
+import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.Matchers;
@@ -13,6 +14,7 @@ import javax.cache.Cache;
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.*;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,7 +27,7 @@ public class AlertsTest extends BaseTest {
     ThymeleafSupport thymeleafSupport;
 
     @Autowired
-    private Cache<String, List<AlertsConfig.Alert>> alertsCache;
+    private Cache<String, List<Alert>> alertsCache;
 
     @Test
     void alerts_test() {

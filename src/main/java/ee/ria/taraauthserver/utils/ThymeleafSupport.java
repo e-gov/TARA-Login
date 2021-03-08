@@ -1,8 +1,5 @@
 package ee.ria.taraauthserver.utils;
 
-import ee.ria.taraauthserver.config.AlertsConfig;
-import ee.ria.taraauthserver.config.TaraAuthServerConfiguration;
-import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
@@ -19,14 +16,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import static ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.Alert;
+
 @Slf4j
 public class ThymeleafSupport {
 
     @Autowired
-    AuthConfigurationProperties configurationProperties;
-
-    @Autowired
-    private Cache<String, List<AlertsConfig.Alert>> alertsCache;
+    private Cache<String, List<Alert>> alertsCache;
 
     public boolean isNotLocale(String code, Locale locale) {
         return !locale.getLanguage().equalsIgnoreCase(code);
@@ -87,15 +83,15 @@ public class ThymeleafSupport {
     }
 
     public String getAlertIfAvailable(AuthenticationType authenticationType) {
-        List<AlertsConfig.Alert> alerts = alertsCache.get("alertsCache");
+        List<Alert> alerts = alertsCache.get("alertsCache");
         if (alerts != null)
-            for (AlertsConfig.Alert alert : alerts)
+            for (Alert alert : alerts)
                 if (authenticationTypeHasValidAlert(alert, authenticationType))
                     return alert.getLoginPageNotificationSettings().getNotificationText();
         return null;
     }
 
-    private boolean authenticationTypeHasValidAlert(AlertsConfig.Alert alert, AuthenticationType authenticationType) {
+    private boolean authenticationTypeHasValidAlert(Alert alert, AuthenticationType authenticationType) {
         return alert.getLoginPageNotificationSettings().getAuthMethods().contains(authenticationType.getAmrName())
                 && alert.getLoginPageNotificationSettings().isNotifyClientsOnTaraLoginPage()
                 && alert.getStartTime().isBefore(LocalDate.now())

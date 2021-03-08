@@ -1,7 +1,5 @@
 package ee.ria.taraauthserver.utils;
 
-import org.hamcrest.Matchers;
-import ee.ria.taraauthserver.config.AlertsConfig;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
@@ -9,14 +7,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import javax.cache.Cache;
 import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.List;
@@ -24,8 +20,6 @@ import java.util.Locale;
 
 import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
-import static org.awaitility.Awaitility.await;
-import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j

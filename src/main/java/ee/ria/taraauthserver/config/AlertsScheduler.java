@@ -15,6 +15,8 @@ import javax.cache.Cache;
 import java.util.Arrays;
 import java.util.List;
 
+import static ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.Alert;
+
 @Slf4j
 @Configuration
 @EnableScheduling
@@ -24,7 +26,7 @@ public class AlertsScheduler {
     AlertsConfigurationProperties alertsConfigurationProperties;
 
     @Autowired
-    private Cache<String, List<AlertsConfig.Alert>> alertsCache;
+    private Cache<String, List<Alert>> alertsCache;
 
     @Autowired
     @Qualifier("alertsRestTemplate")
@@ -35,8 +37,8 @@ public class AlertsScheduler {
         try {
             String url = alertsConfigurationProperties.getHostUrl();
             log.info("requesting alerts from: " + alertsConfigurationProperties.getHostUrl());
-            ResponseEntity<AlertsConfig.Alert[]> response = alertsRestTemplate.exchange(url, HttpMethod.GET, null, AlertsConfig.Alert[].class);
-            AlertsConfig.Alert[] alerts = response.getBody();
+            ResponseEntity<Alert[]> response = alertsRestTemplate.exchange(url, HttpMethod.GET, null, Alert[].class);
+            Alert[] alerts = response.getBody();
             alertsCache.put("alertsCache", Arrays.asList(alerts));
         } catch (Exception e) {
             log.error("Failed to update alerts - " + e.getMessage());

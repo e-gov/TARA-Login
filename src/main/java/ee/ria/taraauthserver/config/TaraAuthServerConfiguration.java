@@ -8,8 +8,6 @@ import nz.net.ultraq.thymeleaf.LayoutDialect;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.ignite.Ignite;
-import org.apache.ignite.configuration.CacheConfiguration;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.MessageSource;
@@ -26,7 +24,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 import org.springframework.web.servlet.i18n.SessionLocaleResolver;
 
-import javax.cache.Cache;
 import javax.net.ssl.SSLContext;
 import javax.validation.Validator;
 import java.io.IOException;
@@ -36,11 +33,8 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.time.Duration;
-import java.util.List;
 import java.util.Locale;
 
-import static org.apache.ignite.cache.CacheAtomicityMode.ATOMIC;
-import static org.apache.ignite.cache.CacheMode.PARTITIONED;
 import static org.springframework.util.ResourceUtils.getFile;
 
 @Slf4j

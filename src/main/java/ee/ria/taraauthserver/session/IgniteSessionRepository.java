@@ -15,7 +15,6 @@ import java.io.Serializable;
 import java.time.Duration;
 
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
-import static javax.management.Query.value;
 import static net.logstash.logback.marker.Markers.append;
 
 /**

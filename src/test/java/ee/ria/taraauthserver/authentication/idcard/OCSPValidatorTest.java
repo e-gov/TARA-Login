@@ -10,6 +10,7 @@ import com.github.tomakehurst.wiremock.extension.ResponseTransformer;
 import com.github.tomakehurst.wiremock.http.Request;
 import com.github.tomakehurst.wiremock.http.Response;
 import ee.ria.taraauthserver.config.TaraAuthServerConfiguration;
+import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties;
 import ee.ria.taraauthserver.error.exceptions.OCSPServiceNotAvailableException;
 import ee.ria.taraauthserver.error.exceptions.OCSPValidationException;
 import lombok.Builder;
@@ -46,6 +47,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.client.RestTemplate;
 
+import javax.cache.Cache;
 import javax.security.auth.x500.X500PrivateCredential;
 import java.io.IOException;
 import java.io.InputStream;
@@ -63,6 +65,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.*;
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp;
 import static java.util.List.of;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -100,6 +103,9 @@ public class OCSPValidatorTest {
 
     @MockBean
     private OCSPConfigurationResolver ocspConfigurationResolver;
+
+    @MockBean
+    private Cache<String, List<Alert>> alertsCache;
 
     @Autowired
     private OCSPValidator ocspValidator;

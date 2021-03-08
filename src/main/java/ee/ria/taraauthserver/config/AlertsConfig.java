@@ -31,30 +31,9 @@ import static org.apache.ignite.cache.CacheMode.PARTITIONED;
 @Configuration
 public class AlertsConfig {
 
-    @Data
-    @RequiredArgsConstructor
-    public static class Alert implements Serializable {
-        @JsonProperty("start_time")
-        LocalDate startTime;
-        @JsonProperty("end_time")
-        LocalDate endTime;
-        @JsonProperty("login_page_notification_settings")
-        LoginPageNotificationSettings loginPageNotificationSettings;
-    }
-
-    @Data
-    public static class LoginPageNotificationSettings {
-        @JsonProperty("notify_clients_on_tara_login_page")
-        boolean notifyClientsOnTaraLoginPage;
-        @JsonProperty("notification_text")
-        String notificationText;
-        @JsonProperty("display_only_for_authmethods")
-        List<String> authMethods;
-    }
-
     @Bean
-    public Cache<String, List<AlertsConfig.Alert>> alertsCache(Ignite igniteInstance, AlertsConfigurationProperties alertsConfigurationProperties) {
-        return igniteInstance.getOrCreateCache(new CacheConfiguration<String, List<AlertsConfig.Alert>>()
+    public Cache<String, List<AlertsConfigurationProperties.Alert>> alertsCache(Ignite igniteInstance, AlertsConfigurationProperties alertsConfigurationProperties) {
+        return igniteInstance.getOrCreateCache(new CacheConfiguration<String, List<AlertsConfigurationProperties.Alert>>()
                 .setName("alertsCache")
                 .setCacheMode(PARTITIONED)
                 .setAtomicityMode(ATOMIC)
