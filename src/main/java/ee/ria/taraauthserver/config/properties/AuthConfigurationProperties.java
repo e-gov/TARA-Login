@@ -126,6 +126,9 @@ public class AuthConfigurationProperties {
         @NotNull
         private String relyingPartyName;
 
+        @NotNull
+        private String defaultShortName;
+
         @Pattern(regexp = "(SHA256|SHA384|SHA512)", message = "invalid hash value, accepted values are: SHA256, SHA384, SHA512")
         private String hashType = "SHA256";
 
@@ -149,6 +152,8 @@ public class AuthConfigurationProperties {
 
         private String truststoreType = "PKCS12";
 
+        private boolean ocspEnabled = true;
+
         @NotNull
         private String truststorePassword;
 
@@ -160,7 +165,7 @@ public class AuthConfigurationProperties {
 
         @PostConstruct
         public void validateConfiguration() {
-            if (isEnabled()) {
+            if (this.ocspEnabled) {
                 Assert.notEmpty(ocsp, "At least one ocsp configuration must be defined!");
                 Set<String> duplicateNames = getFindDuplicateConfigurations();
                 Assert.isTrue(duplicateNames.isEmpty(), "Multiple OCSP configurations detected for issuer's with CN's: " + duplicateNames + ". Please check your configuration!");

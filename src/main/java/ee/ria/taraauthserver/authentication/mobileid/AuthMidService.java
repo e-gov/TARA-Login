@@ -108,9 +108,9 @@ public class AuthMidService {
 
     private MidAuthenticationResponse initMidAuthentication(TaraSession taraSession, String idCode, String telephoneNumber, MidAuthenticationHashToSign authenticationHash) {
         taraSession.setState(INIT_MID);
-        String translatedShortName = taraSession.getOidcClientTranslatedShortName();
+        String shortName = Optional.ofNullable(taraSession.getOidcClientTranslatedShortName()).orElse(midAuthConfigurationProperties.getDefaultShortName());
 
-        MidAuthenticationRequest midRequest = createMidAuthenticationRequest(idCode, telephoneNumber, authenticationHash, translatedShortName);
+        MidAuthenticationRequest midRequest = createMidAuthenticationRequest(idCode, telephoneNumber, authenticationHash, shortName);
         MidAuthenticationResponse response = getAppropriateMidClient(taraSession).getMobileIdConnector().authenticate(midRequest);
         updateAuthSessionWithInitResponse(taraSession, response);
         return response;

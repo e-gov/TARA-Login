@@ -54,6 +54,7 @@ tara:
   auth-methods:
     id-card:
       enabled: true
+      ocsp-enabled: true
       level-of-assurance: HIGH
       truststore-path: file:src/test/resources/idcard-truststore-test.p12
       truststore-type: PKCS12
@@ -82,6 +83,7 @@ tara:
       host-url: https://localhost:9877/mid-api
       relying-party-uuid: 00000000-0000-0000-0000-000000000000
       relying-party-name: DEMO
+      default-short-name: default short name
       truststore-type: PKCS12
       truststore-password: changeit
       connection-timeout-milliseconds: 1000
@@ -96,6 +98,7 @@ tara:
       truststore-password: changeit
       relying-party-uuid: 00000000-0000-0000-0000-000000000000
       relying-party-name: DEMO
+      default-short-name: default short name
       connection-timeout-milliseconds: 1000
       read-timeout-milliseconds: 1000
 

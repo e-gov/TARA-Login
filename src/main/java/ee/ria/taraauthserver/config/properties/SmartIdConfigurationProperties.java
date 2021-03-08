@@ -26,6 +26,9 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
     private String relyingPartyName;
 
     @NotNull
+    private String defaultShortName;
+
+    @NotNull
     private String hostUrl;
 
     @NotNull

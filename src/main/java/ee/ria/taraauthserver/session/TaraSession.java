@@ -115,10 +115,24 @@ public class TaraSession implements Serializable {
                     .collect(toList());
 
             if (isEmpty(clientRequestedAuthMethods)) {
-                return taraProperties.getDefaultAuthenticationMethods();
+                return getAllowedDefaultAuthenticationTypes(taraProperties);
             } else {
                 return clientRequestedAuthMethods;
             }
+        }
+
+        private List<AuthenticationType> getAllowedDefaultAuthenticationTypes(AuthConfigurationProperties taraProperties) {
+            List<AuthenticationType> allowedAuthenticationTypes = new ArrayList<>();
+            List<String> allowedScopes = of(client.getScope().split(" "));
+            for (AuthenticationType authType : taraProperties.getDefaultAuthenticationMethods()) {
+                if (allowedScopes.contains(authType.getScope().getFormalName())) {
+                    allowedAuthenticationTypes.add(authType);
+                } else {
+                    log.warn("Requested scope value '{}' is not allowed, entry ignored!",
+                            value("tara.session.login_request_info.requested_scope", authType.getScope().getFormalName()));
+                }
+            }
+            return allowedAuthenticationTypes;
         }
 
         private List<TaraScope> getRequestedTaraScopes() {
