@@ -196,7 +196,7 @@ public class TaraSession implements Serializable {
         @JsonProperty("acr_values")
         private List<String> acrValues;
         @JsonProperty("ui_locales")
-        private List<String> uiLocales;
+        private List<String> uiLocales = new ArrayList<>();
     }
 
     @Data
