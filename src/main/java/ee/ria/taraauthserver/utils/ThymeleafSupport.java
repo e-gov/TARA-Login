@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.utils;
 
+import ee.ria.taraauthserver.alerts.AlertsScheduler;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
@@ -10,19 +11,15 @@ import org.springframework.util.Assert;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponents;
 
-import javax.cache.Cache;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
-import static ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.Alert;
 
 @Slf4j
 public class ThymeleafSupport {
 
     @Autowired
-    private Cache<String, List<Alert>> alertsCache;
+    private AlertsScheduler alertsScheduler;
 
     public boolean isNotLocale(String code, Locale locale) {
         return !locale.getLanguage().equalsIgnoreCase(code);
@@ -83,19 +80,6 @@ public class ThymeleafSupport {
     }
 
     public String getAlertIfAvailable(AuthenticationType authenticationType) {
-        List<Alert> alerts = alertsCache.get("alertsCache");
-        if (alerts != null)
-            for (Alert alert : alerts)
-                if (authenticationTypeHasValidAlert(alert, authenticationType))
-                    return alert.getLoginPageNotificationSettings().getNotificationText();
-        return null;
+        return alertsScheduler.getFirstAlert(authenticationType);
     }
-
-    private boolean authenticationTypeHasValidAlert(Alert alert, AuthenticationType authenticationType) {
-        return alert.getLoginPageNotificationSettings().getAuthMethods().contains(authenticationType.getAmrName())
-                && alert.getLoginPageNotificationSettings().isNotifyClientsOnTaraLoginPage()
-                && alert.getStartTime().isBefore(LocalDate.now())
-                && alert.getEndTime().isAfter(LocalDate.now());
-    }
-
 }

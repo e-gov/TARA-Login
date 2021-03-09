@@ -1,10 +1,9 @@
-package ee.ria.taraauthserver.utils;
+package ee.ria.taraauthserver.alerts;
 
 
 import ee.ria.taraauthserver.BaseTest;
-import ee.ria.taraauthserver.config.AlertsConfig;
-import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.utils.ThymeleafSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
@@ -14,7 +13,8 @@ import javax.cache.Cache;
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.*;
+import static ee.ria.taraauthserver.alerts.AlertsScheduler.ALERTS_CACHE_KEY;
+import static ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.Alert;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -34,7 +34,7 @@ public class AlertsTest extends BaseTest {
         createAlertsStub("mock_responses/alerts/alerts-response.json", 200);
 
         await().atMost(FIVE_SECONDS)
-                .until(() -> alertsCache.get("alertsCache"), Matchers.notNullValue());
+                .until(() -> alertsCache.get(ALERTS_CACHE_KEY), Matchers.notNullValue());
 
         String alertMessage = thymeleafSupport.getAlertIfAvailable(AuthenticationType.ID_CARD);
         String alertMessage2 = thymeleafSupport.getAlertIfAvailable(AuthenticationType.MOBILE_ID);
@@ -47,7 +47,7 @@ public class AlertsTest extends BaseTest {
         createAlertsStub("mock_responses/alerts/alerts-response-expired-alert.json", 200);
 
         await().atMost(FIVE_SECONDS)
-                .until(() -> alertsCache.get("alertsCache"), Matchers.notNullValue());
+                .until(() -> alertsCache.get(ALERTS_CACHE_KEY), Matchers.notNullValue());
 
         String alertMessage = thymeleafSupport.getAlertIfAvailable(AuthenticationType.ID_CARD);
         String alertMessage2 = thymeleafSupport.getAlertIfAvailable(AuthenticationType.MOBILE_ID);
@@ -60,7 +60,7 @@ public class AlertsTest extends BaseTest {
         createAlertsStub("mock_responses/alerts/alerts-response-not-yet-valid-alert.json", 200);
 
         await().atMost(FIVE_SECONDS)
-                .until(() -> alertsCache.get("alertsCache"), Matchers.notNullValue());
+                .until(() -> alertsCache.get(ALERTS_CACHE_KEY), Matchers.notNullValue());
 
         String alertMessage = thymeleafSupport.getAlertIfAvailable(AuthenticationType.ID_CARD);
         assertNull(alertMessage);
@@ -71,7 +71,7 @@ public class AlertsTest extends BaseTest {
         createAlertsStub("mock_responses/alerts/alerts-response-notify-is-false-alert.json", 200);
 
         await().atMost(FIVE_SECONDS)
-                .until(() -> alertsCache.get("alertsCache"), Matchers.notNullValue());
+                .until(() -> alertsCache.get(ALERTS_CACHE_KEY), Matchers.notNullValue());
 
         String alertMessage = thymeleafSupport.getAlertIfAvailable(AuthenticationType.ID_CARD);
         assertNull(alertMessage);
