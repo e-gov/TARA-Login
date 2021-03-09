@@ -1,5 +1,7 @@
 package ee.ria.taraauthserver.config;
 
+import ee.ria.taraauthserver.security.RequestCorrelationFilter;
+import ee.ria.taraauthserver.security.SessionManagementFilter;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.Ignition;
 import org.apache.ignite.configuration.CacheConfiguration;
@@ -9,6 +11,8 @@ import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.apache.ignite.ssl.SslContextFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.info.BuildProperties;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.session.Session;
@@ -82,5 +86,21 @@ public class SessionConfiguration {
         serializer.setUseBase64Encoding(false);
         serializer.setCookieName(TARA_SESSION_COOKIE_NAME);
         return serializer;
+    }
+
+    @Bean
+    public FilterRegistrationBean<SessionManagementFilter> sessionManagementFilter(@Value("${spring.session.servlet.filter-order}") Integer filterOrder) {
+        FilterRegistrationBean<SessionManagementFilter> registrationBean = new FilterRegistrationBean<>();
+        registrationBean.setFilter(new SessionManagementFilter());
+        registrationBean.setOrder(filterOrder + 1);
+        return registrationBean;
+    }
+
+    @Bean
+    public FilterRegistrationBean<RequestCorrelationFilter> requestCorrelationFilter(@Value("${spring.session.servlet.filter-order}") Integer filterOrder, BuildProperties buildProperties) {
+        FilterRegistrationBean<RequestCorrelationFilter> registrationBean = new FilterRegistrationBean<>();
+        registrationBean.setFilter(new RequestCorrelationFilter(buildProperties));
+        registrationBean.setOrder(filterOrder + 2);
+        return registrationBean;
     }
 }

@@ -54,6 +54,7 @@ public class TaraSession implements Serializable {
 
     @Data
     public static class AuthenticationResult implements Serializable {
+        private String email;
         private String idCode;
         private String country;
         private String firstName;
