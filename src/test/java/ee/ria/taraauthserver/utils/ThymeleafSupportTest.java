@@ -17,6 +17,7 @@ import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
@@ -66,26 +67,16 @@ class ThymeleafSupportTest {
     }
 
     @Test
-    void getServiceName_returnsNullWhenNoClientNameSet() {
+    void getServiceName_returnsDefaultWhenNoClientNameSet() {
         TaraSession.LoginRequestInfo mockLoginRequestInfo = buildMockLoginRequestInfo();
-        mockLoginRequestInfo.getClient().getMetaData().getOidcClient().setName(null);
+        mockLoginRequestInfo.getClient().getMetaData().getOidcClient().setNameTranslations(new HashMap<>());
         buildMockHttpSession(mockLoginRequestInfo);
         assertNull(thymeleafSupport.getServiceName());
     }
 
     @Test
-    void getServiceName_returnsClientNameWhenClientNameSetWithoutTranslations() {
-        TaraSession.LoginRequestInfo mockLoginRequestInfo = buildMockLoginRequestInfo();
-        mockLoginRequestInfo.getClient().getMetaData().getOidcClient().setName(MOCK_CLIENT_NAME);
-        mockLoginRequestInfo.getClient().getMetaData().getOidcClient().setNameTranslations(new HashMap<>());
-        buildMockHttpSession(mockLoginRequestInfo);
-        assertEquals(MOCK_CLIENT_NAME, thymeleafSupport.getServiceName());
-    }
-
-    @Test
     void getServiceName_returnsClientNameWithTranslationWhenTranslationExists() {
         TaraSession.LoginRequestInfo mockLoginRequestInfo = buildMockLoginRequestInfo();
-        mockLoginRequestInfo.getClient().getMetaData().getOidcClient().setName(MOCK_CLIENT_NAME);
         buildMockHttpSession(mockLoginRequestInfo);
         assertEquals(MOCK_CLIENT_NAME_EN, thymeleafSupport.getServiceName());
     }

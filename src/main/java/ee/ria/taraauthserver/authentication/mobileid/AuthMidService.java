@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.authentication.mobileid;
 
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.MidAuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.error.ErrorCode;
@@ -87,6 +88,9 @@ public class AuthMidService {
     private MidAuthConfigurationProperties midAuthConfigurationProperties;
 
     @Autowired
+    private AuthConfigurationProperties authConfigurationProperties;
+
+    @Autowired
     private Executor taskExecutor;
 
     public MidAuthenticationHashToSign startMidAuthSession(TaraSession taraSession, String idCode, String telephoneNumber) {
@@ -108,7 +112,7 @@ public class AuthMidService {
 
     private MidAuthenticationResponse initMidAuthentication(TaraSession taraSession, String idCode, String telephoneNumber, MidAuthenticationHashToSign authenticationHash) {
         taraSession.setState(INIT_MID);
-        String shortName = Optional.ofNullable(taraSession.getOidcClientTranslatedShortName()).orElse(midAuthConfigurationProperties.getDefaultShortName());
+        String shortName = Optional.ofNullable(taraSession.getOidcClientTranslatedShortName()).orElse(authConfigurationProperties.getHydraService().getDefaultShortName());
 
         MidAuthenticationRequest midRequest = createMidAuthenticationRequest(idCode, telephoneNumber, authenticationHash, shortName);
         MidAuthenticationResponse response = getAppropriateMidClient(taraSession).getMobileIdConnector().authenticate(midRequest);

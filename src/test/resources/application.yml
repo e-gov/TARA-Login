@@ -46,6 +46,7 @@ tara:
     accept-consent-url: https://localhost:9877/oauth2/auth/requests/consent/accept
     reject-consent-url: https://localhost:9877/oauth2/auth/requests/consent/reject
     health-url: https://localhost:9877/health/ready
+    default-short-name: default short name
     request-timeout-in-seconds: 1
     max-connections-total: 3
 
@@ -83,7 +84,6 @@ tara:
       host-url: https://localhost:9877/mid-api
       relying-party-uuid: 00000000-0000-0000-0000-000000000000
       relying-party-name: DEMO
-      default-short-name: default short name
       truststore-type: PKCS12
       truststore-password: changeit
       connection-timeout-milliseconds: 1000
@@ -98,7 +98,6 @@ tara:
       truststore-password: changeit
       relying-party-uuid: 00000000-0000-0000-0000-000000000000
       relying-party-name: DEMO
-      default-short-name: default short name
       connection-timeout-milliseconds: 1000
       read-timeout-milliseconds: 1000
 

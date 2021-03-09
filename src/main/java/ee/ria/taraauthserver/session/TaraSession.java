@@ -8,6 +8,7 @@ import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.util.Assert;
 
@@ -33,6 +34,7 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 @Data
 @RequiredArgsConstructor
 public class TaraSession implements Serializable {
+
     public static final String TARA_SESSION = "tara.session";
     private final String sessionId;
 
@@ -49,6 +51,24 @@ public class TaraSession implements Serializable {
                 value("tara.session.old_state", state != null ? state.name() : "NOT_SET"),
                 value("tara.session.state", newState.name()));
         this.state = newState;
+    }
+
+    public String getClientName() {
+        Map<String, String> nameTranslations = getNameTranslations();
+        if (nameTranslations == null)
+            return null;
+        else
+            return nameTranslations.get("et");
+    }
+
+    private Map<String, String> getNameTranslations() {
+        return Optional.of(this)
+                .map(TaraSession::getLoginRequestInfo)
+                .map(TaraSession.LoginRequestInfo::getClient)
+                .map(TaraSession.Client::getMetaData)
+                .map(TaraSession.MetaData::getOidcClient)
+                .map(TaraSession.OidcClient::getNameTranslations)
+                .orElse(null);
     }
 
     @Data
@@ -224,16 +244,8 @@ public class TaraSession implements Serializable {
 
     @Data
     public static class OidcClient implements Serializable {
-        @NotBlank
-        @Size(max = 150)
-        @JsonProperty("name")
-        private String name;
         @JsonProperty("name_translations")
         private Map<String, String> nameTranslations = new HashMap<>();
-        @NotBlank
-        @Size(max = 40)
-        @JsonProperty("short_name")
-        private String shortName;
         @JsonProperty("short_name_translations")
         private Map<String, String> shortNameTranslations = new HashMap<>();
         @Size(max = 1000)
@@ -277,7 +289,7 @@ public class TaraSession implements Serializable {
 
     public String getOidcClientTranslatedShortName() {
         OidcClient oidcClient = getLoginRequestInfo().getClient().getMetaData().getOidcClient();
-        String translatedShortName = oidcClient.getShortName();
+        String translatedShortName = oidcClient.getShortNameTranslations().get("et");
 
         if (oidcClient.getNameTranslations() != null) {
             Map<String, String> serviceNameTranslations = oidcClient.getNameTranslations();

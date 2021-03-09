@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.authentication.smartid;
 
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
@@ -65,6 +66,9 @@ public class SmartIdController {
 
     @Autowired
     private SmartIdConfigurationProperties smartIdConfigurationProperties;
+
+    @Autowired
+    private AuthConfigurationProperties authConfigurationProperties;
 
     private static final Map<Class<?>, ErrorCode> errorMap;
 
@@ -134,7 +138,7 @@ public class SmartIdController {
 
     private List<Interaction> getAppropriateAllowedInteractions(TaraSession taraSession) {
         List<Interaction> allowedInteractions = new ArrayList<>();
-        String shortName = Optional.ofNullable(taraSession.getOidcClientTranslatedShortName()).orElse(smartIdConfigurationProperties.getDefaultShortName());
+        String shortName = Optional.ofNullable(taraSession.getOidcClientTranslatedShortName()).orElse(authConfigurationProperties.getHydraService().getDefaultShortName());
         if (shouldUseVerificationCodeCheck(taraSession))
             allowedInteractions.add(Interaction.verificationCodeChoice(shortName));
         allowedInteractions.add(Interaction.displayTextAndPIN(shortName));

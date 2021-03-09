@@ -37,7 +37,7 @@ public class ThymeleafSupport {
         if (taraSession == null || taraSession.getLoginRequestInfo() == null)
             return null;
 
-        String defaultServicename = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getName();
+        String defaultServicename = taraSession.getClientName();
         if (defaultServicename == null)
             return null;
 

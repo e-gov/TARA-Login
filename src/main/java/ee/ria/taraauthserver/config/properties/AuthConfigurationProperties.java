@@ -74,6 +74,9 @@ public class AuthConfigurationProperties {
         @NotBlank
         private String rejectLoginUrl;
 
+        @NotNull
+        private String defaultShortName;
+
         private int requestTimeoutInSeconds = 3;
 
         private int maxConnectionsTotal = 50;
@@ -125,9 +128,6 @@ public class AuthConfigurationProperties {
 
         @NotNull
         private String relyingPartyName;
-
-        @NotNull
-        private String defaultShortName;
 
         @Pattern(regexp = "(SHA256|SHA384|SHA512)", message = "invalid hash value, accepted values are: SHA256, SHA384, SHA512")
         private String hashType = "SHA256";

@@ -173,7 +173,7 @@ class AuthInitControllerTest extends BaseTest {
         assertEquals("idcard mid", taraSession.getLoginRequestInfo().getClient().getScope());
         assertEquals("idcard", taraSession.getLoginRequestInfo().getRequestedScopes().get(0));
         assertEquals("mid", taraSession.getLoginRequestInfo().getRequestedScopes().get(1));
-        assertEquals("some test client", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getName());
+        assertEquals("test client et", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getNameTranslations().get("et"));
         assertEquals("testRelyingPartyName", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getRelyingPartyName());
         assertEquals("testRelyingPartyId123", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getRelyingPartyUuid());
         assertEquals(true, taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getShouldUseAdditionalVerificationCodeCheck());
@@ -571,6 +571,6 @@ class AuthInitControllerTest extends BaseTest {
                 .body("incident_nr", notNullValue())
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
 
-        assertErrorIsLogged("Server encountered an unexpected error: Invalid hydra response: client.metaData.oidcClient.institution.sector: invalid sector value, accepted values are: private, public, client.metaData.oidcClient.shortName: size must be between 0 and 40, client.scope: must not be blank");
+        assertErrorIsLogged("Server encountered an unexpected error: Invalid hydra response: client.metaData.oidcClient.institution.sector: invalid sector value, accepted values are: private, public, client.scope: must not be blank");
     }
 }
