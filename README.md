@@ -68,6 +68,12 @@ Example: to deploy the webapp to a standalone Tomcat server
 <a name="configuration"></a>
 ## 1 TARA login server configuration properties
 
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.default-locale` | No | Locale that is used by default. Default `et` |
+| `tara.default-short-name` | Yes | Default name for the client application |
+
+
 <a name="hydra_integration_conf"></a>
 ### 1.1 Integration with Hydra service
 

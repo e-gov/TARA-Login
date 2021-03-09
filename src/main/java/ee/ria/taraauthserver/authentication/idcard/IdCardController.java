@@ -86,7 +86,6 @@ public class IdCardController {
                 taraSession.setState(AUTHENTICATION_FAILED);
                 return createErrorResponse(IDC_OCSP_NOT_AVAILABLE, "OCSP service is currently not available", BAD_GATEWAY);
             } catch (OCSPValidationException ex) {
-                taraSession.setState(AUTHENTICATION_FAILED);
                 CertificateStatus status = ex.getStatus();
                 ErrorCode errorCode = status == REVOKED ? IDC_REVOKED : IDC_UNKNOWN;
                 return createErrorResponse(errorCode, ex.getMessage(), BAD_REQUEST);

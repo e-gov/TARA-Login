@@ -35,6 +35,9 @@ public class AuthConfigurationProperties {
     @Pattern(regexp = "(et|en|ru)", message = "invalid default locale value, accepted values are: et, en, ru")
     private String defaultLocale = "et";
 
+    @NotNull
+    private String defaultShortName;
+
     @NotEmpty
     private String contentSecurityPolicy = DEFAULT_CONTENT_SECURITY_POLICY;
 
@@ -73,9 +76,6 @@ public class AuthConfigurationProperties {
 
         @NotBlank
         private String rejectLoginUrl;
-
-        @NotNull
-        private String defaultShortName;
 
         private int requestTimeoutInSeconds = 3;
 
