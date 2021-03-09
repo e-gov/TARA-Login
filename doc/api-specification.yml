@@ -703,13 +703,6 @@ paths:
       operationId: eidasAuthCallback
       description: |
         Handle eIDAS authentication callback
-      parameters:
-        - name: Cookie
-          in: header
-          required: true
-          description: Session cookie
-          schema:
-            type: string
       requestBody:
         description: Optional description in *Markdown*
         required: true

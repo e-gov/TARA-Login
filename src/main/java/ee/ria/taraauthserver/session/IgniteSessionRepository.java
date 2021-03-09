@@ -43,7 +43,7 @@ public class IgniteSessionRepository implements SessionRepository<Session> {
         IgniteSession igniteSession = (IgniteSession) session;
         if (igniteSession.isChanged()) {
             igniteSession.setChanged(false);
-            if(log.isDebugEnabled()) {
+            if (log.isDebugEnabled()) {
                 log.debug(append(TARA_SESSION, session.getAttribute(TARA_SESSION)), "Save session: {}", session.getId());
             }
             sessionCache.put(session.getId(), session);
@@ -64,6 +64,7 @@ public class IgniteSessionRepository implements SessionRepository<Session> {
     @Override
     public void deleteById(String id) {
         sessionCache.remove(id);
+        log.info("Session is removed from cache: {}", id);
     }
 
     @Data

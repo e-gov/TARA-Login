@@ -25,6 +25,7 @@ import java.util.Map;
 import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_CANCELED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static net.logstash.logback.argument.StructuredArguments.value;
 
 @Slf4j
 @Validated
@@ -44,8 +45,10 @@ public class AuthRejectController {
             throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
         }
 
+        String url = getRequestUrl(taraSession.getLoginRequestInfo().getChallenge());
+        log.info("OIDC login reject request: {}", value("url.full", url));
         var response = hydraService.exchange(
-                getRequestUrl(taraSession.getLoginRequestInfo().getChallenge()),
+                url,
                 HttpMethod.PUT,
                 createRequestBody(errorCode),
                 Map.class);

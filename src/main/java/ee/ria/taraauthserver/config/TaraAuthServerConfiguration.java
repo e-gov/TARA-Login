@@ -35,6 +35,7 @@ import java.security.cert.CertificateException;
 import java.time.Duration;
 import java.util.Locale;
 
+import static net.logstash.logback.argument.StructuredArguments.value;
 import static org.springframework.util.ResourceUtils.getFile;
 
 @Slf4j
@@ -86,7 +87,7 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
     public LocaleResolver localeResolver(AuthConfigurationProperties configurationProperties) {
         SessionLocaleResolver bean = new SessionLocaleResolver();
         String locale = configurationProperties.getDefaultLocale();
-        log.info("Setting default locale to [{}]", locale);
+        log.info("Setting default locale to [{}]", value("tara.conf.default_locale", locale));
         bean.setDefaultLocale(new Locale(locale));
         return bean;
     }
@@ -103,7 +104,7 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
 
     @Bean
     public LocaleChangeInterceptor localeChangeInterceptor() {
-        log.info("calling locale change interceptor");
+        log.info("Calling locale change interceptor");
         LocaleChangeInterceptor lci = new LocaleChangeInterceptor();
         lci.setParamName("lang");
         return lci;

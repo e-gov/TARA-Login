@@ -10,7 +10,7 @@
     </parent>
     <groupId>ee.ria.tara</groupId>
     <artifactId>tara-login-server</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.1</version>
     <packaging>war</packaging>
     <name>tara-login-server</name>
     <description>TARA login server</description>
@@ -43,8 +43,14 @@
             <artifactId>spring-session-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-sleuth</artifactId>
+            <groupId>co.elastic.apm</groupId>
+            <artifactId>apm-agent-api</artifactId>
+            <version>1.20.0</version>
+        </dependency>
+        <dependency>
+            <groupId>co.elastic.apm</groupId>
+            <artifactId>elastic-apm-agent</artifactId>
+            <version>1.20.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -68,6 +74,11 @@
         <dependency>
             <groupId>org.apache.ignite</groupId>
             <artifactId>ignite-core</artifactId>
+            <version>2.9.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.ignite</groupId>
+            <artifactId>ignite-slf4j</artifactId>
             <version>2.9.1</version>
         </dependency>
         <dependency>

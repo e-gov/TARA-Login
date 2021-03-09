@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.authentication.idcard;
 
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.OCSPServiceNotAvailableException;
@@ -28,7 +29,9 @@ import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static ee.ria.taraauthserver.authentication.idcard.CertificateStatus.REVOKED;
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
@@ -36,6 +39,8 @@ import static ee.ria.taraauthserver.error.ErrorCode.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.util.Map.of;
+import static net.logstash.logback.argument.StructuredArguments.value;
+import static net.logstash.logback.marker.Markers.append;
 import static org.springframework.context.i18n.LocaleContextHolder.getLocale;
 import static org.springframework.http.HttpStatus.BAD_GATEWAY;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -95,7 +100,7 @@ public class IdCardController {
 
     @NotNull
     private ResponseEntity<Map<String, String>> createErrorResponse(ErrorCode errorCode, String logMessage, HttpStatus httpStatus) {
-        log.warn("OCSP validation failed: " + logMessage);
+        log.warn(append("error.code", errorCode.name()), "OCSP validation failed: {}", value("error.message", logMessage));
         String errorMessage = messageSource.getMessage(errorCode.getMessage(), null, getLocale());
         return ResponseEntity.status(httpStatus).body(of("status", "ERROR", "errorMessage", errorMessage));
     }
@@ -108,10 +113,15 @@ public class IdCardController {
     }
 
     private void addAuthResultToSession(TaraSession taraSession, X509Certificate certificate) {
+
         Map<String, String> params = getCertificateParams(certificate);
         String idCode = EstonianIdCodeUtil.getEstonianIdCode(params.get(CN_SERIALNUMBER));
-
         TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
+
+        if (emailIsRequested(taraSession)) {
+            String email = X509Utils.getRfc822NameSubjectAltName(certificate);
+            authenticationResult.setEmail(email);
+        }
         authenticationResult.setFirstName(params.get(CN_GIVEN_NAME));
         authenticationResult.setLastName(params.get(CN_SURNAME));
         authenticationResult.setIdCode(idCode);
@@ -122,6 +132,14 @@ public class IdCardController {
         authenticationResult.setSubject(authenticationResult.getCountry() + authenticationResult.getIdCode());
         taraSession.setState(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
         taraSession.setAuthenticationResult(authenticationResult);
+    }
+
+    private boolean emailIsRequested(TaraSession taraSession) {
+        List<String> scopes = Optional.of(taraSession)
+                .map(TaraSession::getLoginRequestInfo)
+                .map(TaraSession.LoginRequestInfo::getRequestedScopes)
+                .orElse(null);
+        return scopes != null && scopes.contains(TaraScope.EMAIL.getFormalName());
     }
 
     @NotNull

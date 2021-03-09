@@ -25,6 +25,7 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
@@ -135,7 +136,7 @@ class AuthConsentControllerTest extends BaseTest {
     @Test
     @Tag(value = "USER_CONSENT_ENDPOINT")
     void authConsent_wrong_authentication_state() {
-        Session session = createSession(TaraAuthenticationState.INIT_MID, true);
+        Session session = createSession(TaraAuthenticationState.INIT_MID, true, List.of("openid"));
 
         given()
                 .when()
@@ -156,7 +157,7 @@ class AuthConsentControllerTest extends BaseTest {
     @Tag(value = "USER_CONSENT_REQUIRED")
     @Tag(value = "UI_CONSENT_VIEW")
     void authConsent_display() {
-        Session session = createSession(TaraAuthenticationState.AUTHENTICATION_SUCCESS, true);
+        Session session = createSession(TaraAuthenticationState.AUTHENTICATION_SUCCESS, true, List.of("openid"));
 
         given()
                 .when()
@@ -170,6 +171,8 @@ class AuthConsentControllerTest extends BaseTest {
                 .body(containsString("lastname"))
                 .body(containsString("abc123idcode"))
                 .body(containsString("17.12.1992"))
+                .body(not(containsString("123456789")))
+                .body(not(containsString("phone-number")))
                 .header(HttpHeaders.CONTENT_TYPE, "text/html;charset=UTF-8");
 
         TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
@@ -181,7 +184,7 @@ class AuthConsentControllerTest extends BaseTest {
     @Tag(value = "USER_CONSENT_ENDPOINT")
     @Tag(value = "USER_CONSENT_NOT_REQUIRED")
     void authConsent_redirect() {
-        Session session = createSession(TaraAuthenticationState.AUTHENTICATION_SUCCESS, false);
+        Session session = createSession(TaraAuthenticationState.AUTHENTICATION_SUCCESS, false, List.of("openid"));
 
         wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
                 .willReturn(aResponse()
@@ -205,7 +208,7 @@ class AuthConsentControllerTest extends BaseTest {
     }
 
     @SneakyThrows
-    private Session createSession(TaraAuthenticationState authenticationState, boolean display) {
+    private Session createSession(TaraAuthenticationState authenticationState, boolean display, List<String> requestedScopes) {
         Session session = sessionRepository.createSession();
         TaraSession authSession = new TaraSession(session.getId());
         authSession.setState(authenticationState);
@@ -216,6 +219,7 @@ class AuthConsentControllerTest extends BaseTest {
         client.setMetaData(md);
         client.setScope("mid idcard");
         lri.setClient(client);
+        lri.setRequestedScopes(requestedScopes);
         lri.setUrl(new URL("https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c80393c7-6666-4dd2-b890-0ada47161cfa&nonce=fa97f828-eda3-4975-bca2-4bfbb9b24d28&ui_locales=et"));
         authSession.setLoginRequestInfo(lri);
         TaraSession.AuthenticationResult ar = new TaraSession.AuthenticationResult();
@@ -225,6 +229,7 @@ class AuthConsentControllerTest extends BaseTest {
         ar.setDateOfBirth(LocalDate.of(1992, 12, 17));
         ar.setAcr(LevelOfAssurance.HIGH);
         ar.setAmr(AuthenticationType.MOBILE_ID);
+        ar.setPhoneNumber("123456789");
         authSession.setAuthenticationResult(ar);
         List<AuthenticationType> allowedMethods = new ArrayList<>();
         allowedMethods.add(AuthenticationType.ID_CARD);

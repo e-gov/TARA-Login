@@ -36,8 +36,7 @@ class AuthSidCancelControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(403)
-                .body("message", equalTo("Forbidden"))
-                .body("path", equalTo("/auth/sid/poll/cancel"));
+                .body("message", equalTo("Keelatud päring. Päring esitati topelt, sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."));
     }
 
     @Test

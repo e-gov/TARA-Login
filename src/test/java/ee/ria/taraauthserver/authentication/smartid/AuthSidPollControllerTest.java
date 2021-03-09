@@ -22,6 +22,7 @@ import static io.restassured.RestAssured.given;
 import static java.util.List.of;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class AuthSidPollControllerTest extends BaseTest {
 
@@ -132,8 +133,10 @@ class AuthSidPollControllerTest extends BaseTest {
                 .body("message", equalTo("Kasutajal on mitu Smart-ID kontot ja ühe kontoga tühistati autentimisprotsess."))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
 
-        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
-        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
+        String sessionId = sessionFilter.getSession().getId();
+        assertNull(sessionRepository.findById(sessionFilter.getSession().getId()));
+        assertWarningIsLogged("Session has been invalidated: " + sessionId);
+        assertInfoIsLogged("Session is removed from cache: " + sessionId);
     }
 
     @Test
@@ -159,8 +162,15 @@ class AuthSidPollControllerTest extends BaseTest {
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
 
-        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
-        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
+
+
+
+        String sessionId = sessionFilter.getSession().getId();
+        assertNull(sessionRepository.findById(sessionFilter.getSession().getId()));
+        assertInfoIsLogged("Tara session state change: NOT_SET -> AUTHENTICATION_FAILED");
+        assertWarningIsLogged("Session has been invalidated: " + sessionId);
+        assertInfoIsLogged("Session is removed from cache: " + sessionId);
+
     }
 
     @Test
@@ -186,8 +196,12 @@ class AuthSidPollControllerTest extends BaseTest {
                 .body("message", equalTo("Smart-ID teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti."))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
 
-        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
-        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
+        String sessionId = sessionFilter.getSession().getId();
+        assertNull(sessionRepository.findById(sessionFilter.getSession().getId()));
+        assertInfoIsLogged("Tara session state change: NOT_SET -> AUTHENTICATION_FAILED");
+        assertErrorIsLogged("Service not available: Sid poll failed");
+        assertWarningIsLogged("Session has been invalidated: " + sessionId);
+        assertInfoIsLogged("Session is removed from cache: " + sessionId);
     }
 
 }
