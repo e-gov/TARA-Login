@@ -55,8 +55,7 @@ public class ThymeleafSupport {
     }
 
     public List<String> getListOfCountries() {
-        List<String> countries = eidasConfigurationProperties.getAvailableCountries();
-        return countries;
+        return eidasConfigurationProperties.getAvailableCountries();
     }
 
     public String getBackUrl() {

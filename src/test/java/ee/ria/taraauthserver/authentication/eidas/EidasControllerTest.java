@@ -143,7 +143,7 @@ public class EidasControllerTest extends BaseTest {
                         .withBodyFile("mock_responses/eidas/eidas-login-response.json")));
 
         await().atMost(FIVE_SECONDS)
-                .until(() -> eidasConfigurationProperties.getAvailableCountries(), Matchers.notNullValue());
+                .until(() -> eidasConfigurationProperties.getAvailableCountries().size(), Matchers.equalTo(1));
 
         MockSessionFilter sessionFilter = withTaraSession()
                 .sessionRepository(sessionRepository)
@@ -171,7 +171,7 @@ public class EidasControllerTest extends BaseTest {
         RestAssured.responseSpecification = null;
 
         await().atMost(FIVE_SECONDS)
-                .until(() -> eidasConfigurationProperties.getAvailableCountries(), Matchers.notNullValue());
+                .until(() -> eidasConfigurationProperties.getAvailableCountries().size(), Matchers.equalTo(1));
 
         MockSessionFilter sessionFilter = withTaraSession()
                 .sessionRepository(sessionRepository)
@@ -201,7 +201,7 @@ public class EidasControllerTest extends BaseTest {
         createEidasLoginStub("mock_responses/eidas/eidas-login-response.json", 400);
 
         await().atMost(FIVE_SECONDS)
-                .until(() -> eidasConfigurationProperties.getAvailableCountries(), Matchers.notNullValue());
+                .until(() -> eidasConfigurationProperties.getAvailableCountries().size(), Matchers.equalTo(1));
 
         MockSessionFilter sessionFilter = withTaraSession()
                 .sessionRepository(sessionRepository)

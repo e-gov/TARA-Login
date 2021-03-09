@@ -4,9 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
-import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
-import ee.ria.taraauthserver.error.exceptions.EidasInternalException;
 import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
@@ -36,13 +34,13 @@ import javax.cache.Cache;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.io.IOException;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static co.elastic.apm.agent.shaded.bytebuddy.implementation.FixedValue.value;
 import static ee.ria.taraauthserver.error.ErrorCode.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
@@ -51,6 +49,7 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 @Controller
 @ConditionalOnProperty(value = "tara.auth-methods.eidas.enabled", matchIfMissing = true)
 public class EidasCallbackController {
+    public static final String EIDAS_CALLBACK_REQUEST_MAPPING = "/auth/eidas/callback";
 
     public static final Pattern VALID_PERSON_IDENTIFIER_PATTERN = Pattern.compile("^([A-Z]{2,2})\\/([A-Z]{2,2})\\/(.*)$");
 
@@ -64,7 +63,7 @@ public class EidasCallbackController {
     @Autowired
     private Cache<String, String> eidasRelayStateCache;
 
-    @PostMapping(value = "/auth/eidas/callback")
+    @PostMapping(value = EIDAS_CALLBACK_REQUEST_MAPPING)
     public ModelAndView eidasCallback(@RequestParam(name = "SAMLResponse") String samlResponse, @RequestParam(name = "RelayState") String relayState) {
 
         if (!eidasRelayStateCache.containsKey(relayState))
@@ -75,8 +74,12 @@ public class EidasCallbackController {
 
         try {
             EidasClientResponse response = restTemplate.exchange(eidasConfigurationProperties.getClientUrl() + "/returnUrl", HttpMethod.POST, createRequestEntity(samlResponse), EidasClientResponse.class).getBody();
-            log.info("Received response from eidas client: " + response.toString());
-            updateSession(session, response);
+            if (response != null) {
+                log.info("Received response from eidas client: {}", value(response));
+                updateSession(session, response);
+            } else {
+                throw new IllegalStateException("Response body from eidas client is null.");
+            }
         } catch (HttpClientErrorException.Unauthorized e) {
             handle401Exception(session, e);
         } catch (ResourceAccessException e) {
@@ -101,9 +104,9 @@ public class EidasCallbackController {
 
     private void handle401Exception(Session session, HttpClientErrorException.Unauthorized e) {
         updateSession(session);
-        if (e.getMessage().contains("Authentication failed"))
+        if (e.getMessage() != null && e.getMessage().contains("Authentication failed"))
             throw new BadRequestException(EIDAS_AUTHENTICATION_FAILED, e.getMessage(), e);
-        else if (e.getMessage().contains("No user consent received. User denied access."))
+        else if (e.getMessage() != null && e.getMessage().contains("No user consent received. User denied access."))
             throw new BadRequestException(EIDAS_USER_CONSENT_NOT_GIVEN, e.getMessage(), e);
         else
             throw new BadRequestException(ERROR_GENERAL, e.getMessage(), e);
@@ -147,8 +150,7 @@ public class EidasCallbackController {
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("SAMLResponse", samlResponse);
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
-        return request;
+        return new HttpEntity<>(map, headers);
     }
 
     public void validateSession(Session session) {

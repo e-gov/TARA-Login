@@ -21,6 +21,7 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
 import static ee.ria.taraauthserver.authentication.AuthInitController.AUTH_INIT_REQUEST_MAPPING;
+import static ee.ria.taraauthserver.authentication.eidas.EidasCallbackController.EIDAS_CALLBACK_REQUEST_MAPPING;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static net.logstash.logback.marker.Markers.append;
@@ -30,12 +31,13 @@ import static net.logstash.logback.marker.Markers.append;
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
 public class SessionManagementFilter extends OncePerRequestFilter {
     private static final RequestMatcher AUTH_INIT_REQUEST_MATCHER = new AntPathRequestMatcher(AUTH_INIT_REQUEST_MAPPING);
+    private static final RequestMatcher EIDAS_CALLBACK_REQUEST_MATCHER = new AntPathRequestMatcher(EIDAS_CALLBACK_REQUEST_MAPPING);
     private static final RequestMatcher AUTH_REQUEST_MATCHER = new AntPathRequestMatcher("/auth/**");
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        if (request.getServletPath().startsWith("/auth/eidas/callback")) {
+        if (EIDAS_CALLBACK_REQUEST_MATCHER.matches(request)) {
             request.setAttribute("SHOULD_NOT_FILTER" + CsrfFilter.class.getName(), Boolean.TRUE);
         }
 

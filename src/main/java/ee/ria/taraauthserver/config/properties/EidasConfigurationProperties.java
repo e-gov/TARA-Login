@@ -5,6 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -18,7 +19,7 @@ public class EidasConfigurationProperties {
 
     int refreshCountriesIntervalInMilliseconds;
 
-    List<String> availableCountries;
+    List<String> availableCountries = new ArrayList<>();
 
     private int requestTimeoutInSeconds = 3;
 

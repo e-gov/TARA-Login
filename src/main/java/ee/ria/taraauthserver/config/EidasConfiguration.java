@@ -32,6 +32,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.List.of;
+import static net.logstash.logback.argument.StructuredArguments.value;
 import static org.apache.ignite.cache.CacheAtomicityMode.ATOMIC;
 import static org.apache.ignite.cache.CacheMode.PARTITIONED;
 
@@ -47,7 +49,7 @@ public class EidasConfiguration {
     @Qualifier("restTemplate")
     private RestTemplate restTemplate;
 
-    @Scheduled(fixedRateString = "${tara.auth-methods.eidas.refresh-countries-interval-in-milliseconds:30000}")
+    @Scheduled(fixedRateString = "${tara.auth-methods.eidas.refresh-countries-interval-in-milliseconds:300000}")
     public void scheduleFixedDelayTask() {
         log.info("starting fixed delay task");
         try {
@@ -59,10 +61,11 @@ public class EidasConfiguration {
 
     private void refreshCountriesList() {
         String url = eidasConfigurationProperties.getClientUrl() + "/supportedCountries";
-        log.info("requesting from: " + url);
-        ResponseEntity<Object> response = restTemplate.exchange(url, HttpMethod.GET, null, Object.class);
-        eidasConfigurationProperties.setAvailableCountries((ArrayList<String>) response.getBody());
-        log.info("updated countries list to: " + response.getBody().toString());
+        log.info("Refreshing countries list from: {}", value("url.full", url));
+        ResponseEntity<String[]> response = restTemplate.exchange(url, HttpMethod.GET, null, String[].class);
+        List<String> countries = of(response.getBody());
+        eidasConfigurationProperties.setAvailableCountries(countries);
+        log.info("Updated countries list to: {}", value("tara.conf.auth-methods.eidas.available_countries", countries));
     }
 
     @Bean

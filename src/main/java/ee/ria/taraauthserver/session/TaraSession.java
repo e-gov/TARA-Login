@@ -72,7 +72,6 @@ public class TaraSession implements Serializable {
         private final String midSessionId;
     }
 
-    @Slf4j
     @Data
     @EqualsAndHashCode(callSuper = true)
     @RequiredArgsConstructor

@@ -593,7 +593,7 @@ class AuthInitControllerTest extends BaseTest {
         RestAssured.responseSpecification = null;
 
         await().atMost(FIVE_SECONDS)
-                .until(() -> eidasConfigurationProperties.getAvailableCountries(), Matchers.notNullValue());
+                .until(() -> eidasConfigurationProperties.getAvailableCountries().size(), Matchers.equalTo(1));
 
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
@@ -625,7 +625,7 @@ class AuthInitControllerTest extends BaseTest {
         RestAssured.responseSpecification = null;
 
         await().atMost(FIVE_SECONDS)
-                .until(() -> eidasConfigurationProperties.getAvailableCountries(), Matchers.notNullValue());
+                .until(() -> eidasConfigurationProperties.getAvailableCountries().size(), Matchers.equalTo(1));
 
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()

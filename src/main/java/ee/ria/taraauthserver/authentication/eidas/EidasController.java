@@ -30,12 +30,12 @@ import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.WAITING_EIDAS_RESPONSE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static net.logstash.logback.marker.Markers.append;
 
 @Slf4j
 @RestController
 @ConditionalOnProperty(value = "tara.auth-methods.eidas.enabled", matchIfMissing = true)
 public class EidasController {
-
 
     @Autowired
     private EidasConfigurationProperties eidasConfigurationProperties;
@@ -92,7 +92,7 @@ public class EidasController {
     }
 
     private ErrorCode getAppropriateErrorCode() {
-        Object[] allowedCountries = eidasConfigurationProperties.getAvailableCountries().toArray(new Object[eidasConfigurationProperties.getAvailableCountries().size()]);
+        Object[] allowedCountries = eidasConfigurationProperties.getAvailableCountries().toArray(new Object[0]);
         ErrorCode errorCode = ErrorCode.EIDAS_COUNTRY_NOT_SUPPORTED;
         errorCode.setMessageParameters(allowedCountries);
         return errorCode;
@@ -107,7 +107,7 @@ public class EidasController {
     }
 
     public void validateSession(TaraSession taraSession) {
-        log.info("AuthSession: {}", taraSession);
+        log.info(append("tara.session", taraSession), "Validating session");
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
         List<String> allowedScopes = getAllowedRequestedScopes(taraSession.getLoginRequestInfo());
         if (!(allowedScopes.contains("eidas") || allowedScopes.contains("eidasonly"))) {

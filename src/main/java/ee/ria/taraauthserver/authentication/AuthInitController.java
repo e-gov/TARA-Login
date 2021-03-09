@@ -3,7 +3,7 @@ package ee.ria.taraauthserver.authentication;
 
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
-import ee.ria.taraauthserver.config.properties.*;
+import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
@@ -15,8 +15,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.session.Session;
-import org.springframework.session.SessionRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
@@ -25,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpSession;
 import javax.validation.ConstraintViolation;
@@ -33,7 +30,6 @@ import javax.validation.Validator;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -144,10 +140,12 @@ public class AuthInitController {
 
     private String getAllowedEidasCountryCode(List<String> requestedScopes) {
         String regex = "eidas:country:[a-z]{2}$";
-        for (int i = 0; i < requestedScopes.size(); ++i)
-            if (requestedScopes.get(i).matches(regex) && eidasConfigurationProperties.getAvailableCountries().stream().anyMatch(getCountryCodeFromScope(requestedScopes.get(i))::equalsIgnoreCase))
-                return getCountryCodeFromScope(requestedScopes.get(i));
-        return null;
+        return requestedScopes.stream()
+                .filter(rs -> rs.matches(regex))
+                .map(this::getCountryCodeFromScope)
+                .filter(rs -> eidasConfigurationProperties.getAvailableCountries().contains(rs))
+                .findFirst()
+                .orElse(null);
     }
 
     private String getCountryCodeFromScope(String eidasCountryScope) {
