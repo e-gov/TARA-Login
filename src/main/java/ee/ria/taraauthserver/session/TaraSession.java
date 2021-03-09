@@ -6,7 +6,6 @@ import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
-import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -124,8 +123,6 @@ public class TaraSession implements Serializable {
         }
 
         private List<TaraScope> getRequestedTaraScopes() {
-            if (requestedScopes.isEmpty())
-                throw new BadRequestException(ErrorCode.MISSING_SCOPE, "No scope is requested");
             List<TaraScope> allowedRequestedScopes = new ArrayList<>();
             List<String> allowedScopes = of(client.getScope().split(" "));
             for (String requestedScope : requestedScopes) {
@@ -199,7 +196,7 @@ public class TaraSession implements Serializable {
         @JsonProperty("acr_values")
         private List<String> acrValues;
         @JsonProperty("ui_locales")
-        private List<String> uiLocales;
+        private List<String> uiLocales = new ArrayList<>();
     }
 
     @Data
