@@ -53,7 +53,7 @@ public class AlertsScheduler {
     }
 
     private boolean authenticationTypeHasValidAlert(Alert alert, AuthenticationType authenticationType) {
-        return alert.getLoginPageNotificationSettings().getAuthMethods().contains(authenticationType.getAmrName())
+        return alert.getLoginPageNotificationSettings().getAuthMethods().contains(authenticationType.getScope().getFormalName())
                 && alert.getLoginPageNotificationSettings().isNotifyClientsOnTaraLoginPage()
                 && alert.getStartTime().isBefore(LocalDate.now())
                 && alert.getEndTime().isAfter(LocalDate.now());
