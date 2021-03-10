@@ -28,7 +28,7 @@
       "notify_clients_on_tara_login_page": true,
       "notification_text": "Seoses SK plaaniliste hooldustöödega on Mobiil-ID teenuste kasutamine häiritud vahemikus 12.01.2020 00:00 kuni 13.01.2020 01:00",
       "display_only_for_authmethods": [
-        "mID"
+        "mid"
       ]
     },
     "email_notification_settings": {

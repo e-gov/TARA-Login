@@ -9,6 +9,7 @@ import com.github.tomakehurst.wiremock.extension.Parameters;
 import com.github.tomakehurst.wiremock.extension.ResponseTransformer;
 import com.github.tomakehurst.wiremock.http.Request;
 import com.github.tomakehurst.wiremock.http.Response;
+import ee.ria.taraauthserver.alerts.AlertsScheduler;
 import ee.ria.taraauthserver.config.TaraAuthServerConfiguration;
 import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties;
 import ee.ria.taraauthserver.error.exceptions.OCSPServiceNotAvailableException;
@@ -75,7 +76,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {TaraAuthServerConfiguration.class, OCSPValidator.class, RestTemplate.class, ObjectMapper.class}, initializers = ConfigDataApplicationContextInitializer.class)
+@ContextConfiguration(classes = {TaraAuthServerConfiguration.class, OCSPValidator.class, RestTemplate.class, ObjectMapper.class, AlertsScheduler.class}, initializers = ConfigDataApplicationContextInitializer.class)
 public class OCSPValidatorTest {
     private static final OcspResponseTransformer ocspResponseTransformer = new OcspResponseTransformer(true);
 
