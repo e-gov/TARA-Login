@@ -1,11 +1,13 @@
 package ee.ria.taraauthserver.alerts;
 
 
+import ch.qos.logback.classic.Logger;
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.utils.ThymeleafSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -19,6 +21,8 @@ import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.slf4j.Logger.ROOT_LOGGER_NAME;
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Slf4j
 public class AlertsTest extends BaseTest {
@@ -28,6 +32,11 @@ public class AlertsTest extends BaseTest {
 
     @Autowired
     private Cache<String, List<Alert>> alertsCache;
+
+    @AfterEach
+    public void afterEachTest() {
+        alertsCache.clear();
+    }
 
     @Test
     void alerts_test() {

@@ -122,4 +122,4 @@ tara:
 
   alerts:
     host-url: https://localhost:9877/alerts
-    refresh-alerts-interval-in-milliseconds: 100
+    refresh-alerts-interval-in-milliseconds: 2000
