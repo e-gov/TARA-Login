@@ -119,3 +119,7 @@ tara:
     trust-store-location: classpath:tls-truststore.jks
     trust-store-password: changeit
     trust-store-type: jks
+
+  alerts:
+    host-url: https://localhost:9877/alerts
+    refresh-alerts-interval-in-milliseconds: 100
