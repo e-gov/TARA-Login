@@ -80,8 +80,6 @@ public class AuthInitController {
         log.info(append(TARA_SESSION, newTaraSession).and(append("http.request.locale", RequestUtils.getLocale())), "Initialized authentication session");
 
         if (eidasOnlyWithCountryRequested(loginRequestInfo)) {
-            CsrfToken csrf = (CsrfToken) session.getAttribute("tara.csrf");
-            model.addAttribute("token", csrf.getToken());
             model.addAttribute("country", getAllowedEidasCountryCode(loginRequestInfo.getRequestedScopes()));
             return "redirectToEidasInit";
         } else {

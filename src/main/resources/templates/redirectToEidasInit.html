@@ -7,8 +7,7 @@
     <div class="container">
 
         Redirecting, please wait...
-        <form id="eidasInitRedirectForm" method="post" action="/auth/eidas/init">
-            <input type="hidden" th:name="_csrf" th:value="${token}"/>
+        <form id="eidasInitRedirectForm" role="form" method="post" th:action="@{/auth/eidas/init}">
             <input type="hidden" th:name="country" th:value="${country}"/>
             <noscript>
                 <div>
@@ -17,7 +16,7 @@
             </noscript>
         </form>
     </div>
-    <script src="/scripts/eidas_init_submit.js" defer></script>
+    <script src="/scripts/eidas-init-submit.js" defer></script>
 </div>
 </body>
 </html>
