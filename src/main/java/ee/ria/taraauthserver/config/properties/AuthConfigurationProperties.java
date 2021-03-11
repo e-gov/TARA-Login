@@ -96,7 +96,6 @@ public class AuthConfigurationProperties {
     @Data
     public static class AuthMethodProperties {
 
-        @NotNull
         LevelOfAssurance levelOfAssurance;
 
         boolean enabled = true;
@@ -107,6 +106,9 @@ public class AuthConfigurationProperties {
     @EqualsAndHashCode(callSuper = true)
     @ConfigurationProperties(prefix = "tara.auth-methods.mobile-id")
     public static class MidAuthConfigurationProperties extends AuthMethodProperties {
+
+        @NotNull
+        LevelOfAssurance levelOfAssurance;
 
         @NotNull
         private String hostUrl;
@@ -143,6 +145,9 @@ public class AuthConfigurationProperties {
     @EqualsAndHashCode(callSuper = true)
     @ConfigurationProperties(prefix = "tara.auth-methods.id-card")
     public static class IdCardAuthConfigurationProperties extends AuthMethodProperties {
+
+        @NotNull
+        LevelOfAssurance levelOfAssurance;
 
         @NotNull
         private String truststorePath;

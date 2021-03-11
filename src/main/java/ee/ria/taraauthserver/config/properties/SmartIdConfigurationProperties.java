@@ -16,6 +16,9 @@ import java.util.List;
 @ConditionalOnProperty(value = "tara.auth-methods.smart-id.enabled", matchIfMissing = true)
 public class SmartIdConfigurationProperties extends AuthConfigurationProperties.AuthMethodProperties {
 
+    @NotNull
+    LevelOfAssurance levelOfAssurance;
+
     @Pattern(regexp = "(SHA256|SHA384|SHA512)", message = "invalid hash value, accepted values are: SHA256, SHA384, SHA512")
     private String hashType = "SHA512";
 

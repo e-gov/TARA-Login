@@ -73,12 +73,18 @@ public class TaraSession implements Serializable {
         private final String midSessionId;
     }
 
-    @Slf4j
     @Data
     @EqualsAndHashCode(callSuper = true)
     @RequiredArgsConstructor
     public static class SidAuthenticationResult extends AuthenticationResult {
         private final String sidSessionId;
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = true)
+    @RequiredArgsConstructor
+    public static class EidasAuthenticationResult extends AuthenticationResult {
+        private String relayState;
     }
 
     @Data
@@ -98,6 +104,9 @@ public class TaraSession implements Serializable {
         private URL url;
 
         public List<AuthenticationType> getAllowedAuthenticationMethodsList(AuthConfigurationProperties taraProperties) {
+            if (requestedScopes.contains("eidasonly"))
+                return List.of(AuthenticationType.EIDAS);
+
             List<AuthenticationType> requestedAuthMethods = getRequestedAuthenticationMethodList(taraProperties);
             List<AuthenticationType> allowedAuthenticationMethodsList = requestedAuthMethods.stream()
                     .filter(method -> isAuthenticationMethodEnabled(method, taraProperties))

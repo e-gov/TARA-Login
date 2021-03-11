@@ -98,6 +98,13 @@ tara:
       relying-party-name: DEMO
       connection-timeout-milliseconds: 1000
       read-timeout-milliseconds: 1000
+    eidas:
+      enabled: true
+      client-url: https://localhost:9877
+      refresh-countries-interval-in-milliseconds: 1000
+      request-timeout-in-seconds: 1
+      read-timeout-in-seconds: 1
+      relay-state-cache-duration-in-seconds: 30
 
   legal-person-authentication:
     x-road-server-url: https://localhost:9877/cgi-bin/consumer_proxy
