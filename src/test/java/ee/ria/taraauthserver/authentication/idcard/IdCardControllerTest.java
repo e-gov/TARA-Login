@@ -561,7 +561,7 @@ class IdCardControllerTest extends BaseTest {
         AuthConfigurationProperties.Ocsp ocspConf;
     }
 
-    private static void setUpMockOcspResponse(MockOcspResponseParams responseParams, String stubUrl) {
+    static void setUpMockOcspResponse(MockOcspResponseParams responseParams, String stubUrl) {
         ocspResponseTransformer.setResponseStatus(responseParams.getResponseStatus());
         ocspResponseTransformer.setCertificateStatus(responseParams.getCertificateStatus());
         ocspResponseTransformer.setResponderCertificate(responseParams.getResponderCertificate());

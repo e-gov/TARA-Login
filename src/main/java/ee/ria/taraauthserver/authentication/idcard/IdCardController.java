@@ -53,6 +53,7 @@ public class IdCardController {
     public static final String CN_SERIALNUMBER = "SERIALNUMBER";
     public static final String CN_GIVEN_NAME = "GIVENNAME";
     public static final String CN_SURNAME = "SURNAME";
+    public static final String AUTH_ID_REQUEST_MAPPING = "/auth/id";
 
     @Autowired
     private MessageSource messageSource;
@@ -63,7 +64,7 @@ public class IdCardController {
     @Autowired
     private OCSPValidator ocspValidator;
 
-    @GetMapping(path = {"/auth/id"})
+    @GetMapping(path = {AUTH_ID_REQUEST_MAPPING})
     public ResponseEntity<Map<String, String>> handleRequest(HttpServletRequest request, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
 
