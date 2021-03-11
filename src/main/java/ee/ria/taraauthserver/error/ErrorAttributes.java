@@ -2,7 +2,6 @@ package ee.ria.taraauthserver.error;
 
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.error.exceptions.TaraException;
-import ee.ria.taraauthserver.utils.RequestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.MDC;
@@ -10,7 +9,6 @@ import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
 import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.BindException;
@@ -86,7 +84,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
 
     @NotNull
     private String translateErrorCode(WebRequest webRequest, ErrorCode errorCode) {
-        Locale locale = webRequest.getHeader(HttpHeaders.ACCEPT) != null ? RequestUtils.getLocale() : Locale.ENGLISH;
+        Locale locale = defaultIfNull((Locale) webRequest.getAttribute(ERROR_ATTR_LOCALE, SCOPE_REQUEST), defaultLocale);
         try {
             return messageSource.getMessage(errorCode.getMessage(), errorCode.getMessageParameters(), locale);
         } catch (NoSuchMessageException ex) {
