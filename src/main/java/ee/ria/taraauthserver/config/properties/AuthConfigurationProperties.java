@@ -35,9 +35,6 @@ public class AuthConfigurationProperties {
     @Pattern(regexp = "(et|en|ru|ET|EN|RU)", message = "invalid default locale value, accepted values are: et, en, ru, ET, EN, RU")
     private String defaultLocale = "et";
 
-    @NotNull
-    private String defaultShortName;
-
     @NotEmpty
     private String contentSecurityPolicy = DEFAULT_CONTENT_SECURITY_POLICY;
 
@@ -130,6 +127,9 @@ public class AuthConfigurationProperties {
 
         @NotNull
         private String relyingPartyName;
+
+        @NotNull
+        private String displayText;
 
         @Pattern(regexp = "(SHA256|SHA384|SHA512)", message = "invalid hash value, accepted values are: SHA256, SHA384, SHA512")
         private String hashType = "SHA256";

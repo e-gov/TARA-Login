@@ -50,7 +50,6 @@ tara:
     max-connections-total: 3
 
   default-locale: et
-  default-short-name: default short name
 
   auth-methods:
     id-card:
@@ -84,6 +83,7 @@ tara:
       host-url: https://localhost:9877/mid-api
       relying-party-uuid: 00000000-0000-0000-0000-000000000000
       relying-party-name: DEMO
+      display-text: default short name
       truststore-type: PKCS12
       truststore-password: changeit
       connection-timeout-milliseconds: 1000
@@ -98,6 +98,7 @@ tara:
       truststore-password: changeit
       relying-party-uuid: 00000000-0000-0000-0000-000000000000
       relying-party-name: DEMO
+      display-text: default short name
       connection-timeout-milliseconds: 1000
       read-timeout-milliseconds: 1000
     eidas:

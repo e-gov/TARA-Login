@@ -75,8 +75,7 @@ Example: to deploy the webapp to a standalone Tomcat server
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.default-locale` | No | Locale that is used by default. Default `et` |
-| `tara.default-short-name` | Yes | Default name for the client application. |
-| `tara.default-authentication-methods` | No | default authentication methods. Example `ID_CARD, MOBILE_ID, SMART_ID` |
+| `tara.default-authentication-methods` | No | default authentication methods. Example `ID_CARD, MOBILE_ID, SMART_ID, EIDAS` |
 
 
 <a name="hydra_integration_conf"></a>
@@ -129,6 +128,7 @@ Table 1.3.3 - Integration with the [SK MID service](https://github.com/SK-EID/MI
 | `tara.auth-methods.mobile-id.truststore-password` | Yes | Password of the truststore from truststore-path. Example `changeit` |
 | `tara.auth-methods.mobile-id.relying-party-uuid` | Yes | UUID from RIA mobile id contract |
 | `tara.auth-methods.mobile-id.relying-party-name` | Yes | Name from RIA mobile id contract |
+| `tara.auth-methods.mobile-id.display-text` | Yes | Text to be displayed in user's mobile device. Used as a fallback in case the OIDC client has not registered a short name. |
 | `tara.auth-methods.mobile-id.hash-type` | Yes | Type of authentication hash. Possible values `SHA256, SHA384, SHA512` |
 | `tara.auth-methods.mobile-id.connection-timeout-milliseconds` | No | Connection timeout of the MID authentication initiation request. Default `5000` |
 | `tara.auth-methods.mobile-id.read-timeout-milliseconds` | No | Read timeout of the MID authentication initiation request. Default `5000` |
@@ -161,6 +161,7 @@ Table 1.4.3 - Integration with the [SK SID service](https://github.com/SK-EID/sm
 | `tara.auth-methods.smart-id.truststore-password` | Yes | Password of the truststore from truststore-path. Example `changeit` |
 | `tara.auth-methods.smart-id.relying-party-uuid` | Yes | UUID from RIA smart id contract |
 | `tara.auth-methods.smart-id.relying-party-name` | Yes | Name from RIA smart id contract |
+| `tara.auth-methods.smart-id.display-text` | Yes | Text to be displayed in user's mobile device. Used as a fallback in case the OIDC client has not registered a short name. |
 | `tara.auth-methods.smart-id.hash-type` | No | Type of authentication hash. Possible values `SHA256, SHA384, SHA512` Default `SHA512` |
 | `tara.auth-methods.smart-id.connection-timeout-milliseconds` | No | Connection timeout of the SID session status requests. Default `5000` |
 | `tara.auth-methods.smart-id.read-timeout-milliseconds` | No | Long polling timeout period used for SID session status requests. Default `30000` |
