@@ -44,6 +44,7 @@ import static ee.ria.taraauthserver.error.ErrorCode.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static net.logstash.logback.marker.Markers.append;
 
 @Slf4j
 @Validated
@@ -104,7 +105,7 @@ public class SmartIdController {
 
     private String initiateSidAuthenticationSession(SidCredential sidCredential, TaraSession taraSession, AuthenticationHash authenticationHash, AuthenticationRequestBuilder requestBuilder) {
         try {
-            log.info("Initiating smart-id session...");
+            log.info("Initiating smart-id session with parameters: {}");
             taraSession.setState(INIT_SID);
             SemanticsIdentifier semanticsIdentifier = new SemanticsIdentifier(SemanticsIdentifier.IdentityType.PNO, SemanticsIdentifier.CountryCode.EE, sidCredential.getIdCode());
             requestBuilder
@@ -114,6 +115,7 @@ public class SmartIdController {
                     .withCertificateLevel("QUALIFIED")
                     .withAuthenticationHash(authenticationHash)
                     .withAllowedInteractionsOrder(getAppropriateAllowedInteractions(taraSession));
+            log.info(append("tara.session.sid_authentication_init_request", requestBuilder), "Smart ID authentication init request");
             String sidSessionId = requestBuilder.initiateAuthentication();
 
             log.info("Initiated smart-id session with id: " + sidSessionId);
