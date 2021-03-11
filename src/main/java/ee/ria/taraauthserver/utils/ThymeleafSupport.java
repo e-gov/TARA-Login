@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.utils;
 
+import ee.ria.taraauthserver.alerts.AlertsScheduler;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.session.SessionUtils;
@@ -18,6 +19,9 @@ public class ThymeleafSupport {
 
     @Autowired
     EidasConfigurationProperties eidasConfigurationProperties;
+
+    @Autowired(required = false)
+    private AlertsScheduler alertsScheduler;
 
     public boolean isNotLocale(String code, Locale locale) {
         return !locale.getLanguage().equalsIgnoreCase(code);
@@ -81,4 +85,9 @@ public class ThymeleafSupport {
         return clientSpecificAuthMethodList.contains(method);
     }
 
+    public String getAlertIfAvailable(AuthenticationType authenticationType) {
+        if (alertsScheduler != null)
+            return alertsScheduler.getFirstAlert(authenticationType);
+        else return null;
+    }
 }

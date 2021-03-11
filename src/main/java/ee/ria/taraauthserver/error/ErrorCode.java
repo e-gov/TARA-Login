@@ -45,13 +45,14 @@ public enum ErrorCode {
     INVALID_REQUEST("message.error.invalid-request"),
     INVALID_CSRF_TOKEN("message.error.invalid-csrf-token"),
     INVALID_LEGAL_PERSON("label.legal-person.error.invalid-legal-person"),
-    LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE("label.legal-person.error.service-not-available"),
     EIDAS_COUNTRY_NOT_SUPPORTED("message.eidas.not-allowed-country"),
     EIDAS_USER_CONSENT_NOT_GIVEN("message.eidas.error.user-consent-not-given"),
     EIDAS_AUTHENTICATION_FAILED("message.eidas.error.authentication-failed"),
     EIDAS_INTERNAL_ERROR("message.eidas.error.internal-error"),
     INVALID_OIDC_CLIENT("message.error.invalid-oidc-client"),
-    INVALID_OIDC_REQUEST("message.error.invalid-oidc-request");
+    INVALID_OIDC_REQUEST("message.error.invalid-oidc-request"),
+    LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE("label.legal-person.error.service-not-available"),
+    MISSING_SCOPE("message.error.missing-scope");
 
     private final String message;
     @Setter

@@ -31,6 +31,7 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
@@ -44,6 +45,7 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 @Controller
 public class AuthInitController {
     public static final String AUTH_INIT_REQUEST_MAPPING = "/auth/init";
+    private static final Predicate<String> SUPPORTED_LANGUAGES = java.util.regex.Pattern.compile("(?i)(et|en|ru)").asMatchPredicate();
 
     @Autowired
     private AuthConfigurationProperties taraProperties;
@@ -68,15 +70,18 @@ public class AuthInitController {
         TaraSession.LoginRequestInfo loginRequestInfo = fetchLoginRequestInfo(loginChallenge);
         newTaraSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
         newTaraSession.setLoginRequestInfo(loginRequestInfo);
-        List<AuthenticationType> allowedAuthenticationMethodsList = loginRequestInfo.getAllowedAuthenticationMethodsList(taraProperties);
 
+        if (loginRequestInfo.getRequestedScopes().isEmpty())
+            throw new BadRequestException(ErrorCode.MISSING_SCOPE, "No scope is requested");
+
+        List<AuthenticationType> allowedAuthenticationMethodsList = loginRequestInfo.getAllowedAuthenticationMethodsList(taraProperties);
         if (isEmpty(allowedAuthenticationMethodsList))
             throw new BadRequestException(ErrorCode.NO_VALID_AUTHMETHODS_AVAILABLE,
                     "No authentication methods match the requested level of assurance. Please check your authorization request");
 
         newTaraSession.setAllowedAuthMethods(allowedAuthenticationMethodsList);
+        RequestUtils.setLocale(getUiLanguage(language, newTaraSession));
 
-        setLocale(language, newTaraSession);
         log.info(append(TARA_SESSION, newTaraSession).and(append("http.request.locale", RequestUtils.getLocale())), "Initialized authentication session");
 
         if (eidasOnlyWithCountryRequested(loginRequestInfo)) {
@@ -87,23 +92,19 @@ public class AuthInitController {
         }
     }
 
-    private void setLocale(String language, TaraSession taraSession) {
-        String locale = getUiLanguage(language, taraSession);
-        RequestUtils.setLocale(locale);
-    }
-
     private String getUiLanguage(String language, TaraSession taraSession) {
-        if (isNotEmpty(language)) {
-            return language;
-        } else if (taraSession.getLoginRequestInfo().getOidcContext().getUiLocales() != null && taraSession.getLoginRequestInfo().getOidcContext().getUiLocales().get(0).matches("(et|en|ru)")) {
-            return taraSession.getLoginRequestInfo().getOidcContext().getUiLocales().get(0);
-        } else {
-            return taraProperties.getDefaultLocale();
-        }
+        return isNotEmpty(language) ? language : getDefaultOrRequestedLocale(taraSession);
     }
 
-    private TaraSession.LoginRequestInfo fetchLoginRequestInfo(@RequestParam(name = "login_challenge") @Size(max = 50)
-                                                               @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed") String loginChallenge) {
+    private String getDefaultOrRequestedLocale(TaraSession taraSession) {
+        return taraSession.getLoginRequestInfo().getOidcContext().getUiLocales()
+                .stream()
+                .filter(SUPPORTED_LANGUAGES)
+                .findFirst()
+                .orElse(taraProperties.getDefaultLocale());
+    }
+
+    private TaraSession.LoginRequestInfo fetchLoginRequestInfo(String loginChallenge) {
         String url = taraProperties.getHydraService().getLoginUrl() + "?login_challenge=" + loginChallenge;
         log.info("OIDC login request: {}", value("url.full", url));
         try {

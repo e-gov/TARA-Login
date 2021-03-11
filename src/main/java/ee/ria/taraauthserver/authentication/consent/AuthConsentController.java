@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.authentication.consent;
 
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
@@ -20,6 +21,7 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.util.Map;
 
+import static ee.ria.taraauthserver.authentication.consent.ConsentUtils.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_CONSENT_PROCESS;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
@@ -64,7 +66,19 @@ public class AuthConsentController {
             model.addAttribute("legalPersonName", legalPerson.getLegalName());
             model.addAttribute("legalPersonRegistryCode", legalPerson.getLegalPersonIdentifier());
         }
+        if (shouldEmailBeDisplayed(taraSession))
+            model.addAttribute("email", taraSession.getAuthenticationResult().getEmail());
+        if (shouldPhoneNumberBeDisplayed(taraSession))
+            model.addAttribute("phoneNumber", taraSession.getAuthenticationResult().getPhoneNumber());
         return "consentView";
+    }
+
+    private boolean shouldEmailBeDisplayed(TaraSession taraSession) {
+        return emailIsRequested(taraSession) && taraSession.getAuthenticationResult().getEmail() != null;
+    }
+
+    private boolean shouldPhoneNumberBeDisplayed(TaraSession taraSession) {
+        return phoneNumberIsRequested(taraSession) && taraSession.getAuthenticationResult().getPhoneNumber() != null;
     }
 
     @NotNull

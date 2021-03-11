@@ -20,6 +20,14 @@
                     birth
                 </td>
             </tr>
+            <tr th:if="${email != null}">
+                <th class="consent-table-row"><b th:utext="#{label.natural-person.email}"></b></th>
+                <td id="email" th:text="${email}">E-Mail</td>
+            </tr>
+            <tr th:if="${phoneNumber != null}">
+                <th class="consent-table-row"><b th:utext="#{label.natural-person.phone}"></b></th>
+                <td id="phone-number" th:text="${phoneNumber}">Phone number</td>
+            </tr>
             <tr th:if="${legalPersonName != null}">
                 <th class="consent-table-row"><b th:utext="#{label.legal-person.legal-person-name}"></b></th>
                 <td id="legal-person-name" th:text="${legalPersonName}">Legal person name</td>

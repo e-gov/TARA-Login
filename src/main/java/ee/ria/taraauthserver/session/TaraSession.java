@@ -53,6 +53,7 @@ public class TaraSession implements Serializable {
 
     @Data
     public static class AuthenticationResult implements Serializable {
+        private String email;
         private String idCode;
         private String country;
         private String firstName;
@@ -204,7 +205,7 @@ public class TaraSession implements Serializable {
         @JsonProperty("acr_values")
         private List<String> acrValues;
         @JsonProperty("ui_locales")
-        private List<String> uiLocales;
+        private List<String> uiLocales = new ArrayList<>();
     }
 
     @Data

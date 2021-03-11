@@ -38,6 +38,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
+import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static ee.ria.taraauthserver.authentication.idcard.IdCardController.HEADER_SSL_CLIENT_CERT;
@@ -46,8 +47,10 @@ import static ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest.gene
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
+import static java.util.List.of;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @Slf4j
 class IdCardControllerTest extends BaseTest {
@@ -198,8 +201,64 @@ class IdCardControllerTest extends BaseTest {
         assertEquals("MÄNNIK", result.getLastName());
         assertEquals("1971-01-01", result.getDateOfBirth().toString());
         assertEquals("EE", result.getCountry());
+        assertNull(result.getEmail());
         assertEquals(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, taraSession.getState());
+    }
 
+    @Test
+    @Tag(value = "OCSP_RESPONSE_STATUS_HANDLING")
+    @Tag(value = "IDCARD_AUTH_SUCCESSFUL")
+    void idAuth_ok_with_email() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
+        KeyPairGenerator rsa = KeyPairGenerator.getInstance("RSA");
+        rsa.initialize(2048);
+        KeyPair certKeyPair = rsa.generateKeyPair();
+        X509Certificate ocspResponderCert = generateOcspResponderCertificate("CN=MOCK OCSP RESPONDER, C=EE", certKeyPair, responderKeys, "CN=TEST of ESTEID-SK 2015").getCertificate();
+        ocspResponseTransformer.setSignerKey(certKeyPair.getPrivate());
+
+        setUpMockOcspResponse(MockOcspResponseParams.builder()
+                .ocspServer(wireMockServer)
+                .responseStatus(OCSPResp.SUCCESSFUL)
+                .certificateStatus(CertificateStatus.GOOD)
+                .responseId("CN=MOCK OCSP RESPONDER")
+                .ocspConf(ocspConfiguration)
+                .responderCertificate(
+                        ocspResponderCert
+                ).build(), "/esteid2015");
+
+        Session session = sessionRepository.createSession();
+        TaraSession authSession = new TaraSession(session.getId());
+        authSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+        TaraSession.LoginRequestInfo loginRequestInfo = new TaraSession.LoginRequestInfo();
+        TaraSession.Client client = new TaraSession.Client();
+        client.setScope("openid email");
+        loginRequestInfo.setClient(client);
+        loginRequestInfo.setRequestedScopes(List.of("email", "openid"));
+        authSession.setLoginRequestInfo(loginRequestInfo);
+        session.setAttribute(TARA_SESSION, authSession);
+        sessionRepository.save(session);
+        String sessionId = session.getId();
+
+        given()
+                .when()
+                .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
+                .sessionId("SESSION", sessionId)
+                .get("/auth/id")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .headers(EXPECTED_RESPONSE_HEADERS)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
+                .body("status", equalTo("COMPLETED"));
+
+        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        TaraSession.AuthenticationResult result = taraSession.getAuthenticationResult();
+        assertEquals("47101010033", result.getIdCode());
+        assertEquals("MARI-LIIS", result.getFirstName());
+        assertEquals("MÄNNIK", result.getLastName());
+        assertEquals("1971-01-01", result.getDateOfBirth().toString());
+        assertEquals("EE", result.getCountry());
+        assertEquals("mari-liis.mannik@eesti.ee", result.getEmail());
+        assertEquals(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, taraSession.getState());
     }
 
     @Test
@@ -502,7 +561,7 @@ class IdCardControllerTest extends BaseTest {
         AuthConfigurationProperties.Ocsp ocspConf;
     }
 
-    private static void setUpMockOcspResponse(MockOcspResponseParams responseParams, String stubUrl) {
+    static void setUpMockOcspResponse(MockOcspResponseParams responseParams, String stubUrl) {
         ocspResponseTransformer.setResponseStatus(responseParams.getResponseStatus());
         ocspResponseTransformer.setCertificateStatus(responseParams.getCertificateStatus());
         ocspResponseTransformer.setResponderCertificate(responseParams.getResponderCertificate());

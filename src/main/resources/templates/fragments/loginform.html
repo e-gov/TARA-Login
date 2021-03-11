@@ -5,6 +5,28 @@
         </div>
         <br>
     </noscript>
+
+    <th:block
+            th:if="${@thymeleafSupport.getAlertIfAvailable(T(ee.ria.taraauthserver.config.properties.AuthenticationType).ID_CARD)}"
+            th:remove="tag"
+            layout:insert="~{fragments/logintabs :: warning('id-card', ${@thymeleafSupport.getAlertIfAvailable(T(ee.ria.taraauthserver.config.properties.AuthenticationType).ID_CARD)})}"
+            aria-hidden="true" aria-labelledby="id-card">
+    </th:block>
+
+    <th:block
+            th:if="${@thymeleafSupport.getAlertIfAvailable(T(ee.ria.taraauthserver.config.properties.AuthenticationType).MOBILE_ID)}"
+            th:remove="tag"
+            layout:insert="~{fragments/logintabs :: warning('mobile-id', ${@thymeleafSupport.getAlertIfAvailable(T(ee.ria.taraauthserver.config.properties.AuthenticationType).MOBILE_ID)})}"
+            aria-hidden="true" aria-labelledby="mobile-id">
+    </th:block>
+
+    <th:block
+            th:if="${@thymeleafSupport.getAlertIfAvailable(T(ee.ria.taraauthserver.config.properties.AuthenticationType).SMART_ID)}"
+            th:remove="tag"
+            layout:insert="~{fragments/logintabs :: warning('smart-id', ${@thymeleafSupport.getAlertIfAvailable(T(ee.ria.taraauthserver.config.properties.AuthenticationType).SMART_ID)})}"
+            aria-hidden="true" aria-labelledby="smart-id">
+    </th:block>
+
     <div class="c-tab-login">
         <nav role="navigation" class="c-tab-login__header"
              th:aria-label="#{label.aria.authentication-method.navigation}">

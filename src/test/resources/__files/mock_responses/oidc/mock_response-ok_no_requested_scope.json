@@ -79,8 +79,8 @@
     "ui_locales": [
       "zu",
       "fi",
-      "Ru",
-      "ET",
+      "Et",
+      "RU",
       "en"
     ]
   },
@@ -88,10 +88,7 @@
   "requested_access_token_audience": [
     "string"
   ],
-  "requested_scope": [
-    "idcard",
-    "mid"
-  ],
+  "requested_scope": [],
   "session_id": "string",
   "skip": true,
   "subject": "string"

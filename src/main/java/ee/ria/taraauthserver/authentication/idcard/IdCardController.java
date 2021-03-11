@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.authentication.idcard;
 
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.OCSPServiceNotAvailableException;
@@ -28,7 +29,9 @@ import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static ee.ria.taraauthserver.authentication.idcard.CertificateStatus.REVOKED;
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
@@ -50,6 +53,7 @@ public class IdCardController {
     public static final String CN_SERIALNUMBER = "SERIALNUMBER";
     public static final String CN_GIVEN_NAME = "GIVENNAME";
     public static final String CN_SURNAME = "SURNAME";
+    public static final String AUTH_ID_REQUEST_MAPPING = "/auth/id";
 
     @Autowired
     private MessageSource messageSource;
@@ -60,7 +64,7 @@ public class IdCardController {
     @Autowired
     private OCSPValidator ocspValidator;
 
-    @GetMapping(path = {"/auth/id"})
+    @GetMapping(path = {AUTH_ID_REQUEST_MAPPING})
     public ResponseEntity<Map<String, String>> handleRequest(HttpServletRequest request, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
 
@@ -110,10 +114,15 @@ public class IdCardController {
     }
 
     private void addAuthResultToSession(TaraSession taraSession, X509Certificate certificate) {
+
         Map<String, String> params = getCertificateParams(certificate);
         String idCode = EstonianIdCodeUtil.getEstonianIdCode(params.get(CN_SERIALNUMBER));
-
         TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
+
+        if (emailIsRequested(taraSession)) {
+            String email = X509Utils.getRfc822NameSubjectAltName(certificate);
+            authenticationResult.setEmail(email);
+        }
         authenticationResult.setFirstName(params.get(CN_GIVEN_NAME));
         authenticationResult.setLastName(params.get(CN_SURNAME));
         authenticationResult.setIdCode(idCode);
@@ -124,6 +133,14 @@ public class IdCardController {
         authenticationResult.setSubject(authenticationResult.getCountry() + authenticationResult.getIdCode());
         taraSession.setState(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
         taraSession.setAuthenticationResult(authenticationResult);
+    }
+
+    private boolean emailIsRequested(TaraSession taraSession) {
+        List<String> scopes = Optional.of(taraSession)
+                .map(TaraSession::getLoginRequestInfo)
+                .map(TaraSession.LoginRequestInfo::getRequestedScopes)
+                .orElse(null);
+        return scopes != null && scopes.contains(TaraScope.EMAIL.getFormalName());
     }
 
     @NotNull
