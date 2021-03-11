@@ -71,7 +71,8 @@ Example: to deploy the webapp to a standalone Tomcat server
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.default-locale` | No | Locale that is used by default. Default `et` |
-| `tara.default-short-name` | Yes | Default name for the client application |
+| `tara.default-short-name` | Yes | Default name for the client application. |
+| `tara.default-authentication-methods` | No | default authentication methods. Example `ID_CARD, MOBILE_ID, SMART_ID` |
 
 
 <a name="hydra_integration_conf"></a>
