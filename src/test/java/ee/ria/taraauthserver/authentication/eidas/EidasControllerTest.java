@@ -29,6 +29,7 @@ import static io.restassured.RestAssured.given;
 import static java.util.List.of;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
+import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -200,7 +201,7 @@ public class EidasControllerTest extends BaseTest {
         createEidasCountryStub("mock_responses/eidas/eidas-response.json", 200);
         createEidasLoginStub("mock_responses/eidas/eidas-login-response.json", 400);
 
-        await().atMost(FIVE_SECONDS)
+        await().atMost(TEN_SECONDS)
                 .until(() -> eidasConfigurationProperties.getAvailableCountries().size(), Matchers.equalTo(1));
 
         MockSessionFilter sessionFilter = withTaraSession()

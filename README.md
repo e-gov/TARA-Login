@@ -103,7 +103,7 @@ Table 1.3.1 - Enabling Mobile-ID authentication
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `tara.auth-methods.mobile-id.enabled` | No | Enable or disable Mobile-ID authentication method. Default `true` |
+| `tara.auth-methods.mobile-id.enabled` | No | Enable or disable Mobile-ID authentication method. Default `false` |
 
 Table 1.3.2 - Assignig the Level of assurance to authentication method
 
@@ -135,7 +135,7 @@ Table 1.4.1 - Enabling Smart-ID authentication
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `tara.auth-methods.smart-id.enabled` | No | Enable or disable Smart-ID authentication method. Default `true` |
+| `tara.auth-methods.smart-id.enabled` | No | Enable or disable Smart-ID authentication method. Default `false` |
 
 Table 1.4.2 - Assignig the Level of assurance to authentication method
 
@@ -165,7 +165,7 @@ Table 1.5.1 - Enabling ID-card authentication
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `tara.auth-methods.id-card.enabled` | No | Enable or disable Id-card authentication method. Default `true` |
+| `tara.auth-methods.id-card.enabled` | No | Enable or disable Id-card authentication method. Default `false` |
 
 
 Table 1.5.2 - Assignig the Level of assurance to authentication method
@@ -312,7 +312,7 @@ Table 1.6.1 - Enabling Eidas authentication
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `tara.auth-methods.eidas.enabled` | No | Enable or disable Eidas authentication method. Default `true` |
+| `tara.auth-methods.eidas.enabled` | No | Enable or disable Eidas authentication method. Default `false` |
 
 Table 1.6.2 - Assignig the Level of assurance to authentication method
 

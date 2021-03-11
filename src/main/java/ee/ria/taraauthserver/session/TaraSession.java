@@ -182,7 +182,7 @@ public class TaraSession implements Serializable {
         }
 
         private boolean isAuthenticationMethodEnabled(AuthenticationType method, AuthConfigurationProperties taraProperties) {
-            return taraProperties.getAuthMethods().get(method).isEnabled();
+            return taraProperties.getAuthMethods().get(method) != null && taraProperties.getAuthMethods().get(method).isEnabled();
         }
     }
 

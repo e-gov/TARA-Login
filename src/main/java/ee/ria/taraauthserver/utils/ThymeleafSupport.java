@@ -17,7 +17,7 @@ import java.util.*;
 @Slf4j
 public class ThymeleafSupport {
 
-    @Autowired
+    @Autowired(required = false)
     EidasConfigurationProperties eidasConfigurationProperties;
 
     @Autowired(required = false)
@@ -59,7 +59,10 @@ public class ThymeleafSupport {
     }
 
     public List<String> getListOfCountries() {
-        return eidasConfigurationProperties.getAvailableCountries();
+        if (eidasConfigurationProperties != null)
+            return eidasConfigurationProperties.getAvailableCountries();
+        else
+            return new ArrayList<>();
     }
 
     public String getBackUrl() {

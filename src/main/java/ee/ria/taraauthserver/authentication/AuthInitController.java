@@ -50,7 +50,7 @@ public class AuthInitController {
     @Autowired
     private AuthConfigurationProperties taraProperties;
 
-    @Autowired
+    @Autowired (required = false)
     private EidasConfigurationProperties eidasConfigurationProperties;
 
     @Autowired
@@ -138,6 +138,9 @@ public class AuthInitController {
     }
 
     private String getAllowedEidasCountryCode(List<String> requestedScopes) {
+        if (eidasConfigurationProperties == null)
+            throw new IllegalStateException("Cannot use eidasonly scope when eidas authentication is not loaded. Is not enabled in configuration?");
+
         String regex = "eidas:country:[a-z]{2}$";
         return requestedScopes.stream()
                 .filter(rs -> rs.matches(regex))

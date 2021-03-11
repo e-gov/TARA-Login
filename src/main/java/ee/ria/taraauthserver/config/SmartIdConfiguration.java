@@ -28,7 +28,7 @@ import java.util.List;
 
 @Slf4j
 @Configuration
-@ConditionalOnProperty(value = "tara.auth-methods.smart-id.enabled", matchIfMissing = true)
+@ConditionalOnProperty(value = "tara.auth-methods.smart-id.enabled")
 public class SmartIdConfiguration {
 
     @Autowired

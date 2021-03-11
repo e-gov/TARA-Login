@@ -47,7 +47,7 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 @Slf4j
 @RestController
-@ConditionalOnProperty(value = "tara.auth-methods.id-card.enabled", matchIfMissing = true)
+@ConditionalOnProperty(value = "tara.auth-methods.id-card.enabled")
 public class IdCardController {
     public static final String HEADER_SSL_CLIENT_CERT = "XCLIENTCERTIFICATE";
     public static final String CN_SERIALNUMBER = "SERIALNUMBER";

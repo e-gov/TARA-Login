@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.config.properties;
 
 import lombok.Data;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
@@ -10,16 +11,15 @@ import java.util.List;
 
 @Data
 @Validated
+@ConditionalOnProperty(value = "tara.auth-methods.eidas.enabled")
 @ConfigurationProperties(prefix = "tara.auth-methods.eidas")
-public class EidasConfigurationProperties {
+public class EidasConfigurationProperties extends AuthConfigurationProperties.AuthMethodProperties {
 
-    boolean enabled = true;
+    private String scriptHash = "sha256-8lDeP0UDwCO6/RhblgeH/ctdBzjVpJxrXizsnIk3cEQ=";
 
-    String scriptHash = "sha256-8lDeP0UDwCO6/RhblgeH/ctdBzjVpJxrXizsnIk3cEQ=";
+    private int refreshCountriesIntervalInMilliseconds;
 
-    int refreshCountriesIntervalInMilliseconds;
-
-    List<String> availableCountries = new ArrayList<>();
+    private List<String> availableCountries = new ArrayList<>();
 
     private int requestTimeoutInSeconds = 3;
 

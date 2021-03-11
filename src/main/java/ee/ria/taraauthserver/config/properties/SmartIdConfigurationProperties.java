@@ -13,7 +13,7 @@ import java.util.List;
 @Data
 @Validated
 @ConfigurationProperties(prefix = "tara.auth-methods.smart-id")
-@ConditionalOnProperty(value = "tara.auth-methods.smart-id.enabled", matchIfMissing = true)
+@ConditionalOnProperty(value = "tara.auth-methods.smart-id.enabled")
 public class SmartIdConfigurationProperties extends AuthConfigurationProperties.AuthMethodProperties {
 
     @NotNull

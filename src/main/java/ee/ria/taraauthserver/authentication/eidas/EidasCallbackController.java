@@ -47,7 +47,7 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 
 @Slf4j
 @Controller
-@ConditionalOnProperty(value = "tara.auth-methods.eidas.enabled", matchIfMissing = true)
+@ConditionalOnProperty(value = "tara.auth-methods.eidas.enabled")
 public class EidasCallbackController {
     public static final String EIDAS_CALLBACK_REQUEST_MAPPING = "/auth/eidas/callback";
 

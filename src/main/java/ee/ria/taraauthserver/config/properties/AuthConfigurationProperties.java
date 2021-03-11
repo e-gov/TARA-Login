@@ -98,7 +98,7 @@ public class AuthConfigurationProperties {
 
         LevelOfAssurance levelOfAssurance;
 
-        boolean enabled = true;
+        boolean enabled = false;
     }
 
     @Data

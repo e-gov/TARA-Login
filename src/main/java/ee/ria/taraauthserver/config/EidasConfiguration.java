@@ -40,7 +40,7 @@ import static org.apache.ignite.cache.CacheMode.PARTITIONED;
 @Slf4j
 @Configuration
 @EnableScheduling
-@ConditionalOnProperty(value = "tara.auth-methods.eidas.enabled", matchIfMissing = true)
+@ConditionalOnProperty(value = "tara.auth-methods.eidas.enabled")
 public class EidasConfiguration {
 
     @Autowired

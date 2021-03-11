@@ -48,7 +48,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @Slf4j
 @Validated
 @Controller
-@ConditionalOnProperty(value = "tara.auth-methods.smart-id.enabled", matchIfMissing = true)
+@ConditionalOnProperty(value = "tara.auth-methods.smart-id.enabled")
 public class SmartIdController {
 
     @Autowired

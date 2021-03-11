@@ -34,7 +34,7 @@ import static net.logstash.logback.marker.Markers.append;
 
 @Slf4j
 @RestController
-@ConditionalOnProperty(value = "tara.auth-methods.eidas.enabled", matchIfMissing = true)
+@ConditionalOnProperty(value = "tara.auth-methods.eidas.enabled")
 public class EidasController {
 
     @Autowired

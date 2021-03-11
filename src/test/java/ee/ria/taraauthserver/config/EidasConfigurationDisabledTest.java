@@ -21,6 +21,7 @@ public class EidasConfigurationDisabledTest extends DisabledConfigurationTest {
     @Tag(value = "EIDAS_AUTH_ENABLED")
     public void whenEidasAuthenticationMethodIsDisabledThenBeansNotLoaded() {
         assertBeanNotInitiated(EidasConfiguration.class);
+        assertBeanNotInitiated(EidasConfigurationProperties.class);
         assertBeanNotInitiated(EidasController.class);
         assertBeanNotInitiated(EidasCallbackController.class);
     }
