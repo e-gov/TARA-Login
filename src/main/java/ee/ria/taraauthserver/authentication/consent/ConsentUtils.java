@@ -84,11 +84,11 @@ public class ConsentUtils {
     @Data
     public static class AcceptConsentRequest {
         @JsonProperty("remember")
-        Boolean remember = false;
+        private Boolean remember = false;
         @JsonProperty("session")
-        LoginSession session;
+        private LoginSession session;
         @JsonProperty("grant_scope")
-        List<String> grantScope;
+        private List<String> grantScope;
 
         @Data
         public static class LoginSession {
