@@ -33,7 +33,6 @@ import static org.springframework.web.context.request.RequestAttributes.SCOPE_RE
 public class ErrorAttributes extends DefaultErrorAttributes {
     public static final String ERROR_ATTR_MESSAGE = "message";
     public static final String ERROR_ATTR_LOCALE = "locale";
-    public static final String DEFAULT_INTERNAL_EXCEPTION_MSG = "message.error.general";
     private final MessageSource messageSource;
     private final Locale defaultLocale;
 
@@ -65,7 +64,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
     private void handle4xxClientError(WebRequest webRequest, Map<String, Object> attr) {
         Throwable error = getError(webRequest);
         if (isTaraErrorWithErrorCode(error)) {
-            attr.replace(ERROR_ATTR_MESSAGE, translateErrorCode(webRequest, ((TaraException) error).getErrorCode().getMessage()));
+            attr.replace(ERROR_ATTR_MESSAGE, translateErrorCode(webRequest, ((TaraException) error).getErrorCode()));
         } else if (isBindingError(error)) {
             attr.replace(ERROR_ATTR_MESSAGE, formatBindingErrors((BindException) error));
         }
@@ -75,9 +74,9 @@ public class ErrorAttributes extends DefaultErrorAttributes {
         int status = (int) attr.get("status");
         Throwable error = getError(webRequest);
         if (status == 502 && isTaraErrorWithErrorCode(error)) {
-            attr.replace(ERROR_ATTR_MESSAGE, translateErrorCode(webRequest, ((TaraException) error).getErrorCode().getMessage()));
+            attr.replace(ERROR_ATTR_MESSAGE, translateErrorCode(webRequest, ((TaraException) error).getErrorCode()));
         } else {
-            attr.replace(ERROR_ATTR_MESSAGE, translateErrorCode(webRequest, DEFAULT_INTERNAL_EXCEPTION_MSG));
+            attr.replace(ERROR_ATTR_MESSAGE, translateErrorCode(webRequest, ErrorCode.INTERNAL_ERROR));
         }
     }
 
@@ -86,10 +85,10 @@ public class ErrorAttributes extends DefaultErrorAttributes {
     }
 
     @NotNull
-    private String translateErrorCode(WebRequest webRequest, String errorCode) {
+    private String translateErrorCode(WebRequest webRequest, ErrorCode errorCode) {
         Locale locale = webRequest.getHeader(HttpHeaders.ACCEPT) != null ? RequestUtils.getLocale() : Locale.ENGLISH;
         try {
-            return messageSource.getMessage(errorCode, null, locale);
+            return messageSource.getMessage(errorCode.getMessage(), errorCode.getMessageParameters(), locale);
         } catch (NoSuchMessageException ex) {
             return "???" + errorCode + "???";
         }
