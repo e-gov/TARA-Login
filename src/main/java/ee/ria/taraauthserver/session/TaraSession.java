@@ -8,7 +8,6 @@ import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.util.Assert;
 
@@ -54,20 +53,13 @@ public class TaraSession implements Serializable {
     }
 
     public String getClientName() {
-        Map<String, String> nameTranslations = getNameTranslations();
-        if (nameTranslations == null)
-            return null;
-        else
-            return nameTranslations.get("et");
-    }
-
-    private Map<String, String> getNameTranslations() {
         return Optional.of(this)
                 .map(TaraSession::getLoginRequestInfo)
                 .map(TaraSession.LoginRequestInfo::getClient)
                 .map(TaraSession.Client::getMetaData)
                 .map(TaraSession.MetaData::getOidcClient)
                 .map(TaraSession.OidcClient::getNameTranslations)
+                .map(m -> m.get("et"))
                 .orElse(null);
     }
 
