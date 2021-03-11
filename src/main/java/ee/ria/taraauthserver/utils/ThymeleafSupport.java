@@ -18,7 +18,7 @@ import java.util.Map;
 @Slf4j
 public class ThymeleafSupport {
 
-    @Autowired
+    @Autowired(required = false)
     private AlertsScheduler alertsScheduler;
 
     public boolean isNotLocale(String code, Locale locale) {
@@ -80,6 +80,8 @@ public class ThymeleafSupport {
     }
 
     public String getAlertIfAvailable(AuthenticationType authenticationType) {
-        return alertsScheduler.getFirstAlert(authenticationType);
+        if (alertsScheduler != null)
+            return alertsScheduler.getFirstAlert(authenticationType);
+        else return null;
     }
 }

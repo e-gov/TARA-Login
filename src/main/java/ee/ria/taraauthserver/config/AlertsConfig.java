@@ -6,6 +6,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.configuration.CacheConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +27,7 @@ import static org.apache.ignite.cache.CacheMode.PARTITIONED;
 @Slf4j
 @Configuration
 @EnableScheduling
+@ConditionalOnProperty(value = "tara.alerts.host-url")
 public class AlertsConfig {
 
     @Bean

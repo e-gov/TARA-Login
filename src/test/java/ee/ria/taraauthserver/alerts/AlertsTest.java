@@ -1,7 +1,6 @@
 package ee.ria.taraauthserver.alerts;
 
 
-import ch.qos.logback.classic.Logger;
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.utils.ThymeleafSupport;
@@ -10,6 +9,7 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.TestPropertySource;
 
 import javax.cache.Cache;
 import java.util.List;
@@ -21,10 +21,12 @@ import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.slf4j.Logger.ROOT_LOGGER_NAME;
-import static org.slf4j.LoggerFactory.getLogger;
 
 @Slf4j
+@TestPropertySource(
+        locations = "classpath:application.yml",
+        properties = {"tara.alerts.host-url=https://localhost:9877/alerts",
+                "tara.alerts.refresh-alerts-interval-in-milliseconds=1000"})
 public class AlertsTest extends BaseTest {
 
     @Autowired

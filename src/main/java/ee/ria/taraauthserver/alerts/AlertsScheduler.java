@@ -4,6 +4,7 @@ import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -19,6 +20,7 @@ import static java.util.List.of;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(value = "tara.alerts.host-url")
 public class AlertsScheduler {
     public static final String ALERTS_CACHE_KEY = "alertsCache";
 

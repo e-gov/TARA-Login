@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.config.properties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
@@ -14,6 +15,7 @@ import java.util.List;
 @Data
 @Validated
 @ConfigurationProperties(prefix = "tara.alerts")
+@ConditionalOnProperty(value = "tara.alerts.host-url")
 public class AlertsConfigurationProperties {
 
     @NotNull
