@@ -35,6 +35,9 @@ public class AuthConfigurationProperties {
     @Pattern(regexp = "(et|en|ru|ET|EN|RU)", message = "invalid default locale value, accepted values are: et, en, ru, ET, EN, RU")
     private String defaultLocale = "et";
 
+    @NotNull
+    private String defaultShortName;
+
     @NotEmpty
     private String contentSecurityPolicy = DEFAULT_CONTENT_SECURITY_POLICY;
 
@@ -154,6 +157,8 @@ public class AuthConfigurationProperties {
 
         private String truststoreType = "PKCS12";
 
+        private boolean ocspEnabled = true;
+
         @NotNull
         private String truststorePassword;
 
@@ -165,7 +170,7 @@ public class AuthConfigurationProperties {
 
         @PostConstruct
         public void validateConfiguration() {
-            if (isEnabled()) {
+            if (this.ocspEnabled) {
                 Assert.notEmpty(ocsp, "At least one ocsp configuration must be defined!");
                 Set<String> duplicateNames = getFindDuplicateConfigurations();
                 Assert.isTrue(duplicateNames.isEmpty(), "Multiple OCSP configurations detected for issuer's with CN's: " + duplicateNames + ". Please check your configuration!");

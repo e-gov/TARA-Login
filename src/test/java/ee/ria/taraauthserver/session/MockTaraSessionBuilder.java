@@ -53,7 +53,6 @@ public class MockTaraSessionBuilder {
         if (requestedScopes != null) {
             lri.setRequestedScopes(requestedScopes);
         }
-        oidcClient.setShortName("short_name");
         client.setClientId(MOCK_CLIENT_ID);
         metaData.setOidcClient(oidcClient);
         client.setMetaData(metaData);
@@ -75,13 +74,11 @@ public class MockTaraSessionBuilder {
         TaraSession.MetaData metaData = new TaraSession.MetaData();
         TaraSession.OidcClient oidcClient = new TaraSession.OidcClient();
 
-        oidcClient.setName(MOCK_CLIENT_NAME);
         oidcClient.setNameTranslations(Map.of(
                 "en", MOCK_CLIENT_NAME_EN,
                 "et", MOCK_CLIENT_NAME_ET,
                 "ru", MOCK_CLIENT_NAME_RU
         ));
-        oidcClient.setShortName(MOCK_CLIENT_SHORTNAME);
         oidcClient.setShortNameTranslations(Map.of(
                 "en", MOCK_CLIENT_SHORTNAME_EN,
                 "et", MOCK_CLIENT_SHORTNAME_ET,

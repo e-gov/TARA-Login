@@ -50,10 +50,12 @@ tara:
     max-connections-total: 3
 
   default-locale: et
+  default-short-name: default short name
 
   auth-methods:
     id-card:
       enabled: true
+      ocsp-enabled: true
       level-of-assurance: HIGH
       truststore-path: file:src/test/resources/idcard-truststore-test.p12
       truststore-type: PKCS12

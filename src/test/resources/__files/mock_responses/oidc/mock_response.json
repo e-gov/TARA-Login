@@ -89,8 +89,7 @@
     "string"
   ],
   "requested_scope": [
-    "idcard",
-    "mid"
+    "openid"
   ],
   "session_id": "string",
   "skip": true,

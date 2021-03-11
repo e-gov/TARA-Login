@@ -13,6 +13,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.util.Assert;
 
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,7 +82,7 @@ public class ConsentUtils {
         Assert.notNull(oidcAuthRequestUrl, "OIDC authentication URL cannot be null!");
         String state = getQueryMap(oidcAuthRequestUrl.getQuery()).get("state");
         Assert.notNull(state, "State paremeter is mandatory and cannot be null!");
-        return state;
+        return URLDecoder.decode(state, StandardCharsets.UTF_8);
     }
 
     public static Map<String, String> getQueryMap(String query) {
@@ -106,11 +108,11 @@ public class ConsentUtils {
     @Data
     public static class AcceptConsentRequest {
         @JsonProperty("remember")
-        Boolean remember = false;
+        private Boolean remember = false;
         @JsonProperty("session")
-        LoginSession session;
+        private LoginSession session;
         @JsonProperty("grant_scope")
-        List<String> grantScope;
+        private List<String> grantScope;
 
         @Data
         public static class LoginSession {

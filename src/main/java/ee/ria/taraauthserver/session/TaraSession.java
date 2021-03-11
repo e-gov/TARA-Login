@@ -33,6 +33,7 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 @Data
 @RequiredArgsConstructor
 public class TaraSession implements Serializable {
+
     public static final String TARA_SESSION = "tara.session";
     private final String sessionId;
 
@@ -49,6 +50,17 @@ public class TaraSession implements Serializable {
                 value("tara.session.old_state", state != null ? state.name() : "NOT_SET"),
                 value("tara.session.state", newState.name()));
         this.state = newState;
+    }
+
+    public String getClientName() {
+        return Optional.of(this)
+                .map(TaraSession::getLoginRequestInfo)
+                .map(TaraSession.LoginRequestInfo::getClient)
+                .map(TaraSession.Client::getMetaData)
+                .map(TaraSession.MetaData::getOidcClient)
+                .map(TaraSession.OidcClient::getNameTranslations)
+                .map(m -> m.get("et"))
+                .orElse(null);
     }
 
     @Data
@@ -125,10 +137,24 @@ public class TaraSession implements Serializable {
                     .collect(toList());
 
             if (isEmpty(clientRequestedAuthMethods)) {
-                return taraProperties.getDefaultAuthenticationMethods();
+                return getAllowedDefaultAuthenticationTypes(taraProperties);
             } else {
                 return clientRequestedAuthMethods;
             }
+        }
+
+        private List<AuthenticationType> getAllowedDefaultAuthenticationTypes(AuthConfigurationProperties taraProperties) {
+            List<AuthenticationType> allowedAuthenticationTypes = new ArrayList<>();
+            List<String> allowedScopes = of(client.getScope().split(" "));
+            for (AuthenticationType authType : taraProperties.getDefaultAuthenticationMethods()) {
+                if (allowedScopes.contains(authType.getScope().getFormalName())) {
+                    allowedAuthenticationTypes.add(authType);
+                } else {
+                    log.warn("Requested scope value '{}' is not allowed, entry ignored!",
+                            value("tara.session.login_request_info.requested_scope", authType.getScope().getFormalName()));
+                }
+            }
+            return allowedAuthenticationTypes;
         }
 
         private List<TaraScope> getRequestedTaraScopes() {
@@ -220,16 +246,8 @@ public class TaraSession implements Serializable {
 
     @Data
     public static class OidcClient implements Serializable {
-        @NotBlank
-        @Size(max = 150)
-        @JsonProperty("name")
-        private String name;
         @JsonProperty("name_translations")
         private Map<String, String> nameTranslations = new HashMap<>();
-        @NotBlank
-        @Size(max = 40)
-        @JsonProperty("short_name")
-        private String shortName;
         @JsonProperty("short_name_translations")
         private Map<String, String> shortNameTranslations = new HashMap<>();
         @Size(max = 1000)
@@ -240,6 +258,8 @@ public class TaraSession implements Serializable {
         private Institution institution = new Institution();
         @JsonProperty("smartid_settings")
         private SmartIdSettings smartIdSettings;
+        @JsonProperty("mid_settings")
+        private SmartIdSettings midSettings;
     }
 
     @Data
@@ -271,7 +291,7 @@ public class TaraSession implements Serializable {
 
     public String getOidcClientTranslatedShortName() {
         OidcClient oidcClient = getLoginRequestInfo().getClient().getMetaData().getOidcClient();
-        String translatedShortName = oidcClient.getShortName();
+        String translatedShortName = oidcClient.getShortNameTranslations().get("et");
 
         if (oidcClient.getNameTranslations() != null) {
             Map<String, String> serviceNameTranslations = oidcClient.getNameTranslations();
