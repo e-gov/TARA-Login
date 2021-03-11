@@ -11,6 +11,7 @@
     * [Mobile-ID auth method](#mid_conf)
     * [Smart-ID auth method](#sid_conf)
     * [ID-card auth method](#esteid_conf)
+        * [Basic auth configuration](#esteid_basic_auth_conf)
     * [Monitoring](#monitoring_conf)
         * [Custom application health endpoint configuration](#monitoring_heartbeat_conf)
     * [Legal person attributes](#legalperson_conf)
@@ -290,6 +291,16 @@ tara:
           responder-certificate-cn: SK OCSP RESPONDER 2011  
 ````
 
+<a name="esteid_basic_auth_conf"></a>
+Table 1.5.6 - Basic auth configuration
+
+ID-card auth endpoint is meant to be accessed behind a firewall, therefore basic auth configuration option is available with the following properties:
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.auth-methods.id-card.basic-auth.enabled` | No | Enables or disables basic auth on /auth/id endpoint. Defaults to `false` if not specified. |
+| `tara.auth-methods.id-card.basic-auth.username` | No | Username to access /auth/id endpoint |
+| `tara.auth-methods.id-card.basic-auth.password` | No | Password to access /auth/id endpoint |
 
 <a name="legalperson_conf"></a>
 ## 1.6 Legal person attributes
