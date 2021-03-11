@@ -45,6 +45,7 @@ import static ee.ria.taraauthserver.error.ErrorCode.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 
 @Slf4j
 @Validated
@@ -138,7 +139,7 @@ public class SmartIdController {
 
     private List<Interaction> getAppropriateAllowedInteractions(TaraSession taraSession) {
         List<Interaction> allowedInteractions = new ArrayList<>();
-        String shortName = Optional.ofNullable(taraSession.getOidcClientTranslatedShortName()).orElse(authConfigurationProperties.getDefaultShortName());
+        String shortName = defaultIfNull(taraSession.getOidcClientTranslatedShortName(), authConfigurationProperties.getDefaultShortName());
         if (shouldUseVerificationCodeCheck(taraSession))
             allowedInteractions.add(Interaction.verificationCodeChoice(shortName));
         allowedInteractions.add(Interaction.displayTextAndPIN(shortName));
