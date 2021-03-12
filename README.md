@@ -9,7 +9,10 @@
     * [Integration with Hydra service](#hydra_integration_conf)
     * [Trusted TLS certificates](#tls_conf)
     * [Mobile-ID auth method](#mid_conf)
+    * [Smart-ID auth method](#sid_conf)
     * [ID-card auth method](#esteid_conf)
+      * [Basic auth configuration](#esteid_basic_auth_conf)
+    * [Eidas auth method](#eidas_conf)
     * [Monitoring](#monitoring_conf)
         * [Custom application health endpoint configuration](#monitoring_heartbeat_conf)
     * [Legal person attributes](#legalperson_conf)
@@ -17,6 +20,7 @@
         * [Ignite integration](#ignite_conf)
         * [Security and session management](#sec_conf)
     * [Logging](#logging_conf)
+    * [Alerts](#alerts_conf)
 - [APPENDIX](#api_docs)
     * [API specification](#api_docs)
 
@@ -28,6 +32,8 @@ TARA login server is a webapp that integrates with the [ORY Hydra OIDC server](h
 The webapp provides implementation for following authentication methods:
 * Estonian ID-card
 * Estonian Mobile-ID
+* Estonian Smart-ID
+* Estonian EIDAS
 
 <a name="build"></a>
 ## Building the webapp
@@ -66,6 +72,12 @@ Example: to deploy the webapp to a standalone Tomcat server
 <a name="configuration"></a>
 ## 1 TARA login server configuration properties
 
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.default-locale` | No | Locale that is used by default. Default `et` |
+| `tara.default-authentication-methods` | No | default authentication methods. Example `ID_CARD, MOBILE_ID, SMART_ID, EIDAS` |
+
+
 <a name="hydra_integration_conf"></a>
 ### 1.1 Integration with Hydra service
 
@@ -97,7 +109,7 @@ Table 1.3.1 - Enabling Mobile-ID authentication
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `tara.auth-methods.mobile-id.enabled` | No | Enable or disable Mobile-ID authentication method. Default `true` |
+| `tara.auth-methods.mobile-id.enabled` | No | Enable or disable Mobile-ID authentication method. Default `false` |
 
 Table 1.3.2 - Assignig the Level of assurance to authentication method
 
@@ -116,29 +128,62 @@ Table 1.3.3 - Integration with the [SK MID service](https://github.com/SK-EID/MI
 | `tara.auth-methods.mobile-id.truststore-password` | Yes | Password of the truststore from truststore-path. Example `changeit` |
 | `tara.auth-methods.mobile-id.relying-party-uuid` | Yes | UUID from RIA mobile id contract |
 | `tara.auth-methods.mobile-id.relying-party-name` | Yes | Name from RIA mobile id contract |
+| `tara.auth-methods.mobile-id.display-text` | Yes | Text to be displayed in user's mobile device. Used as a fallback in case the OIDC client has not registered a short name. |
 | `tara.auth-methods.mobile-id.hash-type` | Yes | Type of authentication hash. Possible values `SHA256, SHA384, SHA512` |
 | `tara.auth-methods.mobile-id.connection-timeout-milliseconds` | No | Connection timeout of the MID authentication initiation request. Default `5000` |
 | `tara.auth-methods.mobile-id.read-timeout-milliseconds` | No | Read timeout of the MID authentication initiation request. Default `5000` |
 | `tara.auth-methods.mobile-id.long-polling-timeout-seconds` | No | Long polling timeout period used for MID session status requests. Default `30` |
 | `tara.auth-methods.mobile-id.interval-between-session-status-queries-in-milliseconds` | No | Interval between Mobile-ID status polling queries (from UI to tara-login-service). Default `5000` |
 
-<a name="esteid_conf"></a>
-### 1.4 ID-card auth method
+<a name="sid_conf"></a>
+### 1.4 Smart-ID auth method
 
-Table 1.4.1 - Enabling ID-card authentication
+Table 1.4.1 - Enabling Smart-ID authentication
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `tara.auth-methods.id-card.enabled` | No | Enable or disable Id-card authentication method. Default `true` |
-
+| `tara.auth-methods.smart-id.enabled` | No | Enable or disable Smart-ID authentication method. Default `false` |
 
 Table 1.4.2 - Assignig the Level of assurance to authentication method
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
+| `tara.auth-methods.smart-id.level-of-assurance` | Yes | Level of assurance of this auth method. Example `HIGH` |
+
+
+Table 1.4.3 - Integration with the [SK SID service](https://github.com/SK-EID/smart-id-documentation)
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.auth-methods.smart-id.host-url` | Yes | Smart-ID authentication service url |
+| `tara.auth-methods.smart-id.truststore-path` | Yes | Path to truststore file. Example. `file:src/test/resources/ocsp/sid-truststore.p12` |
+| `tara.auth-methods.smart-id.truststore-type` | Yes | Type of the truststore from truststore-path. Example. `PKCS12` |
+| `tara.auth-methods.smart-id.truststore-password` | Yes | Password of the truststore from truststore-path. Example `changeit` |
+| `tara.auth-methods.smart-id.relying-party-uuid` | Yes | UUID from RIA smart id contract |
+| `tara.auth-methods.smart-id.relying-party-name` | Yes | Name from RIA smart id contract |
+| `tara.auth-methods.smart-id.display-text` | Yes | Text to be displayed in user's mobile device. Used as a fallback in case the OIDC client has not registered a short name. |
+| `tara.auth-methods.smart-id.hash-type` | No | Type of authentication hash. Possible values `SHA256, SHA384, SHA512` Default `SHA512` |
+| `tara.auth-methods.smart-id.connection-timeout-milliseconds` | No | Connection timeout of the SID session status requests. Default `5000` |
+| `tara.auth-methods.smart-id.read-timeout-milliseconds` | No | Long polling timeout period used for SID session status requests. Default `30000` |
+
+<a name="esteid_conf"></a>
+### 1.5 ID-card auth method
+
+Table 1.5.1 - Enabling ID-card authentication
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.auth-methods.id-card.enabled` | No | Enable or disable Id-card authentication method. Default `false` |
+
+
+Table 1.5.2 - Assignig the Level of assurance to authentication method
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
 | `tara.auth-methods.id-card.level-of-assurance` | Yes | Level of assurance of this auth method. Allowed values: `HIGH`, `SUBSTANTIAL`, `LOW`. |
 
-Table 1.4.3 - Configuring truststore for OCSP responder certificates
+
+Table 1.5.3 - Configuring truststore for OCSP responder certificates
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
@@ -146,7 +191,7 @@ Table 1.4.3 - Configuring truststore for OCSP responder certificates
 | `tara.auth-methods.id-card.truststore-type` | Yes | Type of the truststore from truststore-path. Example `PKCS12` |
 | `tara.auth-methods.id-card.truststore-password` | Yes | Password of the truststore from truststore-path. Example `changeit` |
 
-Table 1.4.4 - Explicit configuration of the OCSP service(s)
+Table 1.5.4 - Explicit configuration of the OCSP service(s)
 
 The webapp allows multiple sets of OCSP configurations to be defined by using the `tara.auth-methods.id-card.ocsp[{index}]` notation.
 
@@ -208,7 +253,7 @@ tara:
           responder-certificate-cn: SK OCSP RESPONDER 2011       
 ````
 
-Table 1.4.5 - Configuring fallback OCSP service(s)
+Table 1.5.5 - Configuring fallback OCSP service(s)
 
 When the primary OCSP service is not available (ie returns other than HTTP 200 status code, an invalid response Content-Type or the connection times out) a fallback OCSP connection(s) can be configured to query for the certificate status.
 
@@ -249,26 +294,60 @@ tara:
           nonce-disabled: true
           connect-timeout-in-milliseconds: 500
 
-        - issuer-cn: TEST of ESTEID-SK2018
+        - issuer-cn: TEST of ESTEID2018
           url: http://aia.demo.sk.ee/esteid2018
       fallback-ocsp:
-        - issuer-cn: ESTEID-SK 2011, ESTEID-SK 2015, ESTEID2018
+        - issuer-cn: TEST of ESTEID-SK 2011, TEST of ESTEID-SK 2015, TEST of ESTEID2018
           url: http://ocsp.sk.ee/          
           responder-certificate-cn: SK OCSP RESPONDER 2011  
 ````
 
+<a name="esteid_basic_auth_conf"></a>
+Table 1.5.6 - Basic auth configuration
+
+ID-card auth endpoint is meant to be accessed behind a firewall, therefore basic auth configuration option is available with the following properties:
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.auth-methods.id-card.basic-auth.enabled` | No | Enables or disables basic auth on /auth/id endpoint. Defaults to `false` if not specified. |
+| `tara.auth-methods.id-card.basic-auth.username` | No | Username to access /auth/id endpoint |
+| `tara.auth-methods.id-card.basic-auth.password` | No | Password to access /auth/id endpoint |
+
+<a name="eidas_conf"></a>
+### 1.6 Eidas auth method
+
+Table 1.6.1 - Enabling Eidas authentication
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.auth-methods.eidas.enabled` | No | Enable or disable Eidas authentication method. Default `false` |
+
+Table 1.6.2 - Assignig the Level of assurance to authentication method
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.auth-methods.eidas.level-of-assurance` | Yes | Level of assurance of this auth method. Example `HIGH` |
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.auth-methods.eidas.client-url` | Yes | Eidas client url. Example. `https://eidas-client:8889` |
+| `tara.auth-methods.eidas.refresh-countries-interval-in-milliseconds` | No | How often allowed countries are requested from Eidas client. Default. `300000` |
+| `tara.auth-methods.eidas.request-timeout-in-seconds` | No | Eidas client request timeout. Default. `3` |
+| `tara.auth-methods.eidas.read-timeout-in-seconds` | No | Eidas client read timeout. Default. `3` |
+| `tara.auth-methods.eidas.relay-state-cache-duration-in-seconds` | No | Eidas client read timeout. Default. `30` |
+| `tara.auth-methods.eidas.script-hash` | No | hash to allow inline javascript for eidas redirect. Default. `sha256-8lDeP0UDwCO6/RhblgeH/ctdBzjVpJxrXizsnIk3cEQ=` |
 
 <a name="legalperson_conf"></a>
-## 1.5 Legal person attributes
+## 1.7 Legal person attributes
 
-Table 1.5.1 - Enabling legal-person attribute support 
+Table 1.7.1 - Enabling legal-person attribute support 
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.legal-person-authentication.enabled` | No | Enables or disables the legalperson attribute support and endpoints. Defaults to `true` if not specified.  |
 
 
-Table 1.5.2 - Integration with the Estonian business registry
+Table 1.7.2 - Integration with the Estonian business registry
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
@@ -286,7 +365,7 @@ Table 1.5.2 - Integration with the Estonian business registry
 | `tara.legal-person-authentication.esindus-v2-allowed-types` | No | List of legal person types in arireg.esindus_v2 service response that are considered valid for authentication. Defaults to `TÜ,UÜ, OÜ,AS,TÜH,SA,MTÜ` if not specified.  |
 
 <a name="monitoring_conf"></a>
-## 1.6 Monitoring
+## 1.8 Monitoring
 
 The webapp uses `Spring Boot Actuator` to enable endpoints for monitoring support. To customize Monitoring, Metrics, Auditing, and more see [Spring Boot Actuator documentation](https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#production-ready).
 
@@ -297,7 +376,7 @@ The webapp uses `Spring Boot Actuator` to enable endpoints for monitoring suppor
 | `management.endpoints.web.exposure.include` | No | Endpoint IDs that should be included or `*` for all. Example `heartbeat` |
 
 <a name="monitoring_heartbeat_conf"></a>
-### 1.6.1 Custom application health endpoint configuration
+### 1.8.1 Custom application health endpoint configuration
 
 The webapp implements [custom health endpoint](https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#production-ready-endpoints-custom) with id `heartbeat` and [custom health indicators](https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#writing-custom-healthindicators) with id's `oidcServer`,  `truststore`. This endpoint is disabled by default.
 
@@ -344,10 +423,10 @@ management:
 ````
 
 <a name="session_and_sec_conf"></a>
-## 1.7 Security and session management
+## 1.9 Security and session management
 
 <a name="ignite_conf"></a>
-### 1.7.1 Ignite configuration
+### 1.9.1 Ignite configuration
 
 Ignite is used for storing user’s session information.
 
@@ -368,14 +447,15 @@ Ignite is used for storing user’s session information.
 | `ignite.ssl-context-factory.trust-store-password` | Yes | Ignite trust store password. |
 
 <a name="sec_conf"></a>
-## 1.7 Security and Session management
+## 1.10 Security and Session management
+
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `spring.session.timeout` | No | Session timeout. If a duration suffix is not specified, seconds will be used. Default value `300s` |
 | `tara.content-security-policy` | No | Content security policy. Default value `connect-src 'self'; default-src 'none'; font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; block-all-mixed-content` |
 
 <a name="logging_conf"></a>
-## 1.8 Logging configuration
+## 1.11 Logging configuration
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.masked_field_names` | No | Comma separated field names to mask when structurally logging objects. Default value `session_id` |
@@ -387,6 +467,17 @@ Ignite is used for storing user’s session information.
 | `LOG_FILE_LEVEL` | No | Log level for file logging. Default value `INFO` |
 | `LOG_CONSOLE_PATTERN` | No | Log files path. Default value `%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z',GMT} [${springAppName}-${springAppInstanceId}] [%15.15t] %highlight(%-5level) %-40.40logger{39} %green(%marker) [%X{trace.id},%X{transaction.id}] -%X{remoteHost} -%msg%n}` |
 | `LOG_CONSOLE_LEVEL` | No | Log files path. Default value `OFF` |
+
+<a name="alerts_conf"></a>
+## 1.12 Alerts config
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.alerts.host-url` | Yes | Request url used when refreshing alerts list. Example value `http://alerts-mock:8080/alerts` |
+| `tara.alerts.connection-timeout-milliseconds` | No | Connection timeout in milliseconds. Default value `3000`|
+| `tara.alerts.read-timeout-milliseconds` | No | Read timeout in milliseconds. Default value `3000`|
+| `tara.alerts.refresh-alerts-interval-in-milliseconds` | No | How often alerts are requested from the configured alerts url. Default. `600000` |
+| `tara.alerts.alerts-cache-duration-in-seconds` | No | How long alerts are kept in cache. Default. `3600` |
+
 
 ## APPENDIX
 

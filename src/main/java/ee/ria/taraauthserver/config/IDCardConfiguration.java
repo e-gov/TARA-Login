@@ -20,7 +20,7 @@ import static java.util.stream.Collectors.toMap;
 import static net.logstash.logback.argument.StructuredArguments.value;
 
 @Slf4j
-@ConditionalOnProperty(value = "id-card.enabled", matchIfMissing = true)
+@ConditionalOnProperty(value = "tara.auth-methods.id-card.enabled")
 @Configuration
 public class IDCardConfiguration {
 

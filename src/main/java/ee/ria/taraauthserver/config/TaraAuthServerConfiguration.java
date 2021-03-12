@@ -10,10 +10,15 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.boot.web.servlet.support.ErrorPageFilter;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.client.RestTemplate;
@@ -24,6 +29,7 @@ import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 import org.springframework.web.servlet.i18n.SessionLocaleResolver;
 
 import javax.net.ssl.SSLContext;
+import javax.servlet.Filter;
 import javax.validation.Validator;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -32,6 +38,9 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 
 import static net.logstash.logback.argument.StructuredArguments.value;
@@ -60,6 +69,7 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
     }
 
     @Bean
+    @Primary
     public RestTemplate restTemplate(RestTemplateBuilder builder, SSLContext sslContext, AuthConfigurationProperties authConfigurationProperties) {
         HttpClient client = HttpClients.custom()
                 .setSSLContext(sslContext)
@@ -67,7 +77,13 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
                 .setMaxConnTotal(authConfigurationProperties.getHydraService().getMaxConnectionsTotal())
                 .build();
 
+        List<HttpMessageConverter<?>> converters = new ArrayList<HttpMessageConverter<?>>();
+        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+        converter.setSupportedMediaTypes(Collections.singletonList(MediaType.TEXT_HTML));
+        converters.add(converter);
+
         return builder
+                .additionalMessageConverters(converters)
                 .setConnectTimeout(Duration.ofSeconds(authConfigurationProperties.getHydraService().getRequestTimeoutInSeconds()))
                 .setReadTimeout(Duration.ofSeconds(authConfigurationProperties.getHydraService().getRequestTimeoutInSeconds()))
                 .requestFactory(() -> new HttpComponentsClientHttpRequestFactory(client))

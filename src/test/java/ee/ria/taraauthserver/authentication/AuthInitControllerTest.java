@@ -3,17 +3,21 @@ package ee.ria.taraauthserver.authentication;
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
+import io.restassured.RestAssured;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 import org.springframework.test.annotation.DirtiesContext;
 
@@ -21,21 +25,29 @@ import java.net.URL;
 import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static ee.ria.taraauthserver.authentication.eidas.EidasControllerTest.createEidasCountryStub;
+import static ee.ria.taraauthserver.authentication.eidas.EidasControllerTest.createEidasLoginStub;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
+import static org.awaitility.Awaitility.await;
+import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Slf4j
 class AuthInitControllerTest extends BaseTest {
     private static final String TEST_LOGIN_CHALLENGE = "abcdefg098AAdsCC";
 
     @Autowired
-    private SessionRepository sessionRepository;
+    private SessionRepository<Session> sessionRepository;
 
     @Autowired
     private AuthConfigurationProperties authConfigurationProperties;
+
+    @Autowired
+    EidasConfigurationProperties eidasConfigurationProperties;
 
     @Test
     @Tag(value = "AUTH_INIT_ENDPOINT")
@@ -172,7 +184,10 @@ class AuthInitControllerTest extends BaseTest {
         assertEquals("idcard mid", taraSession.getLoginRequestInfo().getClient().getScope());
         assertEquals("idcard", taraSession.getLoginRequestInfo().getRequestedScopes().get(0));
         assertEquals("mid", taraSession.getLoginRequestInfo().getRequestedScopes().get(1));
-        assertEquals("some test client", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getName());
+        assertEquals("test client et", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getNameTranslations().get("et"));
+        assertEquals("testRelyingPartyName", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getRelyingPartyName());
+        assertEquals("testRelyingPartyId123", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getRelyingPartyUuid());
+        assertEquals(true, taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getShouldUseAdditionalVerificationCodeCheck());
 
         assertInfoIsLogged("OIDC login request: https://localhost:9877/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE);
         assertInfoIsLogged("OIDC login challenge 'abcdefg098AAdsCC' response status code: 200");
@@ -550,6 +565,26 @@ class AuthInitControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
+    void authInit_NoRequestedScope() {
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_no_requested_scope.json")));
+
+        given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("incident_nr", notNullValue())
+                .body("message", equalTo("Päringus puudub scope parameeter."));
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
     void authInit_OidcResponseBodyContainsInvalidParameters() {
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
@@ -567,6 +602,70 @@ class AuthInitControllerTest extends BaseTest {
                 .body("incident_nr", notNullValue())
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
 
-        assertErrorIsLogged("Server encountered an unexpected error: Invalid hydra response: client.metaData.oidcClient.institution.sector: invalid sector value, accepted values are: private, public, client.metaData.oidcClient.shortName: size must be between 0 and 40, client.scope: must not be blank");
+        assertErrorIsLogged("Server encountered an unexpected error: Invalid hydra response: client.metaData.oidcClient.institution.sector: invalid sector value, accepted values are: private, public, client.scope: must not be blank");
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
+    void authInit_redirectToAuthEidasInit_and_uppercaseCountryCodeIsIgnored() {
+        createEidasCountryStub("mock_responses/eidas/eidas-response.json", 200);
+
+        RestAssured.responseSpecification = null;
+
+        await().atMost(FIVE_SECONDS)
+                .until(() -> eidasConfigurationProperties.getAvailableCountries().size(), Matchers.equalTo(1));
+
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response_eidasonly.json")));
+
+        String sessionId = given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
+                .statusCode(200)
+                .body(containsString("<input type=\"hidden\" name=\"country\" value=\"CA\"/>"))
+                .body(containsString("Redirecting, please wait..."))
+                .extract().cookie("SESSION");
+
+        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
+    void authInit_displayEidasAuthenticationPageWhenRequestedCountryIsInvalid() {
+        createEidasCountryStub("mock_responses/eidas/eidas-response.json", 200);
+
+        RestAssured.responseSpecification = null;
+
+        await().atMost(FIVE_SECONDS)
+                .until(() -> eidasConfigurationProperties.getAvailableCountries().size(), Matchers.equalTo(1));
+
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response_eidasonly_with_invalid_country.json")));
+
+        String sessionId = given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
+                .statusCode(200)
+                .body(containsString("European Union member state's eID"))
+                .body(containsString("<option value=\"CA\">Test (CA)</option>"))
+                .extract().cookie("SESSION");
+
+        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
     }
 }

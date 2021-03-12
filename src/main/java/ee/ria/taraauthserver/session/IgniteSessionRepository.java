@@ -64,6 +64,7 @@ public class IgniteSessionRepository implements SessionRepository<Session> {
     @Override
     public void deleteById(String id) {
         sessionCache.remove(id);
+        log.info("Session is removed from cache: {}", id);
     }
 
     @Data
