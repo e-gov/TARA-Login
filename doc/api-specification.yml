@@ -647,7 +647,7 @@ paths:
                 type: string
                 example: 'The HTML error view is displayed'
   /auth/eidas/init:
-    get:
+    post:
       tags:
         - eidas
       summary: Start's the cross-border authentication process (eidas)
