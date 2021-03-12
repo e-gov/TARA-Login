@@ -447,18 +447,15 @@ Ignite is used for storing user’s session information.
 | `ignite.ssl-context-factory.trust-store-password` | Yes | Ignite trust store password. |
 
 <a name="sec_conf"></a>
-<<<<<<< HEAD
 ## 1.10 Security and Session management
-=======
-## 1.9 Security and Session management
->>>>>>> develop
+
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `spring.session.timeout` | No | Session timeout. If a duration suffix is not specified, seconds will be used. Default value `300s` |
 | `tara.content-security-policy` | No | Content security policy. Default value `connect-src 'self'; default-src 'none'; font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; block-all-mixed-content` |
 
 <a name="logging_conf"></a>
-## 1.10 Logging configuration
+## 1.11 Logging configuration
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.masked_field_names` | No | Comma separated field names to mask when structurally logging objects. Default value `session_id` |
@@ -472,7 +469,7 @@ Ignite is used for storing user’s session information.
 | `LOG_CONSOLE_LEVEL` | No | Log files path. Default value `OFF` |
 
 <a name="alerts_conf"></a>
-## 1.11 Alerts config
+## 1.12 Alerts config
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.alerts.host-url` | Yes | Request url used when refreshing alerts list. Example value `http://alerts-mock:8080/alerts` |
