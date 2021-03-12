@@ -24,7 +24,7 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(value = "tara.auth-methods.id-card.enabled", matchIfMissing = true)
+@ConditionalOnProperty(value = "tara.auth-methods.id-card.enabled")
 public class OCSPConfigurationResolver {
 
     @Autowired

@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.authentication;
 
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
@@ -13,7 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import javax.servlet.http.HttpSession;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import javax.validation.constraints.Pattern;
@@ -46,6 +50,9 @@ public class AuthInitController {
     @Autowired
     private AuthConfigurationProperties taraProperties;
 
+    @Autowired (required = false)
+    private EidasConfigurationProperties eidasConfigurationProperties;
+
     @Autowired
     private RestTemplate hydraService;
 
@@ -58,7 +65,7 @@ public class AuthInitController {
             @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed") String loginChallenge,
             @RequestParam(name = "lang", required = false)
             @Pattern(regexp = "(et|en|ru)", message = "supported values are: 'et', 'en', 'ru'") String language,
-            @SessionAttribute(value = TARA_SESSION) TaraSession newTaraSession) {
+            @SessionAttribute(value = TARA_SESSION) TaraSession newTaraSession, Model model, HttpSession session) {
 
         TaraSession.LoginRequestInfo loginRequestInfo = fetchLoginRequestInfo(loginChallenge);
         newTaraSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
@@ -74,8 +81,15 @@ public class AuthInitController {
 
         newTaraSession.setAllowedAuthMethods(allowedAuthenticationMethodsList);
         RequestUtils.setLocale(getUiLanguage(language, newTaraSession));
+
         log.info(append(TARA_SESSION, newTaraSession).and(append("http.request.locale", RequestUtils.getLocale())), "Initialized authentication session");
-        return "loginView";
+
+        if (eidasOnlyWithCountryRequested(loginRequestInfo)) {
+            model.addAttribute("country", getAllowedEidasCountryCode(loginRequestInfo.getRequestedScopes()));
+            return "redirectToEidasInit";
+        } else {
+            return "loginView";
+        }
     }
 
     private String getUiLanguage(String language, TaraSession taraSession) {
@@ -116,5 +130,27 @@ public class AuthInitController {
         return constraintViolations.stream()
                 .map(cv -> cv == null ? "null" : cv.getPropertyPath() + ": " + cv.getMessage())
                 .sorted().collect(Collectors.joining(", "));
+    }
+
+    public boolean eidasOnlyWithCountryRequested(TaraSession.LoginRequestInfo loginRequestInfo) {
+        List<String> requestedScopes = loginRequestInfo.getRequestedScopes();
+        return requestedScopes.contains("eidasonly") && getAllowedEidasCountryCode(requestedScopes) != null;
+    }
+
+    private String getAllowedEidasCountryCode(List<String> requestedScopes) {
+        if (eidasConfigurationProperties == null)
+            throw new IllegalStateException("Cannot use eidasonly scope when eidas authentication is not loaded. Is not enabled in configuration?");
+
+        String regex = "eidas:country:[a-z]{2}$";
+        return requestedScopes.stream()
+                .filter(rs -> rs.matches(regex))
+                .map(this::getCountryCodeFromScope)
+                .filter(rs -> eidasConfigurationProperties.getAvailableCountries().contains(rs))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private String getCountryCodeFromScope(String eidasCountryScope) {
+        return eidasCountryScope.replace("eidas:country:", "").toUpperCase();
     }
 }

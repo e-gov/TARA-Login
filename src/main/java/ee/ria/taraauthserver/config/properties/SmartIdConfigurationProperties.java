@@ -13,8 +13,11 @@ import java.util.List;
 @Data
 @Validated
 @ConfigurationProperties(prefix = "tara.auth-methods.smart-id")
-@ConditionalOnProperty(value = "tara.auth-methods.smart-id.enabled", matchIfMissing = true)
+@ConditionalOnProperty(value = "tara.auth-methods.smart-id.enabled")
 public class SmartIdConfigurationProperties extends AuthConfigurationProperties.AuthMethodProperties {
+
+    @NotNull
+    LevelOfAssurance levelOfAssurance;
 
     @Pattern(regexp = "(SHA256|SHA384|SHA512)", message = "invalid hash value, accepted values are: SHA256, SHA384, SHA512")
     private String hashType = "SHA512";
@@ -24,6 +27,9 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
 
     @NotNull
     private String relyingPartyName;
+
+    @NotNull
+    private String displayText;
 
     @NotNull
     private String hostUrl;

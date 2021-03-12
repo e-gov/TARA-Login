@@ -47,12 +47,13 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 @Slf4j
 @RestController
-@ConditionalOnProperty(value = "tara.auth-methods.id-card.enabled", matchIfMissing = true)
+@ConditionalOnProperty(value = "tara.auth-methods.id-card.enabled")
 public class IdCardController {
     public static final String HEADER_SSL_CLIENT_CERT = "XCLIENTCERTIFICATE";
     public static final String CN_SERIALNUMBER = "SERIALNUMBER";
     public static final String CN_GIVEN_NAME = "GIVENNAME";
     public static final String CN_SURNAME = "SURNAME";
+    public static final String AUTH_ID_REQUEST_MAPPING = "/auth/id";
 
     @Autowired
     private MessageSource messageSource;
@@ -63,7 +64,7 @@ public class IdCardController {
     @Autowired
     private OCSPValidator ocspValidator;
 
-    @GetMapping(path = {"/auth/id"})
+    @GetMapping(path = {AUTH_ID_REQUEST_MAPPING})
     public ResponseEntity<Map<String, String>> handleRequest(HttpServletRequest request, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
 
@@ -82,16 +83,19 @@ public class IdCardController {
         }
 
         taraSession.setState(NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT);
-        try {
-            ocspValidator.checkCert(certificate);
-        } catch (OCSPServiceNotAvailableException ex) {
-            taraSession.setState(AUTHENTICATION_FAILED);
-            return createErrorResponse(IDC_OCSP_NOT_AVAILABLE, "OCSP service is currently not available", BAD_GATEWAY);
-        } catch (OCSPValidationException ex) {
-            taraSession.setState(AUTHENTICATION_FAILED);
-            CertificateStatus status = ex.getStatus();
-            ErrorCode errorCode = status == REVOKED ? IDC_REVOKED : IDC_UNKNOWN;
-            return createErrorResponse(errorCode, ex.getMessage(), BAD_REQUEST);
+        if (configurationProperties.isOcspEnabled()) {
+            try {
+                ocspValidator.checkCert(certificate);
+            } catch (OCSPServiceNotAvailableException ex) {
+                taraSession.setState(AUTHENTICATION_FAILED);
+                return createErrorResponse(IDC_OCSP_NOT_AVAILABLE, "OCSP service is currently not available", BAD_GATEWAY);
+            } catch (OCSPValidationException ex) {
+                CertificateStatus status = ex.getStatus();
+                ErrorCode errorCode = status == REVOKED ? IDC_REVOKED : IDC_UNKNOWN;
+                return createErrorResponse(errorCode, ex.getMessage(), BAD_REQUEST);
+            }
+        } else {
+            log.info("Skipping OCSP validation because OCSP is disabled.");
         }
 
         addAuthResultToSession(taraSession, certificate);

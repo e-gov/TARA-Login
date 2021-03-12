@@ -22,7 +22,7 @@ import java.security.cert.CertificateException;
 
 @Slf4j
 @Configuration
-@ConditionalOnProperty(value = "tara.auth-methods.mobile-id.enabled", matchIfMissing = true)
+@ConditionalOnProperty(value = "tara.auth-methods.mobile-id.enabled")
 public class MidConfiguration {
 
     @Bean
@@ -45,12 +45,12 @@ public class MidConfiguration {
                 .withRelyingPartyUUID(properties.getRelyingPartyUuid())
                 .withRelyingPartyName(properties.getRelyingPartyName())
                 .withTrustSslContext(tlsTrustStore)
-                .withNetworkConnectionConfig(clientConfig(properties))
+                .withNetworkConnectionConfig(midClientConfig(properties))
                 .withLongPollingTimeoutSeconds(properties.getLongPollingTimeoutSeconds())
                 .build();
     }
 
-    private ClientConfig clientConfig(MidAuthConfigurationProperties properties) {
+    private ClientConfig midClientConfig(MidAuthConfigurationProperties properties) {
         ClientConfig clientConfig = new ClientConfig();
         clientConfig.property(ClientProperties.CONNECT_TIMEOUT, properties.getConnectionTimeoutMilliseconds());
         clientConfig.property(ClientProperties.READ_TIMEOUT, properties.getReadTimeoutMilliseconds());

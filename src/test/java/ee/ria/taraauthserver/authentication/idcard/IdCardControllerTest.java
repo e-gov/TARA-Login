@@ -25,6 +25,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.io.IOException;
 import java.security.KeyPair;
@@ -59,6 +60,9 @@ class IdCardControllerTest extends BaseTest {
 
     @Autowired
     private SessionRepository<Session> sessionRepository;
+
+    @Autowired
+    private AuthConfigurationProperties.IdCardAuthConfigurationProperties configurationProperties;
 
     @BeforeEach
     public void setUpTest() throws NoSuchAlgorithmException, NoSuchProviderException {
@@ -262,6 +266,45 @@ class IdCardControllerTest extends BaseTest {
     }
 
     @Test
+    @DirtiesContext
+    @Tag(value = "OCSP_DISABLED")
+    void idAuth_ok_ocsp_disabled() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
+        configurationProperties.setOcspEnabled(false);
+
+        KeyPairGenerator rsa = KeyPairGenerator.getInstance("RSA");
+        rsa.initialize(2048);
+        KeyPair certKeyPair = rsa.generateKeyPair();
+        X509Certificate ocspResponderCert = generateOcspResponderCertificate("CN=MOCK OCSP RESPONDER, C=EE", certKeyPair, responderKeys, "CN=TEST of ESTEID-SK 2015").getCertificate();
+        ocspResponseTransformer.setSignerKey(certKeyPair.getPrivate());
+
+        setUpMockOcspResponse(MockOcspResponseParams.builder()
+                .ocspServer(wireMockServer)
+                .responseStatus(OCSPResp.SUCCESSFUL)
+                .certificateStatus(CertificateStatus.GOOD)
+                .responseId("CN=MOCK OCSP RESPONDER")
+                .ocspConf(ocspConfiguration)
+                .responderCertificate(
+                        ocspResponderCert
+                ).build(), "/esteid2015");
+
+        String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+
+        given()
+                .when()
+                .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
+                .sessionId("SESSION", sessionId)
+                .get("/auth/id")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .headers(EXPECTED_RESPONSE_HEADERS)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
+                .body("status", equalTo("COMPLETED"));
+
+        assertInfoIsLogged("Skipping OCSP validation because OCSP is disabled.");
+    }
+
+    @Test
     @Tag(value = "OCSP_RESPONSE_STATUS_HANDLING")
     @Tag(value = "IDCARD_ERROR_HANDLING")
     void idAuth_response_certificate_status_revoked() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
@@ -335,7 +378,7 @@ class IdCardControllerTest extends BaseTest {
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
 
-        assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
+        assertEquals(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT, taraSession.getState());
         assertWarningIsLogged("OCSP validation failed: Invalid certificate status <UNKNOWN> received");
     }
 
@@ -561,7 +604,7 @@ class IdCardControllerTest extends BaseTest {
         AuthConfigurationProperties.Ocsp ocspConf;
     }
 
-    private static void setUpMockOcspResponse(MockOcspResponseParams responseParams, String stubUrl) {
+    static void setUpMockOcspResponse(MockOcspResponseParams responseParams, String stubUrl) {
         ocspResponseTransformer.setResponseStatus(responseParams.getResponseStatus());
         ocspResponseTransformer.setCertificateStatus(responseParams.getCertificateStatus());
         ocspResponseTransformer.setResponderCertificate(responseParams.getResponderCertificate());

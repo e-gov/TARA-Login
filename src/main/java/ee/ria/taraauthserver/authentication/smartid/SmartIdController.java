@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.authentication.smartid;
 
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
@@ -45,12 +46,13 @@ import static ee.ria.taraauthserver.error.ErrorCode.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import static net.logstash.logback.marker.Markers.append;
 
 @Slf4j
 @Validated
 @Controller
-@ConditionalOnProperty(value = "tara.auth-methods.smart-id.enabled", matchIfMissing = true)
+@ConditionalOnProperty(value = "tara.auth-methods.smart-id.enabled")
 public class SmartIdController {
 
     @Autowired
@@ -67,6 +69,9 @@ public class SmartIdController {
 
     @Autowired
     private SmartIdConfigurationProperties smartIdConfigurationProperties;
+
+    @Autowired
+    private AuthConfigurationProperties authConfigurationProperties;
 
     private static final Map<Class<?>, ErrorCode> errorMap;
 
@@ -138,9 +143,10 @@ public class SmartIdController {
 
     private List<Interaction> getAppropriateAllowedInteractions(TaraSession taraSession) {
         List<Interaction> allowedInteractions = new ArrayList<>();
+        String shortName = defaultIfNull(taraSession.getOidcClientTranslatedShortName(), smartIdConfigurationProperties.getDisplayText());
         if (shouldUseVerificationCodeCheck(taraSession))
-            allowedInteractions.add(Interaction.verificationCodeChoice(taraSession.getOidcClientTranslatedShortName()));
-        allowedInteractions.add(Interaction.displayTextAndPIN(taraSession.getOidcClientTranslatedShortName()));
+            allowedInteractions.add(Interaction.verificationCodeChoice(shortName));
+        allowedInteractions.add(Interaction.displayTextAndPIN(shortName));
         return allowedInteractions;
     }
 
