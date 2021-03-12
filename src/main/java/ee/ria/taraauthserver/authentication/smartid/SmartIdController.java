@@ -22,6 +22,7 @@ import ee.sk.smartid.rest.dao.SemanticsIdentifier;
 import ee.sk.smartid.rest.dao.SessionStatus;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
@@ -112,7 +113,6 @@ public class SmartIdController {
 
     private String initiateSidAuthenticationSession(SidCredential sidCredential, TaraSession taraSession, AuthenticationHash authenticationHash, AuthenticationRequestBuilder requestBuilder) {
         try {
-            log.info("Initiating smart-id session with parameters: {}");
             taraSession.setState(INIT_SID);
             SemanticsIdentifier semanticsIdentifier = new SemanticsIdentifier(SemanticsIdentifier.IdentityType.PNO, SemanticsIdentifier.CountryCode.EE, sidCredential.getIdCode());
             requestBuilder
@@ -122,7 +122,10 @@ public class SmartIdController {
                     .withCertificateLevel("QUALIFIED")
                     .withAuthenticationHash(authenticationHash)
                     .withAllowedInteractionsOrder(getAppropriateAllowedInteractions(taraSession));
-            log.info(append("tara.session.sid_authentication_init_request", requestBuilder), "Smart ID authentication init request");
+
+            log.info(append("tara.session.sid_authentication_init_request",
+                    createSidInitRequestParameterMap(taraSession, authenticationHash, semanticsIdentifier)),
+                    "Smart ID authentication init request");
             String sidSessionId = requestBuilder.initiateAuthentication();
 
             log.info("Initiated smart-id session with id: " + sidSessionId);
@@ -135,6 +138,8 @@ public class SmartIdController {
         } catch (NotAllowedException | SmartIdClientException | NotAuthorizedException e) {
             log.error("Failed to initiate SID authentication session: " + e.getMessage());
             throw new IllegalStateException(ERROR_GENERAL.getMessage(), e);
+        } catch (UserAccountNotFoundException e) {
+            throw new BadRequestException(SID_USER_ACCOUNT_NOT_FOUND, "User was not found with idCode: " + sidCredential.getIdCode());
         } catch (Exception e) {
             log.error("Failed to initiate SID authentication session: " + e.getMessage());
             throw new ServiceNotAvailableException(SID_INTERNAL_ERROR, "Failed to initiate SID authentication session", e);
@@ -252,4 +257,15 @@ public class SmartIdController {
         private String idCode;
     }
 
+    @NotNull
+    private Map<String, Object> createSidInitRequestParameterMap(TaraSession taraSession, AuthenticationHash authenticationHash, SemanticsIdentifier semanticsIdentifier) {
+        Map<String, Object> hm = new HashMap<>();
+        hm.put("relyingPartyUuid", getAppropriateRelyingPartyUuid(taraSession));
+        hm.put("relyingPartyName", getAppropriateRelyingPartyName(taraSession));
+        hm.put("semanticsIdentifier", semanticsIdentifier.getIdentifier());
+        hm.put("certificateLevel", "QUALIFIED");
+        hm.put("authenticationHash", authenticationHash.getHashInBase64());
+        hm.put("authenticationHashType", authenticationHash.getHashType().getAlgorithmName());
+        return hm;
+    }
 }
