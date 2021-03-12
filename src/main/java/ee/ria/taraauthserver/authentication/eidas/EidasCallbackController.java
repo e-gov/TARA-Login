@@ -120,28 +120,39 @@ public class EidasCallbackController {
     }
 
     private void updateSession(Session session, EidasClientResponse response) {
+        String personIdentifier = response.getAttributes().getPersonIdentifier();
+        Matcher personIdentifierMatcher = validatePersonIdentifier(personIdentifier);
+
         TaraSession taraSession = session.getAttribute(TARA_SESSION);
         taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
         TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
         authenticationResult.setFirstName(response.getAttributes().getFirstName());
         authenticationResult.setLastName(response.getAttributes().getFamilyName());
-        authenticationResult.setIdCode(getFormattedPersonIdentifier(response.getAttributes().getPersonIdentifier()));
+        authenticationResult.setIdCode(getIdCodeFromPersonIdentifier(personIdentifierMatcher));
         authenticationResult.setDateOfBirth(LocalDate.parse(response.getAttributes().getDateOfBirth()));
         authenticationResult.setAcr(LevelOfAssurance.findByFormalName(response.getLevelOfAssurance()));
         authenticationResult.setAmr(AuthenticationType.EIDAS);
-        authenticationResult.setSubject(taraSession.getAuthenticationResult().getCountry() + response.getAttributes().getPersonIdentifier());
+        authenticationResult.setSubject(getCountryCodeFromPersonIdentifier(personIdentifierMatcher) +
+                getIdCodeFromPersonIdentifier(personIdentifierMatcher));
         taraSession.setAuthenticationResult(authenticationResult);
         session.setAttribute(TARA_SESSION, taraSession);
         sessionRepository.save(session);
     }
 
-    private String getFormattedPersonIdentifier(String personIdentifier) {
+    private Matcher validatePersonIdentifier(String personIdentifier) {
         Matcher matcher = VALID_PERSON_IDENTIFIER_PATTERN.matcher(personIdentifier);
-        if (matcher.matches()) {
-            return matcher.group(1) + matcher.group(3);
-        } else {
+        if (matcher.matches())
+            return matcher;
+        else
             throw new BadRequestException(EIDAS_AUTHENTICATION_FAILED, "The person identifier has invalid format! <" + personIdentifier + ">");
-        }
+    }
+
+    private String getIdCodeFromPersonIdentifier(Matcher personIdentifierMatcher) {
+        return personIdentifierMatcher.group(3);
+    }
+
+    private String getCountryCodeFromPersonIdentifier(Matcher personIdentifierMatcher) {
+        return personIdentifierMatcher.group(1);
     }
 
     @org.jetbrains.annotations.NotNull

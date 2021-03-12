@@ -153,7 +153,8 @@ class EidasCallbackControllerTest extends BaseTest {
         assertEquals(LevelOfAssurance.HIGH, (taraSession.getAuthenticationResult()).getAcr());
         assertEquals("Javier", (taraSession.getAuthenticationResult()).getFirstName());
         assertEquals("Garcia", (taraSession.getAuthenticationResult()).getLastName());
-        assertEquals("CA12345", (taraSession.getAuthenticationResult()).getIdCode());
+        assertEquals("12345", (taraSession.getAuthenticationResult()).getIdCode());
+        assertEquals("CA12345", (taraSession.getAuthenticationResult()).getSubject());
         assertEquals("1965-01-01", (taraSession.getAuthenticationResult()).getDateOfBirth().toString());
         assertNull(eidasRelayStateCache.get(MOCK_RELAY_STATE_VALUE));
     }
