@@ -282,10 +282,10 @@ tara:
           nonce-disabled: true
           connect-timeout-in-milliseconds: 500
 
-        - issuer-cn: TEST of ESTEID-SK2018
+        - issuer-cn: TEST of ESTEID2018
           url: http://aia.demo.sk.ee/esteid2018
       fallback-ocsp:
-        - issuer-cn: ESTEID-SK 2011, ESTEID-SK 2015, ESTEID2018
+        - issuer-cn: TEST of ESTEID-SK 2011, TEST of ESTEID-SK 2015, TEST of ESTEID2018
           url: http://ocsp.sk.ee/          
           responder-certificate-cn: SK OCSP RESPONDER 2011  
 ````
