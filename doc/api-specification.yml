@@ -647,7 +647,7 @@ paths:
                 type: string
                 example: 'The HTML error view is displayed'
   /auth/eidas/init:
-    get:
+    post:
       tags:
         - eidas
       summary: Start's the cross-border authentication process (eidas)
@@ -661,13 +661,24 @@ paths:
           description: Session cookie
           schema:
             type: string
-        - in: query
-          name: country
-          required: true
-          description: Country code
-          schema:
-            type: string
-            pattern: 'A-Z{2,2}'
+      requestBody:
+        description: Optional description in *Markdown*
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                _csrf:
+                  type: string
+                  example: 'c316e550-23e3-4fee-8cee-f8079a630fba'
+                country:
+                  type: string
+                  pattern: 'A-Z{2,2}'
+                  description: 'Country code'
+              required:
+                - _csrf
+                - country
       responses:
         '200':
           description: Redirect form with SAML request to external eIDAS Node
@@ -677,6 +688,16 @@ paths:
                 type: string
         '400':
           description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+            text/html:
+              schema:
+                type: string
+                example: 'The HTML error view is displayed'
+        '403':
+          description: Forbidden (invalid CSRF token)
           content:
             application/json:
               schema:
