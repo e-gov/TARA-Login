@@ -130,7 +130,7 @@ public class AuthMidService {
                 .withDisplayText(translatedShortName)
                 .withDisplayTextFormat(isServiceNameUsingSpecialCharacters(translatedShortName) ? MidDisplayTextFormat.UCS2 : MidDisplayTextFormat.GSM7)
                 .build();
-        log.info(append("tara.session.authentication_init_request", midRequest), "Mobile ID authentication init request");
+        log.info(append("tara.session.mid_authentication_init_request", midRequest), "Mobile ID authentication init request");
         return midRequest;
     }
 

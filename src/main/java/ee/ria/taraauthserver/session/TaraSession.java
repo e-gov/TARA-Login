@@ -269,7 +269,7 @@ public class TaraSession implements Serializable {
         @JsonProperty("relying_party_name")
         private String relyingPartyName;
         @JsonProperty("should_use_additional_verifcation_code_check")
-        private Boolean ShouldUseAdditionalVerificationCodeCheck;
+        private Boolean shouldUseAdditionalVerificationCodeCheck;
     }
 
     @Data
@@ -300,5 +300,36 @@ public class TaraSession implements Serializable {
                 translatedShortName = serviceNameTranslations.get(locale.getLanguage());
         }
         return translatedShortName;
+    }
+
+    public Boolean isAdditionalSmartIdVerificationCodeCheckNeeded() {
+        return Optional.of(this)
+                .map(TaraSession::getLoginRequestInfo)
+                .map(TaraSession.LoginRequestInfo::getClient)
+                .map(TaraSession.Client::getMetaData)
+                .map(TaraSession.MetaData::getOidcClient)
+                .map(TaraSession.OidcClient::getSmartIdSettings)
+                .map(TaraSession.SmartIdSettings::getShouldUseAdditionalVerificationCodeCheck)
+                .orElse(true);
+    }
+
+    public Optional<String> getSmartIdRelyingPartyName() {
+        return Optional.of(this)
+                .map(TaraSession::getLoginRequestInfo)
+                .map(TaraSession.LoginRequestInfo::getClient)
+                .map(TaraSession.Client::getMetaData)
+                .map(TaraSession.MetaData::getOidcClient)
+                .map(TaraSession.OidcClient::getSmartIdSettings)
+                .map(TaraSession.SmartIdSettings::getRelyingPartyUuid);
+    }
+
+    public Optional<String> getSmartIdRelyingPartyUuid() {
+        return Optional.of(this)
+                .map(TaraSession::getLoginRequestInfo)
+                .map(TaraSession.LoginRequestInfo::getClient)
+                .map(TaraSession.Client::getMetaData)
+                .map(TaraSession.MetaData::getOidcClient)
+                .map(TaraSession.OidcClient::getSmartIdSettings)
+                .map(TaraSession.SmartIdSettings::getRelyingPartyUuid);
     }
 }
