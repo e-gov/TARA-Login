@@ -24,7 +24,6 @@ import java.net.URL;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static ee.ria.taraauthserver.authentication.eidas.EidasControllerTest.createEidasCountryStub;
-import static ee.ria.taraauthserver.authentication.eidas.EidasControllerTest.createEidasLoginStub;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
@@ -32,7 +31,6 @@ import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Slf4j
 class AuthInitControllerTest extends BaseTest {

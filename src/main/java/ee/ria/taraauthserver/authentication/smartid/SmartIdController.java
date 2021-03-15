@@ -1,6 +1,5 @@
 package ee.ria.taraauthserver.authentication.smartid;
 
-import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
@@ -47,8 +46,8 @@ import static ee.ria.taraauthserver.error.ErrorCode.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import static net.logstash.logback.marker.Markers.append;
+import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 
 @Slf4j
 @Validated
@@ -70,9 +69,6 @@ public class SmartIdController {
 
     @Autowired
     private SmartIdConfigurationProperties smartIdConfigurationProperties;
-
-    @Autowired
-    private AuthConfigurationProperties authConfigurationProperties;
 
     private static final Map<Class<?>, ErrorCode> errorMap;
 
@@ -116,8 +112,8 @@ public class SmartIdController {
             taraSession.setState(INIT_SID);
             SemanticsIdentifier semanticsIdentifier = new SemanticsIdentifier(SemanticsIdentifier.IdentityType.PNO, SemanticsIdentifier.CountryCode.EE, sidCredential.getIdCode());
             requestBuilder
-                    .withRelyingPartyUUID(getAppropriateRelyingPartyUuid(taraSession))
-                    .withRelyingPartyName(getAppropriateRelyingPartyName(taraSession))
+                    .withRelyingPartyUUID(taraSession.getSmartIdRelyingPartyUuid().orElse(smartIdConfigurationProperties.getRelyingPartyUuid()))
+                    .withRelyingPartyName(taraSession.getSmartIdRelyingPartyName().orElse(smartIdConfigurationProperties.getRelyingPartyName()))
                     .withSemanticsIdentifier(semanticsIdentifier)
                     .withCertificateLevel("QUALIFIED")
                     .withAuthenticationHash(authenticationHash)
@@ -149,43 +145,10 @@ public class SmartIdController {
     private List<Interaction> getAppropriateAllowedInteractions(TaraSession taraSession) {
         List<Interaction> allowedInteractions = new ArrayList<>();
         String shortName = defaultIfNull(taraSession.getOidcClientTranslatedShortName(), smartIdConfigurationProperties.getDisplayText());
-        if (shouldUseVerificationCodeCheck(taraSession))
+        if (taraSession.isAdditionalSmartIdVerificationCodeCheckNeeded())
             allowedInteractions.add(Interaction.verificationCodeChoice(shortName));
         allowedInteractions.add(Interaction.displayTextAndPIN(shortName));
         return allowedInteractions;
-    }
-
-    private Boolean shouldUseVerificationCodeCheck(TaraSession taraSession) {
-        return Optional.of(taraSession)
-                .map(TaraSession::getLoginRequestInfo)
-                .map(TaraSession.LoginRequestInfo::getClient)
-                .map(TaraSession.Client::getMetaData)
-                .map(TaraSession.MetaData::getOidcClient)
-                .map(TaraSession.OidcClient::getSmartIdSettings)
-                .map(TaraSession.SmartIdSettings::getShouldUseAdditionalVerificationCodeCheck)
-                .orElse(true);
-    }
-
-    private String getAppropriateRelyingPartyName(TaraSession taraSession) {
-        return Optional.of(taraSession)
-                .map(TaraSession::getLoginRequestInfo)
-                .map(TaraSession.LoginRequestInfo::getClient)
-                .map(TaraSession.Client::getMetaData)
-                .map(TaraSession.MetaData::getOidcClient)
-                .map(TaraSession.OidcClient::getSmartIdSettings)
-                .map(TaraSession.SmartIdSettings::getRelyingPartyUuid)
-                .orElse(smartIdConfigurationProperties.getRelyingPartyName());
-    }
-
-    private String getAppropriateRelyingPartyUuid(TaraSession taraSession) {
-        return Optional.of(taraSession)
-                .map(TaraSession::getLoginRequestInfo)
-                .map(TaraSession.LoginRequestInfo::getClient)
-                .map(TaraSession.Client::getMetaData)
-                .map(TaraSession.MetaData::getOidcClient)
-                .map(TaraSession.OidcClient::getSmartIdSettings)
-                .map(TaraSession.SmartIdSettings::getRelyingPartyUuid)
-                .orElse(smartIdConfigurationProperties.getRelyingPartyUuid());
     }
 
     public void validateSession(TaraSession taraSession) {
@@ -260,8 +223,8 @@ public class SmartIdController {
     @NotNull
     private Map<String, Object> createSidInitRequestParameterMap(TaraSession taraSession, AuthenticationHash authenticationHash, AuthenticationRequestBuilder requestBuilder) {
         Map<String, Object> hm = new TreeMap<>();
-        hm.put("relyingPartyUuid", getAppropriateRelyingPartyUuid(taraSession));
-        hm.put("relyingPartyName", getAppropriateRelyingPartyName(taraSession));
+        hm.put("relyingPartyUuid", taraSession.getSmartIdRelyingPartyUuid().orElse(smartIdConfigurationProperties.getRelyingPartyUuid()));
+        hm.put("relyingPartyName", taraSession.getSmartIdRelyingPartyName().orElse(smartIdConfigurationProperties.getRelyingPartyName()));
         hm.put("semanticsIdentifier", requestBuilder.getSemanticsIdentifier().getIdentifier());
         hm.put("certificateLevel", "QUALIFIED");
         hm.put("authenticationHash", authenticationHash.getHashInBase64());
