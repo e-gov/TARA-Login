@@ -232,7 +232,7 @@ tara:
           nonce-disabled: true
           connect-timeout-in-milliseconds: 500
 
-        - issuer-cn: TEST of ESTEID-SK2018
+        - issuer-cn: TEST of ESTEID2018
           url: http://aia.demo.sk.ee/esteid2018
 ````
 
