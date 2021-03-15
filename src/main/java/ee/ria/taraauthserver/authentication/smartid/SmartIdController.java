@@ -124,7 +124,7 @@ public class SmartIdController {
                     .withAllowedInteractionsOrder(getAppropriateAllowedInteractions(taraSession));
 
             log.info(append("tara.session.sid_authentication_init_request",
-                    createSidInitRequestParameterMap(taraSession, authenticationHash, semanticsIdentifier)),
+                    createSidInitRequestParameterMap(taraSession, authenticationHash, requestBuilder)),
                     "Smart ID authentication init request");
             String sidSessionId = requestBuilder.initiateAuthentication();
 
@@ -258,14 +258,16 @@ public class SmartIdController {
     }
 
     @NotNull
-    private Map<String, Object> createSidInitRequestParameterMap(TaraSession taraSession, AuthenticationHash authenticationHash, SemanticsIdentifier semanticsIdentifier) {
-        Map<String, Object> hm = new HashMap<>();
+    private Map<String, Object> createSidInitRequestParameterMap(TaraSession taraSession, AuthenticationHash authenticationHash, AuthenticationRequestBuilder requestBuilder) {
+        Map<String, Object> hm = new TreeMap<>();
         hm.put("relyingPartyUuid", getAppropriateRelyingPartyUuid(taraSession));
         hm.put("relyingPartyName", getAppropriateRelyingPartyName(taraSession));
-        hm.put("semanticsIdentifier", semanticsIdentifier.getIdentifier());
+        hm.put("semanticsIdentifier", requestBuilder.getSemanticsIdentifier().getIdentifier());
         hm.put("certificateLevel", "QUALIFIED");
         hm.put("authenticationHash", authenticationHash.getHashInBase64());
         hm.put("authenticationHashType", authenticationHash.getHashType().getAlgorithmName());
+        for (Interaction interaction : requestBuilder.getAllowedInteractionsOrder())
+            hm.put(interaction.getType().getCode(), interaction.getDisplayText60());
         return hm;
     }
 }
