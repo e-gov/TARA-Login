@@ -13,6 +13,7 @@ import ee.sk.smartid.*;
 import ee.sk.smartid.exception.permanent.SmartIdClientException;
 import ee.sk.smartid.exception.useraccount.DocumentUnusableException;
 import ee.sk.smartid.exception.useraccount.RequiredInteractionNotSupportedByAppException;
+import ee.sk.smartid.exception.useraccount.UserAccountNotFoundException;
 import ee.sk.smartid.exception.useraction.*;
 import ee.sk.smartid.rest.SessionStatusPoller;
 import ee.sk.smartid.rest.dao.Interaction;
@@ -20,6 +21,7 @@ import ee.sk.smartid.rest.dao.SemanticsIdentifier;
 import ee.sk.smartid.rest.dao.SessionStatus;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
@@ -44,11 +46,13 @@ import static ee.ria.taraauthserver.error.ErrorCode.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static net.logstash.logback.marker.Markers.append;
+import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 
 @Slf4j
 @Validated
 @Controller
-@ConditionalOnProperty(value = "tara.auth-methods.smart-id.enabled", matchIfMissing = true)
+@ConditionalOnProperty(value = "tara.auth-methods.smart-id.enabled")
 public class SmartIdController {
 
     @Autowired
@@ -80,6 +84,7 @@ public class SmartIdController {
         errorMap.put(UserRefusedCertChoiceException.class, SID_USER_REFUSED_CERT_CHOICE);
         errorMap.put(UserRefusedDisplayTextAndPinException.class, SID_USER_REFUSED_DISAPLAYTEXTANDPIN);
         errorMap.put(UserRefusedVerificationChoiceException.class, SID_USER_REFUSED_VC_CHOICE);
+        errorMap.put(UserAccountNotFoundException.class, SID_USER_ACCOUNT_NOT_FOUND);
     }
 
     @PostMapping(value = "/auth/sid/init", produces = MediaType.TEXT_HTML_VALUE, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
@@ -104,16 +109,19 @@ public class SmartIdController {
 
     private String initiateSidAuthenticationSession(SidCredential sidCredential, TaraSession taraSession, AuthenticationHash authenticationHash, AuthenticationRequestBuilder requestBuilder) {
         try {
-            log.info("Initiating smart-id session...");
             taraSession.setState(INIT_SID);
             SemanticsIdentifier semanticsIdentifier = new SemanticsIdentifier(SemanticsIdentifier.IdentityType.PNO, SemanticsIdentifier.CountryCode.EE, sidCredential.getIdCode());
             requestBuilder
-                    .withRelyingPartyUUID(getAppropriateRelyingPartyUuid(taraSession))
-                    .withRelyingPartyName(getAppropriateRelyingPartyName(taraSession))
+                    .withRelyingPartyUUID(taraSession.getSmartIdRelyingPartyUuid().orElse(smartIdConfigurationProperties.getRelyingPartyUuid()))
+                    .withRelyingPartyName(taraSession.getSmartIdRelyingPartyName().orElse(smartIdConfigurationProperties.getRelyingPartyName()))
                     .withSemanticsIdentifier(semanticsIdentifier)
                     .withCertificateLevel("QUALIFIED")
                     .withAuthenticationHash(authenticationHash)
                     .withAllowedInteractionsOrder(getAppropriateAllowedInteractions(taraSession));
+
+            log.info(append("tara.session.sid_authentication_init_request",
+                    createSidInitRequestParameterMap(taraSession, authenticationHash, requestBuilder)),
+                    "Smart ID authentication init request");
             String sidSessionId = requestBuilder.initiateAuthentication();
 
             log.info("Initiated smart-id session with id: " + sidSessionId);
@@ -126,6 +134,8 @@ public class SmartIdController {
         } catch (NotAllowedException | SmartIdClientException | NotAuthorizedException e) {
             log.error("Failed to initiate SID authentication session: " + e.getMessage());
             throw new IllegalStateException(ERROR_GENERAL.getMessage(), e);
+        } catch (UserAccountNotFoundException e) {
+            throw new BadRequestException(SID_USER_ACCOUNT_NOT_FOUND, "User was not found with idCode: " + sidCredential.getIdCode());
         } catch (Exception e) {
             log.error("Failed to initiate SID authentication session: " + e.getMessage());
             throw new ServiceNotAvailableException(SID_INTERNAL_ERROR, "Failed to initiate SID authentication session", e);
@@ -134,43 +144,11 @@ public class SmartIdController {
 
     private List<Interaction> getAppropriateAllowedInteractions(TaraSession taraSession) {
         List<Interaction> allowedInteractions = new ArrayList<>();
-        if (shouldUseVerificationCodeCheck(taraSession))
-            allowedInteractions.add(Interaction.verificationCodeChoice(taraSession.getOidcClientTranslatedShortName()));
-        allowedInteractions.add(Interaction.displayTextAndPIN(taraSession.getOidcClientTranslatedShortName()));
+        String shortName = defaultIfNull(taraSession.getOidcClientTranslatedShortName(), smartIdConfigurationProperties.getDisplayText());
+        if (taraSession.isAdditionalSmartIdVerificationCodeCheckNeeded())
+            allowedInteractions.add(Interaction.verificationCodeChoice(shortName));
+        allowedInteractions.add(Interaction.displayTextAndPIN(shortName));
         return allowedInteractions;
-    }
-
-    private Boolean shouldUseVerificationCodeCheck(TaraSession taraSession) {
-        return Optional.of(taraSession)
-                .map(TaraSession::getLoginRequestInfo)
-                .map(TaraSession.LoginRequestInfo::getClient)
-                .map(TaraSession.Client::getMetaData)
-                .map(TaraSession.MetaData::getOidcClient)
-                .map(TaraSession.OidcClient::getSmartIdSettings)
-                .map(TaraSession.SmartIdSettings::getShouldUseAdditionalVerificationCodeCheck)
-                .orElse(true);
-    }
-
-    private String getAppropriateRelyingPartyName(TaraSession taraSession) {
-        return Optional.of(taraSession)
-                .map(TaraSession::getLoginRequestInfo)
-                .map(TaraSession.LoginRequestInfo::getClient)
-                .map(TaraSession.Client::getMetaData)
-                .map(TaraSession.MetaData::getOidcClient)
-                .map(TaraSession.OidcClient::getSmartIdSettings)
-                .map(TaraSession.SmartIdSettings::getRelyingPartyUuid)
-                .orElse(smartIdConfigurationProperties.getRelyingPartyName());
-    }
-
-    private String getAppropriateRelyingPartyUuid(TaraSession taraSession) {
-        return Optional.of(taraSession)
-                .map(TaraSession::getLoginRequestInfo)
-                .map(TaraSession.LoginRequestInfo::getClient)
-                .map(TaraSession.Client::getMetaData)
-                .map(TaraSession.MetaData::getOidcClient)
-                .map(TaraSession.OidcClient::getSmartIdSettings)
-                .map(TaraSession.SmartIdSettings::getRelyingPartyUuid)
-                .orElse(smartIdConfigurationProperties.getRelyingPartyUuid());
     }
 
     public void validateSession(TaraSession taraSession) {
@@ -242,4 +220,17 @@ public class SmartIdController {
         private String idCode;
     }
 
+    @NotNull
+    private Map<String, Object> createSidInitRequestParameterMap(TaraSession taraSession, AuthenticationHash authenticationHash, AuthenticationRequestBuilder requestBuilder) {
+        Map<String, Object> hm = new TreeMap<>();
+        hm.put("relyingPartyUuid", taraSession.getSmartIdRelyingPartyUuid().orElse(smartIdConfigurationProperties.getRelyingPartyUuid()));
+        hm.put("relyingPartyName", taraSession.getSmartIdRelyingPartyName().orElse(smartIdConfigurationProperties.getRelyingPartyName()));
+        hm.put("semanticsIdentifier", requestBuilder.getSemanticsIdentifier().getIdentifier());
+        hm.put("certificateLevel", "QUALIFIED");
+        hm.put("authenticationHash", authenticationHash.getHashInBase64());
+        hm.put("authenticationHashType", authenticationHash.getHashType().getAlgorithmName());
+        for (Interaction interaction : requestBuilder.getAllowedInteractionsOrder())
+            hm.put(interaction.getType().getCode(), interaction.getDisplayText60());
+        return hm;
+    }
 }

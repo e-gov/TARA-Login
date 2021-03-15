@@ -5,6 +5,7 @@ import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.MDC;
+import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -17,6 +18,7 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
 import static ee.ria.taraauthserver.authentication.AuthInitController.AUTH_INIT_REQUEST_MAPPING;
+import static ee.ria.taraauthserver.authentication.eidas.EidasCallbackController.EIDAS_CALLBACK_REQUEST_MAPPING;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static net.logstash.logback.marker.Markers.append;
@@ -24,10 +26,16 @@ import static net.logstash.logback.marker.Markers.append;
 @Slf4j
 public class SessionManagementFilter extends OncePerRequestFilter {
     private static final RequestMatcher AUTH_INIT_REQUEST_MATCHER = new AntPathRequestMatcher(AUTH_INIT_REQUEST_MAPPING);
+    private static final RequestMatcher EIDAS_CALLBACK_REQUEST_MATCHER = new AntPathRequestMatcher(EIDAS_CALLBACK_REQUEST_MAPPING);
     private static final RequestMatcher AUTH_REQUEST_MATCHER = new AntPathRequestMatcher("/auth/**");
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+
+        if (EIDAS_CALLBACK_REQUEST_MATCHER.matches(request)) {
+            request.setAttribute("SHOULD_NOT_FILTER" + CsrfFilter.class.getName(), Boolean.TRUE);
+        }
+
         HttpSession session = request.getSession(false);
         if (AUTH_INIT_REQUEST_MATCHER.matches(request)) {
             session = createNewSession(request, session);

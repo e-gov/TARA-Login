@@ -1,0 +1,8 @@
+{
+  "levelOfAssurance": "http://eidas.europa.eu/LoA/high",
+  "attributes": {
+    "DateOfBirth": "1965-01-01",
+    "PersonIdentifier": "CA/EE/12345",
+    "FirstName": "Javier"
+  }
+}

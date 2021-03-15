@@ -43,7 +43,7 @@ import static net.logstash.logback.argument.StructuredArguments.value;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(value = "tara.auth-methods.id-card.enabled", matchIfMissing = true)
+@ConditionalOnProperty(value = "tara.auth-methods.id-card.enabled")
 public class OCSPValidator {
 
     @Autowired

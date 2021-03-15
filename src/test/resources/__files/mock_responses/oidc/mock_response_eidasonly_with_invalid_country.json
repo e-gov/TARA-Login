@@ -60,7 +60,7 @@
     "response_types": [
       "string"
     ],
-    "scope": "mid idcard",
+    "scope": "openid mid idcard eidas eidasonly eidas:country:ca",
     "sector_identifier_uri": "string",
     "subject_type": "string",
     "token_endpoint_auth_method": "string",
@@ -77,10 +77,6 @@
     "id_token_hint_claims": {},
     "login_hint": "string",
     "ui_locales": [
-      "zu",
-      "fi",
-      "Ru",
-      "ET",
       "en"
     ]
   },
@@ -89,7 +85,12 @@
     "string"
   ],
   "requested_scope": [
-    "openid"
+    "openid",
+    "idcard",
+    "mid",
+    "eidasonly",
+    "eidas:country:DE",
+    "eidas:country:ee"
   ],
   "session_id": "string",
   "skip": true,

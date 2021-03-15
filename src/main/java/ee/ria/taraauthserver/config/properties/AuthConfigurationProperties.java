@@ -96,10 +96,9 @@ public class AuthConfigurationProperties {
     @Data
     public static class AuthMethodProperties {
 
-        @NotNull
         LevelOfAssurance levelOfAssurance;
 
-        boolean enabled = true;
+        boolean enabled = false;
     }
 
     @Data
@@ -107,6 +106,9 @@ public class AuthConfigurationProperties {
     @EqualsAndHashCode(callSuper = true)
     @ConfigurationProperties(prefix = "tara.auth-methods.mobile-id")
     public static class MidAuthConfigurationProperties extends AuthMethodProperties {
+
+        @NotNull
+        LevelOfAssurance levelOfAssurance;
 
         @NotNull
         private String hostUrl;
@@ -125,6 +127,9 @@ public class AuthConfigurationProperties {
 
         @NotNull
         private String relyingPartyName;
+
+        @NotNull
+        private String displayText;
 
         @Pattern(regexp = "(SHA256|SHA384|SHA512)", message = "invalid hash value, accepted values are: SHA256, SHA384, SHA512")
         private String hashType = "SHA256";
@@ -145,9 +150,14 @@ public class AuthConfigurationProperties {
     public static class IdCardAuthConfigurationProperties extends AuthMethodProperties {
 
         @NotNull
+        LevelOfAssurance levelOfAssurance;
+
+        @NotNull
         private String truststorePath;
 
         private String truststoreType = "PKCS12";
+
+        private boolean ocspEnabled = true;
 
         @NotNull
         private String truststorePassword;
@@ -160,7 +170,7 @@ public class AuthConfigurationProperties {
 
         @PostConstruct
         public void validateConfiguration() {
-            if (isEnabled()) {
+            if (this.ocspEnabled) {
                 Assert.notEmpty(ocsp, "At least one ocsp configuration must be defined!");
                 Set<String> duplicateNames = getFindDuplicateConfigurations();
                 Assert.isTrue(duplicateNames.isEmpty(), "Multiple OCSP configurations detected for issuer's with CN's: " + duplicateNames + ". Please check your configuration!");
