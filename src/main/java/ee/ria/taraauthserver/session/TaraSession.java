@@ -268,7 +268,7 @@ public class TaraSession implements Serializable {
         private String relyingPartyUuid;
         @JsonProperty("relying_party_name")
         private String relyingPartyName;
-        @JsonProperty("should_use_additional_verifcation_code_check")
+        @JsonProperty("should_use_additional_verification_code_check")
         private Boolean shouldUseAdditionalVerificationCodeCheck;
     }
 
@@ -320,7 +320,7 @@ public class TaraSession implements Serializable {
                 .map(TaraSession.Client::getMetaData)
                 .map(TaraSession.MetaData::getOidcClient)
                 .map(TaraSession.OidcClient::getSmartIdSettings)
-                .map(TaraSession.SmartIdSettings::getRelyingPartyUuid);
+                .map(TaraSession.SmartIdSettings::getRelyingPartyName);
     }
 
     public Optional<String> getSmartIdRelyingPartyUuid() {

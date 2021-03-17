@@ -183,7 +183,7 @@ class AuthInitControllerTest extends BaseTest {
         assertEquals("test client et", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getNameTranslations().get("et"));
         assertEquals("testRelyingPartyName", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getRelyingPartyName());
         assertEquals("testRelyingPartyId123", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getRelyingPartyUuid());
-        assertEquals(true, taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getShouldUseAdditionalVerificationCodeCheck());
+        assertEquals(false, taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getShouldUseAdditionalVerificationCodeCheck());
 
         assertInfoIsLogged("OIDC login request: https://localhost:9877/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE);
         assertInfoIsLogged("OIDC login challenge 'abcdefg098AAdsCC' response status code: 200");
