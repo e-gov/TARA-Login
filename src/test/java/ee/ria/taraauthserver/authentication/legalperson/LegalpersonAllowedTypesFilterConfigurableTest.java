@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.authentication.legalperson;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import ee.ria.taraauthserver.BaseTest;
+import ee.ria.taraauthserver.session.MockSessionFilter;
 import io.restassured.RestAssured;
 import io.restassured.path.json.JsonPath;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +13,6 @@ import org.springframework.test.context.TestPropertySource;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static ee.ria.taraauthserver.session.MockSessionFilter.*;
 import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.buildMockCredential;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_INIT;
 import static io.restassured.RestAssured.given;
@@ -40,7 +40,7 @@ public class LegalpersonAllowedTypesFilterConfigurableTest extends BaseTest {
                         .withBodyFile("mock_responses/xroad/ok-multiple-matches.xml")));
 
         JsonPath response = given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(LEGAL_PERSON_AUTHENTICATION_INIT)
                         .authenticationResult(buildMockCredential())
