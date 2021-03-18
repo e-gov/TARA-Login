@@ -3,6 +3,11 @@ package ee.ria.taraauthserver.config.properties;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static java.util.Arrays.stream;
+
 @Getter
 @AllArgsConstructor
 public enum AuthenticationType {
@@ -14,4 +19,10 @@ public enum AuthenticationType {
     private final String amrName;
     private final String propertyName;
     private final TaraScope scope;
+
+    public static List<String> getFormalNames() {
+        return stream(AuthenticationType.values())
+                .map(a -> a.getScope().getFormalName())
+                .collect(Collectors.toList());
+    }
 }
