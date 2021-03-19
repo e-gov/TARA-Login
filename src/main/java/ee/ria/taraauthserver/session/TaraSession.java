@@ -259,7 +259,7 @@ public class TaraSession implements Serializable {
         @JsonProperty("smartid_settings")
         private SmartIdSettings smartIdSettings;
         @JsonProperty("mid_settings")
-        private SmartIdSettings midSettings;
+        private MidSettings midSettings;
     }
 
     @Data
@@ -270,6 +270,14 @@ public class TaraSession implements Serializable {
         private String relyingPartyName;
         @JsonProperty("should_use_additional_verification_code_check")
         private Boolean shouldUseAdditionalVerificationCodeCheck;
+    }
+
+    @Data
+    public static class MidSettings implements Serializable {
+        @JsonProperty("relying_party_UUID")
+        private String relyingPartyUuid;
+        @JsonProperty("relying_party_name")
+        private String relyingPartyName;
     }
 
     @Data
@@ -293,12 +301,11 @@ public class TaraSession implements Serializable {
         OidcClient oidcClient = getLoginRequestInfo().getClient().getMetaData().getOidcClient();
         String translatedShortName = oidcClient.getShortNameTranslations().get("et");
 
-        if (oidcClient.getNameTranslations() != null) {
-            Map<String, String> serviceNameTranslations = oidcClient.getNameTranslations();
-            Locale locale = LocaleContextHolder.getLocale();
-            if (serviceNameTranslations.containsKey(locale.getLanguage()))
-                translatedShortName = serviceNameTranslations.get(locale.getLanguage());
-        }
+        Map<String, String> shortNameTranslations = oidcClient.getShortNameTranslations();
+        Locale locale = LocaleContextHolder.getLocale();
+        if (shortNameTranslations.containsKey(locale.getLanguage()))
+            translatedShortName = shortNameTranslations.get(locale.getLanguage());
+
         return translatedShortName;
     }
 

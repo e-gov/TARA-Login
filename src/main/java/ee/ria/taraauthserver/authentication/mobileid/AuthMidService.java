@@ -115,13 +115,14 @@ public class AuthMidService {
         taraSession.setState(INIT_MID);
         String shortName = defaultIfNull(taraSession.getOidcClientTranslatedShortName(), midAuthConfigurationProperties.getDisplayText());
 
-        MidAuthenticationRequest midRequest = createMidAuthenticationRequest(idCode, telephoneNumber, authenticationHash, shortName);
-        MidAuthenticationResponse response = getAppropriateMidClient(taraSession).getMobileIdConnector().authenticate(midRequest);
+        MidClient midClient = getAppropriateMidClient(taraSession);
+        MidAuthenticationRequest midRequest = createMidAuthenticationRequest(idCode, telephoneNumber, authenticationHash, shortName, midClient);
+        MidAuthenticationResponse response = midClient.getMobileIdConnector().authenticate(midRequest);
         updateAuthSessionWithInitResponse(taraSession, response);
         return response;
     }
 
-    private MidAuthenticationRequest createMidAuthenticationRequest(String idCode, String telephoneNumber, MidAuthenticationHashToSign authenticationHash, String translatedShortName) {
+    private MidAuthenticationRequest createMidAuthenticationRequest(String idCode, String telephoneNumber, MidAuthenticationHashToSign authenticationHash, String translatedShortName, MidClient midClient) {
         MidAuthenticationRequest midRequest = MidAuthenticationRequest.newBuilder()
                 .withNationalIdentityNumber(idCode)
                 .withPhoneNumber(telephoneNumber)
@@ -129,6 +130,8 @@ public class AuthMidService {
                 .withLanguage(getMidLanguage())
                 .withDisplayText(translatedShortName)
                 .withDisplayTextFormat(isServiceNameUsingSpecialCharacters(translatedShortName) ? MidDisplayTextFormat.UCS2 : MidDisplayTextFormat.GSM7)
+                .withRelyingPartyUUID(midClient.getRelyingPartyUUID())
+                .withRelyingPartyName(midClient.getRelyingPartyName())
                 .build();
         log.info(append("tara.session.mid_authentication_init_request", midRequest), "Mobile ID authentication init request");
         return midRequest;
@@ -267,8 +270,8 @@ public class AuthMidService {
                 .map(TaraSession.LoginRequestInfo::getClient)
                 .map(TaraSession.Client::getMetaData)
                 .map(TaraSession.MetaData::getOidcClient)
-                .map(TaraSession.OidcClient::getSmartIdSettings)
-                .map(TaraSession.SmartIdSettings::getRelyingPartyUuid)
+                .map(TaraSession.OidcClient::getMidSettings)
+                .map(TaraSession.MidSettings::getRelyingPartyUuid)
                 .orElse(null);
     }
 
@@ -278,8 +281,8 @@ public class AuthMidService {
                 .map(TaraSession.LoginRequestInfo::getClient)
                 .map(TaraSession.Client::getMetaData)
                 .map(TaraSession.MetaData::getOidcClient)
-                .map(TaraSession.OidcClient::getSmartIdSettings)
-                .map(TaraSession.SmartIdSettings::getRelyingPartyUuid)
+                .map(TaraSession.OidcClient::getMidSettings)
+                .map(TaraSession.MidSettings::getRelyingPartyUuid)
                 .orElse(null);
     }
 }

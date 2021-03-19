@@ -222,15 +222,16 @@ public class SmartIdController {
 
     @NotNull
     private Map<String, Object> createSidInitRequestParameterMap(TaraSession taraSession, AuthenticationHash authenticationHash, AuthenticationRequestBuilder requestBuilder) {
-        Map<String, Object> hm = new TreeMap<>();
-        hm.put("relyingPartyUuid", taraSession.getSmartIdRelyingPartyUuid().orElse(smartIdConfigurationProperties.getRelyingPartyUuid()));
-        hm.put("relyingPartyName", taraSession.getSmartIdRelyingPartyName().orElse(smartIdConfigurationProperties.getRelyingPartyName()));
-        hm.put("semanticsIdentifier", requestBuilder.getSemanticsIdentifier().getIdentifier());
-        hm.put("certificateLevel", "QUALIFIED");
-        hm.put("authenticationHash", authenticationHash.getHashInBase64());
-        hm.put("authenticationHashType", authenticationHash.getHashType().getAlgorithmName());
+        Map<String, Object> tm = new TreeMap<>();
+        tm.put("relyingPartyUuid", taraSession.getSmartIdRelyingPartyUuid().orElse(smartIdConfigurationProperties.getRelyingPartyUuid()));
+        tm.put("relyingPartyName", taraSession.getSmartIdRelyingPartyName().orElse(smartIdConfigurationProperties.getRelyingPartyName()));
+        tm.put("semanticsIdentifier", requestBuilder.getSemanticsIdentifier().getIdentifier());
+        tm.put("certificateLevel", "QUALIFIED");
+        tm.put("authenticationHash", authenticationHash.getHashInBase64());
+        tm.put("authenticationHashType", authenticationHash.getHashType().getAlgorithmName());
+        tm.put("hostUrl", smartIdConfigurationProperties.getHostUrl());
         for (Interaction interaction : requestBuilder.getAllowedInteractionsOrder())
-            hm.put(interaction.getType().getCode(), interaction.getDisplayText60());
-        return hm;
+            tm.put(interaction.getType().getCode(), interaction.getDisplayText60());
+        return tm;
     }
 }
