@@ -12,7 +12,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
-import static ee.ria.taraauthserver.session.MockSessionFilter.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
@@ -48,7 +47,7 @@ class AuthMidPollControllerTest extends BaseTest {
     @Tag(value = "MID_AUTH_STATUS_CHECK_VALID_SESSION")
     void midAuth_session_status_incorrect() {
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationTypes(of(MOBILE_ID))
                         .authenticationState(INIT_AUTH_PROCESS).build())
@@ -68,7 +67,7 @@ class AuthMidPollControllerTest extends BaseTest {
     @Tag(value = "MID_AUTH_PENDING")
     void midAuth_session_status_poll_mid_status() {
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationTypes(of(MOBILE_ID))
                         .authenticationState(POLL_MID_STATUS).build())
@@ -85,7 +84,7 @@ class AuthMidPollControllerTest extends BaseTest {
     @Tag(value = "MID_AUTH_STATUS_CHECK_ENDPOINT")
     @Tag(value = "MID_AUTH_SUCCESS")
     void midAuth_session_status_authentication_success() {
-        MockSessionFilter sessionFilter = withTaraSession()
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(MOBILE_ID))
                 .authenticationState(NATURAL_PERSON_AUTHENTICATION_COMPLETED).build();
@@ -110,7 +109,7 @@ class AuthMidPollControllerTest extends BaseTest {
         TaraSession.AuthenticationResult authenticationResult = new TaraSession.MidAuthenticationResult("mid_session_id");
         authenticationResult.setErrorCode(ErrorCode.ERROR_GENERAL);
 
-        MockSessionFilter sessionFilter = withTaraSession()
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(MOBILE_ID))
                 .authenticationState(AUTHENTICATION_FAILED)
@@ -141,7 +140,7 @@ class AuthMidPollControllerTest extends BaseTest {
         TaraSession.AuthenticationResult authenticationResult = new TaraSession.MidAuthenticationResult("mid-session-id");
         authenticationResult.setErrorCode(ErrorCode.MID_INTERNAL_ERROR);
 
-        MockSessionFilter sessionFilter = withTaraSession()
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(MOBILE_ID))
                 .authenticationState(AUTHENTICATION_FAILED)

@@ -470,14 +470,32 @@ Ignite is used for storing user’s session information.
 
 <a name="alerts_conf"></a>
 ## 1.12 Alerts config
+
+Table 1.12.1 - Alerts service configuration parameters 
+
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.alerts.host-url` | Yes | Request url used when refreshing alerts list. Example value `http://alerts-mock:8080/alerts` |
 | `tara.alerts.connection-timeout-milliseconds` | No | Connection timeout in milliseconds. Default value `3000`|
 | `tara.alerts.read-timeout-milliseconds` | No | Read timeout in milliseconds. Default value `3000`|
 | `tara.alerts.refresh-alerts-interval-in-milliseconds` | No | How often alerts are requested from the configured alerts url. Default. `600000` |
-| `tara.alerts.alerts-cache-duration-in-seconds` | No | How long alerts are kept in cache. Default. `3600` |
+| `tara.alerts.alerts-cache-duration-in-seconds` | No | How long alerts request results are kept in cache, in case next refresh fails. Default. `86400` |
 
+Table 1.12.2 - Static alert configuration parameters
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.alerts.static-alert.message-templates[x].message` | No | Static alert message.|
+| `tara.alerts.static-alert.message-templates[x].locale` | No | Static alert message locale. Example value: `et` |
+
+Where x denotes index. Example:
+
+````
+tara.alerts.static-alert.message-templates[0].message=Eestikeelne hoiatusteade
+tara.alerts.static-alert.message-templates[0].locale=en
+tara.alerts.static-alert.message-templates[1].message=English alert message
+tara.alerts.static-alert.message-templates[1].locale=en
+````
 
 ## APPENDIX
 

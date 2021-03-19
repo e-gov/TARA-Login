@@ -57,9 +57,15 @@
     </span>
 </a>
 
-<div layout:fragment="content(tab_id)" xmlns:th="http://www.w3.org/1999/xhtml"
+<div layout:fragment="content(tab_id, alerts)" xmlns:th="http://www.w3.org/1999/xhtml"
      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
     <div class="c-tab-login__content" th:classappend="${static} ? is-active : ''" th:data-tab="${tab_id}">
+        <div class="alert alert-warning" th:if="${not #lists.isEmpty(alerts)}">
+            <ul>
+                <li th:utext="${alert.getAlertMessage(#locale.language)}" th:each="alert : ${alerts}"></li>
+            </ul>
+        </div>
+        <br>
         <div class="c-tab-login__content-wrap">
             <div class="c-tab-login__content-icon" aria-hidden="true">
                 <svg role="img" aria-label="" th:class="'icon icon-' + ${tab_id}">
@@ -81,15 +87,5 @@
                    th:text="${#messages.msg('label.' + tab_id + '.help')}" target="_blank" rel="noopener">Help</a>
             </p>
         </div>
-    </div>
-</div>
-
-<div layout:fragment="warning(tab_id, alertMessage)" xmlns:th="http://www.w3.org/1999/xhtml"
-     xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
-    <div class="c-tab-login__content" th:classappend="${static} ? is-active : ''" th:data-tab="${tab_id}">
-        <div class="alert alert-warning">
-            <p><strong th:utext="${alertMessage}"></strong></p>
-        </div>
-        <br>
     </div>
 </div>

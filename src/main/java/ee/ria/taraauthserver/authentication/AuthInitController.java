@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
@@ -50,7 +49,7 @@ public class AuthInitController {
     @Autowired
     private AuthConfigurationProperties taraProperties;
 
-    @Autowired (required = false)
+    @Autowired(required = false)
     private EidasConfigurationProperties eidasConfigurationProperties;
 
     @Autowired

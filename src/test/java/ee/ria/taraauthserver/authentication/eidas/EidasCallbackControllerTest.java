@@ -14,8 +14,6 @@ import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.EIDAS;
-import static ee.ria.taraauthserver.session.MockSessionFilter.*;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
@@ -37,7 +35,7 @@ class EidasCallbackControllerTest extends BaseTest {
         eidasRelayStateCache.put(MOCK_RELAY_STATE_VALUE, "testSessionId123");
 
         given()
-                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
+                .filter(MockSessionFilter.withoutTaraSession().sessionRepository(sessionRepository).build())
                 .formParam("SAMLResponse", "123test")
                 .when()
                 .formParam("RelayState", MOCK_RELAY_STATE_VALUE)
@@ -54,7 +52,7 @@ class EidasCallbackControllerTest extends BaseTest {
     @Test
     @Tag(value = "EIDAS_AUTH_CALLBACK_REQUEST_CHECKS")
     void eidasAuthCallback_session_status_incorrect() {
-        MockSessionFilter sessionFilter = withTaraSession()
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(EIDAS))
                 .authenticationState(TaraAuthenticationState.INIT_MID).build();
@@ -81,7 +79,7 @@ class EidasCallbackControllerTest extends BaseTest {
     void eidasAuthCallback_session_status_missing_relayState() {
 
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationTypes(of(EIDAS))
                         .authenticationResult(new TaraSession.EidasAuthenticationResult())
@@ -103,7 +101,7 @@ class EidasCallbackControllerTest extends BaseTest {
     void eidasAuthCallback_session_status_missing_samlResponse() {
 
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationTypes(of(EIDAS))
                         .authenticationResult(new TaraSession.EidasAuthenticationResult())
@@ -128,7 +126,7 @@ class EidasCallbackControllerTest extends BaseTest {
         TaraSession.EidasAuthenticationResult eidasAuthenticationResult = new TaraSession.EidasAuthenticationResult();
         eidasAuthenticationResult.setRelayState(UUID.randomUUID().toString());
 
-        MockSessionFilter sessionFilter = withTaraSession()
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(EIDAS))
                 .authenticationResult(eidasAuthenticationResult)
@@ -168,7 +166,7 @@ class EidasCallbackControllerTest extends BaseTest {
         TaraSession.EidasAuthenticationResult eidasAuthenticationResult = new TaraSession.EidasAuthenticationResult();
         eidasAuthenticationResult.setRelayState(UUID.randomUUID().toString());
 
-        MockSessionFilter sessionFilter = withTaraSession()
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(EIDAS))
                 .authenticationResult(eidasAuthenticationResult)
@@ -201,7 +199,7 @@ class EidasCallbackControllerTest extends BaseTest {
         TaraSession.EidasAuthenticationResult eidasAuthenticationResult = new TaraSession.EidasAuthenticationResult();
         eidasAuthenticationResult.setRelayState(UUID.randomUUID().toString());
 
-        MockSessionFilter sessionFilter = withTaraSession()
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(EIDAS))
                 .authenticationResult(eidasAuthenticationResult)
@@ -234,7 +232,7 @@ class EidasCallbackControllerTest extends BaseTest {
         TaraSession.EidasAuthenticationResult eidasAuthenticationResult = new TaraSession.EidasAuthenticationResult();
         eidasAuthenticationResult.setRelayState(UUID.randomUUID().toString());
 
-        MockSessionFilter sessionFilter = withTaraSession()
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(EIDAS))
                 .authenticationResult(eidasAuthenticationResult)
@@ -268,7 +266,7 @@ class EidasCallbackControllerTest extends BaseTest {
 
         eidasAuthenticationResult.setRelayState(UUID.randomUUID().toString());
 
-        MockSessionFilter sessionFilter = withTaraSession()
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(EIDAS))
                 .authenticationResult(eidasAuthenticationResult)
@@ -301,7 +299,7 @@ class EidasCallbackControllerTest extends BaseTest {
 
         eidasAuthenticationResult.setRelayState(UUID.randomUUID().toString());
 
-        MockSessionFilter sessionFilter = withTaraSession()
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(EIDAS))
                 .authenticationResult(eidasAuthenticationResult)

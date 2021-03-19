@@ -15,7 +15,6 @@ import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.SMART_ID;
-import static ee.ria.taraauthserver.session.MockSessionFilter.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
@@ -54,7 +53,7 @@ class AuthSidPollControllerTest extends BaseTest {
     @Tag(value = "SID_AUTH_STATUS_CHECK_VALID_SESSION")
     void sidAuth_session_status_incorrect() {
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationTypes(of(SMART_ID))
                         .authenticationState(INIT_AUTH_PROCESS).build())
@@ -74,7 +73,7 @@ class AuthSidPollControllerTest extends BaseTest {
     @Tag(value = "SID_AUTH_PENDING")
     void sidAuth_session_status_poll_sid_status() {
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationTypes(of(SMART_ID))
                         .authenticationState(POLL_SID_STATUS).build())
@@ -91,7 +90,7 @@ class AuthSidPollControllerTest extends BaseTest {
     @Tag(value = "SID_AUTH_STATUS_CHECK_ENDPOINT")
     @Tag(value = "SID_AUTH_SUCCESS")
     void sidAuth_session_status_authentication_success() {
-        MockSessionFilter sessionFilter = withTaraSession()
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(SMART_ID))
                 .authenticationState(NATURAL_PERSON_AUTHENTICATION_COMPLETED).build();
@@ -116,7 +115,7 @@ class AuthSidPollControllerTest extends BaseTest {
         TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
         authenticationResult.setErrorCode(ErrorCode.SID_USER_REFUSED_CERT_CHOICE);
 
-        MockSessionFilter sessionFilter = withTaraSession()
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(SMART_ID))
                 .authenticationState(AUTHENTICATION_FAILED)
@@ -145,7 +144,7 @@ class AuthSidPollControllerTest extends BaseTest {
         TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
         authenticationResult.setErrorCode(ErrorCode.ERROR_GENERAL);
 
-        MockSessionFilter sessionFilter = withTaraSession()
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(SMART_ID))
                 .authenticationState(AUTHENTICATION_FAILED)
@@ -163,8 +162,6 @@ class AuthSidPollControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
 
 
-
-
         String sessionId = sessionFilter.getSession().getId();
         assertNull(sessionRepository.findById(sessionFilter.getSession().getId()));
         assertInfoIsLogged("Tara session state change: NOT_SET -> AUTHENTICATION_FAILED");
@@ -179,7 +176,7 @@ class AuthSidPollControllerTest extends BaseTest {
         TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
         authenticationResult.setErrorCode(ErrorCode.SID_INTERNAL_ERROR);
 
-        MockSessionFilter sessionFilter = withTaraSession()
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(SMART_ID))
                 .authenticationState(AUTHENTICATION_FAILED)

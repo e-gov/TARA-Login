@@ -1,15 +1,19 @@
 package ee.ria.taraauthserver.config.properties;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -27,27 +31,73 @@ public class AlertsConfigurationProperties {
 
     private int refreshAlertsIntervalInMilliseconds;
 
-    private int alertsCacheDurationInSeconds = 3600;
+    private int alertsCacheDurationInSeconds = 86400;
+
+    private StaticAlert staticAlert;
 
     @Data
-    @RequiredArgsConstructor
+    public static class StaticAlert {
+        private List<MessageTemplate> messageTemplates = new ArrayList<>();
+    }
+
+    @Builder
+    @Data
     public static class Alert implements Serializable {
         @JsonProperty("start_time")
-        LocalDate startTime;
+        private OffsetDateTime startTime;
         @JsonProperty("end_time")
-        LocalDate endTime;
-        @JsonProperty("login_page_notification_settings")
-        LoginPageNotificationSettings loginPageNotificationSettings;
+        private OffsetDateTime endTime;
+        @JsonProperty("login_alert")
+        private LoginAlert loginAlert;
+        @JsonIgnore
+        private String defaultMessage;
+
+        public void setLoginAlert(LoginAlert loginAlert) {
+            this.loginAlert = loginAlert;
+            this.defaultMessage = getAlertMessage("et");
+        }
+
+        public boolean isActive() {
+            return getLoginAlert().isEnabled()
+                    && getStartTime().isBefore(OffsetDateTime.now())
+                    && getEndTime().isAfter(OffsetDateTime.now());
+        }
+
+        public boolean isValidFor(AuthenticationType authenticationType) {
+            String scope = authenticationType.getScope().getFormalName();
+            return loginAlert
+                    .getAuthMethods()
+                    .stream()
+                    .anyMatch(m -> m.equals(scope));
+        }
+
+        public String getAlertMessage(String locale) {
+            return loginAlert.getMessageTemplates().stream()
+                    .filter(m -> m.getLocale().equals(locale))
+                    .map(MessageTemplate::getMessage)
+                    .findFirst()
+                    .orElse(defaultMessage);
+        }
+    }
+
+    @Builder
+    @Data
+    public static class LoginAlert {
+        @Getter
+        @JsonProperty("enabled")
+        private boolean enabled;
+        @JsonProperty("message_templates")
+        private List<MessageTemplate> messageTemplates;
+        @JsonProperty("auth_methods")
+        private List<String> authMethods;
     }
 
     @Data
-    public static class LoginPageNotificationSettings {
-        @JsonProperty("notify_clients_on_tara_login_page")
-        boolean notifyClientsOnTaraLoginPage;
-        @JsonProperty("notification_text")
-        String notificationText;
-        @JsonProperty("display_only_for_authmethods")
-        List<String> authMethods;
+    @NoArgsConstructor
+    public static class MessageTemplate {
+        @JsonProperty("message")
+        private String message;
+        @JsonProperty("locale")
+        private String locale;
     }
-
 }

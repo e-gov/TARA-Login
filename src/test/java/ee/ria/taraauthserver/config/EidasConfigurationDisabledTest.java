@@ -3,7 +3,6 @@ package ee.ria.taraauthserver.config;
 import ee.ria.taraauthserver.authentication.eidas.EidasCallbackController;
 import ee.ria.taraauthserver.authentication.eidas.EidasController;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
-
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

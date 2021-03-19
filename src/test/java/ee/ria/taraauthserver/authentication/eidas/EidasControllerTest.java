@@ -16,12 +16,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 
 import javax.cache.Cache;
-
 import java.util.Arrays;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.EIDAS;
-import static ee.ria.taraauthserver.session.MockSessionFilter.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.WAITING_EIDAS_RESPONSE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
@@ -46,7 +44,7 @@ public class EidasControllerTest extends BaseTest {
     @Tag(value = "EIDAS_AUTH_INIT_REQUEST_CHECKS")
     void eidasAuthInit_session_missing() {
         given()
-                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
+                .filter(MockSessionFilter.withoutTaraSession().sessionRepository(sessionRepository).build())
                 .formParam("country", "CA")
                 .when()
                 .post("/auth/eidas/init")
@@ -63,7 +61,7 @@ public class EidasControllerTest extends BaseTest {
     @Tag(value = "EIDAS_AUTH_INIT_REQUEST_CHECKS")
     void eidasAuthInit_session_status_incorrect() {
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationTypes(of(EIDAS))
                         .authenticationState(TaraAuthenticationState.INIT_MID).build())
@@ -86,7 +84,7 @@ public class EidasControllerTest extends BaseTest {
         createEidasLoginStub("mock_responses/eidas/eidas-login-response.json", 200);
 
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationTypes(of(EIDAS))
                         .authenticationState(INIT_AUTH_PROCESS).build())
@@ -109,7 +107,7 @@ public class EidasControllerTest extends BaseTest {
         createEidasLoginStub("mock_responses/eidas/eidas-login-response.json", 200);
 
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationTypes(of(EIDAS))
                         .authenticationState(INIT_AUTH_PROCESS)
@@ -146,7 +144,7 @@ public class EidasControllerTest extends BaseTest {
         await().atMost(FIVE_SECONDS)
                 .until(() -> eidasConfigurationProperties.getAvailableCountries().size(), Matchers.equalTo(1));
 
-        MockSessionFilter sessionFilter = withTaraSession()
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(EIDAS))
                 .authenticationState(INIT_AUTH_PROCESS)
@@ -174,7 +172,7 @@ public class EidasControllerTest extends BaseTest {
         await().atMost(FIVE_SECONDS)
                 .until(() -> eidasConfigurationProperties.getAvailableCountries().size(), Matchers.equalTo(1));
 
-        MockSessionFilter sessionFilter = withTaraSession()
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(EIDAS))
                 .authenticationState(INIT_AUTH_PROCESS)
@@ -204,7 +202,7 @@ public class EidasControllerTest extends BaseTest {
         await().atMost(TEN_SECONDS)
                 .until(() -> eidasConfigurationProperties.getAvailableCountries().size(), Matchers.equalTo(1));
 
-        MockSessionFilter sessionFilter = withTaraSession()
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(EIDAS))
                 .authenticationState(INIT_AUTH_PROCESS)

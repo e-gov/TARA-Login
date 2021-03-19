@@ -17,7 +17,6 @@ import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
