@@ -20,7 +20,6 @@ import org.bouncycastle.operator.ContentVerifierProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -39,23 +38,21 @@ import java.util.*;
 
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp;
 import static net.logstash.logback.argument.StructuredArguments.value;
+import static net.logstash.logback.marker.Markers.append;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(value = "tara.auth-methods.id-card.enabled")
 public class OCSPValidator {
-
-    @Autowired
-    SSLContext sslContext;
-
-    public static final String MDC_ATTRIBUTE_OCSP_ID = "ocspUrl";
+    private final Map<String, X509Certificate> trustedCertificates;
 
     static {
         Security.addProvider(new BouncyCastleProvider());
     }
 
-    private final Map<String, X509Certificate> trustedCertificates;
+    @Autowired
+    private SSLContext sslContext;
 
     @Autowired
     private final OCSPConfigurationResolver ocspConfigurationResolver;
@@ -76,9 +73,7 @@ public class OCSPValidator {
             Ocsp ocspConf = ocspConfiguration.get(count);
             try {
                 if (count > 0) {
-                    log.info("Retrying OCSP request with {}. Configuration: {}",
-                            value("url.full", ocspConf.getUrl()),
-                            value("ocsp.conf", ocspConf));
+                    log.info(append("ocsp.conf", ocspConf), "Retrying OCSP request to: {}", value("url.full", ocspConf.getUrl()));
                 }
                 checkCert(userCert, ocspConf);
                 return;
@@ -127,16 +122,14 @@ public class OCSPValidator {
         }
     }
 
-    private BasicOCSPResp getResponse(OCSPResp response, Ocsp ocspConf)
-            throws IOException, OCSPException {
-        log.info("OCSP issuerCN=<{}> response received: {}",
-                value("x509.issuer.common_name", ocspConf.getIssuerCn()),
-                value("ocsp.response", Base64.getEncoder().encodeToString(response.getEncoded())));
+    private BasicOCSPResp getResponse(OCSPResp response, Ocsp ocspConf) throws OCSPException, IOException {
+        log.info(append("http.response.body.content", Base64.getEncoder().encodeToString(response.getEncoded()))
+                .and(append("509.issuer.common_name", ocspConf.getIssuerCn()))
+                .and(append("url.full", ocspConf.getUrl())), "OCSP response");
         BasicOCSPResp basicOCSPResponse = (BasicOCSPResp) response.getResponseObject();
         Assert.notNull(basicOCSPResponse, "Invalid OCSP response! OCSP response object bytes could not be read!");
         Assert.notNull(basicOCSPResponse.getCerts(), "Invalid OCSP response! OCSP response is missing mandatory element - the signing certificate");
         Assert.isTrue(basicOCSPResponse.getCerts().length >= 1, "Invalid OCSP response! Expecting at least one OCSP responder certificate");
-        MDC.put(MDC_ATTRIBUTE_OCSP_ID, ocspConf.getUrl());
         return basicOCSPResponse;
     }
 
@@ -169,6 +162,9 @@ public class OCSPValidator {
 
     private OCSPResp sendOCSPReq(OCSPReq request, Ocsp conf) throws IOException {
         byte[] bytes = request.getEncoded();
+        log.info(append("url.full", conf.getUrl())
+                .and(append("http.request.body.content", Base64.getEncoder().encodeToString(bytes)))
+                .and(append("ocsp.conf", conf)), "OCSP request");
 
         HttpURLConnection connection = (HttpURLConnection) getHttpURLConnection(new URL(conf.getUrl()));
         connection.setRequestProperty("Content-Type", "application/ocsp-request");
@@ -176,12 +172,6 @@ public class OCSPValidator {
         connection.setConnectTimeout(conf.getConnectTimeoutInMilliseconds());
         connection.setReadTimeout(conf.getReadTimeoutInMilliseconds());
         connection.setDoOutput(true);
-
-        log.info("Sending OCSP request to <{}>. Request payload: <{}>. OCSP configuration: <{}>",
-                value("url.full", conf.getUrl()),
-                value("http.request.body.content", Base64.getEncoder().encodeToString(bytes)),
-                value("ocsp.conf", conf));
-
         try (DataOutputStream outputStream = new DataOutputStream(new BufferedOutputStream(connection.getOutputStream()))) {
             outputStream.write(bytes);
             outputStream.flush();
@@ -198,9 +188,9 @@ public class OCSPValidator {
                 return new OCSPResp(in);
             }
         } else {
-            log.error("OCSP request has failed (HTTP {}) - {}",
-                    value("http.response.status_code", connection.getResponseCode()),
-                    value("http.response.body.content", connection.getResponseMessage()));
+            log.error(append("url.full", conf.getUrl()), "OCSP request has failed: {}, Status code: {}",
+                    value("http.response.body.content", connection.getResponseMessage()),
+                    value("http.response.status_code", connection.getResponseCode()));
             throw new OCSPServiceNotAvailableException(String.format("Service returned HTTP status code %d",
                     connection.getResponseCode()));
         }

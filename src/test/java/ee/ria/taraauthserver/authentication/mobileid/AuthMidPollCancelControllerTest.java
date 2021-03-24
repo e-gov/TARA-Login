@@ -97,6 +97,6 @@ class AuthMidPollCancelControllerTest extends BaseTest {
 
         TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.POLL_MID_STATUS_CANCELED, taraSession.getState());
-        assertWarningIsLogged("Mobile ID authentication process with MID session id testSessionId has been canceled");
+        assertWarningIsLogged("Mobile-ID authentication process with MID session id testSessionId has been canceled");
     }
 }

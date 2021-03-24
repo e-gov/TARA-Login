@@ -27,7 +27,7 @@ import static net.logstash.logback.argument.StructuredArguments.value;
 
 @Slf4j
 @Component
-@ConditionalOnProperty(value = "tara.alerts.host-url")
+@ConditionalOnProperty(value = "tara.alerts.enabled")
 public class AlertsScheduler {
     public static final String ALERTS_CACHE_KEY = "alertsCache";
 

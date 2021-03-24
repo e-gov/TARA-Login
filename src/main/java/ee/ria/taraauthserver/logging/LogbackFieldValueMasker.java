@@ -1,4 +1,4 @@
-package ee.ria.taraauthserver.session.logging;
+package ee.ria.taraauthserver.logging;
 
 import com.fasterxml.jackson.core.JsonStreamContext;
 import lombok.NoArgsConstructor;

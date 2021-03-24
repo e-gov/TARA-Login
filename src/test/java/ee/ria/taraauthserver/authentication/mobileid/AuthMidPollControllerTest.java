@@ -160,7 +160,7 @@ class AuthMidPollControllerTest extends BaseTest {
         String sessionId = sessionFilter.getSession().getId();
         assertNull(sessionRepository.findById(sessionId));
         assertInfoIsLogged("Tara session state change: NOT_SET -> AUTHENTICATION_FAILED");
-        assertErrorIsLogged("Service not available: Sid poll failed");
+        assertErrorIsLogged("Service not available: Mobile-ID poll failed");
         assertWarningIsLogged("Session has been invalidated: " + sessionId);
         assertInfoIsLogged("Session is removed from cache: " + sessionId);
     }

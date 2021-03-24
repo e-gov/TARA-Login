@@ -306,7 +306,7 @@ class AuthMidControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User exception: Mobile ID authentication method is not allowed");
+        assertErrorIsLogged("User exception: Mobile-ID authentication method is not allowed");
     }
 
     @Test
@@ -344,9 +344,9 @@ class AuthMidControllerTest extends BaseTest {
         assertEquals(MOBILE_ID, result.getAmr());
         assertEquals(LevelOfAssurance.HIGH, result.getAcr());
 
-        assertInfoIsLogged("Mobile ID authentication init request");
-        assertInfoIsLogged("Mobile ID authentication process with MID session id de305d54-75b4-431b-adb2-eb6b9e546015 has been initiated");
-        assertInfoIsLogged("Polling Mobile ID authentication process with MID session id de305d54-75b4-431b-adb2-eb6b9e546015");
+        assertInfoIsLogged("Initiating Mobile-ID authentication session");
+        assertInfoIsLogged("Mobile-ID authentication process with MID session id de305d54-75b4-431b-adb2-eb6b9e546015 has been initiated");
+        assertInfoIsLogged("Polling Mobile-ID authentication process with MID session id de305d54-75b4-431b-adb2-eb6b9e546015");
         assertInfoIsLogged("MID session id de305d54-75b4-431b-adb2-eb6b9e546015 authentication result: OK, status: COMPLETE");
     }
 
@@ -389,7 +389,7 @@ class AuthMidControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(500);
 
-        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: HTTP 400 Bad Request");
+        assertErrorIsLogged("Server encountered an unexpected error: Internal error during Mobile-ID authentication init: HTTP 400 Bad Request");
     }
 
     @Test
@@ -409,7 +409,7 @@ class AuthMidControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(500);
 
-        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: Request is unauthorized for URI https://localhost:9877/mid-api/authentication: HTTP 401 Unauthorized");
+        assertErrorIsLogged("Server encountered an unexpected error: Internal error during Mobile-ID authentication init: Request is unauthorized for URI https://localhost:9877/mid-api/authentication: HTTP 401 Unauthorized");
     }
 
     @Test
@@ -429,7 +429,7 @@ class AuthMidControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(500);
 
-        assertErrorIsLogged("Server encountered an unexpected error: Internal error during MID authentication init: HTTP 405 Method Not Allowed");
+        assertErrorIsLogged("Server encountered an unexpected error: Internal error during Mobile-ID authentication init: HTTP 405 Method Not Allowed");
     }
 
     @Test
@@ -449,7 +449,7 @@ class AuthMidControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(502);
 
-        assertErrorIsLogged("Service not available: MID service is currently unavailable: Error getting response from cert-store/MSSP for URI https://localhost:9877/mid-api/authentication: HTTP 500 Server Error");
+        assertErrorIsLogged("Service not available: Mobile-ID service is currently unavailable: Error getting response from cert-store/MSSP for URI https://localhost:9877/mid-api/authentication: HTTP 500 Server Error");
     }
 
     @Test
@@ -468,7 +468,7 @@ class AuthMidControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(502);
 
-        assertErrorIsLogged("Service not available: MID service is currently unavailable: Error getting response from cert-store/MSSP for URI https://localhost:9877/mid-api/authentication: HTTP 500 Server Error");
+        assertErrorIsLogged("Service not available: Mobile-ID service is currently unavailable: Error getting response from cert-store/MSSP for URI https://localhost:9877/mid-api/authentication: HTTP 500 Server Error");
     }
 
 
@@ -489,6 +489,6 @@ class AuthMidControllerTest extends BaseTest {
                 .statusCode(502)
                 .body("message", equalTo("Mobiil-ID teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti."));
 
-        assertErrorIsLogged("Service not available: MID service is currently unavailable: java.net.SocketTimeoutException: Read timed out");
+        assertErrorIsLogged("Service not available: Mobile-ID service is currently unavailable: java.net.SocketTimeoutException: Read timed out");
     }
 }

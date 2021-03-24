@@ -475,6 +475,7 @@ Table 1.12.1 - Alerts service configuration parameters
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
+| `tara.alerts.enabled` | No | Enables alerts update service. Default value `false` |
 | `tara.alerts.host-url` | Yes | Request url used when refreshing alerts list. Example value `http://alerts-mock:8080/alerts` |
 | `tara.alerts.connection-timeout-milliseconds` | No | Connection timeout in milliseconds. Default value `3000`|
 | `tara.alerts.read-timeout-milliseconds` | No | Read timeout in milliseconds. Default value `3000`|

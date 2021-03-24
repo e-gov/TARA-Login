@@ -91,10 +91,11 @@ public class AuthMidServiceTest extends BaseTest {
 
         assertInfoIsLogged("Tara session state change: NOT_SET -> INIT_AUTH_PROCESS");
         assertInfoIsLogged("Tara session state change: INIT_AUTH_PROCESS -> INIT_MID");
-        assertInfoIsLogged("Mobile ID authentication init request");
+        assertInfoIsLogged("Mobile-ID service request");
         assertInfoIsLogged("Tara session state change: INIT_MID -> POLL_MID_STATUS");
-        assertInfoIsLogged("Mobile ID authentication process with MID session id de305d54-75b4-431b-adb2-eb6b9e546015 has been initiated");
-        assertInfoIsLogged("Polling Mobile ID authentication process with MID session id de305d54-75b4-431b-adb2-eb6b9e546015");
+        assertInfoIsLogged("Mobile-ID service response");
+        assertInfoIsLogged("Mobile-ID authentication process with MID session id de305d54-75b4-431b-adb2-eb6b9e546015 has been initiated");
+        assertInfoIsLogged("Polling Mobile-ID authentication process with MID session id de305d54-75b4-431b-adb2-eb6b9e546015");
         assertInfoIsLogged("MID session id de305d54-75b4-431b-adb2-eb6b9e546015 authentication result: OK, status: COMPLETE");
         assertInfoIsLogged("Tara session state change: POLL_MID_STATUS -> NATURAL_PERSON_AUTHENTICATION_COMPLETED");
         assertMidApiRequests();
@@ -129,7 +130,7 @@ public class AuthMidServiceTest extends BaseTest {
         });
         TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
         assertEquals(INIT_AUTH_PROCESS, taraSession.getState());
-        assertEquals("MID service is currently unavailable: MidInternalErrorException", expectedEx.getMessage());
+        assertEquals("Mobile-ID service is currently unavailable: MidInternalErrorException", expectedEx.getMessage());
     }
 
     @Test
@@ -143,7 +144,7 @@ public class AuthMidServiceTest extends BaseTest {
         });
         TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
         assertEquals(INIT_AUTH_PROCESS, taraSession.getState());
-        assertEquals("MID service is currently unavailable: ProcessingException", expectedEx.getMessage());
+        assertEquals("Mobile-ID service is currently unavailable: ProcessingException", expectedEx.getMessage());
     }
 
     @Test
@@ -157,7 +158,7 @@ public class AuthMidServiceTest extends BaseTest {
         });
         TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
         assertEquals(INIT_AUTH_PROCESS, taraSession.getState());
-        assertEquals("Internal error during MID authentication init: RuntimeException", expectedEx.getMessage());
+        assertEquals("Internal error during Mobile-ID authentication init: RuntimeException", expectedEx.getMessage());
     }
 
     @Test
@@ -166,7 +167,7 @@ public class AuthMidServiceTest extends BaseTest {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_response_delivery_error.json", 200);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertWarningIsLogged("Mobile ID polling failed: SMS sending error");
+        assertWarningIsLogged("Mobile-ID polling failed: SMS sending error");
         assertEquals(MID_DELIVERY_ERROR, taraSession.getAuthenticationResult().getErrorCode());
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
@@ -178,7 +179,7 @@ public class AuthMidServiceTest extends BaseTest {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_response_sim_error.json", 200);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertWarningIsLogged("Mobile ID polling failed: SMS sending error");
+        assertWarningIsLogged("Mobile-ID polling failed: SMS sending error");
         assertEquals(MID_DELIVERY_ERROR, taraSession.getAuthenticationResult().getErrorCode());
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
@@ -190,7 +191,7 @@ public class AuthMidServiceTest extends BaseTest {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_empty_response.json", 400);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertWarningIsLogged("Mobile ID polling failed: HTTP 400 Bad Request");
+        assertWarningIsLogged("Mobile-ID polling failed: HTTP 400 Bad Request");
         assertEquals(ERROR_GENERAL, taraSession.getAuthenticationResult().getErrorCode());
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
@@ -202,7 +203,7 @@ public class AuthMidServiceTest extends BaseTest {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_empty_response.json", 401);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertWarningIsLogged("Mobile ID polling failed: HTTP 401 Unauthorized");
+        assertWarningIsLogged("Mobile-ID polling failed: HTTP 401 Unauthorized");
         assertEquals(ERROR_GENERAL, taraSession.getAuthenticationResult().getErrorCode());
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
@@ -214,7 +215,7 @@ public class AuthMidServiceTest extends BaseTest {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_empty_response.json", 404);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertWarningIsLogged("Mobile ID polling failed: Mobile-ID session was not found. Sessions time out in ~5 minutes.");
+        assertWarningIsLogged("Mobile-ID polling failed: Mobile-ID session was not found. Sessions time out in ~5 minutes.");
         assertEquals(MID_INTEGRATION_ERROR, taraSession.getAuthenticationResult().getErrorCode());
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
@@ -226,7 +227,7 @@ public class AuthMidServiceTest extends BaseTest {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_empty_response.json", 405);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertWarningIsLogged("Mobile ID polling failed: HTTP 405 Method Not Allowed");
+        assertWarningIsLogged("Mobile-ID polling failed: HTTP 405 Method Not Allowed");
         assertEquals(ERROR_GENERAL, taraSession.getAuthenticationResult().getErrorCode());
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
@@ -238,7 +239,7 @@ public class AuthMidServiceTest extends BaseTest {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_empty_response.json", 500);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertWarningIsLogged("Mobile ID polling failed: HTTP 500 Server Error");
+        assertWarningIsLogged("Mobile-ID polling failed: HTTP 500 Server Error");
         assertEquals(MID_INTERNAL_ERROR, taraSession.getAuthenticationResult().getErrorCode());
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
@@ -250,7 +251,7 @@ public class AuthMidServiceTest extends BaseTest {
         String sessionId = startMidAuthSessionWithPollResponseWithDelay("mock_responses/mid/mid_poll_empty_response.json", 500, 0, 5000);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertWarningIsLogged("Mobile ID polling failed: java.net.SocketTimeoutException: Read timed out");
+        assertWarningIsLogged("Mobile-ID polling failed: java.net.SocketTimeoutException: Read timed out");
         assertEquals(MID_INTERNAL_ERROR, taraSession.getAuthenticationResult().getErrorCode());
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
@@ -262,7 +263,7 @@ public class AuthMidServiceTest extends BaseTest {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_response_user_cancelled.json", 200);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertWarningIsLogged("Mobile ID polling failed: User cancelled the operation.");
+        assertWarningIsLogged("Mobile-ID polling failed: User cancelled the operation.");
         assertEquals(MID_USER_CANCEL, taraSession.getAuthenticationResult().getErrorCode());
         assertMidApiRequests();
     }
@@ -273,7 +274,7 @@ public class AuthMidServiceTest extends BaseTest {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_response_not_mid_client.json", 200);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertWarningIsLogged("Mobile ID polling failed: User has no active certificates, and thus is not Mobile-ID client");
+        assertWarningIsLogged("Mobile-ID polling failed: User has no active certificates, and thus is not Mobile-ID client");
         assertEquals(NOT_MID_CLIENT, taraSession.getAuthenticationResult().getErrorCode());
         assertMidApiRequests();
     }
@@ -284,7 +285,7 @@ public class AuthMidServiceTest extends BaseTest {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_response_timeout.json", 200);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertWarningIsLogged("Mobile ID polling failed: User didn't enter PIN code or communication error.");
+        assertWarningIsLogged("Mobile-ID polling failed: User didn't enter PIN code or communication error.");
         assertEquals(MID_TRANSACTION_EXPIRED, taraSession.getAuthenticationResult().getErrorCode());
         assertMidApiRequests();
     }
@@ -295,7 +296,7 @@ public class AuthMidServiceTest extends BaseTest {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_response_signature_hash_mismatch.json", 200);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertWarningIsLogged("Mobile ID polling failed: Mobile-ID configuration on user's SIM card differs from what is configured on service provider side. User needs to contact his/her mobile operator.");
+        assertWarningIsLogged("Mobile-ID polling failed: Mobile-ID configuration on user's SIM card differs from what is configured on service provider side. User needs to contact his/her mobile operator.");
         assertEquals(MID_HASH_MISMATCH, taraSession.getAuthenticationResult().getErrorCode());
         assertMidApiRequests();
     }
@@ -306,7 +307,7 @@ public class AuthMidServiceTest extends BaseTest {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_response_phone_absent.json", 200);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertWarningIsLogged("Mobile ID polling failed: Unable to reach phone or SIM card");
+        assertWarningIsLogged("Mobile-ID polling failed: Unable to reach phone or SIM card");
         assertEquals(MID_PHONE_ABSENT, taraSession.getAuthenticationResult().getErrorCode());
         assertMidApiRequests();
     }
