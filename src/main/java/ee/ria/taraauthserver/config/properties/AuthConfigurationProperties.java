@@ -141,6 +141,8 @@ public class AuthConfigurationProperties {
         private int readTimeoutMilliseconds = 30000;
 
         private int intervalBetweenSessionStatusQueriesInMilliseconds = 5000;
+
+        private int delayStatusPollingStartInMilliseconds = 500;
     }
 
     @Data

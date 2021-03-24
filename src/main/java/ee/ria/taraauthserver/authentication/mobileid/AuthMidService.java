@@ -35,6 +35,7 @@ import static ee.ria.taraauthserver.error.ErrorCode.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.util.Arrays.stream;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static java.util.regex.Pattern.compile;
 import static net.logstash.logback.argument.StructuredArguments.value;
@@ -99,7 +100,7 @@ public class AuthMidService {
                     MDC.setContextMap(contextMap);
                 }
                 pollAuthenticationResult(taraSession, authenticationHash, midAuthentication, telephoneNumber);
-            }, taskExecutor);
+            }, CompletableFuture.delayedExecutor(midAuthConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLISECONDS, taskExecutor));
             return authenticationHash;
         } catch (MidInternalErrorException | ProcessingException e) {
             throw new ServiceNotAvailableException(MID_INTERNAL_ERROR, String.format("Mobile-ID service is currently unavailable: %s", e.getMessage()), e);
