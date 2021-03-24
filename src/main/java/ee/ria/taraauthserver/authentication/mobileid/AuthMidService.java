@@ -282,7 +282,7 @@ public class AuthMidService {
                 .map(TaraSession.Client::getMetaData)
                 .map(TaraSession.MetaData::getOidcClient)
                 .map(TaraSession.OidcClient::getMidSettings)
-                .map(TaraSession.MidSettings::getRelyingPartyUuid)
+                .map(TaraSession.MidSettings::getRelyingPartyName)
                 .orElse(null);
     }
 }
