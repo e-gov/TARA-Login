@@ -4,8 +4,13 @@ import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.LoginAlert;
 import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.StaticAlert;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ignite.Ignite;
+import org.apache.ignite.binary.BinaryObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +40,11 @@ public class AlertsScheduler {
     private AlertsConfigurationProperties alertsConfigurationProperties;
 
     @Autowired
-    private Cache<String, List<Alert>> alertsCache;
+    private Ignite ignite;
+
+    @Autowired
+    @Qualifier("alertsCache")
+    private Cache<String, BinaryObject> alertsCache;
 
     @Autowired
     private RestTemplate alertsRestTemplate;
@@ -49,15 +58,20 @@ public class AlertsScheduler {
             List<Alert> alerts = new ArrayList<>();
             getStaticAlert().ifPresent(alerts::add);
             alerts.addAll(asList(response.getBody()));
-            alertsCache.put(ALERTS_CACHE_KEY, alerts);
+            BinaryObject binaryObject = ignite.binary().toBinary(new ApplicationAlerts(alerts));
+            alertsCache.put(ALERTS_CACHE_KEY, binaryObject);
         } catch (Exception e) {
             log.error("Failed to update alerts: ", e);
         }
     }
 
     public List<Alert> getActiveAlerts() {
-        List<Alert> alerts = alertsCache.get(ALERTS_CACHE_KEY);
-        return alerts == null ? emptyList() : alerts.stream()
+        BinaryObject binaryObject = alertsCache.get(ALERTS_CACHE_KEY);
+        if (binaryObject == null) {
+            return emptyList();
+        }
+        ApplicationAlerts applicationAlerts = binaryObject.deserialize();
+        return applicationAlerts.getAlerts().stream()
                 .filter(Alert::isActive)
                 .collect(toList());
     }
@@ -78,5 +92,11 @@ public class AlertsScheduler {
                 .build();
         alert.setLoginAlert(loginAlert);
         return Optional.of(alert);
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class ApplicationAlerts {
+        private List<Alert> alerts;
     }
 }

@@ -4,6 +4,7 @@ import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.Ale
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.Ignition;
+import org.apache.ignite.binary.BinaryObject;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.logger.slf4j.Slf4jLogger;
@@ -26,6 +27,9 @@ import static javax.cache.expiry.CreatedExpiryPolicy.factoryOf;
 import static org.apache.ignite.cache.CacheAtomicityMode.ATOMIC;
 import static org.apache.ignite.cache.CacheMode.PARTITIONED;
 
+/**
+ * @see <a href="https://ignite.apache.org/releases/latest/javadoc/org/apache/ignite/IgniteBinary.html">Dynamically change structure of the classes without having to restart the cluster.</a>
+ */
 @Slf4j
 @Configuration
 public class IgniteCacheConfiguration {
@@ -57,13 +61,14 @@ public class IgniteCacheConfiguration {
     }
 
     @Bean
-    public Cache<String, Session> sessionCache(Ignite igniteInstance, @Value("${spring.session.timeout}") Duration sessionTimeout) {
+    public Cache<String, BinaryObject> sessionCache(Ignite igniteInstance, @Value("${spring.session.timeout}") Duration sessionTimeout) {
         return igniteInstance.getOrCreateCache(new CacheConfiguration<String, Session>()
                 .setName(SESSION_CACHE_NAME)
                 .setCacheMode(PARTITIONED)
                 .setAtomicityMode(ATOMIC)
                 .setBackups(0)
-                .setExpiryPolicyFactory(factoryOf(new javax.cache.expiry.Duration(SECONDS, sessionTimeout.toSeconds()))));
+                .setExpiryPolicyFactory(factoryOf(new javax.cache.expiry.Duration(SECONDS, sessionTimeout.toSeconds()))))
+                .withKeepBinary();
     }
 
     @Bean
@@ -77,12 +82,13 @@ public class IgniteCacheConfiguration {
     }
 
     @Bean
-    public Cache<String, List<Alert>> alertsCache(Ignite igniteInstance, @Value("${tara.alerts.alerts_cache_duration_in_seconds:86400}") Integer alertsCacheTimeout) {
+    public Cache<String, BinaryObject> alertsCache(Ignite igniteInstance, @Value("${tara.alerts.alerts_cache_duration_in_seconds:86400}") Integer alertsCacheTimeout) {
         return igniteInstance.getOrCreateCache(new CacheConfiguration<String, List<Alert>>()
                 .setName(ALERTS_CACHE_NAME)
                 .setCacheMode(PARTITIONED)
                 .setAtomicityMode(ATOMIC)
                 .setExpiryPolicyFactory(factoryOf(new javax.cache.expiry.Duration(SECONDS, alertsCacheTimeout)))
-                .setBackups(0));
+                .setBackups(0))
+                .withKeepBinary();
     }
 }
