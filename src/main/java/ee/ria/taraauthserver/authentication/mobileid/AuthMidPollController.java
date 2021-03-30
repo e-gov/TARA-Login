@@ -29,7 +29,7 @@ public class AuthMidPollController {
 
         String midSessionId = ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getMidSessionId();
         log.info(append("tara.session.state", taraSession.getState()),
-                "Polling Mobile ID authentication process with MID session id {}",
+                "Polling Mobile-ID authentication process with MID session id {}",
                 value("tara.session.authentication_result.mid_session_id", midSessionId));
 
         if (taraSession.getState() == NATURAL_PERSON_AUTHENTICATION_COMPLETED) {
@@ -39,9 +39,9 @@ public class AuthMidPollController {
             if (errorCode.equals(ErrorCode.ERROR_GENERAL))
                 throw new IllegalStateException(errorCode.getMessage());
             else if (errorCode.equals(ErrorCode.MID_INTERNAL_ERROR))
-                throw new ServiceNotAvailableException(errorCode, "Sid poll failed", null);
+                throw new ServiceNotAvailableException(errorCode, "Mobile-ID poll failed", null);
             else
-                throw new BadRequestException(taraSession.getAuthenticationResult().getErrorCode(), "Sid poll failed");
+                throw new BadRequestException(taraSession.getAuthenticationResult().getErrorCode(), "Mobile-ID poll failed");
         } else
             return of("status", "PENDING");
     }

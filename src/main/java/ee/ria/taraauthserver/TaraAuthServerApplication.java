@@ -1,6 +1,6 @@
 package ee.ria.taraauthserver;
 
-import ee.ria.taraauthserver.config.ActiveConfigurationLogger;
+import ee.ria.taraauthserver.logging.ActiveConfigurationLogger;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;

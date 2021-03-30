@@ -16,6 +16,7 @@ import java.time.Duration;
 
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static net.logstash.logback.marker.Markers.append;
+import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 
 /**
  * @see ee.ria.taraauthserver.config.SessionConfiguration
@@ -23,7 +24,6 @@ import static net.logstash.logback.marker.Markers.append;
 @Slf4j
 @Component
 public class IgniteSessionRepository implements SessionRepository<Session> {
-    public static final String DEFAULT_SESSION_MAP_NAME = "spring:session:sessions";
 
     @Autowired
     private Cache<String, Session> sessionCache;
@@ -43,8 +43,9 @@ public class IgniteSessionRepository implements SessionRepository<Session> {
         IgniteSession igniteSession = (IgniteSession) session;
         if (igniteSession.isChanged()) {
             igniteSession.setChanged(false);
-            if (log.isDebugEnabled()) {
-                log.debug(append(TARA_SESSION, session.getAttribute(TARA_SESSION)), "Save session: {}", session.getId());
+            TaraSession taraSession = session.getAttribute(TARA_SESSION);
+            if (taraSession != null) {
+                log.info(append(TARA_SESSION, taraSession), "Saving session with state: {}", defaultIfNull(taraSession.getState(), "NOT_SET"));
             }
             sessionCache.put(session.getId(), session);
         }

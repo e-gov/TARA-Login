@@ -23,6 +23,8 @@ import java.util.Map;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_CONSENT_PROCESS;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static net.logstash.logback.argument.StructuredArguments.value;
+import static net.logstash.logback.marker.Markers.append;
 
 @Slf4j
 @Validated
@@ -72,18 +74,20 @@ public class AuthConsentController {
     }
 
     private boolean shouldEmailBeDisplayed(TaraSession taraSession) {
-        return ConsentUtils.emailIsRequested(taraSession) && taraSession.getAuthenticationResult().getEmail() != null;
+        return taraSession.isEmailScopeRequested() && taraSession.getAuthenticationResult().getEmail() != null;
     }
 
     private boolean shouldPhoneNumberBeDisplayed(TaraSession taraSession) {
-        return ConsentUtils.phoneNumberIsRequested(taraSession) && taraSession.getAuthenticationResult().getPhoneNumber() != null;
+        return taraSession.isPhoneNumberScopeRequested() && taraSession.getAuthenticationResult().getPhoneNumber() != null;
     }
 
     @NotNull
     private String acceptConsent(String consentChallenge, TaraSession taraSession) {
-        HttpEntity<ConsentUtils.AcceptConsentRequest> request = ConsentUtils.createRequestBody(taraSession);
         String url = authConfigurationProperties.getHydraService().getAcceptConsentUrl() + "?consent_challenge=" + consentChallenge;
-        ResponseEntity<Map> response = hydraService.exchange(url, HttpMethod.PUT, request, Map.class);
+        AcceptConsentRequest acceptConsentRequest = AcceptConsentRequest.buildWithTaraSession(taraSession);
+        log.info(append("tara.session.accept_consent_request", acceptConsentRequest).and(append("url.full", url)),
+                "OIDC accept consent request for challenge: {}", value("tara.session.consent_challenge", consentChallenge));
+        ResponseEntity<Map> response = hydraService.exchange(url, HttpMethod.PUT, new HttpEntity<>(acceptConsentRequest), Map.class);
         if (response.getStatusCode() == HttpStatus.OK && response.getBody().get(REDIRECT_URL) != null) {
             return "redirect:" + response.getBody().get(REDIRECT_URL).toString();
         } else {

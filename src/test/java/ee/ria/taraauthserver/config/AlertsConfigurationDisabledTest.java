@@ -10,7 +10,8 @@ import org.springframework.test.context.TestPropertySource;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @TestPropertySource(
-        locations = "classpath:application.yml")
+        locations = "classpath:application.yml",
+        properties = {"tara.alerts.enabled=false"})
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class AlertsConfigurationDisabledTest extends DisabledConfigurationTest {
     @Test
@@ -18,6 +19,6 @@ public class AlertsConfigurationDisabledTest extends DisabledConfigurationTest {
     public void whenHeartbeatEndpointDisabledThenBeansNotLoaded() {
         assertBeanNotInitiated(AlertsScheduler.class);
         assertBeanNotInitiated(AlertsConfigurationProperties.class);
-        assertBeanNotInitiated(AlertsConfig.class);
+        assertBeanNotInitiated(AlertsConfiguration.class);
     }
 }

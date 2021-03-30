@@ -13,12 +13,13 @@ import org.springframework.util.Assert;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponents;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 
 @Slf4j
 public class ThymeleafSupport {
@@ -64,11 +65,8 @@ public class ThymeleafSupport {
         return uriComponents.getPath() + "?" + uriComponents.getQuery();
     }
 
-    public List<String> getListOfCountries() {
-        if (eidasConfigurationProperties != null)
-            return eidasConfigurationProperties.getAvailableCountries();
-        else
-            return new ArrayList<>();
+    public Set<String> getListOfCountries() {
+        return eidasConfigurationProperties == null ? emptySet() : eidasConfigurationProperties.getAvailableCountries();
     }
 
     public String getBackUrl() {

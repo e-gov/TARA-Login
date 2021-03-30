@@ -151,7 +151,7 @@
             </div>
 
             <div th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).EIDAS)}"
-                 layout:include="~{fragments/logintabs :: content(tab_id = 'eu-citizen', title = 'title-long',
+                 layout:insert="~{fragments/logintabs :: content(tab_id = 'eu-citizen', title = 'title-long',
                  alerts = ${activeAlerts.?[isValidFor(T(ee.ria.taraauthserver.config.properties.AuthenticationType).EIDAS)]})}"
                  th:remove="tag"
                  aria-hidden="true" aria-labelledby="eu-citizen">

@@ -44,13 +44,12 @@ class AuthAcceptController {
             return new RedirectView("/auth/legalperson/init");
         }
         String url = authConfigurationProperties.getHydraService().getAcceptLoginUrl() + "?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge();
-        log.info("OIDC login accept request: {}", value("url.full", url));
+        log.info(append("url.full", url), "OIDC login accept request for challenge: {}", value("tara.session.login_request_info.challenge", taraSession.getLoginRequestInfo().getChallenge()));
         ResponseEntity<LoginAcceptResponseBody> response = hydraService.exchange(url, HttpMethod.PUT, createRequestBody(taraSession), LoginAcceptResponseBody.class);
 
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && response.getBody().getRedirectUrl() != null) {
             taraSession.setState(AUTHENTICATION_SUCCESS);
             taraSession.getLoginRequestInfo().setLoginChallengeExpired(true);
-            log.info(append(TARA_SESSION, taraSession), "Successful authentication");
             return new RedirectView(response.getBody().getRedirectUrl());
         } else {
             throw new IllegalStateException("Invalid OIDC server response. Redirect URL missing from response.");

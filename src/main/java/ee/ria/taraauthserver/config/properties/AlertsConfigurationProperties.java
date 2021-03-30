@@ -19,7 +19,7 @@ import java.util.List;
 @Data
 @Validated
 @ConfigurationProperties(prefix = "tara.alerts")
-@ConditionalOnProperty(value = "tara.alerts.host-url")
+@ConditionalOnProperty(value = "tara.alerts.enabled")
 public class AlertsConfigurationProperties {
 
     @NotNull

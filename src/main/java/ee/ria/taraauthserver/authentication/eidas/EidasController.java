@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -33,6 +32,7 @@ import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.WAITING_EIDAS_RESPONSE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static net.logstash.logback.argument.StructuredArguments.value;
 import static net.logstash.logback.marker.Markers.append;
 
 @Slf4j
@@ -44,24 +44,34 @@ public class EidasController {
     private EidasConfigurationProperties eidasConfigurationProperties;
 
     @Autowired
-    @Qualifier("eidasRestTemplate")
-    RestTemplate restTemplate;
+    private RestTemplate eidasRestTemplate;
 
     @Autowired
     private Cache<String, String> eidasRelayStateCache;
 
     @PostMapping(value = "/auth/eidas/init", produces = MediaType.TEXT_HTML_VALUE)
     public String EidasInit(@RequestParam("country") String country, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession, HttpServletResponse servletResponse) {
-
-        validateSession(taraSession);
         String relayState = UUID.randomUUID().toString();
+        log.info("Initiating EIDAS authentication session with relay state: {}", value("tara.session.eidas.relay_state", relayState));
+        validateSession(taraSession);
         eidasRelayStateCache.put(relayState, taraSession.getSessionId());
 
         if (!eidasConfigurationProperties.getAvailableCountries().contains(country))
             throw new BadRequestException(getAppropriateErrorCode(), "Requested country not supported.");
 
         try {
-            ResponseEntity<String> response = restTemplate.exchange(createRequestUrl(country, taraSession, relayState), HttpMethod.GET, null, String.class);
+            String requestUrl = createRequestUrl(country, taraSession, relayState);
+            log.info(append("http.request.method", HttpMethod.GET.name())
+                            .and(append("url.full", requestUrl))
+                            .and(append("tara.session.eidas.relay_state", relayState)),
+                    "EIDAS request");
+            ResponseEntity<String> response = eidasRestTemplate.exchange(requestUrl, HttpMethod.GET, null, String.class);
+            log.info(append("url.full", requestUrl)
+                            .and(append("http.request.method", HttpMethod.GET.name()))
+                            .and(append("http.response.status_code", response.getStatusCodeValue()))
+                            .and(append("http.response.body.content", response.getBody()))
+                            .and(append("tara.session.eidas.relay_state", relayState)),
+                    "EIDAS response");
             updateSession(country, taraSession, relayState);
             return getHtmlRedirectPageFromResponse(servletResponse, response);
         } catch (Exception e) {
@@ -110,7 +120,6 @@ public class EidasController {
     }
 
     public void validateSession(TaraSession taraSession) {
-        log.info(append("tara.session", taraSession), "Validating session");
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
         List<String> allowedScopes = getAllowedRequestedScopes(taraSession.getLoginRequestInfo());
         if (!(allowedScopes.contains("eidas") || allowedScopes.contains("eidasonly"))) {

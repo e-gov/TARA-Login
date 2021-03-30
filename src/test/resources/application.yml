@@ -25,6 +25,7 @@ management:
 
 ignite:
   ignite-instance-name: tara-ignite
+  metrics-log-frequency: 300000
   discovery-spi:
     ip-finder:
       addresses:
@@ -50,6 +51,10 @@ tara:
     max-connections-total: 3
 
   default-locale: et
+
+  alerts:
+    enabled: true
+    host-url: https://localhost:9877/alerts
 
   auth-methods:
     id-card:
@@ -104,7 +109,7 @@ tara:
     eidas:
       enabled: true
       client-url: https://localhost:9877
-      refresh-countries-interval-in-milliseconds: 1000
+      refresh-countries-interval-in-milliseconds: 300000
       request-timeout-in-seconds: 1
       read-timeout-in-seconds: 1
       relay-state-cache-duration-in-seconds: 30
