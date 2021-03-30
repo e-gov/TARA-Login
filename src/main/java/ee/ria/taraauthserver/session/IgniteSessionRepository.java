@@ -3,7 +3,11 @@ package ee.ria.taraauthserver.session;
 import lombok.Data;
 import lombok.experimental.Delegate;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ignite.Ignite;
+import org.apache.ignite.Ignition;
+import org.apache.ignite.binary.BinaryObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.session.MapSession;
 import org.springframework.session.Session;
@@ -26,7 +30,11 @@ import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 public class IgniteSessionRepository implements SessionRepository<Session> {
 
     @Autowired
-    private Cache<String, Session> sessionCache;
+    @Qualifier("sessionCache")
+    private Cache<String, BinaryObject> sessionCache;
+
+    @Autowired
+    private Ignite ignite;
 
     @Value("${spring.session.timeout}")
     private Duration sessionTimeout;
@@ -47,18 +55,24 @@ public class IgniteSessionRepository implements SessionRepository<Session> {
             if (taraSession != null) {
                 log.info(append(TARA_SESSION, taraSession), "Saving session with state: {}", defaultIfNull(taraSession.getState(), "NOT_SET"));
             }
-            sessionCache.put(session.getId(), session);
+            BinaryObject binaryObject = ignite.binary().toBinary(session);
+            sessionCache.put(session.getId(), binaryObject);
         }
     }
 
     @Override
     public Session findById(String id) {
-        Session session = sessionCache.get(id);
-        if (session != null && session.isExpired()) {
-            deleteById(id);
-            return null;
+        BinaryObject binaryObject = sessionCache.get(id);
+        if (binaryObject != null) {
+            Session session = binaryObject.deserialize();
+            if (session.isExpired()) {
+                deleteById(id);
+                return null;
+            } else {
+                return session;
+            }
         } else {
-            return session;
+            return null;
         }
     }
 

@@ -5,10 +5,12 @@ import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.LoginAlert;
 import ee.ria.taraauthserver.utils.ThymeleafSupport;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ignite.binary.BinaryObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import javax.cache.Cache;
 import java.util.List;
@@ -34,7 +36,8 @@ public class AlertsSchedulerTest extends BaseTest {
     private AlertsScheduler alertsScheduler;
 
     @Autowired
-    private Cache<String, List<Alert>> alertsCache;
+    @Qualifier("alertsCache")
+    private Cache<String, BinaryObject> alertsCache;
 
     @AfterEach
     public void afterEachTest() {
