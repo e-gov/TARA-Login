@@ -20,6 +20,7 @@ import org.springframework.session.SessionRepository;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URL;
+import java.util.Set;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
@@ -603,7 +604,7 @@ class AuthInitControllerTest extends BaseTest {
     @Test
     @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
     void authInit_redirectToAuthEidasInit_and_uppercaseCountryCodeIsIgnored() {
-        eidasConfigurationProperties.getAvailableCountries().add("CA");
+        eidasConfigurationProperties.setAvailableCountries(Set.of("CA"));
         RestAssured.responseSpecification = null;
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
@@ -630,7 +631,7 @@ class AuthInitControllerTest extends BaseTest {
     @Test
     @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
     void authInit_displayEidasAuthenticationPageWhenRequestedCountryIsInvalid() {
-        eidasConfigurationProperties.getAvailableCountries().add("CA");
+        eidasConfigurationProperties.setAvailableCountries(Set.of("CA"));
         RestAssured.responseSpecification = null;
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
