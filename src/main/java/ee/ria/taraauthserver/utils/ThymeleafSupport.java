@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.utils;
 
 import ee.ria.taraauthserver.alerts.AlertsScheduler;
+import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.Alert;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.session.SessionUtils;
@@ -12,13 +13,19 @@ import org.springframework.util.Assert;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponents;
 
-import java.util.*;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 
 @Slf4j
 public class ThymeleafSupport {
 
     @Autowired(required = false)
-    EidasConfigurationProperties eidasConfigurationProperties;
+    private EidasConfigurationProperties eidasConfigurationProperties;
 
     @Autowired(required = false)
     private AlertsScheduler alertsScheduler;
@@ -58,11 +65,8 @@ public class ThymeleafSupport {
         return uriComponents.getPath() + "?" + uriComponents.getQuery();
     }
 
-    public List<String> getListOfCountries() {
-        if (eidasConfigurationProperties != null)
-            return eidasConfigurationProperties.getAvailableCountries();
-        else
-            return new ArrayList<>();
+    public Set<String> getListOfCountries() {
+        return eidasConfigurationProperties == null ? emptySet() : eidasConfigurationProperties.getAvailableCountries();
     }
 
     public String getBackUrl() {
@@ -88,9 +92,7 @@ public class ThymeleafSupport {
         return clientSpecificAuthMethodList.contains(method);
     }
 
-    public String getAlertIfAvailable(AuthenticationType authenticationType) {
-        if (alertsScheduler != null)
-            return alertsScheduler.getFirstAlert(authenticationType);
-        else return null;
+    public List<Alert> getActiveAlerts() {
+        return alertsScheduler == null ? emptyList() : alertsScheduler.getActiveAlerts();
     }
 }

@@ -29,7 +29,6 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.lang.String.format;
 import static java.util.Map.of;
-import static net.logstash.logback.marker.Markers.append;
 import static org.springframework.util.Assert.isTrue;
 import static org.springframework.util.Assert.notNull;
 import static org.springframework.util.CollectionUtils.isEmpty;
@@ -97,9 +96,9 @@ public class LegalpersonController {
 
         Optional<TaraSession.LegalPerson> selectedLegalPerson = getLegalperson(legalPersonIdentifier, legalPersons);
         if (selectedLegalPerson.isPresent()) {
+            log.info("Legal person confirmed");
             taraSession.setSelectedLegalPerson(selectedLegalPerson.get());
             taraSession.setState(LEGAL_PERSON_AUTHENTICATION_COMPLETED);
-            log.info(append(TARA_SESSION, taraSession), "Legal person confirmed");
             return "forward:/auth/accept";
         } else {
             throw new BadRequestException(INVALID_LEGAL_PERSON, format("Attempted to select invalid legal person with id: '%s'", legalPersonIdentifier));

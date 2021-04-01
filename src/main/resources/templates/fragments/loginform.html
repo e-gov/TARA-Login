@@ -6,28 +6,7 @@
         <br>
     </noscript>
 
-    <th:block
-            th:if="${@thymeleafSupport.getAlertIfAvailable(T(ee.ria.taraauthserver.config.properties.AuthenticationType).ID_CARD)}"
-            th:remove="tag"
-            layout:insert="~{fragments/logintabs :: warning('id-card', ${@thymeleafSupport.getAlertIfAvailable(T(ee.ria.taraauthserver.config.properties.AuthenticationType).ID_CARD)})}"
-            aria-hidden="true" aria-labelledby="id-card">
-    </th:block>
-
-    <th:block
-            th:if="${@thymeleafSupport.getAlertIfAvailable(T(ee.ria.taraauthserver.config.properties.AuthenticationType).MOBILE_ID)}"
-            th:remove="tag"
-            layout:insert="~{fragments/logintabs :: warning('mobile-id', ${@thymeleafSupport.getAlertIfAvailable(T(ee.ria.taraauthserver.config.properties.AuthenticationType).MOBILE_ID)})}"
-            aria-hidden="true" aria-labelledby="mobile-id">
-    </th:block>
-
-    <th:block
-            th:if="${@thymeleafSupport.getAlertIfAvailable(T(ee.ria.taraauthserver.config.properties.AuthenticationType).SMART_ID)}"
-            th:remove="tag"
-            layout:insert="~{fragments/logintabs :: warning('smart-id', ${@thymeleafSupport.getAlertIfAvailable(T(ee.ria.taraauthserver.config.properties.AuthenticationType).SMART_ID)})}"
-            aria-hidden="true" aria-labelledby="smart-id">
-    </th:block>
-
-    <div class="c-tab-login">
+    <div class="c-tab-login" >
         <nav role="navigation" class="c-tab-login__header"
              th:aria-label="#{label.aria.authentication-method.navigation}">
             <ul class="c-tab-login__nav">
@@ -49,9 +28,9 @@
                 </th:block>
             </ul>
         </nav>
-        <main role="main" class="c-tab-login__main">
+        <main role="main" class="c-tab-login__main" th:with="activeAlerts=${@thymeleafSupport.getActiveAlerts()}">
             <div th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).ID_CARD)}"
-                 layout:insert="~{fragments/logintabs :: content('id-card')}" th:remove="tag"
+                 layout:insert="~{fragments/logintabs :: content('id-card', ${activeAlerts.?[isValidFor(T(ee.ria.taraauthserver.config.properties.AuthenticationType).ID_CARD)]})}" th:remove="tag"
                  aria-hidden="true" aria-labelledby="id-card">
                 <form role="form" th:action="@{/auth/accept}" method="post" id="idCardForm" class="c-form"
                       layout:fragment="login-form-content">
@@ -72,7 +51,7 @@
             </div>
 
             <div th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).MOBILE_ID)}"
-                 layout:insert="~{fragments/logintabs :: content('mobile-id')}" th:remove="tag"
+                 layout:insert="~{fragments/logintabs :: content('mobile-id', ${activeAlerts.?[isValidFor(T(ee.ria.taraauthserver.config.properties.AuthenticationType).MOBILE_ID)]})}" th:remove="tag"
                  aria-hidden="true" aria-labelledby="mobile-id">
                 <form role="form" th:action="@{/auth/mid/init}" method="post" id="mobileIdForm" class="c-form"
                       layout:fragment="login-form-content">
@@ -132,7 +111,7 @@
             </div>
 
             <div th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).SMART_ID)}"
-                 layout:insert="~{fragments/logintabs :: content('smart-id')}" th:remove="tag"
+                 layout:insert="~{fragments/logintabs :: content('smart-id', ${activeAlerts.?[isValidFor(T(ee.ria.taraauthserver.config.properties.AuthenticationType).SMART_ID)]})}" th:remove="tag"
                  aria-hidden="true" aria-labelledby="smart-id">
                 <form role="form" th:action="@{/auth/sid/init}" method="post" id="smartIdForm" class="c-form"
                       layout:fragment="login-form-content">
@@ -172,7 +151,8 @@
             </div>
 
             <div th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).EIDAS)}"
-                 layout:include="~{fragments/logintabs :: content(tab_id = 'eu-citizen', title = 'title-long')}"
+                 layout:insert="~{fragments/logintabs :: content(tab_id = 'eu-citizen', title = 'title-long',
+                 alerts = ${activeAlerts.?[isValidFor(T(ee.ria.taraauthserver.config.properties.AuthenticationType).EIDAS)]})}"
                  th:remove="tag"
                  aria-hidden="true" aria-labelledby="eu-citizen">
                 <form role="form" method="post" id="eidasForm" th:action="@{/auth/eidas/init}" class="c-form"

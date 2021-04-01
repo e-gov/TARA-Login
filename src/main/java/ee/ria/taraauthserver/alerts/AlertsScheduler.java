@@ -1,9 +1,16 @@
 package ee.ria.taraauthserver.alerts;
 
 import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.LoginAlert;
+import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.StaticAlert;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ignite.Ignite;
+import org.apache.ignite.binary.BinaryObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -12,15 +19,20 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import javax.cache.Cache;
-import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.Alert;
-import static java.util.List.of;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toList;
+import static net.logstash.logback.argument.StructuredArguments.value;
 
 @Slf4j
 @Component
-@ConditionalOnProperty(value = "tara.alerts.host-url")
+@ConditionalOnProperty(value = "tara.alerts.enabled")
 public class AlertsScheduler {
     public static final String ALERTS_CACHE_KEY = "alertsCache";
 
@@ -28,7 +40,11 @@ public class AlertsScheduler {
     private AlertsConfigurationProperties alertsConfigurationProperties;
 
     @Autowired
-    private Cache<String, List<Alert>> alertsCache;
+    private Ignite ignite;
+
+    @Autowired
+    @Qualifier("alertsCache")
+    private Cache<String, BinaryObject> alertsCache;
 
     @Autowired
     private RestTemplate alertsRestTemplate;
@@ -37,27 +53,50 @@ public class AlertsScheduler {
     public void updateAlertsTask() {
         try {
             String url = alertsConfigurationProperties.getHostUrl();
-            log.info("requesting alerts from: " + alertsConfigurationProperties.getHostUrl());
-            ResponseEntity<Alert[]> alerts = alertsRestTemplate.exchange(url, HttpMethod.GET, null, Alert[].class);
-            alertsCache.put(ALERTS_CACHE_KEY, of(alerts.getBody()));
+            log.info("Requesting alerts from: {}", value("url.full", url));
+            ResponseEntity<Alert[]> response = alertsRestTemplate.exchange(url, HttpMethod.GET, null, Alert[].class);
+            List<Alert> alerts = new ArrayList<>();
+            getStaticAlert().ifPresent(alerts::add);
+            alerts.addAll(asList(response.getBody()));
+            BinaryObject binaryObject = ignite.binary().toBinary(new ApplicationAlerts(alerts));
+            alertsCache.put(ALERTS_CACHE_KEY, binaryObject);
         } catch (Exception e) {
-            log.error("Failed to update alerts - " + e.getMessage(), e);
+            log.error("Failed to update alerts: ", e);
         }
     }
 
-    public String getFirstAlert(AuthenticationType authenticationType) {
-        List<Alert> alerts = alertsCache.get(ALERTS_CACHE_KEY);
-        return alerts == null ? null : alerts.stream()
-                .filter(alert -> authenticationTypeHasValidAlert(alert, authenticationType))
-                .findFirst()
-                .map(alert -> alert.getLoginPageNotificationSettings().getNotificationText())
-                .orElse(null);
+    public List<Alert> getActiveAlerts() {
+        BinaryObject binaryObject = alertsCache.get(ALERTS_CACHE_KEY);
+        if (binaryObject == null) {
+            return emptyList();
+        }
+        ApplicationAlerts applicationAlerts = binaryObject.deserialize();
+        return applicationAlerts.getAlerts().stream()
+                .filter(Alert::isActive)
+                .collect(toList());
     }
 
-    private boolean authenticationTypeHasValidAlert(Alert alert, AuthenticationType authenticationType) {
-        return alert.getLoginPageNotificationSettings().getAuthMethods().contains(authenticationType.getScope().getFormalName())
-                && alert.getLoginPageNotificationSettings().isNotifyClientsOnTaraLoginPage()
-                && alert.getStartTime().isBefore(LocalDate.now())
-                && alert.getEndTime().isAfter(LocalDate.now());
+    public Optional<Alert> getStaticAlert() {
+        StaticAlert staticAlert = alertsConfigurationProperties.getStaticAlert();
+        if (staticAlert == null) {
+            return Optional.empty();
+        }
+        LoginAlert loginAlert = LoginAlert.builder()
+                .enabled(true)
+                .authMethods(AuthenticationType.getFormalNames())
+                .messageTemplates(staticAlert.getMessageTemplates())
+                .build();
+        Alert alert = Alert.builder()
+                .startTime(OffsetDateTime.now())
+                .endTime(OffsetDateTime.now().plusYears(1))
+                .build();
+        alert.setLoginAlert(loginAlert);
+        return Optional.of(alert);
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class ApplicationAlerts {
+        private List<Alert> alerts;
     }
 }

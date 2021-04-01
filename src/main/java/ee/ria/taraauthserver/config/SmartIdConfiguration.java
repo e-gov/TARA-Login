@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.config;
 
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
+import ee.ria.taraauthserver.logging.ClientRequestLoggingFilter;
 import ee.sk.smartid.AuthenticationResponseValidator;
 import ee.sk.smartid.SmartIdClient;
 import lombok.extern.slf4j.Slf4j;
@@ -14,15 +15,11 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
 import javax.net.ssl.SSLContext;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.List;
 
@@ -53,6 +50,7 @@ public class SmartIdConfiguration {
         ClientConfig clientConfig = new ClientConfig();
         clientConfig.property(ClientProperties.CONNECT_TIMEOUT, smartIdConfigurationProperties.getConnectionTimeoutMilliseconds());
         clientConfig.property(ClientProperties.READ_TIMEOUT, smartIdConfigurationProperties.getReadTimeoutMilliseconds());
+        clientConfig.register(new ClientRequestLoggingFilter("Smart-ID"));
         return clientConfig;
     }
 

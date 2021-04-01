@@ -134,6 +134,7 @@ Table 1.3.3 - Integration with the [SK MID service](https://github.com/SK-EID/MI
 | `tara.auth-methods.mobile-id.read-timeout-milliseconds` | No | Read timeout of the MID authentication initiation request. Default `5000` |
 | `tara.auth-methods.mobile-id.long-polling-timeout-seconds` | No | Long polling timeout period used for MID session status requests. Default `30` |
 | `tara.auth-methods.mobile-id.interval-between-session-status-queries-in-milliseconds` | No | Interval between Mobile-ID status polling queries (from UI to tara-login-service). Default `5000` |
+| `tara.auth-methods.mobile-id.delay-status-polling-start-in-milliseconds` | No | Delay before long polling. Default `500` |
 
 <a name="sid_conf"></a>
 ### 1.4 Smart-ID auth method
@@ -165,6 +166,7 @@ Table 1.4.3 - Integration with the [SK SID service](https://github.com/SK-EID/sm
 | `tara.auth-methods.smart-id.hash-type` | No | Type of authentication hash. Possible values `SHA256, SHA384, SHA512` Default `SHA512` |
 | `tara.auth-methods.smart-id.connection-timeout-milliseconds` | No | Connection timeout of the SID session status requests. Default `5000` |
 | `tara.auth-methods.smart-id.read-timeout-milliseconds` | No | Long polling timeout period used for SID session status requests. Default `30000` |
+| `tara.auth-methods.smart-id.delay-status-polling-start-in-milliseconds` | No | Delay before long polling. Default `500` |
 
 <a name="esteid_conf"></a>
 ### 1.5 ID-card auth method
@@ -232,7 +234,7 @@ tara:
           nonce-disabled: true
           connect-timeout-in-milliseconds: 500
 
-        - issuer-cn: TEST of ESTEID-SK2018
+        - issuer-cn: TEST of ESTEID2018
           url: http://aia.demo.sk.ee/esteid2018
 ````
 
@@ -470,14 +472,33 @@ Ignite is used for storing user’s session information.
 
 <a name="alerts_conf"></a>
 ## 1.12 Alerts config
+
+Table 1.12.1 - Alerts service configuration parameters 
+
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
+| `tara.alerts.enabled` | No | Enables alerts update service. Default value `false` |
 | `tara.alerts.host-url` | Yes | Request url used when refreshing alerts list. Example value `http://alerts-mock:8080/alerts` |
 | `tara.alerts.connection-timeout-milliseconds` | No | Connection timeout in milliseconds. Default value `3000`|
 | `tara.alerts.read-timeout-milliseconds` | No | Read timeout in milliseconds. Default value `3000`|
 | `tara.alerts.refresh-alerts-interval-in-milliseconds` | No | How often alerts are requested from the configured alerts url. Default. `600000` |
-| `tara.alerts.alerts-cache-duration-in-seconds` | No | How long alerts are kept in cache. Default. `3600` |
+| `tara.alerts.alerts-cache-duration-in-seconds` | No | How long alerts request results are kept in cache, in case next refresh fails. Default. `86400` |
 
+Table 1.12.2 - Static alert configuration parameters
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.alerts.static-alert.message-templates[x].message` | No | Static alert message.|
+| `tara.alerts.static-alert.message-templates[x].locale` | No | Static alert message locale. Example value: `et` |
+
+Where x denotes index. Example:
+
+````
+tara.alerts.static-alert.message-templates[0].message=Eestikeelne hoiatusteade
+tara.alerts.static-alert.message-templates[0].locale=en
+tara.alerts.static-alert.message-templates[1].message=English alert message
+tara.alerts.static-alert.message-templates[1].locale=en
+````
 
 ## APPENDIX
 

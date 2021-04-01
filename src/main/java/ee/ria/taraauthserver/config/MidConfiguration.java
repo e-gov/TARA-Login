@@ -1,9 +1,9 @@
 package ee.ria.taraauthserver.config;
 
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.MidAuthConfigurationProperties;
+import ee.ria.taraauthserver.logging.ClientRequestLoggingFilter;
 import ee.sk.mid.MidAuthenticationResponseValidator;
 import ee.sk.mid.MidClient;
-import ee.sk.mid.rest.MidLoggingFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
@@ -54,7 +54,7 @@ public class MidConfiguration {
         ClientConfig clientConfig = new ClientConfig();
         clientConfig.property(ClientProperties.CONNECT_TIMEOUT, properties.getConnectionTimeoutMilliseconds());
         clientConfig.property(ClientProperties.READ_TIMEOUT, properties.getReadTimeoutMilliseconds());
-        clientConfig.register(new MidLoggingFilter());
+        clientConfig.register(new ClientRequestLoggingFilter("Mobile-ID"));
         return clientConfig;
     }
 }

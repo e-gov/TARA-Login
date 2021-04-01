@@ -39,9 +39,9 @@
             <level>${log.level.tara-login-service}</level>
         </filter>
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-            <jsonFactoryDecorator class="ee.ria.taraauthserver.session.logging.LogbackJsonFactoryDecorator"/>
+            <jsonFactoryDecorator class="ee.ria.taraauthserver.logging.LogbackJsonFactoryDecorator"/>
             <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
-                <valueMasker class="ee.ria.taraauthserver.session.logging.LogbackFieldValueMasker"/>
+                <valueMasker class="ee.ria.taraauthserver.logging.LogbackFieldValueMasker"/>
             </jsonGeneratorDecorator>
             <providers>
                 <timestamp>

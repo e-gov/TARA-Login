@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.error;
 
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.error.exceptions.TaraException;
+import ee.ria.taraauthserver.utils.RequestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.MDC;
@@ -19,6 +20,7 @@ import org.springframework.web.context.request.WebRequest;
 
 import java.util.*;
 
+import static ee.ria.taraauthserver.security.RequestCorrelationFilter.MDC_ATTRIBUTE_TRACE_ID;
 import static java.lang.String.format;
 import static java.lang.String.join;
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
@@ -31,6 +33,8 @@ import static org.springframework.web.context.request.RequestAttributes.SCOPE_RE
 public class ErrorAttributes extends DefaultErrorAttributes {
     public static final String ERROR_ATTR_MESSAGE = "message";
     public static final String ERROR_ATTR_LOCALE = "locale";
+    public static final String ERROR_ATTR_LOGIN_CHALLENGE = "login_challenge";
+    public static final String ERROR_ATTR_INCIDENT_NR = "incident_nr";
     private final MessageSource messageSource;
     private final Locale defaultLocale;
 
@@ -44,7 +48,6 @@ public class ErrorAttributes extends DefaultErrorAttributes {
         Map<String, Object> attr = super.getErrorAttributes(webRequest, options.including(MESSAGE, BINDING_ERRORS));
 
         HttpStatus status = HttpStatus.valueOf((int) attr.get("status"));
-
         if (status.is5xxServerError()) {
             handle5xxError(webRequest, attr);
         } else if (status.is4xxClientError()) {
@@ -52,10 +55,11 @@ public class ErrorAttributes extends DefaultErrorAttributes {
         }
 
         Locale locale = defaultIfNull((Locale) webRequest.getAttribute(ERROR_ATTR_LOCALE, SCOPE_REQUEST), defaultLocale);
+        RequestUtils.setLocale(locale.getLanguage());
         attr.put(ERROR_ATTR_LOCALE, locale);
+        attr.put(ERROR_ATTR_LOGIN_CHALLENGE, webRequest.getAttribute(ERROR_ATTR_LOGIN_CHALLENGE, SCOPE_REQUEST));
+        attr.put(ERROR_ATTR_INCIDENT_NR, MDC.get(MDC_ATTRIBUTE_TRACE_ID));
         attr.remove("errors");
-        attr.put("incident_nr", MDC.get("trace.id"));
-
         return attr;
     }
 

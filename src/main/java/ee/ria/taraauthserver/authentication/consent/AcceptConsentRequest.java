@@ -5,11 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.session.TaraSession;
+import lombok.Builder;
 import lombok.Data;
-import lombok.experimental.UtilityClass;
-import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
-import org.springframework.http.HttpEntity;
 import org.springframework.util.Assert;
 
 import java.net.URL;
@@ -21,14 +18,18 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.util.List.of;
-import static net.logstash.logback.argument.StructuredArguments.value;
 
-@Slf4j
-@UtilityClass
-public class ConsentUtils {
+@Data
+public class AcceptConsentRequest {
+    @JsonProperty("remember")
+    private Boolean remember = false;
+    @JsonProperty("session")
+    private AcceptConsentRequest.LoginSession session;
+    @JsonProperty("grant_scope")
+    private List<String> grantScope;
 
-    @NotNull
-    public HttpEntity<AcceptConsentRequest> createRequestBody(TaraSession taraSession) {
+    @Builder
+    public static AcceptConsentRequest buildWithTaraSession(TaraSession taraSession) {
         AcceptConsentRequest acceptConsentRequest = new AcceptConsentRequest();
         AcceptConsentRequest.LoginSession loginSession = new AcceptConsentRequest.LoginSession();
         AcceptConsentRequest.IdToken idToken = new AcceptConsentRequest.IdToken();
@@ -71,13 +72,19 @@ public class ConsentUtils {
                 .filter(allowedScopes::contains)
                 .collect(Collectors.toList());
         scope.add("openid");
-
         acceptConsentRequest.setGrantScope(scope);
-        log.info("accepting consent from: {}", value("tara.session.accept_consent_request", acceptConsentRequest));
-        return new HttpEntity<>(acceptConsentRequest);
+        return acceptConsentRequest;
     }
 
-    private String getStateParameterValue(TaraSession taraSession) {
+    private static boolean emailIsRequested(TaraSession taraSession) {
+        return taraSession.getLoginRequestInfo().getRequestedScopes().contains(TaraScope.EMAIL.getFormalName());
+    }
+
+    private static boolean phoneNumberIsRequested(TaraSession taraSession) {
+        return taraSession.getLoginRequestInfo().getRequestedScopes().contains(TaraScope.PHONE.getFormalName());
+    }
+
+    private static String getStateParameterValue(TaraSession taraSession) {
         URL oidcAuthRequestUrl = (taraSession).getLoginRequestInfo().getUrl();
         Assert.notNull(oidcAuthRequestUrl, "OIDC authentication URL cannot be null!");
         String state = getQueryMap(oidcAuthRequestUrl.getQuery()).get("state");
@@ -85,7 +92,7 @@ public class ConsentUtils {
         return URLDecoder.decode(state, StandardCharsets.UTF_8);
     }
 
-    public static Map<String, String> getQueryMap(String query) {
+    private static Map<String, String> getQueryMap(String query) {
         String[] params = query.split("&");
         Map<String, String> map = new HashMap<>();
 
@@ -97,70 +104,51 @@ public class ConsentUtils {
         return map;
     }
 
-    public boolean emailIsRequested(TaraSession taraSession) {
-        return taraSession.getLoginRequestInfo().getRequestedScopes().contains(TaraScope.EMAIL.getFormalName());
-    }
-
-    public boolean phoneNumberIsRequested(TaraSession taraSession) {
-        return taraSession.getLoginRequestInfo().getRequestedScopes().contains(TaraScope.PHONE.getFormalName());
+    @Data
+    public static class LoginSession {
+        @JsonProperty("id_token")
+        private AcceptConsentRequest.IdToken idToken;
     }
 
     @Data
-    public static class AcceptConsentRequest {
-        @JsonProperty("remember")
-        private Boolean remember = false;
-        @JsonProperty("session")
-        private LoginSession session;
-        @JsonProperty("grant_scope")
-        private List<String> grantScope;
-
-        @Data
-        public static class LoginSession {
-            @JsonProperty("id_token")
-            private IdToken idToken;
-        }
-
-        @Data
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        public static class IdToken {
-            @JsonProperty("profile_attributes")
-            private ProfileAttributes profileAttributes;
-            @JsonProperty("acr")
-            private String acr;
-            @JsonProperty("amr")
-            private List<String> amr;
-            @JsonProperty("state")
-            private String state;
-            @JsonProperty("email")
-            private String email;
-            @JsonProperty("email_verified")
-            private Boolean emailVerified;
-            @JsonProperty("phone_number")
-            private String phoneNr;
-            @JsonProperty("phone_number_verified")
-            private Boolean phoneNrVerified;
-        }
-
-        @Data
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        public static class ProfileAttributes {
-            @JsonProperty("family_name")
-            private String familyName;
-            @JsonProperty("given_name")
-            private String givenName;
-            @JsonProperty("date_of_birth")
-            private String dateOfBirth;
-            @JsonProperty("represents_legal_person")
-            private RepresentsLegalPerson representsLegalPerson;
-        }
-
-        @Data
-        public static class RepresentsLegalPerson {
-            @JsonProperty("name")
-            private String name;
-            @JsonProperty("registry_code")
-            private String registryCode;
-        }
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class IdToken {
+        @JsonProperty("profile_attributes")
+        private AcceptConsentRequest.ProfileAttributes profileAttributes;
+        @JsonProperty("acr")
+        private String acr;
+        @JsonProperty("amr")
+        private List<String> amr;
+        @JsonProperty("state")
+        private String state;
+        @JsonProperty("email")
+        private String email;
+        @JsonProperty("email_verified")
+        private Boolean emailVerified;
+        @JsonProperty("phone_number")
+        private String phoneNr;
+        @JsonProperty("phone_number_verified")
+        private Boolean phoneNrVerified;
     }
 
+    @Data
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class ProfileAttributes {
+        @JsonProperty("family_name")
+        private String familyName;
+        @JsonProperty("given_name")
+        private String givenName;
+        @JsonProperty("date_of_birth")
+        private String dateOfBirth;
+        @JsonProperty("represents_legal_person")
+        private AcceptConsentRequest.RepresentsLegalPerson representsLegalPerson;
+    }
+
+    @Data
+    public static class RepresentsLegalPerson {
+        @JsonProperty("name")
+        private String name;
+        @JsonProperty("registry_code")
+        private String registryCode;
+    }
 }

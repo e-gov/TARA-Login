@@ -8,6 +8,8 @@ import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.util.Assert;
 
@@ -21,6 +23,7 @@ import java.net.URL;
 import java.time.LocalDate;
 import java.util.*;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.stream;
 import static java.util.List.of;
 import static java.util.stream.Collectors.toList;
@@ -33,7 +36,6 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 @Data
 @RequiredArgsConstructor
 public class TaraSession implements Serializable {
-
     public static final String TARA_SESSION = "tara.session";
     private final String sessionId;
 
@@ -61,6 +63,14 @@ public class TaraSession implements Serializable {
                 .map(TaraSession.OidcClient::getNameTranslations)
                 .map(m -> m.get("et"))
                 .orElse(null);
+    }
+
+    public boolean isEmailScopeRequested() {
+        return getLoginRequestInfo().getRequestedScopes().contains(TaraScope.EMAIL.getFormalName());
+    }
+
+    public boolean isPhoneNumberScopeRequested() {
+        return getLoginRequestInfo().getRequestedScopes().contains(TaraScope.PHONE.getFormalName());
     }
 
     @Data
@@ -114,6 +124,15 @@ public class TaraSession implements Serializable {
         private OidcContext oidcContext = new OidcContext();
         @JsonProperty("request_url")
         private URL url;
+
+        public String getOidcState() {
+            return URLEncodedUtils.parse(url.getQuery(), UTF_8)
+                    .stream()
+                    .filter(p -> p.getName().equals("state"))
+                    .map(NameValuePair::getValue)
+                    .findFirst()
+                    .orElse("not set");
+        }
 
         public List<AuthenticationType> getAllowedAuthenticationMethodsList(AuthConfigurationProperties taraProperties) {
             if (requestedScopes.contains("eidasonly"))
@@ -259,7 +278,7 @@ public class TaraSession implements Serializable {
         @JsonProperty("smartid_settings")
         private SmartIdSettings smartIdSettings;
         @JsonProperty("mid_settings")
-        private SmartIdSettings midSettings;
+        private MidSettings midSettings;
     }
 
     @Data
@@ -268,8 +287,16 @@ public class TaraSession implements Serializable {
         private String relyingPartyUuid;
         @JsonProperty("relying_party_name")
         private String relyingPartyName;
-        @JsonProperty("should_use_additional_verifcation_code_check")
-        private Boolean ShouldUseAdditionalVerificationCodeCheck;
+        @JsonProperty("should_use_additional_verification_code_check")
+        private Boolean shouldUseAdditionalVerificationCodeCheck;
+    }
+
+    @Data
+    public static class MidSettings implements Serializable {
+        @JsonProperty("relying_party_UUID")
+        private String relyingPartyUuid;
+        @JsonProperty("relying_party_name")
+        private String relyingPartyName;
     }
 
     @Data
@@ -293,12 +320,42 @@ public class TaraSession implements Serializable {
         OidcClient oidcClient = getLoginRequestInfo().getClient().getMetaData().getOidcClient();
         String translatedShortName = oidcClient.getShortNameTranslations().get("et");
 
-        if (oidcClient.getNameTranslations() != null) {
-            Map<String, String> serviceNameTranslations = oidcClient.getNameTranslations();
-            Locale locale = LocaleContextHolder.getLocale();
-            if (serviceNameTranslations.containsKey(locale.getLanguage()))
-                translatedShortName = serviceNameTranslations.get(locale.getLanguage());
-        }
+        Map<String, String> shortNameTranslations = oidcClient.getShortNameTranslations();
+        Locale locale = LocaleContextHolder.getLocale();
+        if (shortNameTranslations.containsKey(locale.getLanguage()))
+            translatedShortName = shortNameTranslations.get(locale.getLanguage());
+
         return translatedShortName;
+    }
+
+    public Boolean isAdditionalSmartIdVerificationCodeCheckNeeded() {
+        return Optional.of(this)
+                .map(TaraSession::getLoginRequestInfo)
+                .map(TaraSession.LoginRequestInfo::getClient)
+                .map(TaraSession.Client::getMetaData)
+                .map(TaraSession.MetaData::getOidcClient)
+                .map(TaraSession.OidcClient::getSmartIdSettings)
+                .map(TaraSession.SmartIdSettings::getShouldUseAdditionalVerificationCodeCheck)
+                .orElse(true);
+    }
+
+    public Optional<String> getSmartIdRelyingPartyName() {
+        return Optional.of(this)
+                .map(TaraSession::getLoginRequestInfo)
+                .map(TaraSession.LoginRequestInfo::getClient)
+                .map(TaraSession.Client::getMetaData)
+                .map(TaraSession.MetaData::getOidcClient)
+                .map(TaraSession.OidcClient::getSmartIdSettings)
+                .map(TaraSession.SmartIdSettings::getRelyingPartyName);
+    }
+
+    public Optional<String> getSmartIdRelyingPartyUuid() {
+        return Optional.of(this)
+                .map(TaraSession::getLoginRequestInfo)
+                .map(TaraSession.LoginRequestInfo::getClient)
+                .map(TaraSession.Client::getMetaData)
+                .map(TaraSession.MetaData::getOidcClient)
+                .map(TaraSession.OidcClient::getSmartIdSettings)
+                .map(TaraSession.SmartIdSettings::getRelyingPartyUuid);
     }
 }

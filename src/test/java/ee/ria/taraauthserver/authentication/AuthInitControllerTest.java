@@ -10,10 +10,8 @@ import ee.ria.taraauthserver.session.TaraSession;
 import io.restassured.RestAssured;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -22,19 +20,14 @@ import org.springframework.session.SessionRepository;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URL;
-import java.util.UUID;
+import java.util.Set;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static ee.ria.taraauthserver.authentication.eidas.EidasControllerTest.createEidasCountryStub;
-import static ee.ria.taraauthserver.authentication.eidas.EidasControllerTest.createEidasLoginStub;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
-import static org.awaitility.Awaitility.await;
-import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Slf4j
 class AuthInitControllerTest extends BaseTest {
@@ -47,7 +40,7 @@ class AuthInitControllerTest extends BaseTest {
     private AuthConfigurationProperties authConfigurationProperties;
 
     @Autowired
-    EidasConfigurationProperties eidasConfigurationProperties;
+    private EidasConfigurationProperties eidasConfigurationProperties;
 
     @Test
     @Tag(value = "AUTH_INIT_ENDPOINT")
@@ -187,10 +180,13 @@ class AuthInitControllerTest extends BaseTest {
         assertEquals("test client et", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getNameTranslations().get("et"));
         assertEquals("testRelyingPartyName", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getRelyingPartyName());
         assertEquals("testRelyingPartyId123", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getRelyingPartyUuid());
-        assertEquals(true, taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getShouldUseAdditionalVerificationCodeCheck());
+        assertEquals(false, taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getShouldUseAdditionalVerificationCodeCheck());
 
-        assertInfoIsLogged("OIDC login request: https://localhost:9877/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE);
-        assertInfoIsLogged("OIDC login challenge 'abcdefg098AAdsCC' response status code: 200");
+        assertInfoIsLogged("New authentication session");
+        assertInfoIsLogged("OIDC login request for challenge: " + TEST_LOGIN_CHALLENGE);
+        assertInfoIsLogged("OIDC login response for challenge: abcdefg098AAdsCC, Status code: 200");
+        assertInfoIsLogged("Tara session state change: NOT_SET -> INIT_AUTH_PROCESS");
+        assertInfoIsLogged("Saving session with state: INIT_AUTH_PROCESS");
     }
 
     @Test
@@ -608,13 +604,8 @@ class AuthInitControllerTest extends BaseTest {
     @Test
     @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
     void authInit_redirectToAuthEidasInit_and_uppercaseCountryCodeIsIgnored() {
-        createEidasCountryStub("mock_responses/eidas/eidas-response.json", 200);
-
+        eidasConfigurationProperties.setAvailableCountries(Set.of("CA"));
         RestAssured.responseSpecification = null;
-
-        await().atMost(FIVE_SECONDS)
-                .until(() -> eidasConfigurationProperties.getAvailableCountries().size(), Matchers.equalTo(1));
-
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -640,13 +631,8 @@ class AuthInitControllerTest extends BaseTest {
     @Test
     @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
     void authInit_displayEidasAuthenticationPageWhenRequestedCountryIsInvalid() {
-        createEidasCountryStub("mock_responses/eidas/eidas-response.json", 200);
-
+        eidasConfigurationProperties.setAvailableCountries(Set.of("CA"));
         RestAssured.responseSpecification = null;
-
-        await().atMost(FIVE_SECONDS)
-                .until(() -> eidasConfigurationProperties.getAvailableCountries().size(), Matchers.equalTo(1));
-
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)

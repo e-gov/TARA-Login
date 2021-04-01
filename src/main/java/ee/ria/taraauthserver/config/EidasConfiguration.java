@@ -4,9 +4,6 @@ import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.ignite.Ignite;
-import org.apache.ignite.configuration.CacheConfiguration;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -23,19 +20,14 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.client.RestTemplate;
 
-import javax.cache.Cache;
-import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.net.ssl.SSLContext;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Set;
 
-import static java.util.List.of;
 import static net.logstash.logback.argument.StructuredArguments.value;
-import static org.apache.ignite.cache.CacheAtomicityMode.ATOMIC;
-import static org.apache.ignite.cache.CacheMode.PARTITIONED;
 
 @Slf4j
 @Configuration
@@ -44,18 +36,18 @@ import static org.apache.ignite.cache.CacheMode.PARTITIONED;
 public class EidasConfiguration {
 
     @Autowired
-    EidasConfigurationProperties eidasConfigurationProperties;
+    private EidasConfigurationProperties eidasConfigurationProperties;
+
     @Autowired
     @Qualifier("restTemplate")
     private RestTemplate restTemplate;
 
     @Scheduled(fixedRateString = "${tara.auth-methods.eidas.refresh-countries-interval-in-milliseconds:300000}")
     public void scheduleFixedDelayTask() {
-        log.info("starting fixed delay task");
         try {
             refreshCountriesList();
         } catch (Exception e) {
-            log.error("Failed to update countries list - " + e.getMessage());
+            log.error("Failed to update countries list: {}", e.getMessage());
         }
     }
 
@@ -63,24 +55,9 @@ public class EidasConfiguration {
         String url = eidasConfigurationProperties.getClientUrl() + "/supportedCountries";
         log.info("Refreshing countries list from: {}", value("url.full", url));
         ResponseEntity<String[]> response = restTemplate.exchange(url, HttpMethod.GET, null, String[].class);
-        List<String> countries = of(response.getBody());
+        Set<String> countries = Set.of(response.getBody());
         eidasConfigurationProperties.setAvailableCountries(countries);
         log.info("Updated countries list to: {}", value("tara.conf.auth-methods.eidas.available_countries", countries));
-    }
-
-    @Bean
-    public Cache<String, String> eidasRelayStateCache(Ignite igniteInstance) {
-        return igniteInstance.getOrCreateCache(new CacheConfiguration<String, String>()
-                .setName("eidasRelayState")
-                .setCacheMode(PARTITIONED)
-                .setAtomicityMode(ATOMIC)
-                .setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(getDuration()))
-                .setBackups(0));
-    }
-
-    @NotNull
-    private javax.cache.expiry.Duration getDuration() {
-        return new javax.cache.expiry.Duration(TimeUnit.SECONDS, eidasConfigurationProperties.getRelayStateCacheDurationInSeconds());
     }
 
     @Bean(value = "eidasRestTemplate")
@@ -103,5 +80,4 @@ public class EidasConfiguration {
                 .requestFactory(() -> new HttpComponentsClientHttpRequestFactory(client))
                 .build();
     }
-
 }

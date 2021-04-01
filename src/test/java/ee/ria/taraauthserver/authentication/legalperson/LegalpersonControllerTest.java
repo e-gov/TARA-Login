@@ -2,20 +2,17 @@ package ee.ria.taraauthserver.authentication.legalperson;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import ee.ria.taraauthserver.BaseTest;
+import ee.ria.taraauthserver.session.MockSessionFilter;
 import ee.ria.taraauthserver.session.TaraSession;
 import io.restassured.RestAssured;
 import io.restassured.path.json.JsonPath;
-import io.restassured.path.xml.XmlPath;
 import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import java.time.format.DateTimeFormatter;
-
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static ee.ria.taraauthserver.session.MockSessionFilter.*;
 import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static io.restassured.RestAssured.given;
@@ -38,7 +35,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Tag(value = "LEGAL_PERSON_AUTH_START")
     void getAuthLegalPersonInit_noSession() {
         given()
-                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
+                .filter(MockSessionFilter.withoutTaraSession().sessionRepository(sessionRepository).build())
                 .when()
                 .get("/auth/legalperson/init")
                 .then()
@@ -57,7 +54,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Tag(value = "LEGAL_PERSON_AUTH_START")
     void getAuthLegalPersonInit_invalidSessionStatus() {
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(INIT_AUTH_PROCESS)
                         .build())
@@ -79,7 +76,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Tag(value = "LEGAL_PERSON_AUTH_START")
     void getAuthLegalPersonInit_invalidRequest_noLegalpersonScopeInOidcRequest() {
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(NATURAL_PERSON_AUTHENTICATION_COMPLETED)
                         .clientAllowedScopes(of("mid", "legalperson"))
@@ -102,7 +99,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Tag(value = "LEGAL_PERSON_AUTH_START")
     void getAuthLegalPersonInit_invalidRequest_scopeNotAllowed() {
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(NATURAL_PERSON_AUTHENTICATION_COMPLETED)
                         .clientAllowedScopes(of(""))
@@ -127,7 +124,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Tag(value = "UI_LEGALPERSON_AUTHENTICATION_VIEW")
     void getAuthLegalPersonInit_Ok() {
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(NATURAL_PERSON_AUTHENTICATION_COMPLETED)
                         .authenticationResult(buildMockCredential())
@@ -147,7 +144,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Tag(value = "LEGAL_PERSON_AUTH_START")
     void getAuthLegalPerson_noSession() {
         given()
-                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
+                .filter(MockSessionFilter.withoutTaraSession().sessionRepository(sessionRepository).build())
                 .when()
                 .get("/auth/legalperson")
                 .then()
@@ -166,7 +163,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Tag(value = "LEGAL_PERSON_AUTH_START")
     void getAuthLegalPerson_invalidSessionStatus() {
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(INIT_AUTH_PROCESS)
                         .build())
@@ -194,7 +191,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .withBodyFile("mock_responses/xroad/nok-soapfault.xml")));
 
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(LEGAL_PERSON_AUTHENTICATION_INIT)
                         .authenticationResult(buildMockCredential())
@@ -210,7 +207,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("path", equalTo("/auth/legalperson"));
 
-        assertErrorIsLogged("Server encountered an unexpected error: XRoad service returned a soap fault: faultcode = 'SOAP-ENV:Server', faultstring = 'Sisendparameetrid vigased: palun sisestage kas äriregistri kood, isikukood või isiku ees- ja perekonnanimi.'");
+        assertErrorIsLogged("Server encountered an unexpected error: X-Road service returned a soap fault: faultcode = 'SOAP-ENV:Server', faultstring = 'Sisendparameetrid vigased: palun sisestage kas äriregistri kood, isikukood või isiku ees- ja perekonnanimi.'");
     }
 
     @Test
@@ -224,7 +221,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .withBody("Not found")));
 
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(LEGAL_PERSON_AUTHENTICATION_INIT)
                         .authenticationResult(buildMockCredential())
@@ -254,7 +251,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .withBodyFile("mock_responses/xroad/ok-single-match.xml")));
 
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(LEGAL_PERSON_AUTHENTICATION_INIT)
                         .authenticationResult(buildMockCredential())
@@ -283,7 +280,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .withBodyFile("mock_responses/xroad/ok-no-match.xml")));
 
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(LEGAL_PERSON_AUTHENTICATION_INIT)
                         .authenticationResult(buildMockCredential())
@@ -313,7 +310,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .withBodyFile("mock_responses/xroad/ok-single-match.xml")));
 
         JsonPath response = given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(LEGAL_PERSON_AUTHENTICATION_INIT)
                         .authenticationResult(buildMockCredential())
@@ -341,7 +338,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .withBodyFile("mock_responses/xroad/ok-multiple-matches.xml")));
 
         JsonPath response = given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(LEGAL_PERSON_AUTHENTICATION_INIT)
                         .authenticationResult(buildMockCredential())
@@ -374,7 +371,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Tag("CSRF_PROTCTION")
     void postAuthLegalPersonConfirm_NoCsrf() {
         given()
-                .filter(withoutCsrf().sessionRepository(sessionRepository).build())
+                .filter(MockSessionFilter.withoutCsrf().sessionRepository(sessionRepository).build())
                 .param("legal_person_identifier", "1234")
                 .when()
                 .post("/auth/legalperson/confirm")
@@ -391,7 +388,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Tag(value = "LEGAL_PERSON_SELECTION_CONFIRMED")
     void postAuthLegalPersonConfirm_NoSession() {
         given()
-                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
+                .filter(MockSessionFilter.withoutTaraSession().sessionRepository(sessionRepository).build())
                 .param("legal_person_identifier", "1234")
                 .when()
                 .post("/auth/legalperson/confirm")
@@ -411,7 +408,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Tag(value = "LEGAL_PERSON_SELECTION_CONFIRMED")
     void postAuthLegalPersonConfirm_invalidSessionStatus() {
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(LEGAL_PERSON_AUTHENTICATION_INIT)
                         .build())
@@ -435,7 +432,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Tag(value = "LEGAL_PERSON_SELECTION_CONFIRMED")
     void postAuthLegalPersonConfirm_MissingRequiredParam() {
         given()
-                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
+                .filter(MockSessionFilter.withoutTaraSession().sessionRepository(sessionRepository).build())
                 .when()
                 .post("/auth/legalperson/confirm")
                 .then()
@@ -454,7 +451,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Tag(value = "LEGAL_PERSON_SELECTION_CONFIRMED")
     void postAuthLegalPersonConfirm_InvalidParameter_InvalidInput() {
         given()
-                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
+                .filter(MockSessionFilter.withoutTaraSession().sessionRepository(sessionRepository).build())
                 .param("legal_person_identifier", "<>?=`*,.")
                 .when()
                 .post("/auth/legalperson/confirm")
@@ -474,7 +471,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Tag(value = "LEGAL_PERSON_SELECTION_CONFIRMED")
     void postAuthLegalPersonConfirm_InvalidParameter_notListed() {
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(GET_LEGAL_PERSON_LIST)
                         .legalPersonList(of(new TaraSession.LegalPerson("Acme OÜ", "123456abcd")))
@@ -505,7 +502,7 @@ public class LegalpersonControllerTest extends BaseTest {
                         .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
 
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(GET_LEGAL_PERSON_LIST)
                         .authenticationResult(buildMockCredential())
