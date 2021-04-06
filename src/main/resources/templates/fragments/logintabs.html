@@ -68,7 +68,7 @@
                 </li>
             </ul>
         </div>
-        <br>
+        <br th:if="${not #lists.isEmpty(alerts)}">
         <div class="c-tab-login__content-wrap">
             <div class="c-tab-login__content-icon" aria-hidden="true">
                 <svg role="img" aria-label="" th:class="'icon icon-' + ${tab_id}">
