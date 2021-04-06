@@ -62,10 +62,13 @@
     <div class="c-tab-login__content" th:classappend="${static} ? is-active : ''" th:data-tab="${tab_id}">
         <div class="alert alert-warning" th:if="${not #lists.isEmpty(alerts)}">
             <ul>
-                <li th:utext="${alert.getAlertMessage(#locale.language)}" th:each="alert : ${alerts}"></li>
+                <li th:each="alert : ${alerts}">
+                    <strong th:if="${alert.isLoadedFromConf()}" th:utext="${alert.getAlertMessage(#locale.language)}"></strong>
+                    <strong th:unless="${alert.isLoadedFromConf()}" th:text="${alert.getAlertMessage(#locale.language)}"></strong>
+                </li>
             </ul>
         </div>
-        <br>
+        <br th:if="${not #lists.isEmpty(alerts)}">
         <div class="c-tab-login__content-wrap">
             <div class="c-tab-login__content-icon" aria-hidden="true">
                 <svg role="img" aria-label="" th:class="'icon icon-' + ${tab_id}">

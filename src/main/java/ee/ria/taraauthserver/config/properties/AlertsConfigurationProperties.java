@@ -51,6 +51,8 @@ public class AlertsConfigurationProperties {
         private LoginAlert loginAlert;
         @JsonIgnore
         private String defaultMessage;
+        @JsonIgnore
+        private boolean loadedFromConf;
 
         public void setLoginAlert(LoginAlert loginAlert) {
             this.loginAlert = loginAlert;

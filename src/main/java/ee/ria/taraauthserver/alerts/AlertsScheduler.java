@@ -91,6 +91,7 @@ public class AlertsScheduler {
                 .endTime(OffsetDateTime.now().plusYears(1))
                 .build();
         alert.setLoginAlert(loginAlert);
+        alert.setLoadedFromConf(true);
         return Optional.of(alert);
     }
 
