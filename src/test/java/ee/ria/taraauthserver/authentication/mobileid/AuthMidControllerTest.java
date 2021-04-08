@@ -242,7 +242,7 @@ class AuthMidControllerTest extends BaseTest {
         given()
                 .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
                 .formParam("idCode", "60001019906")
-                .formParam("telephoneNumber", "+12345")
+                .formParam("telephoneNumber", "45")
                 .when()
                 .post("/auth/mid/init")
                 .then()
