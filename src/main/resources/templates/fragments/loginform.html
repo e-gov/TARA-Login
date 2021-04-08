@@ -8,25 +8,25 @@
 
     <div th:with="activeAlerts=${@thymeleafSupport.getActiveAlerts()}">
         <th:block
-                th:if="${not #lists.isEmpty(activeAlerts.?[isValidFor(T(ee.ria.taraauthserver.config.properties.AuthenticationType).ID_CARD)])}"
+                th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).ID_CARD)}"
                 th:remove="tag"
                 layout:insert="~{fragments/logintabs :: warning('id-card', ${activeAlerts.?[isValidFor(T(ee.ria.taraauthserver.config.properties.AuthenticationType).ID_CARD)]})}"
                 aria-hidden="true" aria-labelledby="id-card">
         </th:block>
         <th:block
-                th:if="${not #lists.isEmpty(activeAlerts.?[isValidFor(T(ee.ria.taraauthserver.config.properties.AuthenticationType).MOBILE_ID)])}"
+                th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).MOBILE_ID)}"
                 th:remove="tag"
                 layout:insert="~{fragments/logintabs :: warning('mobile-id', ${activeAlerts.?[isValidFor(T(ee.ria.taraauthserver.config.properties.AuthenticationType).MOBILE_ID)]})}"
                 aria-hidden="true" aria-labelledby="mobile-id">
         </th:block>
         <th:block
-                th:if="${not #lists.isEmpty(activeAlerts.?[isValidFor(T(ee.ria.taraauthserver.config.properties.AuthenticationType).SMART_ID)])}"
+                th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).SMART_ID)}"
                 th:remove="tag"
                 layout:insert="~{fragments/logintabs :: warning('smart-id', ${activeAlerts.?[isValidFor(T(ee.ria.taraauthserver.config.properties.AuthenticationType).SMART_ID)]})}"
                 aria-hidden="true" aria-labelledby="smart-id">
         </th:block>
         <th:block
-                th:if="${not #lists.isEmpty(activeAlerts.?[isValidFor(T(ee.ria.taraauthserver.config.properties.AuthenticationType).EIDAS)])}"
+                th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).EIDAS)}"
                 th:remove="tag"
                 layout:insert="~{fragments/logintabs :: warning('eu-citizen', ${activeAlerts.?[isValidFor(T(ee.ria.taraauthserver.config.properties.AuthenticationType).EIDAS)]})}"
                 aria-hidden="true" aria-labelledby="eu-citizen">

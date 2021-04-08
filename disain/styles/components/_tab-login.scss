@@ -150,6 +150,15 @@
       }
     }
   }
+  &__warning {
+      display: none;
+      &.is-active {
+        display: block;
+        @media (max-width: $breakpoint-mobile) {
+          display: none;
+        }
+      }
+    }
   &__content-wrap {
     display: flex;
     background-color: #fff;
