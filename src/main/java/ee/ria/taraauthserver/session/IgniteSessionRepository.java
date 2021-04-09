@@ -19,8 +19,7 @@ import javax.cache.Cache;
 import java.io.Serializable;
 import java.time.Duration;
 
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static net.logstash.logback.marker.Markers.append;
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
@@ -66,7 +65,8 @@ public class IgniteSessionRepository implements SessionRepository<Session> {
         TaraSession taraSession = session.getAttribute(TARA_SESSION);
         if (taraSession != null) {
             LogstashMarker marker = append(TARA_SESSION, taraSession);
-            if (AUTHENTICATION_SUCCESS == taraSession.getState() || AUTHENTICATION_FAILED == taraSession.getState()) {
+            if (AUTHENTICATION_SUCCESS == taraSession.getState() || AUTHENTICATION_FAILED == taraSession.getState() ||
+                    AUTHENTICATION_CANCELED == taraSession.getState()) {
                 statisticsLog.info(marker, "Authentication result: {}", taraSession.getState());
             }
             log.info(marker, "Saving session with state: {}", defaultIfNull(taraSession.getState(), "NOT_SET"));
