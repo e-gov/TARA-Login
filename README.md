@@ -478,8 +478,22 @@ Ignite is used for storing user’s session information.
 | `LOG_HOME` | No | Log files path. Default value `/var/log` |
 | `LOG_FILES_MAX_COUNT` | No | Rolling file appender max files history. Default value `31` |
 | `LOG_FILE_LEVEL` | No | Log level for file logging. Default value `INFO` |
-| `LOG_CONSOLE_PATTERN` | No | Log files path. Default value `%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z',GMT} [${springAppName}-${springAppInstanceId}] [%15.15t] %highlight(%-5level) %-40.40logger{39} %green(%marker) [%X{trace.id},%X{transaction.id}] -%X{remoteHost} -%msg%n}` |
+| `LOG_CONSOLE_PATTERN` | No | Log files path. Default value `%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z',GMT} [${springAppName}] [%15.15t] %highlight(%-5level) %-40.40logger{39} %green(%marker) [%X{trace.id},%X{transaction.id}] -%X{remoteHost} -%msg%n}` |
 | `LOG_CONSOLE_LEVEL` | No | Log files path. Default value `OFF` |
+
+Application logs:
+
+````
+${LOG_HOME}/TaraLoginService.%d{yyyy-MM-dd,GMT}.log
+````
+
+Authentication statistics logs:
+
+````
+${LOG_HOME}/TaraLoginServiceStatistics.%d{yyyy-MM-dd,GMT}.log
+````
+
+Statistic logs contain authentication end results with states AUTHENTICATION_SUCCESS, AUTHENTICATION_FAILED or AUTHENTICATION_CANCELED. 
 
 <a name="alerts_conf"></a>
 ## 1.12 Alerts config
