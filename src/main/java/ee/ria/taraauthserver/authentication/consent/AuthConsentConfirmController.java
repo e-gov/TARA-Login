@@ -30,6 +30,7 @@ import static net.logstash.logback.marker.Markers.append;
 @Validated
 @Controller
 public class AuthConsentConfirmController {
+    public static final String REDIRECT_TO = "redirect_to";
 
     @Autowired
     private AuthConfigurationProperties authConfigurationProperties;
@@ -76,10 +77,10 @@ public class AuthConsentConfirmController {
     private RedirectView getRedirectView(TaraSession taraSession, TaraAuthenticationState taraSessionState, String requestUrl, HttpEntity<?> requestEntity) {
         ResponseEntity<Map<String, String>> response = hydraService.exchange(requestUrl, HttpMethod.PUT, requestEntity, new ParameterizedTypeReference<>() {
         });
-        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && response.getBody().get("redirect_to") != null) {
+        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && response.getBody().get(REDIRECT_TO) != null) {
             taraSession.setState(taraSessionState);
             SessionUtils.invalidateSession();
-            return new RedirectView(response.getBody().get("redirect_to"));
+            return new RedirectView(response.getBody().get(REDIRECT_TO));
         } else {
             throw new IllegalStateException("Invalid OIDC server response. Redirect URL missing from response.");
         }
