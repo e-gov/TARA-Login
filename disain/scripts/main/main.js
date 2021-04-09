@@ -16,9 +16,9 @@ jQuery(function ($) {
         if ($('.c-tab-login__nav-link[data-tab="' + active + '"]').length !== 1)
             throw 3;
 
-        activateTab($('.c-tab-login__nav-link[data-tab="' + active + '"]'), $('.c-tab-login__content[data-tab="' + active + '"]'));
+        activateTab($('.c-tab-login__nav-link[data-tab="' + active + '"]'), $('.c-tab-login__content[data-tab="' + active + '"]'), $('.c-tab-login__warning[data-tab="' + active + '"]'));
     } catch (e) {
-        activateTab($('.c-tab-login__nav-link').first(), $('.c-tab-login__content').first());
+        activateTab($('.c-tab-login__nav-link').first(), $('.c-tab-login__content').first(), $('.c-tab-login__warning').first());
     }
 
 	// Tab nav
@@ -35,9 +35,9 @@ jQuery(function ($) {
 		$('.c-tab-login__content[data-tab="' + active + '"] .selectize-input').removeClass('is-invalid');
 
 		$('.c-tab-login__nav-item').removeClass('is-active');
-		deActivateTab($('.c-tab-login__nav-link'), $('.c-tab-login__content'));
+		deActivateTab($('.c-tab-login__nav-link'), $('.c-tab-login__content'), $('.c-tab-login__warning'));
 
-        activateTab($(this), $('.c-tab-login__content[data-tab="' + active + '"]'));
+        activateTab($(this), $('.c-tab-login__content[data-tab="' + active + '"]'), $('.c-tab-login__warning[data-tab="' + active + '"]'));
 		if (typeof(Storage) !== "undefined") {
             sessionStorage.setItem('active-tab', active);
         }
@@ -294,17 +294,21 @@ jQuery(function ($) {
         feedback.addClass('is-hidden');
     }
 
-    function activateTab(link, content) {
+    function activateTab(link, content, warning) {
 		link.parent().attr("aria-selected", true);
 		link.addClass('is-active');
         content.attr("aria-hidden", false);
         content.addClass('is-active');
+        warning.attr("aria-hidden", false);
+        warning.addClass('is-active');
     }
 
-    function deActivateTab(link, content) {
+    function deActivateTab(link, content, warning) {
         link.parent().attr("aria-selected", false);
         link.removeClass('is-active');
         content.attr("aria-hidden", true);
         content.removeClass('is-active');
+        warning.attr("aria-hidden", true);
+        warning.removeClass('is-active');
     }
 });
