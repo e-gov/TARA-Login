@@ -129,7 +129,7 @@ class AuthSidPollControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .body("error", equalTo("Bad Request"))
-                .body("message", equalTo("Kasutajal on mitu Smart-ID kontot ja ühe kontoga tühistati autentimisprotsess."))
+                .body("message", equalTo("Kasutaja katkestas sertifikaadi valiku."))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
 
         String sessionId = sessionFilter.getSession().getId();
