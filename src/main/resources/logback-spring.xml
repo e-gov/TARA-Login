@@ -61,7 +61,7 @@
                     <pattern>
                         {
                         "log.level": "%level",
-                        "log.logger": "%logger{40}",
+                        "log.logger": "%logger",
                         "process.pid": "#asLong{%property{PID}}",
                         "process.thread.name": "%thread",
                         "service.name": "${springAppName}",
@@ -125,7 +125,7 @@
                     <pattern>
                         {
                         "log.level": "%level",
-                        "log.logger": "%logger{40}",
+                        "log.logger": "%logger",
                         "process.pid": "#asLong{%property{PID}}",
                         "process.thread.name": "%thread",
                         "service.name": "${springAppName}",
