@@ -7,6 +7,18 @@
     </noscript>
 
     <div th:with="activeAlerts=${@thymeleafSupport.getActiveAlerts()}">
+        <div class="c-tab-login__static-warning">
+            <th:block th:remove="tag" aria-hidden="true">
+                <div class="alert alert-warning">
+                    <ul>
+                        <li th:each="alert : ${activeAlerts}">
+                            <strong th:if="${alert.isLoadedFromConf()}"
+                                    th:utext="${alert.getAlertMessage(#locale.language)}"></strong>
+                        </li>
+                    </ul>
+                </div>
+            </th:block>
+        </div>
         <th:block
                 th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).ID_CARD)}"
                 th:remove="tag"

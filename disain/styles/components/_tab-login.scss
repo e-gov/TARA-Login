@@ -158,7 +158,13 @@
           display: none;
         }
       }
-    }
+  }
+  &__static-warning {
+      display: none;
+        @media (max-width: $breakpoint-mobile) {
+          display: block;
+        }
+  }
   &__content-wrap {
     display: flex;
     background-color: #fff;
