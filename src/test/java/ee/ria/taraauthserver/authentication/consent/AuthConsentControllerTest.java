@@ -26,6 +26,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @Slf4j
 class AuthConsentControllerTest extends BaseTest {
@@ -202,8 +203,10 @@ class AuthConsentControllerTest extends BaseTest {
                 .statusCode(302)
                 .header("Location", "http://localhost:" + port + "/auth/some/test/url");
 
-        TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
-        assertEquals(TaraAuthenticationState.CONSENT_NOT_REQUIRED, taraSession.getState());
+        assertInfoIsLogged("Tara session state change: AUTHENTICATION_SUCCESS -> CONSENT_NOT_REQUIRED");
+        assertInfoIsLogged("Session is removed from cache: " + session.getId());
+        assertWarningIsLogged("Session has been invalidated: " + session.getId());
+        assertNull(sessionRepository.findById(session.getId()));
     }
 
     @SneakyThrows
