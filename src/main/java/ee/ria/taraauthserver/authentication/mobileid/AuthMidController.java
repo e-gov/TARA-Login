@@ -57,7 +57,7 @@ public class AuthMidController {
         @ValidNationalIdNumber(message = "{message.mid-rest.error.invalid-identity-code}")
         private String idCode;
         @NotNull(message = "{message.mid-rest.error.invalid-phone-number}")
-        @Pattern(regexp = "\\d{8,15}", message = "{message.mid-rest.error.invalid-phone-number}")
+        @Pattern(regexp = "\\d{3,15}", message = "{message.mid-rest.error.invalid-phone-number}")
         private String telephoneNumber;
     }
 }

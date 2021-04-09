@@ -25,8 +25,8 @@ public class AlertsConfiguration {
     public RestTemplate alertsRestTemplate(RestTemplateBuilder builder, SSLContext sslContext, AlertsConfigurationProperties alertsConfigurationProperties) {
         HttpClient client = HttpClients.custom()
                 .setSSLContext(sslContext)
-                .setMaxConnPerRoute(50)
-                .setMaxConnTotal(50)
+                .setMaxConnPerRoute(3)
+                .setMaxConnTotal(3)
                 .build();
 
         return builder

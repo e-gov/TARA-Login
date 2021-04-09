@@ -266,13 +266,13 @@ The following properties can be used to configure a fallback OCSP service:
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.auth-methods.id-card.fallback-ocsp[{index}].issuer-cn` | Yes | A comma separated list of certificate issuer CN's. Determines the issuer(s) this fallback configuration will be applied to. Note that the certificate by CN must be present in the truststore (tara.auth-methods.id-card.truststore-path) |
-| `tara.auth-methods.id-card.fallback-ocsp[{index}].url` | Y | HTTP URL of the OCSP service. |
-| `tara.auth-methods.id-card.fallback-ocsp[{index}].responder-certificate-cn` | N | Explicit OCSP response signing certificate CN. If not provided, OCSP reponse signer certificate is expected to be issued from the same chain as user-certificate. |
-| `tara.auth-methods.id-card.fallback-ocsp[{index}].nonce-disabled` | N | Boolean value, that determines whether the nonce extension usage is disabled. Defaults to `false` if not specified. |
-| `tara.auth-methods.id-card.fallback-ocsp[{index}].accepted-clock-skew-in-seconds` | N | Maximum accepted time difference in seconds between OCSP provider and TARA-Server. Defaults to `2`, if not specified. |
-| `tara.auth-methods.id-card.fallback-ocsp[{index}].response-lifetime-inseconds` | N | Maximum accepted age of an OCSP response in seconds. Defaults to `900` if not specified. |
-| `tara.auth-methods.id-card.fallback-ocsp[{index}].connect-timeout-in-milliseconds` | N | Connection timeout in milliseconds. Defaults to `3000`, if not specified. |
-| `tara.auth-methods.id-card.fallback-ocsp[{index}].read-timeout-in-milliseconds` | N | Connection read timeout in milliseconds. Defaults to `3000` if not specified. |
+| `tara.auth-methods.id-card.fallback-ocsp[{index}].url` | Yes | HTTP URL of the OCSP service. |
+| `tara.auth-methods.id-card.fallback-ocsp[{index}].responder-certificate-cn` | No | Explicit OCSP response signing certificate CN. If not provided, OCSP reponse signer certificate is expected to be issued from the same chain as user-certificate. Note that the certificate referenced by CN must be present in the truststore (tara.auth-methods.id-card.truststore-path) |
+| `tara.auth-methods.id-card.fallback-ocsp[{index}].nonce-disabled` | No | Boolean value, that determines whether the nonce extension usage is disabled. Defaults to `false` if not specified. |
+| `tara.auth-methods.id-card.fallback-ocsp[{index}].accepted-clock-skew-in-seconds` | No | Maximum accepted time difference in seconds between OCSP provider and TARA-Server. Defaults to `2`, if not specified. |
+| `tara.auth-methods.id-card.fallback-ocsp[{index}].response-lifetime-inseconds` | No | Maximum accepted age of an OCSP response in seconds. Defaults to `900` if not specified. |
+| `tara.auth-methods.id-card.fallback-ocsp[{index}].connect-timeout-in-milliseconds` | No | Connection timeout in milliseconds. Defaults to `3000`, if not specified. |
+| `tara.auth-methods.id-card.fallback-ocsp[{index}].read-timeout-in-milliseconds` | No | Connection read timeout in milliseconds. Defaults to `3000` if not specified. |
 
 Example: AIA OCSP by default using a static backup OCSP
 
@@ -287,19 +287,30 @@ tara:
       truststore-password: changeit
       ocsp:
         - issuer-cn: TEST of ESTEID-SK 2011
-          url: http://aia.sk.ee/esteid2011
-          nonce-disabled: true          
-          responder-certificate-cn: TEST_of_ESTEID-SK_2011.crt
+          url: http://aia.demo.sk.ee/esteid2011
+          nonce-disabled: true
+        - issuer-cn: ESTEID-SK 2011
+          url: http://aia.demo.sk.ee/esteid2011
+          nonce-disabled: true
+          responder-certificate-cn: TEST of KLASS3-SK 2010
 
         - issuer-cn: TEST of ESTEID-SK 2015        
-          url: https://localhost:9877/esteid2015
+          url: https://aia.demo.sk.ee/esteid2015
           nonce-disabled: true
           connect-timeout-in-milliseconds: 500
+        - issuer-cn: ESTEID-SK 2015
+          url: http://aia.demo.sk.ee/esteid2015
+          nonce-disabled: true
+          responder-certificate-cn: TEST of KLASS3-SK 2010
 
         - issuer-cn: TEST of ESTEID2018
           url: http://aia.demo.sk.ee/esteid2018
+        - issuer-cn: ESTEID2018
+          url: http://aia.demo.sk.ee/esteid2018
+          responder-certificate-cn: TEST of KLASS3-SK 2010
+          
       fallback-ocsp:
-        - issuer-cn: TEST of ESTEID-SK 2011, TEST of ESTEID-SK 2015, TEST of ESTEID2018
+        - issuer-cn: TEST of ESTEID-SK 2011, TEST of ESTEID-SK 2015, TEST of ESTEID2018, ESTEID-SK 2011, ESTEID-SK 2015, ESTEID2018
           url: http://ocsp.sk.ee/          
           responder-certificate-cn: SK OCSP RESPONDER 2011  
 ````
@@ -467,8 +478,22 @@ Ignite is used for storing user’s session information.
 | `LOG_HOME` | No | Log files path. Default value `/var/log` |
 | `LOG_FILES_MAX_COUNT` | No | Rolling file appender max files history. Default value `31` |
 | `LOG_FILE_LEVEL` | No | Log level for file logging. Default value `INFO` |
-| `LOG_CONSOLE_PATTERN` | No | Log files path. Default value `%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z',GMT} [${springAppName}-${springAppInstanceId}] [%15.15t] %highlight(%-5level) %-40.40logger{39} %green(%marker) [%X{trace.id},%X{transaction.id}] -%X{remoteHost} -%msg%n}` |
+| `LOG_CONSOLE_PATTERN` | No | Log files path. Default value `%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z',GMT} [${springAppName}] [%15.15t] %highlight(%-5level) %-40.40logger{39} %green(%marker) [%X{trace.id},%X{transaction.id}] -%X{remoteHost} -%msg%n}` |
 | `LOG_CONSOLE_LEVEL` | No | Log files path. Default value `OFF` |
+
+Application logs:
+
+````
+${LOG_HOME}/TaraLoginService.%d{yyyy-MM-dd,GMT}.log
+````
+
+Authentication statistics logs:
+
+````
+${LOG_HOME}/TaraLoginServiceStatistics.%d{yyyy-MM-dd,GMT}.log
+````
+
+Statistic logs contain authentication end results with states AUTHENTICATION_SUCCESS, AUTHENTICATION_FAILED or AUTHENTICATION_CANCELED. 
 
 <a name="alerts_conf"></a>
 ## 1.12 Alerts config
@@ -494,9 +519,9 @@ Table 1.12.2 - Static alert configuration parameters
 Where x denotes index. Example:
 
 ````
-tara.alerts.static-alert.message-templates[0].message=Eestikeelne hoiatusteade
+tara.alerts.static-alert.message-templates[0].message=Tegemist on testkeskkonnaga ja autentimiseks vajalik info on <a href="https://e-gov.github.io/TARA-Doku/Testimine#testimine-testnumbrite-ja-id-kaardiga">TARA dokumentatsioonis</a>!
 tara.alerts.static-alert.message-templates[0].locale=en
-tara.alerts.static-alert.message-templates[1].message=English alert message
+tara.alerts.static-alert.message-templates[1].message=This is a test environment and necessary credentials for testing is available in <a href="https://e-gov.github.io/TARA-Doku/Testimine#testimine-testnumbrite-ja-id-kaardiga">TARA documentation</a>!
 tara.alerts.static-alert.message-templates[1].locale=en
 ````
 

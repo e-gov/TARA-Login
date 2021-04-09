@@ -1,7 +1,6 @@
 spring:
   application:
     name: tara-login-service
-    instance-id: ${APP_INSTANCE_ID:${random.int(100)}}
   session:
     timeout: 300s
     servlet:
