@@ -21,7 +21,7 @@ import ee.sk.smartid.rest.dao.SemanticsIdentifier;
 import ee.sk.smartid.rest.dao.SessionStatus;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
@@ -38,7 +38,10 @@ import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotAllowedException;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.ProcessingException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
@@ -46,6 +49,7 @@ import static ee.ria.taraauthserver.error.ErrorCode.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static net.logstash.logback.argument.StructuredArguments.value;
 import static net.logstash.logback.marker.Markers.append;
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 
@@ -89,14 +93,19 @@ public class SmartIdController {
 
     @PostMapping(value = "/auth/sid/init", produces = MediaType.TEXT_HTML_VALUE, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public String authSidInit(@Validated @ModelAttribute(value = "credential") SidCredential sidCredential, Model model, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
-
+        log.info("Initiating Smart-ID authentication session");
         validateSession(taraSession);
 
         AuthenticationHash authenticationHash = getAuthenticationHash();
         AuthenticationRequestBuilder requestBuilder = sidClient.createAuthentication();
         String sidSessionId = initiateSidAuthenticationSession(sidCredential, taraSession, authenticationHash, requestBuilder);
-
-        CompletableFuture.runAsync(() -> pollSidSessionStatus(sidSessionId, taraSession, requestBuilder),
+        Map<String, String> contextMap = MDC.getCopyOfContextMap();
+        CompletableFuture.runAsync(() -> {
+                    if (contextMap != null) {
+                        MDC.setContextMap(contextMap);
+                    }
+                    pollSidSessionStatus(sidSessionId, taraSession, requestBuilder);
+                },
                 CompletableFuture.delayedExecutor(smartIdConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLISECONDS, taskExecutor));
 
         model.addAttribute("smartIdVerificationCode", authenticationHash.calculateVerificationCode());
@@ -119,12 +128,8 @@ public class SmartIdController {
                     .withAuthenticationHash(authenticationHash)
                     .withAllowedInteractionsOrder(getAppropriateAllowedInteractions(taraSession));
 
-            log.info(append("tara.session.sid_authentication_init_request",
-                    createSidInitRequestParameterMap(taraSession, authenticationHash, requestBuilder)),
-                    "Smart ID authentication init request");
             String sidSessionId = requestBuilder.initiateAuthentication();
-
-            log.info("Initiated smart-id session with id: " + sidSessionId);
+            log.info("Initiated Smart-ID session with id: {}", value("tara.session.authentication_result.sid_session_id", sidSessionId));
 
             taraSession.setState(POLL_SID_STATUS);
             TaraSession.SidAuthenticationResult sidAuthenticationResult = new TaraSession.SidAuthenticationResult(sidSessionId);
@@ -132,13 +137,13 @@ public class SmartIdController {
 
             return sidSessionId;
         } catch (NotAllowedException | SmartIdClientException | NotAuthorizedException e) {
-            log.error("Failed to initiate SID authentication session: " + e.getMessage());
+            log.error("Failed to initiate Smart-ID authentication session: " + e.getMessage());
             throw new IllegalStateException(ERROR_GENERAL.getMessage(), e);
         } catch (UserAccountNotFoundException e) {
             throw new BadRequestException(SID_USER_ACCOUNT_NOT_FOUND, "User was not found with idCode: " + sidCredential.getIdCode());
         } catch (Exception e) {
-            log.error("Failed to initiate SID authentication session: " + e.getMessage());
-            throw new ServiceNotAvailableException(SID_INTERNAL_ERROR, "Failed to initiate SID authentication session", e);
+            log.error("Failed to initiate Smart-ID authentication session: " + e.getMessage());
+            throw new ServiceNotAvailableException(SID_INTERNAL_ERROR, "Failed to initiate Smart-ID authentication session", e);
         }
     }
 
@@ -152,31 +157,26 @@ public class SmartIdController {
     }
 
     public void validateSession(TaraSession taraSession) {
-        log.info("AuthSession: {}", taraSession);
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
         if (!taraSession.getAllowedAuthMethods().contains(AuthenticationType.SMART_ID)) {
-            throw new BadRequestException(INVALID_REQUEST, "Smart ID authentication method is not allowed");
+            throw new BadRequestException(INVALID_REQUEST, "Smart-ID authentication method is not allowed");
         }
     }
 
     private void pollSidSessionStatus(String sidSessionId, TaraSession taraSession, AuthenticationRequestBuilder requestBuilder) {
-        SessionStatusPoller sessionStatusPoller = new SessionStatusPoller(sidClient.getSmartIdConnector());
-        log.info("starting session status polling with id: " + sidSessionId);
-
         try {
-            log.info("fetching final session status");
+            SessionStatusPoller sessionStatusPoller = new SessionStatusPoller(sidClient.getSmartIdConnector());
+            log.info("Starting Smart-ID session status polling with id: {}", value("tara.session.sid_authentication_result.sid_session_id", sidSessionId));
             SessionStatus sessionStatus = sessionStatusPoller.fetchFinalSessionStatus(sidSessionId);
-            log.info("fetched final session status");
+            log.info(append("http.response.body.content", sessionStatus), "Smart-ID session polling result");
             handleSidAuthenticationResult(taraSession, sessionStatus, requestBuilder);
         } catch (Exception ex) {
-            log.info("received exception");
             handleSidAuthenticationException(taraSession, ex);
         }
     }
 
     private void handleSidAuthenticationResult(TaraSession taraSession, SessionStatus sessionStatus, AuthenticationRequestBuilder requestBuilder) {
-        log.info("handling sid authentication result");
-
+        log.info("Handling Smart-ID authentication result");
         SmartIdAuthenticationResponse response = requestBuilder.createSmartIdAuthenticationResponse(sessionStatus);
         AuthenticationIdentity authIdentity = authenticationResponseValidator.validate(response);
         taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
@@ -196,12 +196,10 @@ public class SmartIdController {
         Session session = sessionRepository.findById(taraSession.getSessionId());
         session.setAttribute(TARA_SESSION, taraSession);
         sessionRepository.save(session);
-
-        log.info("sid authentication result handled");
     }
 
     private void handleSidAuthenticationException(TaraSession taraSession, Exception ex) {
-        log.error("received sid poll exception: " + ex.getMessage());
+        log.error("Smart-ID poll exception: " + ex.getMessage(), ex);
         taraSession.setState(AUTHENTICATION_FAILED);
         taraSession.getAuthenticationResult().setErrorCode(translateExceptionToErrorCode(ex));
 
@@ -218,20 +216,5 @@ public class SmartIdController {
     public static class SidCredential {
         @ValidNationalIdNumber(message = "{message.mid-rest.error.invalid-identity-code}")
         private String idCode;
-    }
-
-    @NotNull
-    private Map<String, Object> createSidInitRequestParameterMap(TaraSession taraSession, AuthenticationHash authenticationHash, AuthenticationRequestBuilder requestBuilder) {
-        Map<String, Object> tm = new TreeMap<>();
-        tm.put("relyingPartyUuid", taraSession.getSmartIdRelyingPartyUuid().orElse(smartIdConfigurationProperties.getRelyingPartyUuid()));
-        tm.put("relyingPartyName", taraSession.getSmartIdRelyingPartyName().orElse(smartIdConfigurationProperties.getRelyingPartyName()));
-        tm.put("semanticsIdentifier", requestBuilder.getSemanticsIdentifier().getIdentifier());
-        tm.put("certificateLevel", "QUALIFIED");
-        tm.put("authenticationHash", authenticationHash.getHashInBase64());
-        tm.put("authenticationHashType", authenticationHash.getHashType().getAlgorithmName());
-        tm.put("hostUrl", smartIdConfigurationProperties.getHostUrl());
-        for (Interaction interaction : requestBuilder.getAllowedInteractionsOrder())
-            tm.put(interaction.getType().getCode(), interaction.getDisplayText60());
-        return tm;
     }
 }

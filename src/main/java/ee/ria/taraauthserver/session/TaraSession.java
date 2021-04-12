@@ -8,6 +8,8 @@ import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.util.Assert;
 
@@ -21,6 +23,7 @@ import java.net.URL;
 import java.time.LocalDate;
 import java.util.*;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.stream;
 import static java.util.List.of;
 import static java.util.stream.Collectors.toList;
@@ -33,7 +36,6 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 @Data
 @RequiredArgsConstructor
 public class TaraSession implements Serializable {
-
     public static final String TARA_SESSION = "tara.session";
     private final String sessionId;
 
@@ -61,6 +63,14 @@ public class TaraSession implements Serializable {
                 .map(TaraSession.OidcClient::getNameTranslations)
                 .map(m -> m.get("et"))
                 .orElse(null);
+    }
+
+    public boolean isEmailScopeRequested() {
+        return getLoginRequestInfo().getRequestedScopes().contains(TaraScope.EMAIL.getFormalName());
+    }
+
+    public boolean isPhoneNumberScopeRequested() {
+        return getLoginRequestInfo().getRequestedScopes().contains(TaraScope.PHONE.getFormalName());
     }
 
     @Data
@@ -114,6 +124,15 @@ public class TaraSession implements Serializable {
         private OidcContext oidcContext = new OidcContext();
         @JsonProperty("request_url")
         private URL url;
+
+        public String getOidcState() {
+            return URLEncodedUtils.parse(url.getQuery(), UTF_8)
+                    .stream()
+                    .filter(p -> p.getName().equals("state"))
+                    .map(NameValuePair::getValue)
+                    .findFirst()
+                    .orElse("not set");
+        }
 
         public List<AuthenticationType> getAllowedAuthenticationMethodsList(AuthConfigurationProperties taraProperties) {
             if (requestedScopes.contains("eidasonly"))

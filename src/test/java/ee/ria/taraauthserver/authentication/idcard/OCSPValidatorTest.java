@@ -9,7 +9,6 @@ import com.github.tomakehurst.wiremock.extension.Parameters;
 import com.github.tomakehurst.wiremock.extension.ResponseTransformer;
 import com.github.tomakehurst.wiremock.http.Request;
 import com.github.tomakehurst.wiremock.http.Response;
-import ee.ria.taraauthserver.alerts.AlertsScheduler;
 import ee.ria.taraauthserver.config.TaraAuthServerConfiguration;
 import ee.ria.taraauthserver.error.exceptions.OCSPServiceNotAvailableException;
 import ee.ria.taraauthserver.error.exceptions.OCSPValidationException;
@@ -47,7 +46,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.client.RestTemplate;
 
-import javax.cache.Cache;
 import javax.security.auth.x500.X500PrivateCredential;
 import java.io.IOException;
 import java.io.InputStream;
@@ -65,7 +63,6 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.Alert;
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp;
 import static java.util.List.of;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -75,7 +72,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {TaraAuthServerConfiguration.class, OCSPValidator.class, RestTemplate.class, ObjectMapper.class, AlertsScheduler.class}, initializers = ConfigDataApplicationContextInitializer.class)
+@ContextConfiguration(classes = {TaraAuthServerConfiguration.class, OCSPValidator.class, RestTemplate.class, ObjectMapper.class}, initializers = ConfigDataApplicationContextInitializer.class)
 public class OCSPValidatorTest {
     private static final OcspResponseTransformer ocspResponseTransformer = new OcspResponseTransformer(true);
 
@@ -103,9 +100,6 @@ public class OCSPValidatorTest {
 
     @MockBean
     private OCSPConfigurationResolver ocspConfigurationResolver;
-
-    @MockBean
-    private Cache<String, List<Alert>> alertsCache;
 
     @Autowired
     private OCSPValidator ocspValidator;
@@ -164,7 +158,6 @@ public class OCSPValidatorTest {
         } catch (Exception e) {
             assertEquals(IllegalArgumentException.class, e.getClass());
             assertThat(e.getMessage(), containsString("User certificate cannot be null!"));
-            assertMdcContent(null);
         }
     }
 
@@ -180,7 +173,6 @@ public class OCSPValidatorTest {
         } catch (Exception e) {
             assertEquals(IllegalArgumentException.class, e.getClass());
             assertThat(e.getMessage(), containsString("Issuer certificate with CN 'TEST of ESTEID-SK 2015' is not a trusted certificate!"));
-            assertMdcContent(null);
         }
     }
 
@@ -196,7 +188,6 @@ public class OCSPValidatorTest {
         } catch (Exception e) {
             assertEquals(IllegalArgumentException.class, e.getClass());
             assertThat(e.getMessage(), containsString("At least one OCSP configuration must be present"));
-            assertMdcContent(null);
         }
     }
 
@@ -215,7 +206,6 @@ public class OCSPValidatorTest {
         } catch (Exception e) {
             assertEquals(OCSPServiceNotAvailableException.class, e.getClass());
             assertThat(e.getMessage(), containsString("Service returned HTTP status code 500"));
-            assertMdcContent(null);
         }
     }
 
@@ -239,7 +229,6 @@ public class OCSPValidatorTest {
         } catch (Exception e) {
             assertEquals(OCSPServiceNotAvailableException.class, e.getClass());
             assertThat(e.getMessage(), containsString("Response Content-Type header is missing or invalid. Expected: 'application/ocsp-response', actual: text/html"));
-            assertMdcContent(null);
         }
     }
 
@@ -263,7 +252,6 @@ public class OCSPValidatorTest {
         } catch (Exception e) {
             assertEquals(OCSPServiceNotAvailableException.class, e.getClass());
             assertThat(e.getMessage(), containsString("Invalid OCSP response! Response returned empty body!"));
-            assertMdcContent(null);
         }
     }
 
@@ -289,7 +277,6 @@ public class OCSPValidatorTest {
         } catch (Exception e) {
             assertEquals(OCSPServiceNotAvailableException.class, e.getClass());
             assertThat(e.getMessage(), containsString("Invalid OCSP response! Response status is missing or invalid!"));
-            assertMdcContent(null);
         }
     }
 
@@ -315,7 +302,6 @@ public class OCSPValidatorTest {
         } catch (Exception e) {
             assertEquals(OCSPServiceNotAvailableException.class, e.getClass());
             assertThat(e.getMessage(), containsString("Response returned Internal Server error!"));
-            assertMdcContent(null);
         }
     }
 
@@ -341,7 +327,6 @@ public class OCSPValidatorTest {
         } catch (Exception e) {
             assertEquals(OCSPServiceNotAvailableException.class, e.getClass());
             assertThat(e.getMessage(), containsString("Response returned Try Later error!"));
-            assertMdcContent(null);
         }
 
     }
@@ -359,7 +344,6 @@ public class OCSPValidatorTest {
         } catch (Exception e) {
             assertEquals(IllegalStateException.class, e.getClass());
             assertThat(e.getMessage(), containsString("OCSP validation failed: Certificate with CN: 'TEST of SK OCSP RESPONDER 2011' is not trusted! Please check your configuration!"));
-            assertMdcContent(ocspConfiguration.getUrl());
         }
     }
 
@@ -376,7 +360,6 @@ public class OCSPValidatorTest {
         } catch (Exception e) {
             assertEquals(IllegalStateException.class, e.getClass());
             assertThat(e.getMessage(), containsString("No nonce found in OCSP response"));
-            assertMdcContent(ocspConfiguration.getUrl());
         }
     }
 
@@ -395,7 +378,6 @@ public class OCSPValidatorTest {
         } catch (Exception e) {
             assertEquals(IllegalStateException.class, e.getClass());
             assertThat(e.getMessage(), containsString("Invalid OCSP response nonce"));
-            assertMdcContent(ocspConfiguration.getUrl());
         }
     }
 
@@ -418,7 +400,6 @@ public class OCSPValidatorTest {
         } catch (Exception e) {
             assertEquals(IllegalStateException.class, e.getClass());
             assertThat(e.getMessage(), containsString("OCSP response was older than accepted"));
-            assertMdcContent(ocspConfiguration.getUrl());
         }
     }
 
@@ -440,7 +421,6 @@ public class OCSPValidatorTest {
         } catch (Exception e) {
             assertEquals(IllegalStateException.class, e.getClass());
             assertThat(e.getMessage(), containsString("OCSP response cannot be produced in the future"));
-            assertMdcContent(ocspConfiguration.getUrl());
         }
     }
 
@@ -463,7 +443,6 @@ public class OCSPValidatorTest {
         } catch (Exception e) {
             assertEquals(IllegalStateException.class, e.getClass());
             assertThat(e.getMessage(), containsString("OCSP response signature is not valid"));
-            assertMdcContent(ocspConfiguration.getUrl());
         }
     }
 
@@ -498,7 +477,6 @@ public class OCSPValidatorTest {
             assertThat(e.getMessage(), containsString("OCSP validation failed: Invalid OCSP response! " +
                     "Responder ID in response contains value: TEST, but there was " +
                     "no cert provided with this CN in the response."));
-            assertMdcContent(ocspConfiguration.getUrl());
         }
     }
 
@@ -529,7 +507,6 @@ public class OCSPValidatorTest {
         } catch (Exception e) {
             assertEquals(IllegalStateException.class, e.getClass());
             assertThat(e.getMessage(), containsString("Invalid OCSP response! Responder ID in response contains value: TEST, but there was no cert provided with this CN in the response."));
-            assertMdcContent(ocspConfiguration.getUrl());
         }
     }
 
@@ -547,7 +524,6 @@ public class OCSPValidatorTest {
         } catch (Exception e) {
             assertEquals(OCSPValidationException.class, e.getClass());
             assertThat(e.getMessage(), containsString("Invalid certificate status <REVOKED> received"));
-            assertMdcContent(ocspConfiguration.getUrl());
         }
     }
 
@@ -563,7 +539,6 @@ public class OCSPValidatorTest {
         } catch (Exception e) {
             assertEquals(OCSPValidationException.class, e.getClass());
             assertThat(e.getMessage(), containsString("Invalid certificate status <UNKNOWN> received"));
-            assertMdcContent(ocspConfiguration.getUrl());
         }
     }
 
@@ -607,7 +582,6 @@ public class OCSPValidatorTest {
                     "Expected issuer: 'CN=TEST of ESTEID2018, OID.2.5.4.97=NTREE-10747013, O=SK ID Solutions AS, C=EE', " +
                     "but the OCSP responder signing certificate " +
                     "was issued by 'EMAILADDRESS=pki@sk.ee, CN=TEST of ESTEID-SK 2011, O=AS Sertifitseerimiskeskus, C=EE'"));
-            assertMdcContent(ocspUrl);
         }
 
     }
@@ -632,7 +606,6 @@ public class OCSPValidatorTest {
         } catch (Exception e) {
             assertEquals(OCSPServiceNotAvailableException.class, e.getClass());
             assertThat(e.getMessage(), containsString("OCSP not available: http://localhost:"));
-            assertMdcContent(null);
         }
     }
 
@@ -649,7 +622,6 @@ public class OCSPValidatorTest {
         } catch (Exception e) {
             assertEquals(IllegalArgumentException.class, e.getClass());
             assertThat(e.getMessage(), containsString("At least one OCSP configuration must be present"));
-            assertMdcContent(null);
         }
     }
 
@@ -672,7 +644,6 @@ public class OCSPValidatorTest {
         } catch (Exception e) {
             assertEquals(IllegalStateException.class, e.getClass());
             assertThat(e.getMessage(), containsString("OCSP validation failed: Unable to find responder CN from OCSP response"));
-            assertMdcContent(String.format("http://localhost:%d/ocsp", mockOcspServer.port()));
         }
     }
 
@@ -703,7 +674,6 @@ public class OCSPValidatorTest {
 
         X509Certificate userCert = loadCertificateFromResource(MOCK_USER_CERT_2015_PATH);
         ocspValidator.checkCert(userCert);
-        assertMdcContent(ocspUrl);
     }
 
     @Test
@@ -738,8 +708,6 @@ public class OCSPValidatorTest {
         X509Certificate userCert = generateUserCertificate("SERIALNUMBER=PNOEE-38001085718, GIVENNAME=JAAK-KRISTJAN, SURNAME=JÕEORG, CN=\"JÕEORG,JAAK-KRISTJAN,38001085718\", C=EE", responderKeys, "CN=MOCK CA", null, null).getCertificate();
 
         new OCSPValidator(trustedCertificates, ocspConfigurationResolver).checkCert(userCert);
-
-        assertMdcContent(ocspUrl);
     }
 
     @Test
@@ -775,8 +743,6 @@ public class OCSPValidatorTest {
         X509Certificate userCert = generateUserCertificate("SERIALNUMBER=PNOEE-38001085718, GIVENNAME=JAAK-KRISTJAN, SURNAME=JÕEORG, CN=\"JÕEORG,JAAK-KRISTJAN,38001085718\", C=EE", responderKeys, "CN=MOCK CA", null, null).getCertificate();
 
         new OCSPValidator(trustedCertificates, ocspConfigurationResolver).checkCert(userCert);
-
-        assertMdcContent(ocspUrl);
     }
 
     @Test
@@ -816,8 +782,6 @@ public class OCSPValidatorTest {
 
 
         ocspValidator.checkCert(loadCertificateFromResource(MOCK_USER_CERT_2015_PATH));
-
-        assertMdcContent(fallbackOcspUrl);
     }
 
     @Test
@@ -857,8 +821,6 @@ public class OCSPValidatorTest {
 
 
         ocspValidator.checkCert(loadCertificateFromResource(MOCK_USER_CERT_2015_PATH));
-
-        assertMdcContent(ocspUrl);
     }
 
     @Test
@@ -893,8 +855,6 @@ public class OCSPValidatorTest {
 
 
         ocspValidator.checkCert(loadCertificateFromResource(MOCK_USER_CERT_2015_PATH));
-
-        assertMdcContent(ocspUrl);
     }
 
     private X509Certificate generateCertificate(KeyPair keyPair, String name) throws OperatorCreationException, CertIOException, CertificateException {
@@ -1125,9 +1085,5 @@ public class OCSPValidatorTest {
         return new JcaX509CertificateConverter()
                 .setProvider(BouncyCastleProvider.PROVIDER_NAME)
                 .getCertificate(certificateBuilder.build(signer));
-    }
-
-    private void assertMdcContent(String ocspUrl) {
-        assertEquals(ocspUrl, MDC.get("ocspUrl"));
     }
 }

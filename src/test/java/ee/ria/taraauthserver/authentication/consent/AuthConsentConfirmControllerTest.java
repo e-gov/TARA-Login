@@ -147,10 +147,12 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .statusCode(302)
                 .header("Location", Matchers.endsWith("some/test/url"));
 
-        assertInfoIsLogged(OIDC_CONSENT_REQUEST_BODY);
-
-        assertNull(sessionRepository.findById(session.getId()));
+        assertInfoIsLogged("Tara session state change: NOT_SET -> INIT_CONSENT_PROCESS");
+        assertInfoIsLogged("OIDC accept consent request for challenge: " + MOCK_CONSENT_CHALLENGE);
+        assertInfoIsLogged("Tara session state change: INIT_CONSENT_PROCESS -> CONSENT_GIVEN");
         assertWarningIsLogged("Session has been invalidated: " + session.getId());
+        assertInfoIsLogged("Session is removed from cache: " + session.getId());
+        assertNull(sessionRepository.findById(session.getId()));
     }
 
     @Test
@@ -173,10 +175,12 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(302);
 
-        assertInfoIsLogged(OIDC_CONSENT_REQUEST_BODY_WITH_PHONE);
-
-        assertNull(sessionRepository.findById(session.getId()));
+        assertInfoIsLogged("Tara session state change: NOT_SET -> INIT_CONSENT_PROCESS");
+        assertInfoIsLogged("OIDC accept consent request for challenge: " + MOCK_CONSENT_CHALLENGE);
+        assertInfoIsLogged("Tara session state change: INIT_CONSENT_PROCESS -> CONSENT_GIVEN");
         assertWarningIsLogged("Session has been invalidated: " + session.getId());
+        assertInfoIsLogged("Session is removed from cache: " + session.getId());
+        assertNull(sessionRepository.findById(session.getId()));
     }
 
     @Test
@@ -199,14 +203,12 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(302);
 
-        assertInfoIsLogged(OIDC_CONSENT_REQUEST_BODY_WITH_EMAIL);
-
-        assertNull(sessionRepository.findById(session.getId()));
         assertInfoIsLogged("Tara session state change: NOT_SET -> INIT_CONSENT_PROCESS");
-        assertInfoIsLogged("Consent accepted: https://localhost:9877/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC");
+        assertInfoIsLogged("OIDC accept consent request for challenge: " + MOCK_CONSENT_CHALLENGE);
         assertInfoIsLogged("Tara session state change: INIT_CONSENT_PROCESS -> CONSENT_GIVEN");
         assertWarningIsLogged("Session has been invalidated: " + session.getId());
         assertInfoIsLogged("Session is removed from cache: " + session.getId());
+        assertNull(sessionRepository.findById(session.getId()));
     }
 
     @Test
@@ -231,10 +233,10 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .body("error", equalTo("Internal Server Error"));
 
         assertInfoIsLogged("Tara session state change: NOT_SET -> INIT_CONSENT_PROCESS");
-        assertInfoIsLogged("Consent accepted: https://localhost:9877/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC");
-        assertErrorIsLogged("Server encountered an unexpected error: Invalid OIDC server response. Redirect URL missing from response.");
+        assertInfoIsLogged("OIDC accept consent request for challenge: " + MOCK_CONSENT_CHALLENGE);
         assertWarningIsLogged("Session has been invalidated: " + session.getId());
         assertInfoIsLogged("Session is removed from cache: " + session.getId());
+        assertNull(sessionRepository.findById(session.getId()));
     }
 
     @Test
@@ -260,7 +262,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
 
         assertNull(sessionRepository.findById(session.getId()));
         assertInfoIsLogged("Tara session state change: NOT_SET -> INIT_CONSENT_PROCESS");
-        assertInfoIsLogged("Consent rejected: https://localhost:9877/oauth2/auth/requests/consent/reject?consent_challenge=abcdefg098AAdsCC");
+        assertInfoIsLogged("OIDC reject consent request for challenge: " + MOCK_CONSENT_CHALLENGE);
         assertInfoIsLogged("Tara session state change: INIT_CONSENT_PROCESS -> CONSENT_NOT_GIVEN");
         assertWarningIsLogged("Session has been invalidated: " + session.getId());
         assertInfoIsLogged("Session is removed from cache: " + session.getId());
@@ -288,7 +290,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .body("error", equalTo("Internal Server Error"));
 
         assertInfoIsLogged("Tara session state change: NOT_SET -> INIT_CONSENT_PROCESS");
-        assertInfoIsLogged("Consent rejected: https://localhost:9877/oauth2/auth/requests/consent/reject?consent_challenge=abcdefg098AAdsCC");
+        assertInfoIsLogged("OIDC reject consent request for challenge: " + MOCK_CONSENT_CHALLENGE);
         assertErrorIsLogged("Server encountered an unexpected error: Invalid OIDC server response. Redirect URL missing from response.");
         assertWarningIsLogged("Session has been invalidated: " + session.getId());
         assertInfoIsLogged("Session is removed from cache: " + session.getId());
@@ -328,8 +330,4 @@ class AuthConsentConfirmControllerTest extends BaseTest {
         sessionRepository.save(session);
         return session;
     }
-
-    private static final String OIDC_CONSENT_REQUEST_BODY = "accepting consent from: ConsentUtils.AcceptConsentRequest(remember=false, session=ConsentUtils.AcceptConsentRequest.LoginSession(idToken=ConsentUtils.AcceptConsentRequest.IdToken(profileAttributes=ConsentUtils.AcceptConsentRequest.ProfileAttributes(familyName=lastname, givenName=firstname, dateOfBirth=1992-12-17, representsLegalPerson=null), acr=high, amr=[mID], state=c80393c7-6666-4dd2-b890-0ada47161cfa, email=null, emailVerified=null, phoneNr=null, phoneNrVerified=null)), grantScope=[openid])";
-    private static final String OIDC_CONSENT_REQUEST_BODY_WITH_PHONE = "accepting consent from: ConsentUtils.AcceptConsentRequest(remember=false, session=ConsentUtils.AcceptConsentRequest.LoginSession(idToken=ConsentUtils.AcceptConsentRequest.IdToken(profileAttributes=ConsentUtils.AcceptConsentRequest.ProfileAttributes(familyName=lastname, givenName=firstname, dateOfBirth=1992-12-17, representsLegalPerson=null), acr=high, amr=[mID], state=c80393c7-6666-4dd2-b890-0ada47161cfa, email=null, emailVerified=null, phoneNr=112233, phoneNrVerified=true)), grantScope=[openid])";
-    private static final String OIDC_CONSENT_REQUEST_BODY_WITH_EMAIL = "accepting consent from: ConsentUtils.AcceptConsentRequest(remember=false, session=ConsentUtils.AcceptConsentRequest.LoginSession(idToken=ConsentUtils.AcceptConsentRequest.IdToken(profileAttributes=ConsentUtils.AcceptConsentRequest.ProfileAttributes(familyName=lastname, givenName=firstname, dateOfBirth=1992-12-17, representsLegalPerson=null), acr=high, amr=[idcard], state=c80393c7-6666-4dd2-b890-0ada47161cfa, email=test@test.ee, emailVerified=false, phoneNr=null, phoneNrVerified=null)), grantScope=[openid])";
 }

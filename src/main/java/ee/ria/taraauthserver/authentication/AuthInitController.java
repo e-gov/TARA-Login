@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import javax.servlet.http.HttpSession;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import javax.validation.constraints.Pattern;
@@ -64,7 +63,8 @@ public class AuthInitController {
             @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed") String loginChallenge,
             @RequestParam(name = "lang", required = false)
             @Pattern(regexp = "(et|en|ru)", message = "supported values are: 'et', 'en', 'ru'") String language,
-            @SessionAttribute(value = TARA_SESSION) TaraSession newTaraSession, Model model, HttpSession session) {
+            @SessionAttribute(value = TARA_SESSION) TaraSession newTaraSession, Model model) {
+        log.info(append("http.request.locale", RequestUtils.getLocale()), "New authentication session");
 
         TaraSession.LoginRequestInfo loginRequestInfo = fetchLoginRequestInfo(loginChallenge);
         newTaraSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
@@ -80,9 +80,6 @@ public class AuthInitController {
 
         newTaraSession.setAllowedAuthMethods(allowedAuthenticationMethodsList);
         RequestUtils.setLocale(getUiLanguage(language, newTaraSession));
-
-        log.info(append(TARA_SESSION, newTaraSession).and(append("http.request.locale", RequestUtils.getLocale())), "Initialized authentication session");
-
         if (eidasOnlyWithCountryRequested(loginRequestInfo)) {
             model.addAttribute("country", getAllowedEidasCountryCode(loginRequestInfo.getRequestedScopes()));
             return "redirectToEidasInit";
@@ -105,10 +102,10 @@ public class AuthInitController {
 
     private TaraSession.LoginRequestInfo fetchLoginRequestInfo(String loginChallenge) {
         String url = taraProperties.getHydraService().getLoginUrl() + "?login_challenge=" + loginChallenge;
-        log.info("OIDC login request: {}", value("url.full", url));
+        log.info(append("url.full", url), "OIDC login request for challenge: {}", value("tara.session.login_request_info.challenge", loginChallenge));
         try {
             ResponseEntity<TaraSession.LoginRequestInfo> response = hydraService.exchange(url, HttpMethod.GET, null, TaraSession.LoginRequestInfo.class);
-            log.info(append("tara.session.login_request_info", response), "OIDC login challenge '{}' response status code: {}",
+            log.info(append("tara.session.login_request_info", response.getBody()), "OIDC login response for challenge: {}, Status code: {}",
                     loginChallenge,
                     response.getStatusCodeValue());
             validateResponse(response.getBody(), loginChallenge);

@@ -17,6 +17,7 @@ import org.springframework.test.annotation.DirtiesContext;
 
 import javax.cache.Cache;
 import java.util.Arrays;
+import java.util.Set;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.EIDAS;
@@ -35,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class EidasControllerTest extends BaseTest {
 
     @Autowired
-    EidasConfigurationProperties eidasConfigurationProperties;
+    private EidasConfigurationProperties eidasConfigurationProperties;
 
     @Autowired
     private Cache<String, String> eidasRelayStateCache;
@@ -129,9 +130,7 @@ public class EidasControllerTest extends BaseTest {
     @DirtiesContext
     @Tag(value = "EIDAS_AUTH_INIT_GET_REQUEST")
     void eidasAuthInit_timeout_responds_with_500() {
-
-        EidasConfigurationProperties testConfig = new EidasConfigurationProperties();
-        testConfig.setRequestTimeoutInSeconds(1);
+        eidasConfigurationProperties.setAvailableCountries(Set.of("CA"));
 
         createEidasCountryStub("mock_responses/eidas/eidas-response.json", 200);
         wireMockServer.stubFor(any(urlPathMatching("/login"))
@@ -141,8 +140,6 @@ public class EidasControllerTest extends BaseTest {
                         .withFixedDelay((eidasConfigurationProperties.getRequestTimeoutInSeconds() * 1000) + 100)
                         .withBodyFile("mock_responses/eidas/eidas-login-response.json")));
 
-        await().atMost(FIVE_SECONDS)
-                .until(() -> eidasConfigurationProperties.getAvailableCountries().size(), Matchers.equalTo(1));
 
         MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
@@ -176,6 +173,7 @@ public class EidasControllerTest extends BaseTest {
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(EIDAS))
                 .authenticationState(INIT_AUTH_PROCESS)
+                .authenticationResult(new TaraSession.EidasAuthenticationResult())
                 .clientAllowedScopes(Arrays.asList("eidas")).build();
         given()
                 .filter(sessionFilter)
@@ -237,5 +235,4 @@ public class EidasControllerTest extends BaseTest {
                         .withStatus(status)
                         .withBodyFile(response)));
     }
-
 }

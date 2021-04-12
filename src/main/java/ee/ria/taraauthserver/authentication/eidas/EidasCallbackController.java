@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.authentication.eidas;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
@@ -10,8 +11,8 @@ import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import net.logstash.logback.argument.StructuredArguments;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -40,32 +41,36 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static co.elastic.apm.agent.shaded.bytebuddy.implementation.FixedValue.value;
 import static ee.ria.taraauthserver.error.ErrorCode.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static net.logstash.logback.marker.Markers.append;
 
 @Slf4j
 @Controller
 @ConditionalOnProperty(value = "tara.auth-methods.eidas.enabled")
 public class EidasCallbackController {
     public static final String EIDAS_CALLBACK_REQUEST_MAPPING = "/auth/eidas/callback";
-
     public static final Pattern VALID_PERSON_IDENTIFIER_PATTERN = Pattern.compile("^([A-Z]{2,2})\\/([A-Z]{2,2})\\/(.*)$");
 
     @Autowired
-    @Qualifier("eidasRestTemplate")
-    private RestTemplate restTemplate;
+    private RestTemplate eidasRestTemplate;
+
     @Autowired
     private EidasConfigurationProperties eidasConfigurationProperties;
+
     @Autowired
     private SessionRepository<Session> sessionRepository;
+
     @Autowired
     private Cache<String, String> eidasRelayStateCache;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @PostMapping(value = EIDAS_CALLBACK_REQUEST_MAPPING)
     public ModelAndView eidasCallback(@RequestParam(name = "SAMLResponse") String samlResponse, @RequestParam(name = "RelayState") String relayState) {
-
+        log.info("Handling EIDAS authentication callback for relay state: {}", StructuredArguments.value("tara.session.eidas.relay_state", relayState));
         if (!eidasRelayStateCache.containsKey(relayState))
             throw new BadRequestException(INVALID_REQUEST, "relayState not found in relayState map");
 
@@ -73,9 +78,19 @@ public class EidasCallbackController {
         validateSession(session);
 
         try {
-            EidasClientResponse response = restTemplate.exchange(eidasConfigurationProperties.getClientUrl() + "/returnUrl", HttpMethod.POST, createRequestEntity(samlResponse), EidasClientResponse.class).getBody();
+            HttpEntity<MultiValueMap<String, String>> requestEntity = createRequestEntity(samlResponse);
+            String requestUrl = eidasConfigurationProperties.getClientUrl() + "/returnUrl";
+
+            log.info(append("http.request.method", HttpMethod.POST.name())
+                            .and(append("http.request.body.content", "SAMLResponse=" + samlResponse))
+                            .and(append("url.full", requestUrl)),
+                    "EIDAS-Client request");
+            EidasClientResponse response = eidasRestTemplate.exchange(requestUrl, HttpMethod.POST, requestEntity, EidasClientResponse.class).getBody();
             if (response != null) {
-                log.info("Received response from eidas client: {}", value(response));
+                log.info(append("http.request.method", HttpMethod.POST.name())
+                                .and(append("http.response.body.content", objectMapper.writeValueAsString(response)))
+                                .and(append("url.full", requestUrl)),
+                        "EIDAS-Client response");
                 updateSession(session, response);
             } else {
                 throw new IllegalStateException("Response body from eidas client is null.");
@@ -168,7 +183,6 @@ public class EidasCallbackController {
         if (session == null)
             throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
         TaraSession taraSession = session.getAttribute(TARA_SESSION);
-        log.info("AuthSession: {}", taraSession);
         SessionUtils.assertSessionInState(taraSession, WAITING_EIDAS_RESPONSE);
         if (((TaraSession.EidasAuthenticationResult) taraSession.getAuthenticationResult()).getRelayState() == null) {
             throw new BadRequestException(ERROR_GENERAL, "Relay state is missing from session.");

@@ -1,19 +1,17 @@
 package ee.ria.taraauthserver.authentication.mobileid;
 
-import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.MidAuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
+import ee.ria.taraauthserver.logging.ClientRequestLoggingFilter;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.sk.mid.*;
 import ee.sk.mid.exception.*;
-import ee.sk.mid.rest.MidLoggingFilter;
 import ee.sk.mid.rest.dao.MidSessionStatus;
 import ee.sk.mid.rest.dao.request.MidAuthenticationRequest;
 import ee.sk.mid.rest.dao.response.MidAuthenticationResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.slf4j.MDC;
@@ -37,6 +35,7 @@ import static ee.ria.taraauthserver.error.ErrorCode.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.util.Arrays.stream;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static java.util.regex.Pattern.compile;
 import static net.logstash.logback.argument.StructuredArguments.value;
@@ -89,21 +88,24 @@ public class AuthMidService {
     private MidAuthConfigurationProperties midAuthConfigurationProperties;
 
     @Autowired
-    private AuthConfigurationProperties authConfigurationProperties;
-
-    @Autowired
     private Executor taskExecutor;
 
     public MidAuthenticationHashToSign startMidAuthSession(TaraSession taraSession, String idCode, String telephoneNumber) {
         try {
             MidAuthenticationHashToSign authenticationHash = getAuthenticationHash();
             MidAuthenticationResponse midAuthentication = initMidAuthentication(taraSession, idCode, telephoneNumber, authenticationHash);
-            CompletableFuture.runAsync(() -> pollAuthenticationResult(taraSession, authenticationHash, midAuthentication, telephoneNumber), taskExecutor);
+            Map<String, String> contextMap = MDC.getCopyOfContextMap();
+            CompletableFuture.runAsync(() -> {
+                if (contextMap != null) {
+                    MDC.setContextMap(contextMap);
+                }
+                pollAuthenticationResult(taraSession, authenticationHash, midAuthentication, telephoneNumber);
+            }, CompletableFuture.delayedExecutor(midAuthConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLISECONDS, taskExecutor));
             return authenticationHash;
         } catch (MidInternalErrorException | ProcessingException e) {
-            throw new ServiceNotAvailableException(MID_INTERNAL_ERROR, String.format("MID service is currently unavailable: %s", e.getMessage()), e);
+            throw new ServiceNotAvailableException(MID_INTERNAL_ERROR, String.format("Mobile-ID service is currently unavailable: %s", e.getMessage()), e);
         } catch (Exception e) {
-            throw new IllegalStateException("Internal error during MID authentication init: " + e.getMessage(), e);
+            throw new IllegalStateException("Internal error during Mobile-ID authentication init: " + e.getMessage(), e);
         }
     }
 
@@ -123,7 +125,7 @@ public class AuthMidService {
     }
 
     private MidAuthenticationRequest createMidAuthenticationRequest(String idCode, String telephoneNumber, MidAuthenticationHashToSign authenticationHash, String translatedShortName, MidClient midClient) {
-        MidAuthenticationRequest midRequest = MidAuthenticationRequest.newBuilder()
+        return MidAuthenticationRequest.newBuilder()
                 .withNationalIdentityNumber(idCode)
                 .withPhoneNumber(telephoneNumber)
                 .withHashToSign(authenticationHash)
@@ -133,15 +135,13 @@ public class AuthMidService {
                 .withRelyingPartyUUID(midClient.getRelyingPartyUUID())
                 .withRelyingPartyName(midClient.getRelyingPartyName())
                 .build();
-        log.info(append("tara.session.mid_authentication_init_request", midRequest), "Mobile ID authentication init request");
-        return midRequest;
     }
 
     private void updateAuthSessionWithInitResponse(TaraSession taraSession, MidAuthenticationResponse response) {
         taraSession.setState(POLL_MID_STATUS);
         TaraSession.MidAuthenticationResult midAuthenticationResult = new TaraSession.MidAuthenticationResult(response.getSessionID());
         taraSession.setAuthenticationResult(midAuthenticationResult);
-        log.info(append(TARA_SESSION, taraSession), "Mobile ID authentication process with MID session id {} has been initiated", response.getSessionID());
+        log.info("Mobile-ID authentication process with MID session id {} has been initiated", response.getSessionID());
     }
 
     private static boolean isServiceNameUsingSpecialCharacters(String serviceName) {
@@ -150,9 +150,7 @@ public class AuthMidService {
     }
 
     private void pollAuthenticationResult(TaraSession taraSession, MidAuthenticationHashToSign authenticationHash, MidAuthenticationResponse response, String telephoneNumber) {
-        String taraTraceId = DigestUtils.sha256Hex(taraSession.getSessionId());
-        MDC.put("labels.tara_trace_id", taraTraceId);
-        log.info("Polling Mobile ID authentication process with MID session id {}",
+        log.info("Polling Mobile-ID authentication process with MID session id {}",
                 value("tara.session.authentication_result.mid_session_id", response.getSessionID()));
         try {
             MidSessionStatus midSessionStatus = midClient.getSessionStatusPoller()
@@ -215,7 +213,7 @@ public class AuthMidService {
             taraSession.getAuthenticationResult().setErrorCode(errorCode);
             log.warn(append(TARA_SESSION, taraSession)
                             .and(append("error.code", errorCode.name())),
-                    "Mobile ID polling failed: {}", value("error.message", ex.getMessage()));
+                    "Mobile-ID polling failed: {}", value("error.message", ex.getMessage()));
             Session session = sessionRepository.findById(taraSession.getSessionId());
             if (session != null) {
                 session.setAttribute(TARA_SESSION, taraSession);
@@ -260,7 +258,7 @@ public class AuthMidService {
         ClientConfig clientConfig = new ClientConfig();
         clientConfig.property(ClientProperties.CONNECT_TIMEOUT, midAuthConfigurationProperties.getConnectionTimeoutMilliseconds());
         clientConfig.property(ClientProperties.READ_TIMEOUT, midAuthConfigurationProperties.getReadTimeoutMilliseconds());
-        clientConfig.register(new MidLoggingFilter());
+        clientConfig.register(new ClientRequestLoggingFilter("Mobile-ID"));
         return clientConfig;
     }
 

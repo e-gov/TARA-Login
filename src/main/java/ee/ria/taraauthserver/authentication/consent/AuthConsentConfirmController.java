@@ -24,11 +24,13 @@ import java.util.Map;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static net.logstash.logback.argument.StructuredArguments.value;
+import static net.logstash.logback.marker.Markers.append;
 
 @Slf4j
 @Validated
 @Controller
 public class AuthConsentConfirmController {
+    public static final String REDIRECT_TO = "redirect_to";
 
     @Autowired
     private AuthConfigurationProperties authConfigurationProperties;
@@ -52,7 +54,8 @@ public class AuthConsentConfirmController {
     @NotNull
     private RedirectView rejectConsent(TaraSession taraSession) {
         String requestUrl = authConfigurationProperties.getHydraService().getRejectConsentUrl() + "?consent_challenge=" + taraSession.getConsentChallenge();
-        log.info("Consent rejected: {}", value("url.full", requestUrl));
+        log.info(append("url.full", requestUrl), "OIDC reject consent request for challenge: {}",
+                value("tara.session.consent_challenge", taraSession.getConsentChallenge()));
         Map<String, String> requestParams = new HashMap<>();
         requestParams.put("error", "user_cancel");
         requestParams.put("error_debug", "Consent not given. User canceled the authentication process.");
@@ -64,19 +67,20 @@ public class AuthConsentConfirmController {
     @NotNull
     private RedirectView acceptConsent(TaraSession taraSession) {
         String requestUrl = authConfigurationProperties.getHydraService().getAcceptConsentUrl() + "?consent_challenge=" + taraSession.getConsentChallenge();
-        log.info("Consent accepted: {}", value("url.full", requestUrl));
-        HttpEntity<ConsentUtils.AcceptConsentRequest> requestEntity = ConsentUtils.createRequestBody(taraSession);
-        return getRedirectView(taraSession, CONSENT_GIVEN, requestUrl, requestEntity);
+        AcceptConsentRequest acceptConsentRequest = AcceptConsentRequest.buildWithTaraSession(taraSession);
+        log.info(append("tara.session.accept_consent_request", acceptConsentRequest).and(append("url.full", requestUrl)),
+                "OIDC accept consent request for challenge: {}", value("tara.session.consent_challenge", taraSession.getConsentChallenge()));
+        return getRedirectView(taraSession, CONSENT_GIVEN, requestUrl, new HttpEntity<>(acceptConsentRequest));
     }
 
     @NotNull
     private RedirectView getRedirectView(TaraSession taraSession, TaraAuthenticationState taraSessionState, String requestUrl, HttpEntity<?> requestEntity) {
         ResponseEntity<Map<String, String>> response = hydraService.exchange(requestUrl, HttpMethod.PUT, requestEntity, new ParameterizedTypeReference<>() {
         });
-        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && response.getBody().get("redirect_to") != null) {
+        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && response.getBody().get(REDIRECT_TO) != null) {
             taraSession.setState(taraSessionState);
             SessionUtils.invalidateSession();
-            return new RedirectView(response.getBody().get("redirect_to"));
+            return new RedirectView(response.getBody().get(REDIRECT_TO));
         } else {
             throw new IllegalStateException("Invalid OIDC server response. Redirect URL missing from response.");
         }

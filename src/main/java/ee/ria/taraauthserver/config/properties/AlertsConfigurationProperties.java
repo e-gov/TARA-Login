@@ -19,7 +19,7 @@ import java.util.List;
 @Data
 @Validated
 @ConfigurationProperties(prefix = "tara.alerts")
-@ConditionalOnProperty(value = "tara.alerts.host-url")
+@ConditionalOnProperty(value = "tara.alerts.enabled")
 public class AlertsConfigurationProperties {
 
     @NotNull
@@ -51,6 +51,8 @@ public class AlertsConfigurationProperties {
         private LoginAlert loginAlert;
         @JsonIgnore
         private String defaultMessage;
+        @JsonIgnore
+        private boolean loadedFromConf;
 
         public void setLoginAlert(LoginAlert loginAlert) {
             this.loginAlert = loginAlert;

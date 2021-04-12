@@ -6,8 +6,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @Validated
@@ -19,7 +19,7 @@ public class EidasConfigurationProperties extends AuthConfigurationProperties.Au
 
     private int refreshCountriesIntervalInMilliseconds;
 
-    private List<String> availableCountries = new ArrayList<>();
+    private Set<String> availableCountries = new HashSet<>();
 
     private int requestTimeoutInSeconds = 3;
 

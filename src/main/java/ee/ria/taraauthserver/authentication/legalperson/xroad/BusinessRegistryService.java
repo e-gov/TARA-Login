@@ -38,6 +38,7 @@ import static java.util.Arrays.stream;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static net.logstash.logback.argument.StructuredArguments.value;
+import static net.logstash.logback.marker.Markers.append;
 import static org.apache.commons.lang3.StringUtils.join;
 import static org.unbescape.xml.XmlEscape.escapeXml11;
 
@@ -123,9 +124,8 @@ public class BusinessRegistryService {
 
     protected NodeList send(String request, String filterExpression) {
         try {
-            log.info("Sending X-Road Business registry request to URL: {}, body: {}  ",
-                    value("url.full", legalPersonProperties.getXRoadServerUrl()),
-                    value("http.request.body.content", request));
+            log.info(append("http.request.body.content", request), "Sending X-Road Business registry request to URL: {}",
+                    value("url.full", legalPersonProperties.getXRoadServerUrl()));
             URL obj = new URL(legalPersonProperties.getXRoadServerUrl());
             HttpURLConnection con = (HttpURLConnection) getHttpURLConnection(obj);
             con.setReadTimeout(legalPersonProperties.getXRoadServerReadTimeoutInMilliseconds());
@@ -142,9 +142,8 @@ public class BusinessRegistryService {
             try (InputStream in = (InputStream) con.getContent()) {
                 int responseCode = con.getResponseCode();
                 String response = IOUtils.toString(in, StandardCharsets.UTF_8);
-                log.info("X-Road Business registry response received. Response code: {}, Response body: {}",
-                        value("http.response.status_code", responseCode),
-                        value("http.response.body.content", response));
+                log.info(append("http.response.body.content", response), "X-Road Business registry response received. Status code: {}",
+                        value("http.response.status_code", responseCode));
 
                 DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
                 builderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -160,7 +159,7 @@ public class BusinessRegistryService {
                 } else {
                     String faultstring = (String) xPath.compile("/Envelope/Body/Fault/faultstring/text()")
                             .evaluate(xmlDocument, XPathConstants.STRING);
-                    throw new IllegalStateException("XRoad service returned a soap fault: faultcode = '" + faultCode
+                    throw new IllegalStateException("X-Road service returned a soap fault: faultcode = '" + faultCode
                             + "', faultstring = '" + faultstring + "'");
                 }
             }
