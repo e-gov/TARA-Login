@@ -57,17 +57,9 @@
     </span>
 </a>
 
-<div layout:fragment="content(tab_id, alerts)" xmlns:th="http://www.w3.org/1999/xhtml"
+<div layout:fragment="content(tab_id)" xmlns:th="http://www.w3.org/1999/xhtml"
      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
     <div class="c-tab-login__content" th:classappend="${static} ? is-active : ''" th:data-tab="${tab_id}">
-        <div class="alert alert-warning" th:if="${not #lists.isEmpty(alerts)}">
-            <ul>
-                <li th:each="alert : ${alerts}">
-                    <strong th:if="${alert.isLoadedFromConf()}" th:utext="${alert.getAlertMessage(#locale.language)}"></strong>
-                    <strong th:unless="${alert.isLoadedFromConf()}" th:text="${alert.getAlertMessage(#locale.language)}"></strong>
-                </li>
-            </ul>
-        </div>
         <br th:if="${not #lists.isEmpty(alerts)}">
         <div class="c-tab-login__content-wrap">
             <div class="c-tab-login__content-icon" aria-hidden="true">
@@ -85,10 +77,28 @@
         </div>
         <div class="c-tab-login__footer">
             <p><a th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a></p>
-            <p th:if="${!#strings.startsWith(#messages.msg('label.' + tab_id + '.help'), 'label.')}">
+            <p th:if="${#messages.msgOrNull('label.' + tab_id + '.help') != null}">
                 <a th:href="${#messages.msg('link.' + tab_id + '.help')}"
                    th:text="${#messages.msg('label.' + tab_id + '.help')}" target="_blank" rel="noopener">Help</a>
             </p>
         </div>
+    </div>
+</div>
+
+<div layout:fragment="warning(tab_id, alerts)" xmlns:th="http://www.w3.org/1999/xhtml"
+     xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+    <div th:if="${not #lists.isEmpty(alerts)}" class="c-tab-login__warning" th:classappend="${static} ? is-active : ''"
+         th:data-tab="${tab_id}">
+        <div class="alert alert-warning">
+            <ul>
+                <li th:each="alert : ${alerts}">
+                    <strong th:if="${alert.isLoadedFromConf()}"
+                            th:utext="${alert.getAlertMessage(#locale.language)}"></strong>
+                    <strong th:unless="${alert.isLoadedFromConf()}"
+                            th:text="${alert.getAlertMessage(#locale.language)}"></strong>
+                </li>
+            </ul>
+        </div>
+        <br>
     </div>
 </div>

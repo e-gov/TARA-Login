@@ -144,6 +144,16 @@ body.is-mobile-subview {
       display: block;
     }
   }
+  .c-tab-login__warning.is-active {
+      @media (max-width: $breakpoint-mobile) {
+        display: block;
+      }
+    }
+  .c-tab-login__static-warning {
+      @media (max-width: $breakpoint-mobile) {
+        display: none;
+      }
+    }
 }
 
 // Helpers
