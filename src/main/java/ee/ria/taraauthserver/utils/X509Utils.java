@@ -11,12 +11,15 @@ import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.cert.*;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @UtilityClass
@@ -103,6 +106,17 @@ public class X509Utils {
         }
 
         return null;
+    }
+
+    @NotNull
+    public Map<String, String> getCertificateParams(X509Certificate certificate) {
+        String[] test1 = certificate.getSubjectDN().getName().split(", ");
+        Map<String, String> params = new HashMap<>();
+        for (String s : test1) {
+            String[] t = s.split("=");
+            params.put(t[0], t[1]);
+        }
+        return params;
     }
 
     private ASN1Primitive getExtensionValue(X509Certificate certificate, String oid) throws IOException {
