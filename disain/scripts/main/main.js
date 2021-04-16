@@ -140,11 +140,11 @@ jQuery(function ($) {
                 var errorMessageTitle = $('#idCardForm .alert-popup #error-message-title');
                 var errorMessage = $('#idCardForm .alert-popup #error-message');
                 var incidentNumber = $('#idCardForm .alert-popup #error-incident-number');
-                $('#idCardForm .alert-popup #error-incident-number-wrapper').show();
 
                 errorMessageTitle.text(errorMessageTitle.text());
                 errorMessage.text(jsonResponse.message);
                 incidentNumber.text(jsonResponse.incident_nr);
+                $('#idCardForm .alert-popup #error-incident-number-wrapper').show();
 
                 _this.prop('disabled', false);
 			} else {
@@ -156,6 +156,7 @@ jQuery(function ($) {
 			        var jsonResponse = JSON.parse(this.responseText);
                     errorMessageTitle.text(errorMessageTitle.text());
                     errorMessage.text(jsonResponse.message);
+                    incidentNumber.text(jsonResponse.incident_nr);
                     $('#idCardForm .alert-popup #error-incident-number-wrapper').show();
 			    } else {
                     errorMessageTitle.text(errorMessageTitle.text());
