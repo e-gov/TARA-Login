@@ -336,7 +336,7 @@ class IdCardControllerTest extends BaseTest {
                 .statusCode(400)
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
-                .body("errorMessage", equalTo("Kasutaja sertifikaat on tühistatud või peatatud staatuses."));
+                .body("message", equalTo("Kasutaja sertifikaat on tühistatud või peatatud staatuses."));
 
         assertWarningIsLogged("OCSP validation failed: Invalid certificate status <REVOKED> received");
     }
@@ -373,7 +373,7 @@ class IdCardControllerTest extends BaseTest {
                 .statusCode(400)
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
-                .body("errorMessage", equalTo("Kasutaja sertifikaadi staatus on teadmata."));
+                .body("message", equalTo("Kasutaja sertifikaadi staatus on teadmata."));
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
 
@@ -524,7 +524,7 @@ class IdCardControllerTest extends BaseTest {
                 .statusCode(502)
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
-                .body("errorMessage", equalTo("Sertifikaadi kehtivuse info küsimine ei õnnestunud. Palun proovige mõne aja pärast uuesti."));
+                .body("message", equalTo("Sertifikaadi kehtivuse info küsimine ei õnnestunud. Palun proovige mõne aja pärast uuesti."));
 
         assertWarningIsLogged("OCSP validation failed: OCSP service is currently not available");
     }
@@ -549,7 +549,7 @@ class IdCardControllerTest extends BaseTest {
                 .statusCode(400)
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
-                .body("errorMessage", equalTo("Teie sertifikaadid ei kehti."));
+                .body("message", equalTo("Teie sertifikaadid ei kehti."));
 
         assertWarningIsLogged("OCSP validation failed: User certificate is not yet valid");
     }
@@ -574,7 +574,7 @@ class IdCardControllerTest extends BaseTest {
                 .statusCode(400)
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
-                .body("errorMessage", equalTo("Teie sertifikaadid ei kehti."));
+                .body("message", equalTo("Teie sertifikaadid ei kehti."));
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
