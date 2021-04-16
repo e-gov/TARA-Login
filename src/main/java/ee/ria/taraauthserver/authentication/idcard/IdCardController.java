@@ -14,6 +14,7 @@ import ee.ria.taraauthserver.utils.X509Utils;
 import ee.sk.mid.MidNationalIdentificationCodeValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.MessageSource;
@@ -35,7 +36,9 @@ import java.util.Optional;
 
 import static ee.ria.taraauthserver.authentication.idcard.CertificateStatus.REVOKED;
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
+import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_INCIDENT_NR;
 import static ee.ria.taraauthserver.error.ErrorCode.*;
+import static ee.ria.taraauthserver.security.RequestCorrelationFilter.MDC_ATTRIBUTE_TRACE_ID;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.util.Map.of;
@@ -106,7 +109,7 @@ public class IdCardController {
     private ResponseEntity<Map<String, String>> createErrorResponse(ErrorCode errorCode, String logMessage, HttpStatus httpStatus) {
         log.warn(append("error.code", errorCode.name()), "OCSP validation failed: {}", value("error.message", logMessage));
         String errorMessage = messageSource.getMessage(errorCode.getMessage(), null, getLocale());
-        return ResponseEntity.status(httpStatus).body(of("status", "ERROR", "errorMessage", errorMessage));
+        return ResponseEntity.status(httpStatus).body(of("status", "ERROR", "message", errorMessage, ERROR_ATTR_INCIDENT_NR, MDC.get(MDC_ATTRIBUTE_TRACE_ID)));
     }
 
     private void validateEncodedCertificate(String encodedCertificate) {

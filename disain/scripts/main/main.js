@@ -132,7 +132,6 @@ jQuery(function ($) {
 		var xhttp = new XMLHttpRequest();
 		xhttp.onreadystatechange = function() {
 			if (this.readyState !== 4) return;
-
 			if (this.status == 200 || this.responseText == '{"status":"COMPLETED"}') {
 			    $('#idCardForm').submit();
 			} else if (this.status == 400 || this.status == 502) {
@@ -140,17 +139,30 @@ jQuery(function ($) {
 			    showAlert($('#idCardForm .alert-popup'));
                 var errorMessageTitle = $('#idCardForm .alert-popup #error-message-title');
                 var errorMessage = $('#idCardForm .alert-popup #error-message');
+                var incidentNumber = $('#idCardForm .alert-popup #error-incident-number');
 
                 errorMessageTitle.text(errorMessageTitle.text());
-                errorMessage.text(jsonResponse.errorMessage);
+                errorMessage.text(jsonResponse.message);
+                incidentNumber.text(jsonResponse.incident_nr);
+                $('#idCardForm .alert-popup #error-incident-number-wrapper').show();
 
                 _this.prop('disabled', false);
 			} else {
-			    showAlert($('#idCardForm .alert-popup'));
-                var errorMessageTitle = $('#idCardForm .alert-popup #error-message-title');
+			    var errorMessageTitle = $('#idCardForm .alert-popup #error-message-title');
                 var errorMessage = $('#idCardForm .alert-popup #error-message');
-                errorMessageTitle.text(errorMessageTitle.text());
-                errorMessage.text(errorMessage.text());
+                var incidentNumber = $('#idCardForm .alert-popup #error-incident-number');
+			    showAlert($('#idCardForm .alert-popup'));
+			    if (this.responseText) {
+			        var jsonResponse = JSON.parse(this.responseText);
+                    errorMessageTitle.text(errorMessageTitle.text());
+                    errorMessage.text(jsonResponse.message);
+                    incidentNumber.text(jsonResponse.incident_nr);
+                    $('#idCardForm .alert-popup #error-incident-number-wrapper').show();
+			    } else {
+                    errorMessageTitle.text(errorMessageTitle.text());
+                    errorMessage.text(errorMessage.text());
+                    $('#idCardForm .alert-popup #error-incident-number-wrapper').hide();
+			    }
 
                 _this.prop('disabled', false);
 			}
