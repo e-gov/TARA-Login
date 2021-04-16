@@ -23,9 +23,11 @@ import java.util.Locale;
 
 import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_LOCALE;
 import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_LOGIN_CHALLENGE;
+import static ee.ria.taraauthserver.error.ErrorCode.INTERNAL_ERROR;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static net.logstash.logback.marker.Markers.append;
+import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import static org.springframework.web.servlet.i18n.SessionLocaleResolver.LOCALE_SESSION_ATTRIBUTE_NAME;
 
 @Slf4j
@@ -61,7 +63,9 @@ public class ErrorHandler {
         if (ex instanceof TaraException &&
                 taraSession.getAuthenticationResult() != null &&
                 taraSession.getAuthenticationResult().getErrorCode() == null) {
-            taraSession.getAuthenticationResult().setErrorCode(((TaraException) ex).getErrorCode());
+            taraSession.getAuthenticationResult().setErrorCode(defaultIfNull(((TaraException) ex).getErrorCode(), INTERNAL_ERROR));
+        } else if(taraSession.getAuthenticationResult() != null) {
+            taraSession.getAuthenticationResult().setErrorCode(INTERNAL_ERROR);
         }
     }
 

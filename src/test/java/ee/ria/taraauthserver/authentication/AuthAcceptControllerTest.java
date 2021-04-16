@@ -1,13 +1,17 @@
 package ee.ria.taraauthserver.authentication;
 
 import ee.ria.taraauthserver.BaseTest;
+import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.MockTaraSessionBuilder;
 import lombok.extern.slf4j.Slf4j;
+import net.logstash.logback.marker.ObjectFieldsAppendingMarker;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 
+import static ch.qos.logback.classic.Level.ERROR;
+import static ch.qos.logback.classic.Level.INFO;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static ee.ria.taraauthserver.session.MockSessionFilter.*;
 import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.MOCK_LOGIN_CHALLENGE;
@@ -15,6 +19,7 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static io.restassured.RestAssured.given;
 import static java.util.List.of;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
 public class AuthAcceptControllerTest extends BaseTest {
@@ -70,6 +75,10 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED]");
+        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLogged(StatisticsLogger.class, ERROR, "Authentication result: AUTHENTICATION_FAILED");
+        assertEquals("StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, " +
+                        "ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=SESSION_STATE_INVALID)",
+                statisticsMarker.toStringSelf());
     }
 
     @Test
@@ -95,6 +104,10 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
 
         assertErrorIsLogged("HTTP client exception");
+        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLogged(StatisticsLogger.class, ERROR, "Authentication result: AUTHENTICATION_FAILED");
+        assertEquals("StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, " +
+                        "ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)",
+                statisticsMarker.toStringSelf());
     }
 
     @Test
@@ -120,6 +133,10 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
 
         assertErrorIsLogged("Server encountered an unexpected error: Invalid OIDC server response. Redirect URL missing from response.");
+        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLogged(StatisticsLogger.class, ERROR, "Authentication result: AUTHENTICATION_FAILED");
+        assertEquals("StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, " +
+                        "ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)",
+                statisticsMarker.toStringSelf());
     }
 
     @Test
@@ -145,6 +162,11 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(302)
                 .header("Location", Matchers.endsWith("some/test/url"));
+
+        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLogged(StatisticsLogger.class, INFO, "Authentication result: AUTHENTICATION_SUCCESS");
+        assertEquals("StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, " +
+                        "ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null)",
+                statisticsMarker.toStringSelf());
     }
 
     @Test
@@ -221,5 +243,9 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .statusCode(500);
 
         assertErrorIsLogged("Server encountered an unexpected error: I/O error on PUT request for \"https://localhost:9877/oauth2/auth/requests/login/accept\": Read timed out; nested exception is java.net.SocketTimeoutException: Read timed out");
+        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLogged(StatisticsLogger.class, ERROR, "Authentication result: AUTHENTICATION_FAILED");
+        assertEquals("StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, " +
+                        "ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)",
+                statisticsMarker.toStringSelf());
     }
 }

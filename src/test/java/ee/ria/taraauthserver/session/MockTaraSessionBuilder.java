@@ -24,7 +24,7 @@ import static java.util.Objects.requireNonNullElseGet;
 public class MockTaraSessionBuilder {
     public static final String MOCK_LOGIN_CHALLENGE = "abcdefg098AAdsCC";
     public static final String MOCK_CLIENT_ID = "openIdDemo";
-    public static final String MOCK_CLIENT_NAME = "institution.name";
+    public static final String MOCK_INSTITUTION_REGISTRY_CODE = "10001234";
     public static final String MOCK_CLIENT_NAME_EN = "institution.name.en";
     public static final String MOCK_CLIENT_LEGACY_URL = "http://legacy.url";
     public static final String MOCK_CLIENT_NAME_ET = "institution.name.et";
@@ -47,6 +47,7 @@ public class MockTaraSessionBuilder {
         TaraSession.Client client = new TaraSession.Client();
         TaraSession.MetaData metaData = new TaraSession.MetaData();
         TaraSession.OidcClient oidcClient = new TaraSession.OidcClient();
+        TaraSession.Institution institution = new TaraSession.Institution();
         taraSession.setLegalPersonList(legalPersonList);
 
         lri.setChallenge(MOCK_LOGIN_CHALLENGE);
@@ -54,6 +55,9 @@ public class MockTaraSessionBuilder {
             lri.setRequestedScopes(requestedScopes);
         }
         client.setClientId(MOCK_CLIENT_ID);
+        institution.setRegistryCode(MOCK_INSTITUTION_REGISTRY_CODE);
+        institution.setSector("public");
+        oidcClient.setInstitution(institution);
         metaData.setOidcClient(oidcClient);
         client.setMetaData(metaData);
         client.setScope(clientAllowedScopes == null ? "" : join(" ", clientAllowedScopes));

@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.logging;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.error.ErrorCode;
+import ee.ria.taraauthserver.logging.StatisticsLogger.SessionStatistics.SessionStatisticsBuilder;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraSession.AuthenticationResult;
@@ -27,37 +28,45 @@ public class StatisticsLogger {
         if (taraSession != null && taraSession.getLoginRequestInfo() != null) {
             TaraAuthenticationState state = getState(taraSession);
             if (state != null) {
-
-                LoginRequestInfo loginRequestInfo = taraSession.getLoginRequestInfo();
-                LegalPerson selectedLegalPerson = taraSession.getSelectedLegalPerson();
-                SessionStatistics.SessionStatisticsBuilder sessionStatisticsBuilder = SessionStatistics.builder()
-                        .clientId(loginRequestInfo.getClientId())
-                        .authenticationState(state)
-                        .legalPerson(selectedLegalPerson != null);
-                loginRequestInfo.getInstitution().ifPresent(i -> {
-                    sessionStatisticsBuilder.registryCode(i.getRegistryCode());
-                    sessionStatisticsBuilder.sector(i.getSector());
-                });
-
-                AuthenticationResult authenticationResult = taraSession.getAuthenticationResult();
-                if (authenticationResult != null) {
-                    String idCode = selectedLegalPerson == null ? authenticationResult.getIdCode() : selectedLegalPerson.getLegalPersonIdentifier();
-                    sessionStatisticsBuilder
-                            .country(authenticationResult.getCountry())
-                            .idCode(idCode)
-                            .authenticationType(authenticationResult.getAmr())
-                            .errorCode(authenticationResult.getErrorCode());
-                    if (authenticationResult.getAmr() == AuthenticationType.ID_CARD) {
-                        sessionStatisticsBuilder.ocspUrl(((TaraSession.IdCardAuthenticationResult) authenticationResult).getOcspUrl());
-                    }
-                }
-
-                SessionStatistics sessionStatistics = sessionStatisticsBuilder.build();
+                SessionStatisticsBuilder statisticsBuilder = SessionStatistics.builder();
+                processAuthenticationRequest(taraSession, state, statisticsBuilder);
+                processAuthenticationResult(taraSession, statisticsBuilder);
+                SessionStatistics sessionStatistics = statisticsBuilder.build();
                 if (ex == null) {
                     log.info(appendFields(sessionStatistics), "Authentication result: {}", taraSession.getState());
                 } else {
                     log.error(appendFields(sessionStatistics), "Authentication result: " + taraSession.getState(), ex);
                 }
+            }
+        }
+    }
+
+    private SessionStatisticsBuilder processAuthenticationRequest(TaraSession taraSession, TaraAuthenticationState state, SessionStatisticsBuilder statisticsBuilder) {
+        LoginRequestInfo loginRequestInfo = taraSession.getLoginRequestInfo();
+        LegalPerson selectedLegalPerson = taraSession.getSelectedLegalPerson();
+        statisticsBuilder
+                .clientId(loginRequestInfo.getClientId())
+                .authenticationState(state)
+                .legalPerson(selectedLegalPerson != null);
+        loginRequestInfo.getInstitution().ifPresent(i -> {
+            statisticsBuilder.registryCode(i.getRegistryCode());
+            statisticsBuilder.sector(i.getSector());
+        });
+        return statisticsBuilder;
+    }
+
+    private void processAuthenticationResult(TaraSession taraSession, SessionStatisticsBuilder sessionStatisticsBuilder) {
+        AuthenticationResult authenticationResult = taraSession.getAuthenticationResult();
+        LegalPerson selectedLegalPerson = taraSession.getSelectedLegalPerson();
+        if (authenticationResult != null) {
+            String idCode = selectedLegalPerson == null ? authenticationResult.getIdCode() : selectedLegalPerson.getLegalPersonIdentifier();
+            sessionStatisticsBuilder
+                    .country(authenticationResult.getCountry())
+                    .idCode(idCode)
+                    .authenticationType(authenticationResult.getAmr())
+                    .errorCode(authenticationResult.getErrorCode());
+            if (authenticationResult.getAmr() == AuthenticationType.ID_CARD) {
+                sessionStatisticsBuilder.ocspUrl(((TaraSession.IdCardAuthenticationResult) authenticationResult).getOcspUrl());
             }
         }
     }
