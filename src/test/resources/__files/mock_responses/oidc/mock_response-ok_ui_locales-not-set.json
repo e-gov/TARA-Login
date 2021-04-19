@@ -41,6 +41,7 @@
           "ru": "short test client ru"
         },
         "institution": {
+          "registry_code": "70006317",
           "sector": "public"
         },
         "smartid_settings": {

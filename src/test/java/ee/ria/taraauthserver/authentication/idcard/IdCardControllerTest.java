@@ -385,7 +385,7 @@ class IdCardControllerTest extends BaseTest {
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
 
-        assertEquals(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT, taraSession.getState());
+        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertWarningIsLogged("OCSP validation failed: Invalid certificate status <UNKNOWN> received");
     }
 

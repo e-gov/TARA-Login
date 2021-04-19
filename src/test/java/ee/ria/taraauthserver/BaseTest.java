@@ -15,6 +15,9 @@ import io.restassured.config.SessionConfig;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import lombok.extern.slf4j.Slf4j;
+import net.logstash.logback.marker.LogstashMarker;
+import net.logstash.logback.marker.ObjectAppendingMarker;
+import net.logstash.logback.marker.ObjectFieldsAppendingMarker;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.AfterEach;
@@ -40,6 +43,8 @@ import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInRelativeOrder;
+import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
@@ -199,5 +204,27 @@ public abstract class BaseTest {
 
         assertThat("Expected log messages not found in output.\n\tExpected log messages: " + List.of(messagesInRelativeOrder) + ",\n\tActual log messages: " + events, events, containsInRelativeOrder(stream(messagesInRelativeOrder)
                 .map(CoreMatchers::startsWith).toArray(Matcher[]::new)));
+    }
+
+    protected void assertMessageNotIsLogged(Class<?> loggerClass, String message) {
+        String loggedMessage = mockAppender.list.stream()
+                .filter(e -> (loggerClass == null || e.getLoggerName().equals(loggerClass.getCanonicalName())))
+                .map(ILoggingEvent::getFormattedMessage)
+                .filter(msg -> msg.equals(message))
+                .findFirst()
+                .orElse(null);
+        assertNull(loggedMessage);
+    }
+
+    protected ObjectFieldsAppendingMarker assertMessageWithMarkerIsLoggedOnce(Class<?> loggerClass, Level loggingLevel, String message) {
+        List<ObjectFieldsAppendingMarker> markers = mockAppender.list.stream()
+                .filter(e -> e.getLevel() == loggingLevel &&
+                        (loggerClass == null || e.getLoggerName().equals(loggerClass.getCanonicalName())) &&
+                        e.getFormattedMessage().equals(message))
+                .map(e -> (ObjectFieldsAppendingMarker) e.getMarker())
+                .collect(toList());
+        assertNotNull(markers);
+        assertThat(markers, hasSize(1));
+        return markers.get(0);
     }
 }

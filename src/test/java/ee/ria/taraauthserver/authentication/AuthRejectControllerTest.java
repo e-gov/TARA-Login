@@ -1,10 +1,13 @@
 package ee.ria.taraauthserver.authentication;
 
 import ee.ria.taraauthserver.BaseTest;
+import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
+import net.logstash.logback.marker.ObjectFieldsAppendingMarker;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -12,11 +15,13 @@ import org.springframework.http.MediaType;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
+import static ch.qos.logback.classic.Level.INFO;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.MOCK_LOGIN_CHALLENGE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 @Slf4j
@@ -70,6 +75,7 @@ class AuthRejectControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "LOG_EVENT_UNIQUE_STATUS")
     void authReject_success() {
         wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/reject?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
@@ -94,6 +100,11 @@ class AuthRejectControllerTest extends BaseTest {
         assertInfoIsLogged("Tara session state change: NOT_SET -> AUTHENTICATION_CANCELED");
         assertWarningIsLogged("Session has been invalidated: " + sessionId);
         assertInfoIsLogged("Session is removed from cache: " + sessionId);
+
+        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, INFO, "Authentication result: AUTHENTICATION_CANCELED");
+        assertEquals("StatisticsLogger.SessionStatistics(clientId=null, sector=null, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, " +
+                        "authenticationType=null, authenticationState=AUTHENTICATION_CANCELED, errorCode=null)",
+                statisticsMarker.toStringSelf());
     }
 
     @Test

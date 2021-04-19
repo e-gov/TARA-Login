@@ -135,6 +135,7 @@ public class SmartIdController {
 
             taraSession.setState(POLL_SID_STATUS);
             TaraSession.SidAuthenticationResult sidAuthenticationResult = new TaraSession.SidAuthenticationResult(sidSessionId);
+            sidAuthenticationResult.setAmr(AuthenticationType.SMART_ID);
             taraSession.setAuthenticationResult(sidAuthenticationResult);
 
             return sidSessionId;
