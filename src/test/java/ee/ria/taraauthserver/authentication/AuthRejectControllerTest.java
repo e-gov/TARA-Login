@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.marker.ObjectFieldsAppendingMarker;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -74,6 +75,7 @@ class AuthRejectControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "LOG_EVENT_UNIQUE_STATUS")
     void authReject_success() {
         wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/reject?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
@@ -99,7 +101,7 @@ class AuthRejectControllerTest extends BaseTest {
         assertWarningIsLogged("Session has been invalidated: " + sessionId);
         assertInfoIsLogged("Session is removed from cache: " + sessionId);
 
-        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLogged(StatisticsLogger.class, INFO, "Authentication result: AUTHENTICATION_CANCELED");
+        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, INFO, "Authentication result: AUTHENTICATION_CANCELED");
         assertEquals("StatisticsLogger.SessionStatistics(clientId=null, sector=null, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, " +
                         "authenticationType=null, authenticationState=AUTHENTICATION_CANCELED, errorCode=null)",
                 statisticsMarker.toStringSelf());

@@ -61,6 +61,7 @@ public class AuthAcceptControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "ACCEPT_LOGIN")
+    @Tag(value = "LOG_EVENT_UNIQUE_STATUS")
     void authAccept_incorrectSessionState() {
         given()
                 .filter(withTaraSession()
@@ -75,7 +76,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED]");
-        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLogged(StatisticsLogger.class, ERROR, "Authentication result: AUTHENTICATION_FAILED");
+        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, ERROR, "Authentication result: AUTHENTICATION_FAILED");
         assertEquals("StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, " +
                         "ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=SESSION_STATE_INVALID)",
                 statisticsMarker.toStringSelf());
@@ -83,6 +84,7 @@ public class AuthAcceptControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "ACCEPT_LOGIN")
+    @Tag(value = "LOG_EVENT_UNIQUE_STATUS")
     void authAccept_OidcServerInvalidResponse_BadRequest() {
         wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
@@ -104,7 +106,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
 
         assertErrorIsLogged("HTTP client exception");
-        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLogged(StatisticsLogger.class, ERROR, "Authentication result: AUTHENTICATION_FAILED");
+        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, ERROR, "Authentication result: AUTHENTICATION_FAILED");
         assertEquals("StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, " +
                         "ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)",
                 statisticsMarker.toStringSelf());
@@ -112,6 +114,7 @@ public class AuthAcceptControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "ACCEPT_LOGIN")
+    @Tag(value = "LOG_EVENT_UNIQUE_STATUS")
     void authAccept_OidcServerInvalidResponse_MissingRedirectUrl() {
         wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
@@ -133,7 +136,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
 
         assertErrorIsLogged("Server encountered an unexpected error: Invalid OIDC server response. Redirect URL missing from response.");
-        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLogged(StatisticsLogger.class, ERROR, "Authentication result: AUTHENTICATION_FAILED");
+        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, ERROR, "Authentication result: AUTHENTICATION_FAILED");
         assertEquals("StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, " +
                         "ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)",
                 statisticsMarker.toStringSelf());
@@ -142,6 +145,7 @@ public class AuthAcceptControllerTest extends BaseTest {
     @Test
     @Tag(value = "ACCEPT_LOGIN")
     @Tag(value = "AUTH_ACCEPT_LOGIN_ENDPOINT")
+    @Tag(value = "LOG_EVENT_UNIQUE_STATUS")
     void authAccept_NaturalPersonAuthenticationComplete_Redirected() {
         wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
@@ -163,7 +167,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .statusCode(302)
                 .header("Location", Matchers.endsWith("some/test/url"));
 
-        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLogged(StatisticsLogger.class, INFO, "Authentication result: AUTHENTICATION_SUCCESS");
+        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, INFO, "Authentication result: AUTHENTICATION_SUCCESS");
         assertEquals("StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, " +
                         "ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null)",
                 statisticsMarker.toStringSelf());
@@ -221,6 +225,7 @@ public class AuthAcceptControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "ACCEPT_LOGIN")
+    @Tag(value = "LOG_EVENT_UNIQUE_STATUS")
     void authAccept_oidcServerTimeout() {
         wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
@@ -243,7 +248,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .statusCode(500);
 
         assertErrorIsLogged("Server encountered an unexpected error: I/O error on PUT request for \"https://localhost:9877/oauth2/auth/requests/login/accept\": Read timed out; nested exception is java.net.SocketTimeoutException: Read timed out");
-        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLogged(StatisticsLogger.class, ERROR, "Authentication result: AUTHENTICATION_FAILED");
+        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, ERROR, "Authentication result: AUTHENTICATION_FAILED");
         assertEquals("StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, " +
                         "ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)",
                 statisticsMarker.toStringSelf());

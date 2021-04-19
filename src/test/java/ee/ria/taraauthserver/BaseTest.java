@@ -43,8 +43,8 @@ import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInRelativeOrder;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
@@ -206,15 +206,25 @@ public abstract class BaseTest {
                 .map(CoreMatchers::startsWith).toArray(Matcher[]::new)));
     }
 
-    protected ObjectFieldsAppendingMarker assertMessageWithMarkerIsLogged(Class<?> loggerClass, Level loggingLevel, String message) {
-        ObjectFieldsAppendingMarker marker = mockAppender.list.stream()
+    protected void assertMessageNotIsLogged(Class<?> loggerClass, String message) {
+        String loggedMessage = mockAppender.list.stream()
+                .filter(e -> (loggerClass == null || e.getLoggerName().equals(loggerClass.getCanonicalName())))
+                .map(ILoggingEvent::getFormattedMessage)
+                .filter(msg -> msg.equals(message))
+                .findFirst()
+                .orElse(null);
+        assertNull(loggedMessage);
+    }
+
+    protected ObjectFieldsAppendingMarker assertMessageWithMarkerIsLoggedOnce(Class<?> loggerClass, Level loggingLevel, String message) {
+        List<ObjectFieldsAppendingMarker> markers = mockAppender.list.stream()
                 .filter(e -> e.getLevel() == loggingLevel &&
                         (loggerClass == null || e.getLoggerName().equals(loggerClass.getCanonicalName())) &&
                         e.getFormattedMessage().equals(message))
                 .map(e -> (ObjectFieldsAppendingMarker) e.getMarker())
-                .findFirst()
-                .orElse(null);
-        assertNotNull(marker);
-        return marker;
+                .collect(toList());
+        assertNotNull(markers);
+        assertThat(markers, hasSize(1));
+        return markers.get(0);
     }
 }
