@@ -1,9 +1,12 @@
 package ee.ria.taraauthserver.health;
 
 import ee.ria.taraauthserver.BaseTest;
+import org.apache.ignite.Ignite;
+import org.apache.ignite.cluster.ClusterState;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -27,6 +30,9 @@ public class ApplicationHealthEndpointTest extends BaseTest {
 
     @MockBean
     protected BuildProperties buildProperties;
+
+    @Autowired
+    private Ignite ignite;
 
     @MockBean
     protected GitProperties gitProperties;
@@ -60,10 +66,12 @@ public class ApplicationHealthEndpointTest extends BaseTest {
                 .body("status", equalTo("UP"))
                 .body("name", equalTo("tara-auth-server"))
                 .body("buildTime", equalTo(testTime.toString()))
-                .body("dependencies[0].name", equalTo("oidcServer"))
+                .body("dependencies[0].name", equalTo("ignite"))
                 .body("dependencies[0].status", equalTo("UP"))
-                .body("dependencies[1].name", equalTo("truststore"))
-                .body("dependencies[1].status", equalTo("UP"));
+                .body("dependencies[1].name", equalTo("oidcServer"))
+                .body("dependencies[1].status", equalTo("UP"))
+                .body("dependencies[2].name", equalTo("truststore"))
+                .body("dependencies[2].status", equalTo("UP"));
     }
 
     @Test
@@ -80,8 +88,8 @@ public class ApplicationHealthEndpointTest extends BaseTest {
                 .assertThat()
                 .statusCode(503)
                 .body("status", equalTo("DOWN"))
-                .body("dependencies[0].name", equalTo("oidcServer"))
-                .body("dependencies[0].status", equalTo("DOWN"));
+                .body("dependencies[1].name", equalTo("oidcServer"))
+                .body("dependencies[1].status", equalTo("DOWN"));
     }
 
     @Test
@@ -102,8 +110,8 @@ public class ApplicationHealthEndpointTest extends BaseTest {
                 .statusCode(200)
                 .body("status", equalTo("UP"))
                 .body("warnings[0]", equalTo("Truststore certificate 'EMAILADDRESS=pki@sk.ee, CN=TEST of ESTEID-SK 2011, O=AS Sertifitseerimiskeskus, C=EE' with serial number '99797407197858021528704268478232071100' is expiring at 2023-09-07T12:06:09Z"))
-                .body("dependencies[0].name", equalTo("oidcServer"))
-                .body("dependencies[0].status", equalTo("UP"));
+                .body("dependencies[1].name", equalTo("oidcServer"))
+                .body("dependencies[1].status", equalTo("UP"));
     }
 
     @Test
@@ -124,8 +132,31 @@ public class ApplicationHealthEndpointTest extends BaseTest {
                 .statusCode(200)
                 .body("status", equalTo("UP"))
                 .body("warnings[0]", equalTo("Truststore certificate 'EMAILADDRESS=pki@sk.ee, CN=TEST of ESTEID-SK 2011, O=AS Sertifitseerimiskeskus, C=EE' with serial number '99797407197858021528704268478232071100' is expiring at 2023-09-07T12:06:09Z"))
-                .body("dependencies[1].name", equalTo("truststore"))
-                .body("dependencies[1].status", equalTo("UNKNOWN"));
+                .body("dependencies[2].name", equalTo("truststore"))
+                .body("dependencies[2].status", equalTo("UNKNOWN"));
+    }
+
+    @Test
+    @Tag(value = "HEALTH_MONITORING_ENDPOINT")
+    @Tag(value = "HEALTH_MONITORING_STATUS")
+    void applicationHealth_when_ignite_is_down() {
+
+        wireMockServer.stubFor(any(urlPathEqualTo("/health/ready"))
+                .willReturn(aResponse().withStatus(200)));
+
+        ignite.cluster().state(ClusterState.INACTIVE);
+
+        given()
+                .when()
+                .get("/heartbeat")
+                .then()
+                .assertThat()
+                .statusCode(503)
+                .body("status", equalTo("DOWN"))
+                .body("dependencies[0].name", equalTo("ignite"))
+                .body("dependencies[0].status", equalTo("DOWN"));
+
+        ignite.cluster().state(ClusterState.ACTIVE);
     }
 
 }
