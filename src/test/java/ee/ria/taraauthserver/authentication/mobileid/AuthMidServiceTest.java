@@ -191,7 +191,7 @@ public class AuthMidServiceTest extends BaseTest {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_empty_response.json", 400);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertWarningIsLogged("Mobile-ID polling failed: HTTP 400 Bad Request");
+        assertErrorIsLogged("Mobile-ID polling failed with general error");
         assertEquals(ERROR_GENERAL, taraSession.getAuthenticationResult().getErrorCode());
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
@@ -203,7 +203,7 @@ public class AuthMidServiceTest extends BaseTest {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_empty_response.json", 401);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertWarningIsLogged("Mobile-ID polling failed: HTTP 401 Unauthorized");
+        assertErrorIsLogged("Mobile-ID polling failed with general error");
         assertEquals(ERROR_GENERAL, taraSession.getAuthenticationResult().getErrorCode());
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
@@ -227,7 +227,7 @@ public class AuthMidServiceTest extends BaseTest {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_empty_response.json", 405);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertWarningIsLogged("Mobile-ID polling failed: HTTP 405 Method Not Allowed");
+        assertErrorIsLogged("Mobile-ID polling failed with general error");
         assertEquals(ERROR_GENERAL, taraSession.getAuthenticationResult().getErrorCode());
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
