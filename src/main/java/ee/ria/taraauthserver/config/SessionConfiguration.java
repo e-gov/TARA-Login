@@ -51,7 +51,7 @@ public class SessionConfiguration {
     @Bean
     public FilterRegistrationBean<SessionManagementFilter> sessionManagementFilter(@Value("${spring.session.servlet.filter-order}") Integer filterOrder) {
         FilterRegistrationBean<SessionManagementFilter> registrationBean = new FilterRegistrationBean<>();
-        //registrationBean.setUrlPatterns(of("/auth/**"));
+        registrationBean.setUrlPatterns(of("/auth/*"));
         registrationBean.setFilter(new SessionManagementFilter());
         registrationBean.setOrder(filterOrder + 1);
         return registrationBean;
