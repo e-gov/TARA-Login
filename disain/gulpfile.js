@@ -21,11 +21,11 @@ config = {
     JS_LEGALPERSON: './scripts/legalperson/**/*.js'
   },
   DEST: {
-    ICO: '../src/main/resources/static/',
-    IMG: '../src/main/resources/static/assets/',
-    FONTS: '../src/main/resources/static/fonts/',
-    CSS: '../src/main/resources/static/styles/',
-    JS: '../src/main/resources/static/scripts/'
+    ICO: '../src/main/resources/static/TARA2',
+    IMG: '../src/main/resources/static/TARA2/assets/',
+    FONTS: '../src/main/resources/static/TARA2/fonts/',
+    CSS: '../src/main/resources/static/TARA2/styles/',
+    JS: '../src/main/resources/static/TARA2/scripts/'
   }
 }
 
