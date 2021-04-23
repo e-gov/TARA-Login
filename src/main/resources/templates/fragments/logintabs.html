@@ -52,7 +52,7 @@
    th:lang="${lang}"
    th:data-tab="${tab_id}">
     <span class="c-tab-login__nav-label">
-        <span th:class="'icon icon-' + ${tab_id}"><img th:src="'/TARA2/assets/' + ${suffix} + '-icon.png'"
+        <span th:class="'icon icon-' + ${tab_id}"><img th:src="@{'/content/assets/' + ${suffix} + '-icon.png'}"
                                                        alt=""></span>
         <span th:text="${#messages.msg('label.' + tab_id + '.title')}"/>
     </span>
