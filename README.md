@@ -412,6 +412,10 @@ Response:
 	"commitBranch": "develop",
 	"status": "UP",
 	"dependencies": [
+	    {
+			"name": "ignite",
+			"status": "UP"
+		},
 		{
 			"name": "oidcServer",
 			"status": "UP"
