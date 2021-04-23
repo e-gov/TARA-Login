@@ -57,7 +57,7 @@ public class OCSPValidator {
     @Autowired
     private final OCSPConfigurationResolver ocspConfigurationResolver;
 
-    public void checkCert(X509Certificate userCert) {
+    public Ocsp checkCert(X509Certificate userCert) {
         Assert.notNull(userCert, "User certificate cannot be null!");
         log.info("OCSP certificate validation. Serialnumber=<{}>, SubjectDN=<{}>, issuerDN=<{}>",
                 value("x509.serial_number", userCert.getSerialNumber().toString()),
@@ -76,7 +76,7 @@ public class OCSPValidator {
                     log.info(append("ocsp.conf", ocspConf), "Retrying OCSP request to: {}", value("url.full", ocspConf.getUrl()));
                 }
                 checkCert(userCert, ocspConf);
-                return;
+                return ocspConf;
             } catch (OCSPServiceNotAvailableException e) {
                 log.error("OCSP request has failed: {}", e.getMessage(), e);
                 if (++count == maxTries) throw e;

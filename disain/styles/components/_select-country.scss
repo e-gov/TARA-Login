@@ -112,6 +112,9 @@
   &[data-value="SK"] {
     background-image: url('../assets/flags/sk.svg');
   }
+  &[data-value="CA"] {
+    background-image: url('../assets/flags/eu.svg');
+  }
 }
 .selectize-dropdown .option {
   padding-left: 66px;

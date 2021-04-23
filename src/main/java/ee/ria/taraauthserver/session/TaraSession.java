@@ -23,6 +23,8 @@ import java.net.URL;
 import java.time.LocalDate;
 import java.util.*;
 
+import static ee.ria.taraauthserver.config.properties.TaraScope.EMAIL;
+import static ee.ria.taraauthserver.config.properties.TaraScope.PHONE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.stream;
 import static java.util.List.of;
@@ -48,9 +50,11 @@ public class TaraSession implements Serializable {
     private String consentChallenge;
 
     public void setState(TaraAuthenticationState newState) {
-        log.info(append("tara.session.session_id", this.sessionId), "Tara session state change: {} -> {}",
-                value("tara.session.old_state", state != null ? state.name() : "NOT_SET"),
-                value("tara.session.state", newState.name()));
+        if (state == null || !state.equals(newState)) {
+            log.info("Tara session state change: {} -> {}",
+                    value("tara.session.old_state", state != null ? state.name() : "NOT_SET"),
+                    value("tara.session.state", newState.name()));
+        }
         this.state = newState;
     }
 
@@ -66,18 +70,26 @@ public class TaraSession implements Serializable {
     }
 
     public boolean isEmailScopeRequested() {
-        return getLoginRequestInfo().getRequestedScopes().contains(TaraScope.EMAIL.getFormalName());
+        return isScopeRequested(EMAIL);
     }
 
     public boolean isPhoneNumberScopeRequested() {
-        return getLoginRequestInfo().getRequestedScopes().contains(TaraScope.PHONE.getFormalName());
+        return isScopeRequested(PHONE);
+    }
+
+    public boolean isScopeRequested(TaraScope scope) {
+        return Optional.of(this)
+                .map(TaraSession::getLoginRequestInfo)
+                .map(TaraSession.LoginRequestInfo::getRequestedScopes)
+                .filter(scopes -> scopes.contains(scope.getFormalName()))
+                .stream().findFirst().isPresent();
     }
 
     @Data
     public static class AuthenticationResult implements Serializable {
         private String email;
         private String idCode;
-        private String country;
+        private String country = "EE";
         private String firstName;
         private String lastName;
         private String phoneNumber;
@@ -86,6 +98,14 @@ public class TaraSession implements Serializable {
         private AuthenticationType amr;
         private LevelOfAssurance acr; //TODO acr vs LevelOfAssurance vs loa, choose one
         private ErrorCode errorCode;
+    }
+
+
+    @Data
+    @EqualsAndHashCode(callSuper = true)
+    @RequiredArgsConstructor
+    public static class IdCardAuthenticationResult extends AuthenticationResult {
+        private String ocspUrl;
     }
 
     @Data
@@ -132,6 +152,21 @@ public class TaraSession implements Serializable {
                     .map(NameValuePair::getValue)
                     .findFirst()
                     .orElse("not set");
+        }
+
+        public String getClientId() {
+            return Optional.of(this)
+                    .map(TaraSession.LoginRequestInfo::getClient)
+                    .map(TaraSession.Client::getClientId)
+                    .orElse(null);
+        }
+
+        public Optional<Institution> getInstitution() {
+            return Optional.of(this)
+                    .map(TaraSession.LoginRequestInfo::getClient)
+                    .map(TaraSession.Client::getMetaData)
+                    .map(TaraSession.MetaData::getOidcClient)
+                    .map(TaraSession.OidcClient::getInstitution);
         }
 
         public List<AuthenticationType> getAllowedAuthenticationMethodsList(AuthConfigurationProperties taraProperties) {
@@ -301,6 +336,10 @@ public class TaraSession implements Serializable {
 
     @Data
     public static class Institution implements Serializable {
+        @NotBlank
+        @JsonProperty("registry_code")
+        private String registryCode;
+
         @NotBlank
         @Pattern(regexp = "(private|public)", message = "invalid sector value, accepted values are: private, public")
         @JsonProperty("sector")

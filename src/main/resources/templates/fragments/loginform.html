@@ -83,6 +83,10 @@
                             </strong>
                         </p>
                         <span id="error-message" th:text="#{message.idc.does-id-card-exist}"/>
+                        <div id="error-incident-number-wrapper">
+                            <label th:text="#{label.error.incident-number('')}" for="error-incident-number"></label>
+                            <span id="error-incident-number"></span>
+                        </div>
                         <button role="button" class="close" th:aria-label="#{label.alert.close}" data-dismiss="alert">
                             <span aria-hidden="true">&times;</span></button>
                     </div>
@@ -252,4 +256,4 @@
         </symbol>
     </defs>
 </svg>
-<script src="/scripts/main.js" defer></script>
+<script th:src="@{/content/scripts/main.js}" defer></script>

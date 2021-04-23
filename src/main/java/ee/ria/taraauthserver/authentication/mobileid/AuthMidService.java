@@ -140,6 +140,7 @@ public class AuthMidService {
     private void updateAuthSessionWithInitResponse(TaraSession taraSession, MidAuthenticationResponse response) {
         taraSession.setState(POLL_MID_STATUS);
         TaraSession.MidAuthenticationResult midAuthenticationResult = new TaraSession.MidAuthenticationResult(response.getSessionID());
+        midAuthenticationResult.setAmr(AuthenticationType.MOBILE_ID);
         taraSession.setAuthenticationResult(midAuthenticationResult);
         log.info("Mobile-ID authentication process with MID session id {} has been initiated", response.getSessionID());
     }
@@ -211,9 +212,11 @@ public class AuthMidService {
             taraSession.setState(AUTHENTICATION_FAILED);
             ErrorCode errorCode = translateExceptionToErrorCode(ex);
             taraSession.getAuthenticationResult().setErrorCode(errorCode);
-            log.warn(append(TARA_SESSION, taraSession)
-                            .and(append("error.code", errorCode.name())),
-                    "Mobile-ID polling failed: {}", value("error.message", ex.getMessage()));
+            if(errorCode == ERROR_GENERAL) {
+                log.error(append("error.code", errorCode.name()), "Mobile-ID polling failed with general error", ex);
+            } else {
+                log.warn(append("error.code", errorCode.name()), "Mobile-ID polling failed: {}", value("error.message", ex.getMessage()));
+            }
             Session session = sessionRepository.findById(taraSession.getSessionId());
             if (session != null) {
                 session.setAttribute(TARA_SESSION, taraSession);

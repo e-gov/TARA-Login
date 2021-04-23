@@ -30,6 +30,8 @@ public enum ErrorCode {
     SID_USER_REFUSED_DISAPLAYTEXTANDPIN("message.smart-id.error.user-refused-display-text-and-pin"),
     SID_USER_ACCOUNT_NOT_FOUND("message.smart-id.error.user-account-not-found"),
     SID_USER_REFUSED_VC_CHOICE("message.smart-id.error.user-refused-vc-choice"),
+    SID_USER_REFUSED_CONFIRMATIONMESSAGE("message.smart-id.error.user-refused-confirmation-message"),
+    SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE("message.smart-id.error.user-refused-confirmation-message-with-vc-choice"),
     MID_INTEGRATION_ERROR("message.error.general"),
     MID_VALIDATION_ERROR("message.mid-rest.error.validation-error"),
     IDC_OCSP_NOT_AVAILABLE("message.idc.error.ocsp.not.available"),

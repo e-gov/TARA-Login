@@ -1,19 +1,20 @@
 package ee.ria.taraauthserver.authentication.idcard;
 
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
-import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.OCSPServiceNotAvailableException;
 import ee.ria.taraauthserver.error.exceptions.OCSPValidationException;
 import ee.ria.taraauthserver.session.SessionUtils;
-import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
+import ee.ria.taraauthserver.session.TaraSession.IdCardAuthenticationResult;
 import ee.ria.taraauthserver.utils.EstonianIdCodeUtil;
 import ee.ria.taraauthserver.utils.X509Utils;
 import ee.sk.mid.MidNationalIdentificationCodeValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.MessageSource;
@@ -28,14 +29,13 @@ import javax.servlet.http.HttpServletRequest;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static ee.ria.taraauthserver.authentication.idcard.CertificateStatus.REVOKED;
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
+import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_INCIDENT_NR;
 import static ee.ria.taraauthserver.error.ErrorCode.*;
+import static ee.ria.taraauthserver.security.RequestCorrelationFilter.MDC_ATTRIBUTE_TRACE_ID;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.util.Map.of;
@@ -67,62 +67,74 @@ public class IdCardController {
     @GetMapping(path = {AUTH_ID_REQUEST_MAPPING})
     public ResponseEntity<Map<String, String>> handleRequest(HttpServletRequest request, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
+        initIdCardAuthentication(taraSession);
 
-        String encodedCertificate = request.getHeader(HEADER_SSL_CLIENT_CERT);
-        validateEncodedCertificate(encodedCertificate);
-
-        X509Certificate certificate = X509Utils.toX509Certificate(encodedCertificate);
+        X509Certificate certificate = getCertificateFromRequest(taraSession, request);
         try {
             certificate.checkValidity();
         } catch (CertificateNotYetValidException ex) {
-            taraSession.setState(AUTHENTICATION_FAILED);
-            return createErrorResponse(IDC_CERT_NOT_YET_VALID, "User certificate is not yet valid", BAD_REQUEST);
+            return createErrorResponse(taraSession, IDC_CERT_NOT_YET_VALID, "User certificate is not yet valid", BAD_REQUEST);
         } catch (CertificateExpiredException ex) {
-            taraSession.setState(AUTHENTICATION_FAILED);
-            return createErrorResponse(IDC_CERT_EXPIRED, "User certificate is expired", BAD_REQUEST);
+            return createErrorResponse(taraSession, IDC_CERT_EXPIRED, "User certificate is expired", BAD_REQUEST);
         }
 
         taraSession.setState(NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT);
         if (configurationProperties.isOcspEnabled()) {
             try {
-                ocspValidator.checkCert(certificate);
+                Ocsp validatingOcspConf = ocspValidator.checkCert(certificate);
+                updateAuthenticationResult(taraSession, certificate, validatingOcspConf);
             } catch (OCSPServiceNotAvailableException ex) {
-                taraSession.setState(AUTHENTICATION_FAILED);
-                return createErrorResponse(IDC_OCSP_NOT_AVAILABLE, "OCSP service is currently not available", BAD_GATEWAY);
+                return createErrorResponse(taraSession, IDC_OCSP_NOT_AVAILABLE, "OCSP service is currently not available", BAD_GATEWAY);
             } catch (OCSPValidationException ex) {
-                CertificateStatus status = ex.getStatus();
-                ErrorCode errorCode = status == REVOKED ? IDC_REVOKED : IDC_UNKNOWN;
-                return createErrorResponse(errorCode, ex.getMessage(), BAD_REQUEST);
+                ErrorCode errorCode = ex.getStatus() == REVOKED ? IDC_REVOKED : IDC_UNKNOWN;
+                return createErrorResponse(taraSession, errorCode, ex.getMessage(), BAD_REQUEST);
             }
         } else {
             log.info("Skipping OCSP validation because OCSP is disabled.");
+            updateAuthenticationResult(taraSession, certificate, null);
         }
 
-        addAuthResultToSession(taraSession, certificate);
         return ResponseEntity.ok(of("status", "COMPLETED"));
     }
 
+    private void initIdCardAuthentication(TaraSession taraSession) {
+        IdCardAuthenticationResult authenticationResult = new IdCardAuthenticationResult();
+        authenticationResult.setAmr(AuthenticationType.ID_CARD);
+        taraSession.setAuthenticationResult(authenticationResult);
+    }
+
     @NotNull
-    private ResponseEntity<Map<String, String>> createErrorResponse(ErrorCode errorCode, String logMessage, HttpStatus httpStatus) {
+    private ResponseEntity<Map<String, String>> createErrorResponse(TaraSession taraSession, ErrorCode errorCode, String logMessage, HttpStatus httpStatus) {
         log.warn(append("error.code", errorCode.name()), "OCSP validation failed: {}", value("error.message", logMessage));
+        taraSession.setState(AUTHENTICATION_FAILED);
+        taraSession.getAuthenticationResult().setErrorCode(errorCode);
         String errorMessage = messageSource.getMessage(errorCode.getMessage(), null, getLocale());
-        return ResponseEntity.status(httpStatus).body(of("status", "ERROR", "errorMessage", errorMessage));
+        return ResponseEntity.status(httpStatus).body(of("status", "ERROR", "message", errorMessage, ERROR_ATTR_INCIDENT_NR, MDC.get(MDC_ATTRIBUTE_TRACE_ID)));
     }
 
-    private void validateEncodedCertificate(String encodedCertificate) {
-        if (encodedCertificate == null)
+    private X509Certificate getCertificateFromRequest(TaraSession taraSession, HttpServletRequest request) {
+        String encodedCertificate = request.getHeader(HEADER_SSL_CLIENT_CERT);
+        if (encodedCertificate == null) {
+            taraSession.getAuthenticationResult().setErrorCode(ESTEID_INVALID_REQUEST);
             throw new BadRequestException(ESTEID_INVALID_REQUEST, HEADER_SSL_CLIENT_CERT + " can not be null");
-        if (!StringUtils.hasLength(encodedCertificate))
+        }
+        if (!StringUtils.hasLength(encodedCertificate)) {
+            taraSession.getAuthenticationResult().setErrorCode(ESTEID_INVALID_REQUEST);
             throw new BadRequestException(ESTEID_INVALID_REQUEST, HEADER_SSL_CLIENT_CERT + " can not be an empty string");
+        }
+        return X509Utils.toX509Certificate(encodedCertificate);
     }
 
-    private void addAuthResultToSession(TaraSession taraSession, X509Certificate certificate) {
-
-        Map<String, String> params = getCertificateParams(certificate);
+    private void updateAuthenticationResult(TaraSession taraSession, X509Certificate certificate, Ocsp validatingOcspConf) {
+        Map<String, String> params = X509Utils.getCertificateParams(certificate);
         String idCode = EstonianIdCodeUtil.getEstonianIdCode(params.get(CN_SERIALNUMBER));
-        TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
+        IdCardAuthenticationResult authenticationResult = (IdCardAuthenticationResult) taraSession.getAuthenticationResult();
 
-        if (emailIsRequested(taraSession)) {
+        if (validatingOcspConf != null) {
+            authenticationResult.setOcspUrl(validatingOcspConf.getUrl());
+        }
+
+        if (taraSession.isEmailScopeRequested()) {
             String email = X509Utils.getRfc822NameSubjectAltName(certificate);
             authenticationResult.setEmail(email);
         }
@@ -132,28 +144,7 @@ public class IdCardController {
         authenticationResult.setCountry("EE");
         authenticationResult.setDateOfBirth(MidNationalIdentificationCodeValidator.getBirthDate(idCode));
         authenticationResult.setAcr(configurationProperties.getLevelOfAssurance());
-        authenticationResult.setAmr(AuthenticationType.ID_CARD);
         authenticationResult.setSubject(authenticationResult.getCountry() + authenticationResult.getIdCode());
-        taraSession.setState(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED);
-        taraSession.setAuthenticationResult(authenticationResult);
-    }
-
-    private boolean emailIsRequested(TaraSession taraSession) {
-        List<String> scopes = Optional.of(taraSession)
-                .map(TaraSession::getLoginRequestInfo)
-                .map(TaraSession.LoginRequestInfo::getRequestedScopes)
-                .orElse(null);
-        return scopes != null && scopes.contains(TaraScope.EMAIL.getFormalName());
-    }
-
-    @NotNull
-    private Map<String, String> getCertificateParams(X509Certificate certificate) {
-        String[] test1 = certificate.getSubjectDN().getName().split(", ");
-        Map<String, String> params = new HashMap<>();
-        for (String s : test1) {
-            String[] t = s.split("=");
-            params.put(t[0], t[1]);
-        }
-        return params;
+        taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
     }
 }

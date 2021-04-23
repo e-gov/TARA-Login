@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.authentication.eidas;
 
+import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
@@ -87,6 +88,7 @@ public class EidasController {
 
     private void updateSession(String country, TaraSession taraSession, String relayState) {
         TaraSession.EidasAuthenticationResult authenticationResult = new TaraSession.EidasAuthenticationResult();
+        authenticationResult.setAmr(AuthenticationType.EIDAS);
         authenticationResult.setRelayState(relayState);
         authenticationResult.setCountry(country);
         taraSession.setState(WAITING_EIDAS_RESPONSE);

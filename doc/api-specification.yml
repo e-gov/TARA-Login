@@ -1206,10 +1206,14 @@ components:
         status:
           type: string
           example: 'ERROR'
-        errorMessage:
+        message:
           type: string
           description: 'Human readable error message. Translated according to active locale in user session'
           example: 'Error description'
+        incident_nr:
+          type: string
+          description: 'Unique ID to identify the error in logs'
+          example: 'c6b00494c24db783dc950a95a17212c0'
     Dependency:
       type: object
       properties:

@@ -140,7 +140,7 @@ public class EidasCallbackController {
 
         TaraSession taraSession = session.getAttribute(TARA_SESSION);
         taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
-        TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
+        TaraSession.AuthenticationResult authenticationResult = taraSession.getAuthenticationResult();
         authenticationResult.setFirstName(response.getAttributes().getFirstName());
         authenticationResult.setLastName(response.getAttributes().getFamilyName());
         authenticationResult.setIdCode(getIdCodeFromPersonIdentifier(personIdentifierMatcher));

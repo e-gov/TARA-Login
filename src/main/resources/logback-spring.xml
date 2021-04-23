@@ -39,7 +39,7 @@
         </filter>
         <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
             <evaluator> <!-- defaults to type ch.qos.logback.classic.boolex.JaninoEventEvaluator -->
-                <expression>return logger.equals("statistics");</expression>
+                <expression>return logger.equals("ee.ria.taraauthserver.logging.StatisticsLogger");</expression>
             </evaluator>
             <onMismatch>NEUTRAL</onMismatch>
             <onMatch>DENY</onMatch>
@@ -78,6 +78,7 @@
                         <exclude>^sun\.reflect\..*\.invoke</exclude>
                         <exclude>^net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
                         <rootCauseFirst>true</rootCauseFirst>
+                        <inlineHash>true</inlineHash>
                     </throwableConverter>
                 </stackTrace>
                 <stackHash/>
@@ -103,16 +104,12 @@
         </rollingPolicy>
         <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
             <evaluator> <!-- defaults to type ch.qos.logback.classic.boolex.JaninoEventEvaluator -->
-                <expression>return logger.equals("statistics");</expression>
+                <expression>return logger.equals("ee.ria.taraauthserver.logging.StatisticsLogger");</expression>
             </evaluator>
             <onMismatch>DENY</onMismatch>
             <onMatch>ACCEPT</onMatch>
         </filter>
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-            <jsonFactoryDecorator class="ee.ria.taraauthserver.logging.LogbackJsonFactoryDecorator"/>
-            <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
-                <valueMasker class="ee.ria.taraauthserver.logging.LogbackFieldValueMasker"/>
-            </jsonGeneratorDecorator>
             <providers>
                 <timestamp>
                     <fieldName>@timestamp</fieldName>
@@ -120,28 +117,16 @@
                     <timeZone>UTC</timeZone>
                 </timestamp>
                 <message/>
-                <pattern>
-                    <omitEmptyFields>true</omitEmptyFields>
-                    <pattern>
-                        {
-                        "log.level": "%level",
-                        "log.logger": "%logger",
-                        "process.pid": "#asLong{%property{PID}}",
-                        "process.thread.name": "%thread",
-                        "service.name": "${springAppName}",
-                        "service.type": "tara"
-                        }
-                    </pattern>
-                </pattern>
                 <stackTrace>
                     <fieldName>error.stack_trace</fieldName>
                     <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
-                        <maxDepthPerThrowable>30</maxDepthPerThrowable>
-                        <maxLength>2048</maxLength>
+                        <maxDepthPerThrowable>1</maxDepthPerThrowable>
+                        <maxLength>512</maxLength>
                         <shortenedClassNameLength>20</shortenedClassNameLength>
                         <exclude>^sun\.reflect\..*\.invoke</exclude>
                         <exclude>^net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
                         <rootCauseFirst>true</rootCauseFirst>
+                        <inlineHash>true</inlineHash>
                     </throwableConverter>
                 </stackTrace>
                 <stackHash/>
@@ -150,7 +135,6 @@
                     <fieldName>error.type</fieldName>
                 </throwableRootCauseClassName>
                 <logstashMarkers/>
-                <mdc/>
                 <arguments/>
             </providers>
         </encoder>
@@ -158,6 +142,7 @@
 
     <logger name="ee.ria.taraauthserver" level="${log.level.tara-login-service}"/>
     <logger name="ee.sk.smartid.rest.SmartIdRestConnector" level="ERROR"/>
+    <logger name="ee.sk.mid.MidAuthenticationResponseValidator" level="ERROR"/>
 
     <root level="INFO">
         <appender-ref ref="FILE"/>

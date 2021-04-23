@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.authentication;
 
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +39,9 @@ public class AuthRejectController {
     @Autowired
     private RestTemplate hydraService;
 
+    @Autowired
+    private StatisticsLogger statisticsLogger;
+
     @GetMapping("/auth/reject")
     public RedirectView authReject(@RequestParam(name = "error_code") @Pattern(regexp = "user_cancel", message = "the only supported value is: 'user_cancel'") String errorCode,
                                    @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
@@ -55,6 +59,7 @@ public class AuthRejectController {
 
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && response.getBody().get("redirect_to") != null) {
             taraSession.setState(AUTHENTICATION_CANCELED);
+            statisticsLogger.log(taraSession);
             SessionUtils.invalidateSession();
             return new RedirectView(response.getBody().get("redirect_to").toString());
         } else {

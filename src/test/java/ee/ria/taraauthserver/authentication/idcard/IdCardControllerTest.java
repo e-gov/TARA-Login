@@ -10,6 +10,7 @@ import io.restassured.RestAssured;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.bouncycastle.asn1.x509.CRLReason;
 import org.bouncycastle.cert.ocsp.CertificateStatus;
 import org.bouncycastle.cert.ocsp.OCSPResp;
@@ -49,6 +50,7 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATI
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -88,7 +90,8 @@ class IdCardControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .body("message", equalTo("Sertifikaadi küsimine ei õnnestunud. Palun proovige mõne aja pärast uuesti."))
-                .body("error", equalTo("Bad Request"));
+                .body("error", equalTo("Bad Request"))
+                .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertErrorIsLogged("User exception: XCLIENTCERTIFICATE can not be null");
     }
@@ -107,7 +110,8 @@ class IdCardControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(500)
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
-                .body("error", equalTo("Internal Server Error"));
+                .body("error", equalTo("Internal Server Error"))
+                .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertErrorIsLogged("Server encountered an unexpected error: Failed to decode certificate");
     }
@@ -126,7 +130,8 @@ class IdCardControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .body("message", equalTo("Sertifikaadi küsimine ei õnnestunud. Palun proovige mõne aja pärast uuesti."))
-                .body("error", equalTo("Bad Request"));
+                .body("error", equalTo("Bad Request"))
+                .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertErrorIsLogged("User exception: XCLIENTCERTIFICATE can not be an empty string");
     }
@@ -142,7 +147,8 @@ class IdCardControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
-                .body("error", equalTo("Bad Request"));
+                .body("error", equalTo("Bad Request"))
+                .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
     }
 
     @Test
@@ -158,7 +164,8 @@ class IdCardControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
-                .body("error", equalTo("Bad Request"));
+                .body("error", equalTo("Bad Request"))
+                .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [INIT_AUTH_PROCESS]");
     }
@@ -336,7 +343,8 @@ class IdCardControllerTest extends BaseTest {
                 .statusCode(400)
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
-                .body("errorMessage", equalTo("Kasutaja sertifikaat on tühistatud või peatatud staatuses."));
+                .body("message", equalTo("Kasutaja sertifikaat on tühistatud või peatatud staatuses."))
+                .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertWarningIsLogged("OCSP validation failed: Invalid certificate status <REVOKED> received");
     }
@@ -373,11 +381,11 @@ class IdCardControllerTest extends BaseTest {
                 .statusCode(400)
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
-                .body("errorMessage", equalTo("Kasutaja sertifikaadi staatus on teadmata."));
+                .body("message", equalTo("Kasutaja sertifikaadi staatus on teadmata."));
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
 
-        assertEquals(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT, taraSession.getState());
+        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertWarningIsLogged("OCSP validation failed: Invalid certificate status <UNKNOWN> received");
     }
 
@@ -524,7 +532,8 @@ class IdCardControllerTest extends BaseTest {
                 .statusCode(502)
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
-                .body("errorMessage", equalTo("Sertifikaadi kehtivuse info küsimine ei õnnestunud. Palun proovige mõne aja pärast uuesti."));
+                .body("message", equalTo("Sertifikaadi kehtivuse info küsimine ei õnnestunud. Palun proovige mõne aja pärast uuesti."))
+                .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertWarningIsLogged("OCSP validation failed: OCSP service is currently not available");
     }
@@ -549,7 +558,8 @@ class IdCardControllerTest extends BaseTest {
                 .statusCode(400)
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
-                .body("errorMessage", equalTo("Teie sertifikaadid ei kehti."));
+                .body("message", equalTo("Teie sertifikaadid ei kehti."))
+                .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertWarningIsLogged("OCSP validation failed: User certificate is not yet valid");
     }
@@ -574,7 +584,8 @@ class IdCardControllerTest extends BaseTest {
                 .statusCode(400)
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
-                .body("errorMessage", equalTo("Teie sertifikaadid ei kehti."));
+                .body("message", equalTo("Teie sertifikaadid ei kehti."))
+                .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
