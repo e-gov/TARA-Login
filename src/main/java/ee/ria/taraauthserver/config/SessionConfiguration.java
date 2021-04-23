@@ -10,6 +10,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.session.config.annotation.web.http.EnableSpringHttpSession;
 import org.springframework.session.web.http.CookieSerializer;
 import org.springframework.session.web.http.DefaultCookieSerializer;
+import org.springframework.session.web.http.SessionRepositoryFilter;
+
+import static java.util.List.of;
 
 /**
  * Replace {@link EnableSpringHttpSession} with Spring Session Ignite module or corresponding Community Extension,
@@ -38,9 +41,17 @@ public class SessionConfiguration {
     }
 
     @Bean
+    public FilterRegistrationBean<SessionRepositoryFilter<?>> sessionRepositoryFilterRegistrationTest(@Value("${spring.session.servlet.filter-order}") Integer filterOrder, SessionRepositoryFilter<?> filter) {
+        FilterRegistrationBean<SessionRepositoryFilter<?>> registrationBean = new FilterRegistrationBean<>(filter);
+        registrationBean.setUrlPatterns(of("/auth/*", "/oidc-error"));
+        registrationBean.setOrder(filterOrder);
+        return registrationBean;
+    }
+
+    @Bean
     public FilterRegistrationBean<SessionManagementFilter> sessionManagementFilter(@Value("${spring.session.servlet.filter-order}") Integer filterOrder) {
         FilterRegistrationBean<SessionManagementFilter> registrationBean = new FilterRegistrationBean<>();
-        //registrationBean.setUrlPatterns(of("/auth/**"));
+        registrationBean.setUrlPatterns(of("/auth/*"));
         registrationBean.setFilter(new SessionManagementFilter());
         registrationBean.setOrder(filterOrder + 1);
         return registrationBean;
