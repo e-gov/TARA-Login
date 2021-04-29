@@ -24,6 +24,7 @@ import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 import org.springframework.web.servlet.i18n.SessionLocaleResolver;
 import org.springframework.web.servlet.resource.PathResourceResolver;
@@ -98,7 +99,7 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
 
     @Bean
     public LocaleResolver localeResolver(AuthConfigurationProperties configurationProperties) {
-        SessionLocaleResolver bean = new SessionLocaleResolver();
+        CookieLocaleResolver bean = new CookieLocaleResolver();
         String locale = configurationProperties.getDefaultLocale();
         log.info("Setting default locale to [{}]", value("tara.conf.default_locale", locale));
         bean.setDefaultLocale(new Locale(locale));
