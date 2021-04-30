@@ -52,8 +52,12 @@ paths:
         '200':
           description: HTML response with a list of eligible login methods
           headers:
-            Set-Cookie:
+            - Set-Cookie:
               description: SESSION=abcde12345; Path=/; HttpOnly; Secure
+              schema:
+                type: string
+            - Set-Cookie:
+              description: LOGIN_LOCALE=et; Path=/
               schema:
                 type: string
           content:
@@ -94,6 +98,12 @@ paths:
           in: header
           required: true
           description: Session cookie
+          schema:
+            type: string
+        - name: Cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
       requestBody:
@@ -162,12 +172,18 @@ paths:
           description: Session cookie
           schema:
             type: string
+        - name: Cookie
+          in: header
+          required: false
+          description: Locale cookie
+          schema:
+            type: string
         - in: query
           name: error_code
           description: Error code to be returned to the OIDC client
           schema:
             type: string
-            enum: [user_cancel]
+            enum: [ user_cancel ]
       responses:
         '302':
           description: A redirect to OIDC service
@@ -213,6 +229,12 @@ paths:
           in: header
           required: true
           description: Session cookie
+          schema:
+            type: string
+        - name: Cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
       requestBody:
@@ -301,6 +323,11 @@ paths:
           required: true
           description: Session cookie
           schema:
+        - name: Cookie
+          in: header
+          required: false
+          description: Locale cookie
+          schema:
             type: string
       responses:
         '200':
@@ -346,6 +373,12 @@ paths:
           in: header
           required: true
           description: Session cookie
+          schema:
+            type: string
+        - name: Cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
       requestBody:
@@ -418,6 +451,12 @@ paths:
           description: Session cookie
           schema:
             type: string
+        - name: Cookie
+          in: header
+          required: false
+          description: Locale cookie
+          schema:
+            type: string
         - name: XCLIENTCERTIFICATE
           in: header
           required: true
@@ -466,6 +505,12 @@ paths:
           in: header
           required: true
           description: Session cookie
+          schema:
+            type: string
+        - name: Cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
       requestBody:
@@ -549,6 +594,12 @@ paths:
           description: Session cookie
           schema:
             type: string
+        - name: Cookie
+          in: header
+          required: false
+          description: Locale cookie
+          schema:
+            type: string
       responses:
         '200':
           description: Response status of Smart-ID authentication polling
@@ -593,6 +644,12 @@ paths:
           in: header
           required: true
           description: Session cookie
+          schema:
+            type: string
+        - name: Cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
       requestBody:
@@ -659,6 +716,12 @@ paths:
           in: header
           required: true
           description: Session cookie
+          schema:
+            type: string
+        - name: Cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
       requestBody:
@@ -784,6 +847,12 @@ paths:
           description: Session cookie
           schema:
             type: string
+        - name: Cookie
+          in: header
+          required: false
+          description: Locale cookie
+          schema:
+            type: string
       responses:
         '200':
           description: HTML view legal person selection
@@ -824,6 +893,12 @@ paths:
           in: header
           required: true
           description: Session cookie
+          schema:
+            type: string
+        - name: Cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
       responses:
@@ -902,6 +977,12 @@ paths:
           description: Session cookie
           schema:
             type: string
+        - name: Cookie
+          in: header
+          required: false
+          description: Locale cookie
+          schema:
+            type: string
       requestBody:
         description: Optional description in *Markdown*
         required: true
@@ -978,6 +1059,12 @@ paths:
           description: Session cookie
           schema:
             type: string
+        - name: Cookie
+          in: header
+          required: false
+          description: Locale cookie
+          schema:
+            type: string
         - in: query
           name: consent_challenge
           description: The consent challenge from the OIDC service to initialize login session
@@ -1040,6 +1127,12 @@ paths:
           in: header
           required: true
           description: Session cookie
+          schema:
+            type: string
+        - name: Cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
       requestBody:
