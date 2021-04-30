@@ -1,4 +1,4 @@
-# TARA login server
+# TARA login service
 
 - [Overview](#overview)
 - [Setting up the webapp](#build)
@@ -27,7 +27,7 @@
 <a name="overview"></a>
 ## Overview
 
-TARA login server is a webapp that integrates with the [ORY Hydra OIDC server](https://github.com/ory/hydra) implementation. TARA login server provides [login](https://www.ory.sh/hydra/docs/concepts/login) and [consent](https://www.ory.sh/hydra/docs/concepts/login) flow implementations. Apache Ignite is used for session persistence between requests. 
+TARA login service is a webapp that integrates with the [ORY Hydra OIDC server](https://github.com/ory/hydra) implementation. TARA login service provides [login](https://www.ory.sh/hydra/docs/concepts/login) and [consent](https://www.ory.sh/hydra/docs/concepts/login) flow implementations. Apache Ignite is used for session persistence between requests. 
 
 The webapp provides implementation for following authentication methods:
 * Estonian ID-card
@@ -59,7 +59,7 @@ You can find the compiled WAR archive in the target/ directory.
 <a name="deploying"></a>
 ## Deploying the webapp
 
-TARA login server is distributed as a WAR archive that can be deployed to a web server that supports Java Servlets (ie Apache Tomcat).
+TARA login service is distributed as a WAR archive that can be deployed to a web server that supports Java Servlets (ie Apache Tomcat).
 
 Example: to deploy the webapp to a standalone Tomcat server
 
@@ -70,7 +70,7 @@ Example: to deploy the webapp to a standalone Tomcat server
     ````
 
 <a name="configuration"></a>
-## 1 TARA login server configuration properties
+## 1 TARA login service configuration properties
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
@@ -170,6 +170,8 @@ Table 1.4.3 - Integration with the [SK SID service](https://github.com/SK-EID/sm
 
 <a name="esteid_conf"></a>
 ### 1.5 ID-card auth method
+
+ID-card authentication by itself is meant to be implemented in cooperation with a reverse proxy or a firewall in front of the login service. User identification process is started as a tls handshake that requires a client certificate issued by a particular CA (TLS client is the user's browser which has access to the user's ID-card). When successful, the user's X509 certificate should be forwarded to /auth/id endpoint in a custom HTTP header `XCLIENTCERTIFICATE`.
 
 Table 1.5.1 - Enabling ID-card authentication
 
@@ -317,6 +319,8 @@ tara:
 
 <a name="esteid_basic_auth_conf"></a>
 Table 1.5.6 - Basic auth configuration
+
+Additional HTTP basic authentication can be enabled for `/auth/id` endpoint. To safeguard the `/auth/id` endpoint against potential configuration and deployment related errors that could allow users to access `/auth/id` endpoint directly. This is a precautionary measure which, when enabled, does not allow presenting the user certificate directly to the login service.
 
 ID-card auth endpoint is meant to be accessed behind a firewall, therefore basic auth configuration option is available with the following properties:
 
