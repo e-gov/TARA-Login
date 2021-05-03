@@ -6,6 +6,7 @@ import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
 import ee.ria.taraauthserver.error.exceptions.TaraException;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.TaraSession;
+import ee.ria.taraauthserver.utils.RequestUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.BindException;
@@ -39,10 +40,7 @@ public class ErrorHandler {
     private void invalidateSessionAndSendError(HttpServletRequest request, HttpServletResponse response, int status, Exception ex) throws IOException {
         HttpSession session = request.getSession(false);
         if (session != null) {
-            Locale locale = (Locale) session.getAttribute(LOCALE_SESSION_ATTRIBUTE_NAME);
-            request.setAttribute(ERROR_ATTR_LOCALE, locale);
             TaraSession taraSession = (TaraSession) session.getAttribute(TARA_SESSION);
-
             if (taraSession != null) {
                 setErrorCode(taraSession, ex);
                 if (!AUTHENTICATION_FAILED.equals(taraSession.getState())) {

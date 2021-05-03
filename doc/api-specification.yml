@@ -52,8 +52,12 @@ paths:
         '200':
           description: HTML response with a list of eligible login methods
           headers:
-            Set-Cookie:
+            - Set-Cookie:
               description: SESSION=abcde12345; Path=/; HttpOnly; Secure
+              schema:
+                type: string
+            - Set-Cookie:
+              description: LOGIN_LOCALE=et; Path=/
               schema:
                 type: string
           content:
@@ -90,10 +94,15 @@ paths:
       description: |
         Completes the login process
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
-          description: Session cookie
+          schema:
+            type: string
+        - name: Locale cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
       requestBody:
@@ -156,10 +165,16 @@ paths:
       description: |
         Cancels the login process
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
+          schema:
+            type: string
+        - name: Locale cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
         - in: query
@@ -167,7 +182,7 @@ paths:
           description: Error code to be returned to the OIDC client
           schema:
             type: string
-            enum: [user_cancel]
+            enum: [ user_cancel ]
       responses:
         '302':
           description: A redirect to OIDC service
@@ -209,10 +224,16 @@ paths:
       description: |
         Starts MID authentication
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
+          schema:
+            type: string
+        - name: Locale cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
       requestBody:
@@ -296,10 +317,15 @@ paths:
       description: |
         Poll the MID authentication status.
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
+          schema:
+        - name: Locale cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
       responses:
@@ -342,10 +368,16 @@ paths:
       description: |
         Cancel MID authentication result polling
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
+          schema:
+            type: string
+        - name: Locale cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
       requestBody:
@@ -412,10 +444,16 @@ paths:
 
         NB! Important - NEVER expose this endpoint directly to the public. Always remove XCLIENTCERTIFICATE header sent directly from the client.
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
+          schema:
+            type: string
+        - name: Locale cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
         - name: XCLIENTCERTIFICATE
@@ -462,10 +500,16 @@ paths:
       description: |
         Starts Smart-ID authentication
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
+          schema:
+            type: string
+        - name: Locale cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
       requestBody:
@@ -543,10 +587,16 @@ paths:
       description: |
         Poll the Smart-ID authentication status.
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
+          schema:
+            type: string
+        - name: Locale cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
       responses:
@@ -589,10 +639,16 @@ paths:
       description: |
         Cancel Smart-ID authentication result polling
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
+          schema:
+            type: string
+        - name: Locale cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
       requestBody:
@@ -655,10 +711,16 @@ paths:
       description: |
         Starts eIDAS authentication
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
+          schema:
+            type: string
+        - name: Locale cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
       requestBody:
@@ -778,10 +840,16 @@ paths:
       description: |
         Initialize legal person view, enabling user to select a valid legal person.
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
+          schema:
+            type: string
+        - name: Locale cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
       responses:
@@ -820,10 +888,16 @@ paths:
       description: |
         Get a list of user related legal persons
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
+          schema:
+            type: string
+        - name: Locale cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
       responses:
@@ -896,10 +970,16 @@ paths:
       description: |
         Initialize legal person view, enabling user to select a valid legal person.
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
+          schema:
+            type: string
+        - name: Locale cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
       requestBody:
@@ -972,10 +1052,16 @@ paths:
         Performs checks whether the OIDC client requires explicit user consent
         Constructs the ID-Token
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
+          schema:
+            type: string
+        - name: Locale cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
         - in: query
@@ -1036,10 +1122,16 @@ paths:
       description: |
         Initialize legal person view, enabling user to select a valid legal person.
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
+          schema:
+            type: string
+        - name: Locale cookie
+          in: header
+          required: false
+          description: Locale cookie
           schema:
             type: string
       requestBody:
