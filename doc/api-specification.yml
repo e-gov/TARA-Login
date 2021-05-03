@@ -94,13 +94,12 @@ paths:
       description: |
         Completes the login process
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
-          description: Session cookie
           schema:
             type: string
-        - name: Cookie
+        - name: Locale cookie
           in: header
           required: false
           description: Locale cookie
@@ -166,13 +165,13 @@ paths:
       description: |
         Cancels the login process
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
           schema:
             type: string
-        - name: Cookie
+        - name: Locale cookie
           in: header
           required: false
           description: Locale cookie
@@ -225,13 +224,13 @@ paths:
       description: |
         Starts MID authentication
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
           schema:
             type: string
-        - name: Cookie
+        - name: Locale cookie
           in: header
           required: false
           description: Locale cookie
@@ -318,12 +317,12 @@ paths:
       description: |
         Poll the MID authentication status.
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
           schema:
-        - name: Cookie
+        - name: Locale cookie
           in: header
           required: false
           description: Locale cookie
@@ -369,13 +368,13 @@ paths:
       description: |
         Cancel MID authentication result polling
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
           schema:
             type: string
-        - name: Cookie
+        - name: Locale cookie
           in: header
           required: false
           description: Locale cookie
@@ -445,13 +444,13 @@ paths:
 
         NB! Important - NEVER expose this endpoint directly to the public. Always remove XCLIENTCERTIFICATE header sent directly from the client.
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
           schema:
             type: string
-        - name: Cookie
+        - name: Locale cookie
           in: header
           required: false
           description: Locale cookie
@@ -501,13 +500,13 @@ paths:
       description: |
         Starts Smart-ID authentication
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
           schema:
             type: string
-        - name: Cookie
+        - name: Locale cookie
           in: header
           required: false
           description: Locale cookie
@@ -588,13 +587,13 @@ paths:
       description: |
         Poll the Smart-ID authentication status.
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
           schema:
             type: string
-        - name: Cookie
+        - name: Locale cookie
           in: header
           required: false
           description: Locale cookie
@@ -640,13 +639,13 @@ paths:
       description: |
         Cancel Smart-ID authentication result polling
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
           schema:
             type: string
-        - name: Cookie
+        - name: Locale cookie
           in: header
           required: false
           description: Locale cookie
@@ -712,13 +711,13 @@ paths:
       description: |
         Starts eIDAS authentication
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
           schema:
             type: string
-        - name: Cookie
+        - name: Locale cookie
           in: header
           required: false
           description: Locale cookie
@@ -841,13 +840,13 @@ paths:
       description: |
         Initialize legal person view, enabling user to select a valid legal person.
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
           schema:
             type: string
-        - name: Cookie
+        - name: Locale cookie
           in: header
           required: false
           description: Locale cookie
@@ -889,13 +888,13 @@ paths:
       description: |
         Get a list of user related legal persons
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
           schema:
             type: string
-        - name: Cookie
+        - name: Locale cookie
           in: header
           required: false
           description: Locale cookie
@@ -971,13 +970,13 @@ paths:
       description: |
         Initialize legal person view, enabling user to select a valid legal person.
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
           schema:
             type: string
-        - name: Cookie
+        - name: Locale cookie
           in: header
           required: false
           description: Locale cookie
@@ -1053,13 +1052,13 @@ paths:
         Performs checks whether the OIDC client requires explicit user consent
         Constructs the ID-Token
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
           schema:
             type: string
-        - name: Cookie
+        - name: Locale cookie
           in: header
           required: false
           description: Locale cookie
@@ -1123,13 +1122,13 @@ paths:
       description: |
         Initialize legal person view, enabling user to select a valid legal person.
       parameters:
-        - name: Cookie
+        - name: Session cookie
           in: header
           required: true
           description: Session cookie
           schema:
             type: string
-        - name: Cookie
+        - name: Locale cookie
           in: header
           required: false
           description: Locale cookie
