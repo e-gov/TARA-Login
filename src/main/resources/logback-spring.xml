@@ -135,6 +135,9 @@
                     <fieldName>error.type</fieldName>
                 </throwableRootCauseClassName>
                 <logstashMarkers/>
+                <mdc>
+                    <includeMdcKeyName>client.ip</includeMdcKeyName>
+                </mdc>
                 <arguments/>
             </providers>
         </encoder>
