@@ -13,6 +13,8 @@ import javax.cache.Cache;
 import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static ee.ria.taraauthserver.authentication.eidas.EidasCallbackController.AUTHN_FAILED;
+import static ee.ria.taraauthserver.authentication.eidas.EidasCallbackController.REQUEST_DENIED;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.EIDAS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;

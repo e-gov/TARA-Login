@@ -1,4 +1,5 @@
 {
   "error": "Unauthorized",
-  "message": "Authentication failed"
+  "message": "Authentication failed",
+  "status": "urn:oasis:names:tc:SAML:2.0:status:AuthnFailed"
 }

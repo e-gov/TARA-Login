@@ -1,4 +1,5 @@
 {
   "error": "Unauthorized",
-  "message": "No user consent received. User denied access."
+  "message": "No user consent received. User denied access.",
+  "status": "urn:oasis:names:tc:SAML:2.0:status:RequestDenied"
 }
