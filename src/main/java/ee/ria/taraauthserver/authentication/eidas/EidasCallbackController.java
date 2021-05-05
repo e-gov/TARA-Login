@@ -122,11 +122,11 @@ public class EidasCallbackController {
     private void handle401Exception(Session session, HttpClientErrorException.Unauthorized e) {
         updateSession(session);
         if (e.getMessage() != null && e.getMessage().contains(AUTHN_FAILED))
-            throw new BadRequestException(EIDAS_AUTHENTICATION_FAILED, e.getMessage().replace("\r\n", ""), e);
+            throw new BadRequestException(EIDAS_AUTHENTICATION_FAILED, e.getMessage(), e);
         else if (e.getMessage() != null && e.getMessage().contains(REQUEST_DENIED))
-            throw new BadRequestException(EIDAS_USER_CONSENT_NOT_GIVEN, e.getMessage().replace("\r\n", ""), e);
+            throw new BadRequestException(EIDAS_USER_CONSENT_NOT_GIVEN, e.getMessage(), e);
         else
-            throw new BadRequestException(ERROR_GENERAL, e.getMessage().replace("\r\n", ""), e);
+            throw new BadRequestException(ERROR_GENERAL, e.getMessage(), e);
     }
 
     private void updateSession(Session session) {
