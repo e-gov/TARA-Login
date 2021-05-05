@@ -220,12 +220,7 @@ class EidasCallbackControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"));
 
         assertWarningIsLogged("Session has been invalidated: " + sessionFilter.getSession().getId());
-        assertErrorIsLogged("User exception: 401 Unauthorized: [{\r\n" +
-                "  \"error\": \"Unauthorized\",\r\n" +
-                "  \"message\": \"Authentication failed\",\r\n" +
-                "  \"status\": \"urn:oasis:names:tc:SAML:2.0:status:Responder\",\r\n" +
-                "  \"subStatus\": \"urn:oasis:names:tc:SAML:2.0:status:AuthnFailed\"\r\n" +
-                "}]");
+        assertErrorIsLogged("User exception: 401 Unauthorized: [{  \"error\": \"Unauthorized\",  \"message\": \"Authentication failed\",  \"status\": \"urn:oasis:names:tc:SAML:2.0:status:Responder\",  \"subStatus\": \"urn:oasis:names:tc:SAML:2.0:status:AuthnFailed\"}]");
     }
 
     @Test
@@ -258,12 +253,7 @@ class EidasCallbackControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"));
 
         assertWarningIsLogged("Session has been invalidated: " + sessionFilter.getSession().getId());
-        assertErrorIsLogged("User exception: 401 Unauthorized: [{\r\n" +
-                "  \"error\": \"Unauthorized\",\r\n" +
-                "  \"message\": \"Citizen consent not given.\",\r\n" +
-                "  \"status\": \"urn:oasis:names:tc:SAML:2.0:status:Responder\",\r\n" +
-                "  \"subStatus\": \"urn:oasis:names:tc:SAML:2.0:status:RequestDenied\"\r\n" +
-                "}]");
+        assertErrorIsLogged("User exception: 401 Unauthorized: [{  \"error\": \"Unauthorized\",  \"message\": \"Citizen consent not given.\",  \"status\": \"urn:oasis:names:tc:SAML:2.0:status:Responder\",  \"subStatus\": \"urn:oasis:names:tc:SAML:2.0:status:RequestDenied\"}]");
     }
 
     @Test
