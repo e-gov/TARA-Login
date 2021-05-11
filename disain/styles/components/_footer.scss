@@ -32,6 +32,18 @@
       height: 40px;
     }
   }
+  &__block-logo-elrf {
+      @media (max-width: $breakpoint-mobile) {
+        margin-bottom: 15px;
+      }
+      img {
+        margin-right: 10px;
+        margin-left: 10px;
+        display: block;
+        width: auto;
+        height: 20mm;
+      }
+    }
   &__block-text {
     padding-left: 20px;
 	font-family: Arial, Helvetica, sans-serif;
