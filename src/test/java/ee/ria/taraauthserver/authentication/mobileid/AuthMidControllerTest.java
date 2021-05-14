@@ -471,10 +471,9 @@ class AuthMidControllerTest extends BaseTest {
         assertErrorIsLogged("Service not available: Mobile-ID service is currently unavailable: Error getting response from cert-store/MSSP for URI https://localhost:9877/mid-api/authentication: HTTP 500 Server Error");
     }
 
-
     @Test
     void midAuthInit_response_timeout() {
-        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 200, 2000);
+        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 200, 6100);
 
         given()
                 .filter(withTaraSession()
@@ -490,5 +489,22 @@ class AuthMidControllerTest extends BaseTest {
                 .body("message", equalTo("Mobiil-ID teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti."));
 
         assertErrorIsLogged("Service not available: Mobile-ID service is currently unavailable: java.net.SocketTimeoutException: Read timed out");
+    }
+
+    @Test
+    void midAuthInit_response_not_timeout() {
+        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 200, 5100);
+
+        given()
+                .filter(withTaraSession()
+                        .sessionRepository(sessionRepository)
+                        .authenticationTypes(of(MOBILE_ID)).build())
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "00000766")
+                .when()
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(200);
     }
 }

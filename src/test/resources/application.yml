@@ -90,8 +90,9 @@ tara:
       display-text: default short name
       truststore-type: PKCS12
       truststore-password: changeit
+      long-polling-timeout-seconds: 1
       connection-timeout-milliseconds: 1000
-      read-timeout-milliseconds: 1000
+      read-timeout-milliseconds: 6000
       interval-between-session-status-queries-in-milliseconds: 1000
     smart-id:
       enabled: true
@@ -103,8 +104,9 @@ tara:
       relying-party-uuid: 00000000-0000-0000-0000-000000000000
       relying-party-name: DEMO
       display-text: default short name
+      long-polling-timeout-milliseconds: 1000
       connection-timeout-milliseconds: 1000
-      read-timeout-milliseconds: 1000
+      read-timeout-milliseconds: 6000
     eidas:
       enabled: true
       client-url: https://localhost:9877

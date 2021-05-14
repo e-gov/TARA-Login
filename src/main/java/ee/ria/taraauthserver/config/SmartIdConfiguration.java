@@ -22,6 +22,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Configuration
@@ -40,6 +41,7 @@ public class SmartIdConfiguration {
         smartIdClient.setHostUrl(smartIdConfigurationProperties.getHostUrl());
         smartIdClient.setRelyingPartyName(smartIdConfigurationProperties.getRelyingPartyName());
         smartIdClient.setRelyingPartyUUID(smartIdConfigurationProperties.getRelyingPartyUuid());
+        smartIdClient.setSessionStatusResponseSocketOpenTime(TimeUnit.MILLISECONDS, smartIdConfigurationProperties.getLongPollingTimeoutMilliseconds());
         smartIdClient.setTrustSslContext(tlsTrustStore);
         smartIdClient.setNetworkConnectionConfig(clientConfig());
 

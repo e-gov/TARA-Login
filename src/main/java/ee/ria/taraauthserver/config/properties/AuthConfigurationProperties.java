@@ -138,11 +138,16 @@ public class AuthConfigurationProperties {
 
         private int connectionTimeoutMilliseconds = 5000;
 
-        private int readTimeoutMilliseconds = 30000;
+        private int readTimeoutMilliseconds = 35000;
 
         private int intervalBetweenSessionStatusQueriesInMilliseconds = 5000;
 
         private int delayStatusPollingStartInMilliseconds = 500;
+
+        @PostConstruct
+        public void validateConfiguration() {
+            Assert.isTrue(readTimeoutMilliseconds >= (longPollingTimeoutSeconds * 1000) + 5000, "Mobile-ID read timeout must be at least 5 seconds longer than its long polling timeout.");
+        }
     }
 
     @Data

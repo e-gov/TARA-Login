@@ -31,6 +31,7 @@ import static java.util.List.of;
 import static java.util.Locale.forLanguageTag;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
+import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.junit.jupiter.api.Assertions.*;
@@ -248,8 +249,8 @@ public class AuthMidServiceTest extends BaseTest {
     @Test
     @Tag(value = "MID_AUTH_POLL_RESPONSE")
     void authenticationFailsWhen_MidApi_response_times_out() {
-        String sessionId = startMidAuthSessionWithPollResponseWithDelay("mock_responses/mid/mid_poll_empty_response.json", 500, 0, 5000);
-        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+        String sessionId = startMidAuthSessionWithPollResponseWithDelay("mock_responses/mid/mid_poll_empty_response.json", 500, 0, 6100);
+        TaraSession taraSession = await().atMost(TEN_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertWarningIsLogged("Mobile-ID polling failed: java.net.SocketTimeoutException: Read timed out");
         assertEquals(MID_INTERNAL_ERROR, taraSession.getAuthenticationResult().getErrorCode());

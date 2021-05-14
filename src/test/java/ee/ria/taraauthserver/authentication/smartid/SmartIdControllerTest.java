@@ -249,7 +249,7 @@ class SmartIdControllerTest extends BaseTest {
     @Tag(value = "SID_AUTH_INIT_REQUEST")
     @Tag(value = "SID_AUTH_POLL_RESPONSE_COMPLETED_OK")
     void sidAuthInit_timeout() {
-        createSidApiAuthenticationStub("mock_responses/sid/sid_authentication_init_response.json", 200, 2000);
+        createSidApiAuthenticationStub("mock_responses/sid/sid_authentication_init_response.json", 200, 6100);
 
         MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
@@ -264,6 +264,27 @@ class SmartIdControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(502);
+    }
+
+    @Test
+    @Tag(value = "SID_AUTH_INIT_REQUEST")
+    @Tag(value = "SID_AUTH_POLL_RESPONSE_COMPLETED_OK")
+    void sidAuthInit_not_timeout() {
+        createSidApiAuthenticationStub("mock_responses/sid/sid_authentication_init_response.json", 200, 5100);
+
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(SMART_ID))
+                .authenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS).build();
+
+        given()
+                .filter(sessionFilter)
+                .when()
+                .formParam(ID_CODE, ID_CODE_VALUE)
+                .post("/auth/sid/init")
+                .then()
+                .assertThat()
+                .statusCode(200);
     }
 
     @Test
