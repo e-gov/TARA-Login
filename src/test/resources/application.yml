@@ -50,6 +50,7 @@ tara:
     max-connections-total: 3
 
   default-locale: et
+  error-report-email: help@example.com
 
   alerts:
     enabled: true
