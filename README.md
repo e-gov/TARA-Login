@@ -76,6 +76,7 @@ Example: to deploy the webapp to a standalone Tomcat server
 | :---------------- | :---------- | :----------------|
 | `tara.default-locale` | No | Locale that is used by default. Default `et` |
 | `tara.default-authentication-methods` | No | default authentication methods. Example `ID_CARD, MOBILE_ID, SMART_ID, EIDAS` |
+| `tara.error-report-address` | Yes | E-mail address where users can send error reports. Example `help@example.com` |
 
 
 <a name="hydra_integration_conf"></a>

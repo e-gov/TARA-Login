@@ -7,6 +7,9 @@ import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
+import io.restassured.path.xml.XmlPath;
+import io.restassured.response.Response;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -49,8 +52,10 @@ import static ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest.gene
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
+import static io.restassured.path.xml.XmlPath.CompatibilityMode.HTML;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.matchesPattern;
+import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -92,6 +97,30 @@ class IdCardControllerTest extends BaseTest {
                 .body("message", equalTo("Sertifikaadi küsimine ei õnnestunud. Palun proovige mõne aja pärast uuesti."))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
+
+        assertErrorIsLogged("User exception: XCLIENTCERTIFICATE can not be null");
+    }
+
+    @Test
+    @Tag(value = "ESTEID_INIT")
+    @Tag(value = "ESTEID_AUTH_ENDPOINT")
+    void idAuth_certificate_missing_html_response() {
+        String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+        Response response = given()
+                .when()
+                .header("Accept", "text/html")
+                .sessionId("SESSION", sessionId)
+                .get("/auth/id")
+                .then()
+                .assertThat()
+                .statusCode(400).contentType(ContentType.HTML).extract()
+                .response();
+
+        assertTrue(response.body().htmlPath().getInt("**.find { strong -> strong.text() == 'Kasutaja tuvastamine ebaõnnestus.'}.size()") > 0);
+        assertTrue(response.body().htmlPath().getInt("**.find { p -> p.text() == 'Sertifikaadi küsimine ei õnnestunud. Palun proovige mõne aja pärast uuesti.'}.size()") > 0);
+        assertTrue(response.body().htmlPath().getString("**.find { it.@role == 'alert'}.p.text()").contains("Intsidendi number:"));
+        assertTrue(response.body().htmlPath().getString("**.find { it.@role == 'alert'}.p.a.@href").contains("mailto:"));
+        assertTrue(response.body().htmlPath().getString("**.find { it.@role == 'alert'}.p.text()").contains("Palun saada e-kiri aadressile"));
 
         assertErrorIsLogged("User exception: XCLIENTCERTIFICATE can not be null");
     }

@@ -7,14 +7,20 @@
     <div class="container">
         <div class="alert alert-error" role="alert">
             <p><strong><span th:text="#{message.error.auth.title}" th:remove="tag"></span></strong></p>
-            <p th:if="${message != null}" th:utext="${message}"></p>
-            <p th:unless="${message != null}" th:utext="#{message.error.general}"></p>
-            <p th:if="${incident_nr != null}" th:utext="#{label.error.incident-number(${incident_nr})}"></p>
+            <p th:if="${message != null}" th:text="${message}"></p>
+            <p th:unless="${message != null}" th:text="#{message.error.general}"></p>
+            <p th:if="${incident_nr != null}" th:text="#{label.error.incident-number(${incident_nr})}"></p>
+            <p th:if="${incident_nr != null}"><a id="error-report-url" class="mailto-link"
+                                                 th:href="#{label.error.error-report-content(${@thymeleafSupport.getErrorReportEmail()},${message},${incident_nr})}"
+                                                 th:text="#{label.error.error-report-link}">Send error report</a></p>
+            <p th:if="${incident_nr != null}" id="error-report-notification" class="hidden"
+               th:text="#{label.error.error-report-notification(${@thymeleafSupport.getErrorReportEmail()}, ${incident_nr})}"></p>
         </div>
         <p th:if="${login_challenge != null}" class="link-back">
             <a th:href="'/auth/init?login_challenge=' + ${login_challenge}" th:text="#{label.common.back}">Back</a>
         </p>
     </div>
+    <script th:src="@{/content/scripts/main.js}" defer></script>
 </div>
 </body>
 </html>

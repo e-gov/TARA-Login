@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.utils;
 
 import ee.ria.taraauthserver.alerts.AlertsScheduler;
 import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.Alert;
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.session.SessionUtils;
@@ -26,6 +27,9 @@ public class ThymeleafSupport {
 
     @Autowired(required = false)
     private EidasConfigurationProperties eidasConfigurationProperties;
+
+    @Autowired(required = false)
+    private AuthConfigurationProperties authConfigurationProperties;
 
     @Autowired(required = false)
     private AlertsScheduler alertsScheduler;
@@ -94,5 +98,9 @@ public class ThymeleafSupport {
 
     public List<Alert> getActiveAlerts() {
         return alertsScheduler == null ? emptyList() : alertsScheduler.getActiveAlerts();
+    }
+
+    public String getErrorReportEmail() {
+        return authConfigurationProperties.getErrorReportEmail();
     }
 }

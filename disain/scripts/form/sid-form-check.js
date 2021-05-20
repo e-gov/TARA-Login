@@ -46,6 +46,15 @@
                 document.querySelector("#sid-error").classList.remove('hidden');
                 document.querySelector("#error-message").innerHTML = pollResponse["message"];
                 document.querySelector("#error-incident-number").innerHTML = pollResponse["incident_nr"];
+
+                var errorReportUrl = document.querySelector("#error-report-url").href;
+                errorReportUrl = errorReportUrl.replace("{1}", pollResponse["message"]);
+                errorReportUrl = errorReportUrl.replace("{2}", pollResponse["incident_nr"]);
+                document.querySelector("#error-report-url").href = errorReportUrl;
+
+                var errorReportNotification = document.querySelector("#error-report-notification").innerHTML;
+                errorReportNotification = errorReportNotification.replace("{1}", pollResponse["incident_nr"]);
+                document.querySelector("#error-report-notification").innerHTML = errorReportNotification;
             }
         };
         xhttp.open('GET', '/auth/sid/poll', true);
