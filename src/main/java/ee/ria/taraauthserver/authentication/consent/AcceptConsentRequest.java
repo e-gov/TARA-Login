@@ -97,9 +97,12 @@ public class AcceptConsentRequest {
         Map<String, String> map = new HashMap<>();
 
         for (String param : params) {
-            String name = param.split("=")[0];
-            String value = param.split("=")[1];
-            map.put(name, value);
+            String[] nameValuePair = param.split("=", 2);
+            if (nameValuePair.length > 1) {
+                String name = nameValuePair[0];
+                String value = nameValuePair[1];
+                map.put(name, value);
+            }
         }
         return map;
     }
