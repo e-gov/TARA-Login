@@ -79,7 +79,9 @@ public class AuthInitController {
                     "No authentication methods match the requested level of assurance. Please check your authorization request");
 
         newTaraSession.setAllowedAuthMethods(allowedAuthenticationMethodsList);
-        RequestUtils.setLocale(getUiLanguage(language, newTaraSession));
+
+        if (language == null)
+            RequestUtils.setLocale(getDefaultOrRequestedLocale(newTaraSession));
         if (eidasOnlyWithCountryRequested(loginRequestInfo)) {
             model.addAttribute("country", getAllowedEidasCountryCode(loginRequestInfo.getRequestedScopes()));
             return "redirectToEidasInit";

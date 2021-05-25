@@ -52,6 +52,8 @@ import static net.logstash.logback.marker.Markers.append;
 public class EidasCallbackController {
     public static final String EIDAS_CALLBACK_REQUEST_MAPPING = "/auth/eidas/callback";
     public static final Pattern VALID_PERSON_IDENTIFIER_PATTERN = Pattern.compile("^([A-Z]{2,2})\\/([A-Z]{2,2})\\/(.*)$");
+    public static final String REQUEST_DENIED = "urn:oasis:names:tc:SAML:2.0:status:RequestDenied";
+    public static final String AUTHN_FAILED = "urn:oasis:names:tc:SAML:2.0:status:AuthnFailed";
 
     @Autowired
     private RestTemplate eidasRestTemplate;
@@ -119,9 +121,9 @@ public class EidasCallbackController {
 
     private void handle401Exception(Session session, HttpClientErrorException.Unauthorized e) {
         updateSession(session);
-        if (e.getMessage() != null && e.getMessage().contains("Authentication failed"))
+        if (e.getMessage() != null && e.getMessage().contains(AUTHN_FAILED))
             throw new BadRequestException(EIDAS_AUTHENTICATION_FAILED, e.getMessage(), e);
-        else if (e.getMessage() != null && e.getMessage().contains("No user consent received. User denied access."))
+        else if (e.getMessage() != null && e.getMessage().contains(REQUEST_DENIED))
             throw new BadRequestException(EIDAS_USER_CONSENT_NOT_GIVEN, e.getMessage(), e);
         else
             throw new BadRequestException(ERROR_GENERAL, e.getMessage(), e);
