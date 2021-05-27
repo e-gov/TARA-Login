@@ -1,6 +1,8 @@
 // Components
 @import "components/fonts";
 @import "components/general";
+@import "components/tom-select";
+// Selectize component is here to retain the old design that was used before moving over to tom-select.
 @import "components/selectize";
 @import "components/header-bar";
 @import "components/lang-list";
