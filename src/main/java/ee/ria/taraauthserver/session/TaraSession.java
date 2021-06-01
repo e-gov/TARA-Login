@@ -232,6 +232,9 @@ public class TaraSession implements Serializable {
         }
 
         private boolean isAuthenticationMethodAllowedByRequestedLoa(AuthenticationType autMethod, AuthConfigurationProperties taraProperties) {
+            if (autMethod == AuthenticationType.EIDAS)
+                return true;
+
             LevelOfAssurance requestedLoa = getRequestedAcr();
             if (requestedLoa == null)
                 return true;
@@ -247,14 +250,17 @@ public class TaraSession implements Serializable {
             return acr;
         }
 
-        private boolean isAllowedByRequestedLoa(LevelOfAssurance requestedLoa, AuthenticationType authenticationMethod, AuthConfigurationProperties taraProperties) {
-            LevelOfAssurance authenticationMethodLoa = taraProperties.getAuthMethods().get(authenticationMethod).getLevelOfAssurance();
+        private boolean isAllowedByRequestedLoa(LevelOfAssurance requestedLoa, AuthenticationType authenticationMethodType, AuthConfigurationProperties taraProperties) {
+            LevelOfAssurance authenticationMethodLoa = taraProperties.getAuthMethods().get(authenticationMethodType).getLevelOfAssurance();
+            if (authenticationMethodLoa == null)
+                throw new IllegalStateException("Level of assurance must be configured for authentication method: " + authenticationMethodType.getPropertyName() + ". Please check the application configuration.");
+
             boolean isAllowed = authenticationMethodLoa.ordinal() >= requestedLoa.ordinal();
 
             if (!isAllowed) {
                 log.warn(append("tara.session.login_request_info", this),
                         "Ignoring authentication method since it's level of assurance is lower than requested. Authentication method: {} with assigned LoA: {}, requested level of assurance: {}",
-                        value("tara.session.login_request_info.authentication_method", authenticationMethod),
+                        value("tara.session.login_request_info.authentication_method", authenticationMethodType),
                         value("tara.session.login_request_info.authentication_method_loa", authenticationMethodLoa),
                         value("tara.session.login_request_info.requested_loa", requestedLoa));
             }

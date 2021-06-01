@@ -345,10 +345,6 @@ Table 1.6.2 - Assignig the Level of assurance to authentication method
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `tara.auth-methods.eidas.level-of-assurance` | Yes | Level of assurance of this auth method. Example `HIGH` |
-
-| Parameter        | Mandatory | Description, example |
-| :---------------- | :---------- | :----------------|
 | `tara.auth-methods.eidas.client-url` | Yes | Eidas client url. Example. `https://eidas-client:8889` |
 | `tara.auth-methods.eidas.refresh-countries-interval-in-milliseconds` | No | How often allowed countries are requested from Eidas client. Default. `300000` |
 | `tara.auth-methods.eidas.request-timeout-in-seconds` | No | Eidas client request timeout. Default. `3` |
