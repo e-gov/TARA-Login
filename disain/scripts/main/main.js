@@ -87,7 +87,27 @@ jQuery(function ($) {
 	});
 
 	// Country select
-	$('.js-select-country').selectize();
+	// Note that when updating tom-select, you have to convert tom-select.base.js from ecmascript-6 to ecmascript-5 for gulp compatibility and comment out the preventDefault(e) method under KEY_TAB settings to use regular tab behaviour.
+	new TomSelect("#country-select",{
+    	selectOnTab: true,
+    	onChange:function(){
+    	    // Removes the placeholder text when a country has been selected and a placeholder exists. Also sets the input width to 0 so it wouldn't create a new line on narrow screens.
+            if ($('#country-select-tomselected').is("[placeholder]")) {
+                $('#country-select-tomselected').removeAttr('placeholder');
+                $('#country-select-tomselected').css({"width":0, "min-width":0});
+            }
+        },
+    	sortField: {
+    		field: "text",
+    		direction: "asc"
+    	},
+    	render:{
+    	    // Removes the "no results found" default message when using the search function.
+            no_results:function(data,escape){
+                return '';
+            }
+        }
+    });
 	
 	function validateEstonianIdCode(value){
 		return value && /^[0-9]{11}$/.test(value);

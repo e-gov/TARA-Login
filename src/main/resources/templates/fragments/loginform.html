@@ -212,8 +212,7 @@
                         <tbody>
                         <tr>
                             <td>
-                                <select class="js-select-country" name="country"
-                                        th:placeholder="#{label.eu-citizen.select-country}">
+                                <select id="country-select" name="country">
                                     <option value="" th:text="#{label.eu-citizen.select-country}">Select</option>
                                     <option th:each="country : ${@thymeleafSupport.getListOfCountries()}"
                                             th:value="${country}"
@@ -266,3 +265,4 @@
     </defs>
 </svg>
 <script th:src="@{/content/scripts/main.js}" defer></script>
+

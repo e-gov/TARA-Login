@@ -1,10 +1,10 @@
-.selectize-control {
+.ts-control {
   width: 350px;
   @media (max-width: $breakpoint-mobile) {
     width: 100%;
   }
 }
-.selectize-input {
+.ts-input {
   padding: 13px 20px;
   color: #5d6071;
   border: 2px solid #5d6071;
@@ -13,8 +13,42 @@
     border-color: #fc7376;
   }
 }
-.selectize-input .item,
-.selectize-dropdown .option {
+.ts-input.dropdown-active::before {
+  content: ' ';
+  display: block;
+  position: absolute;
+  background: #ffffff;
+  height: 1px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+.ts-control.single .ts-input.dropdown-active:after {
+  margin-top: -4px;
+  border-width: 0 5px 5px 5px;
+  border-color: transparent transparent #333333 transparent;
+}
+.ts-input.dropdown-active {
+  border-radius: 10px;
+}
+.ts-input.dropdown-active::before {
+  display: none;
+}
+.ts-input.dropdown-active {
+  border-radius: 10px 10px 0 0;
+}
+.ts-control.single .ts-input.input-active,
+.ts-control.single .ts-input.input-active input {
+  cursor: text;
+}
+.ts-input,
+.ts-control.single .ts-input.input-active {
+  background: #fff;
+  cursor: text;
+  display: inline-block;
+}
+.ts-input .item,
+.ts-dropdown .option {
   padding-left: 45px;
   background-repeat: no-repeat;
   background-position: 0 50%;
@@ -116,8 +150,11 @@
     background-image: url('../assets/flags/eu.svg');
   }
 }
-.selectize-dropdown .option {
+.ts-dropdown .option {
   padding-left: 66px;
   background-position: 21px 50%;
   color: #5d6071;
+}
+#country-select-tomselected {
+    width: 100%;
 }
