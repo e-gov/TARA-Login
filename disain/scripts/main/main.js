@@ -87,7 +87,7 @@ jQuery(function ($) {
 	});
 
 	// Country select
-	// Note that when updating tom-select, you have to convert it from ecmascript-6 to ecmascript-5 for gulp compatibility and comment out the preventDefault(e) method under KEY_TAB settings to use regular tab behaviour.
+	// Note that when updating tom-select, you have to convert tom-select.base.js from ecmascript-6 to ecmascript-5 for gulp compatibility and comment out the preventDefault(e) method under KEY_TAB settings to use regular tab behaviour.
 	new TomSelect("#country-select",{
     	selectOnTab: true,
     	onChange:function(){
