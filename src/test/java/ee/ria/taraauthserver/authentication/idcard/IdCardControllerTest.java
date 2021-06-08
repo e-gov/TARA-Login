@@ -120,7 +120,7 @@ class IdCardControllerTest extends BaseTest {
         assertTrue(response.body().htmlPath().getInt("**.find { p -> p.text() == 'Sertifikaadi küsimine ei õnnestunud. Palun proovige mõne aja pärast uuesti.'}.size()") > 0);
         assertTrue(response.body().htmlPath().getString("**.find { it.@role == 'alert'}.p.text()").contains("Intsidendi number:"));
         assertTrue(response.body().htmlPath().getString("**.find { it.@role == 'alert'}.p.a.@href").contains("mailto:"));
-        assertTrue(response.body().htmlPath().getString("**.find { it.@role == 'alert'}.p.text()").contains("Palun saada e-kiri aadressile"));
+        assertTrue(response.body().htmlPath().getString("**.find { it.@role == 'alert'}.p.text()").contains("Palun saatke e-kiri aadressile"));
 
         assertErrorIsLogged("User exception: XCLIENTCERTIFICATE can not be null");
     }
