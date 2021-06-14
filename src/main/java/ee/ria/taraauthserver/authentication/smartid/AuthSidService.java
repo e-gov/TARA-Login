@@ -1,5 +1,8 @@
 package ee.ria.taraauthserver.authentication.smartid;
 
+import co.elastic.apm.api.ElasticApm;
+import co.elastic.apm.api.Scope;
+import co.elastic.apm.api.Span;
 import ee.ria.taraauthserver.authentication.smartid.SmartIdController.SidCredential;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
@@ -37,9 +40,12 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
+import static co.elastic.apm.api.Outcome.FAILURE;
 import static ee.ria.taraauthserver.error.ErrorCode.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static java.time.Instant.now;
+import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.util.concurrent.CompletableFuture.delayedExecutor;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static net.logstash.logback.argument.StructuredArguments.value;
@@ -146,7 +152,10 @@ public class AuthSidService {
 
 
     private void pollSidSessionStatus(String sidSessionId, TaraSession taraSession, AuthenticationRequestBuilder requestBuilder) {
-        try {
+        Span span = ElasticApm.currentTransaction().startSpan("app", "SID", "poll");
+        span.setName("AuthSidService#startSidAuthSession");
+        span.setStartTimestamp(now().plus(200, MILLIS).minus(smartIdConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLIS).toEpochMilli() * 1_000);
+        try (final Scope scope = span.activate()) {
             SessionStatusPoller sessionStatusPoller = new SessionStatusPoller(sidClient.getSmartIdConnector());
             log.info("Starting Smart-ID session status polling with id: {}", value("tara.session.sid_authentication_result.sid_session_id", sidSessionId));
             SessionStatus sessionStatus = sessionStatusPoller.fetchFinalSessionStatus(sidSessionId);
@@ -154,6 +163,8 @@ public class AuthSidService {
             handleSidAuthenticationResult(taraSession, sessionStatus, requestBuilder);
         } catch (Exception ex) {
             handleSidAuthenticationException(taraSession, ex);
+        } finally {
+            span.end();
         }
     }
 
@@ -207,6 +218,10 @@ public class AuthSidService {
         } else {
             log.debug("Session not found: {}", taraSession.getSessionId());
         }
+
+        Span span = ElasticApm.currentSpan();
+        span.setOutcome(FAILURE);
+        span.captureException(ex);
     }
 
     private ErrorCode translateExceptionToErrorCode(Throwable ex) {
