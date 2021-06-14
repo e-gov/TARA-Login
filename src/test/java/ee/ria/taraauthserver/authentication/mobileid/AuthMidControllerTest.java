@@ -132,7 +132,7 @@ class AuthMidControllerTest extends BaseTest {
                 .body("message", equalTo("Isikukood ei ole korrektne."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
     }
 
     @Test
@@ -150,7 +150,7 @@ class AuthMidControllerTest extends BaseTest {
                 .body("message", equalTo("Isikukood ei ole korrektne."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
     }
 
     @Test
@@ -168,7 +168,7 @@ class AuthMidControllerTest extends BaseTest {
                 .body("message", equalTo("Isikukood ei ole korrektne."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
     }
 
     @Test
@@ -186,7 +186,7 @@ class AuthMidControllerTest extends BaseTest {
                 .body("message", equalTo("Isikukood ei ole korrektne."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
     }
 
     @Test
@@ -284,7 +284,7 @@ class AuthMidControllerTest extends BaseTest {
                 .body("message", equalTo("Isikukood ei ole korrektne.; Telefoninumber ei ole korrektne."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 2 errors");
+        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 2 errors");
     }
 
     @Test

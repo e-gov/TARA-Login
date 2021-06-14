@@ -67,9 +67,9 @@ public class ErrorHandler {
     @ExceptionHandler({BadRequestException.class})
     public void handleBadRequestException(BadRequestException ex, HttpServletRequest request, HttpServletResponse response) throws IOException {
         if (ex.getCause() != null)
-            log.error(append("error.code", ex.getErrorCode().name()), ex.getMessage(), ex);
+            log.error(append("error.code", ex.getErrorCode().name()), "User exception: {}", ex.getMessage(), ex);
         else {
-            log.error(append("error.code", ex.getErrorCode().name()), ex.getMessage());
+            log.error(append("error.code", ex.getErrorCode().name()), "User exception: {}", ex.getMessage());
         }
         invalidateSessionAndSendError(request, response, HttpServletResponse.SC_BAD_REQUEST, ex);
     }
@@ -77,9 +77,9 @@ public class ErrorHandler {
     @ExceptionHandler({BindException.class, ConstraintViolationException.class, MissingServletRequestParameterException.class})
     public void handleBindException(Exception ex, HttpServletRequest request, HttpServletResponse response) throws IOException {
         if (log.isDebugEnabled())
-            log.error("User exception: {}", ex.getMessage(), ex);
+            log.error("User input exception: {}", ex.getMessage(), ex);
         else
-            log.error("User exception: {}", ex.getMessage());
+            log.error("User input exception: {}", ex.getMessage());
         invalidateSessionAndSendError(request, response, HttpServletResponse.SC_BAD_REQUEST, ex);
     }
 

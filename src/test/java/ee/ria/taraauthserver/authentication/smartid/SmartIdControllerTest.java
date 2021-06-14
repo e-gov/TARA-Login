@@ -51,7 +51,7 @@ class SmartIdControllerTest extends BaseTest {
         AuthenticationHash mockHashToSign = new AuthenticationHash();
         mockHashToSign.setHashInBase64("mri6grZmsF8wXJgTNzGRsoodshrFsdPTorCaBKsDOGSGCh64R+tPbu+ULVvKIh9QRVu0pLiPx3cpeX/TgsdyNA==");
         mockHashToSign.setHashType(HashType.SHA512);
-        Mockito.doReturn(mockHashToSign).when(smartIdController).getAuthenticationHash();
+        Mockito.doReturn(mockHashToSign).when(authSidService).getAuthenticationHash();
     }
 
     @Test
@@ -144,7 +144,7 @@ class SmartIdControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
     }
 
     @Test
@@ -165,7 +165,7 @@ class SmartIdControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
     }
 
     @Test
@@ -186,7 +186,7 @@ class SmartIdControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
     }
 
     @Test
@@ -207,7 +207,7 @@ class SmartIdControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
     }
 
     @Test
