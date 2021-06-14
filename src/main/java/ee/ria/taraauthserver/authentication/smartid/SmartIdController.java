@@ -197,8 +197,12 @@ public class SmartIdController {
         taraAuthResult.setAcr(smartIdConfigurationProperties.getLevelOfAssurance());
 
         Session session = sessionRepository.findById(taraSession.getSessionId());
-        session.setAttribute(TARA_SESSION, taraSession);
-        sessionRepository.save(session);
+        if (session != null) {
+            session.setAttribute(TARA_SESSION, taraSession);
+            sessionRepository.save(session);
+        } else {
+            log.error("Session correlated with this Smart-ID polling process was not found: {}", taraSession.getSessionId());
+        }
     }
 
     private void handleSidAuthenticationException(TaraSession taraSession, Exception ex) {
@@ -207,8 +211,13 @@ public class SmartIdController {
         taraSession.getAuthenticationResult().setErrorCode(translateExceptionToErrorCode(ex));
 
         Session session = sessionRepository.findById(taraSession.getSessionId());
-        session.setAttribute(TARA_SESSION, taraSession);
-        sessionRepository.save(session);
+
+        if (session != null) {
+            session.setAttribute(TARA_SESSION, taraSession);
+            sessionRepository.save(session);
+        } else {
+            log.error("Session correlated with this Smart-ID polling process was not found: {}", taraSession.getSessionId());
+        }
     }
 
     private ErrorCode translateExceptionToErrorCode(Throwable ex) {
