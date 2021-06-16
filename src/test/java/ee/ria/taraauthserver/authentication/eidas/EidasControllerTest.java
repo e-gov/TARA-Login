@@ -98,7 +98,7 @@ public class EidasControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User exception: Required String parameter 'country' is not present");
+        assertErrorIsLogged("User input exception: Required String parameter 'country' is not present");
     }
 
     @Test

@@ -72,7 +72,7 @@ class AuthInitControllerTest extends BaseTest {
                 .body("incident_nr", notNullValue())
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User exception: Required String parameter 'login_challenge' is not present");
+        assertErrorIsLogged("User input exception: Required String parameter 'login_challenge' is not present");
     }
 
     @Test
@@ -90,7 +90,7 @@ class AuthInitControllerTest extends BaseTest {
                 .body("incident_nr", notNullValue())
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User exception: authInit.loginChallenge: only characters and numbers allowed");
+        assertErrorIsLogged("User input exception: authInit.loginChallenge: only characters and numbers allowed");
     }
 
     @Test
@@ -108,7 +108,7 @@ class AuthInitControllerTest extends BaseTest {
                 .body("incident_nr", notNullValue())
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User exception: authInit.loginChallenge: size must be between 0 and 50");
+        assertErrorIsLogged("User input exception: authInit.loginChallenge: size must be between 0 and 50");
     }
 
     @Test

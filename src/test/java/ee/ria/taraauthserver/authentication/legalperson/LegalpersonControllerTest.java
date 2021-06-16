@@ -444,7 +444,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .body("message", equalTo("Required String parameter 'legal_person_identifier' is not present"))
                 .body("path", equalTo("/auth/legalperson/confirm"));
 
-        assertErrorIsLogged("User exception: Required String parameter 'legal_person_identifier' is not present");
+        assertErrorIsLogged("User input exception: Required String parameter 'legal_person_identifier' is not present");
     }
 
     @Test
@@ -464,7 +464,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .body("message", equalTo("confirmLegalPerson.legalPersonIdentifier: invalid legal person identifier"))
                 .body("path", equalTo("/auth/legalperson/confirm"));
 
-        assertErrorIsLogged("User exception: confirmLegalPerson.legalPersonIdentifier: invalid legal person identifier");
+        assertErrorIsLogged("User input exception: confirmLegalPerson.legalPersonIdentifier: invalid legal person identifier");
     }
 
     @Test

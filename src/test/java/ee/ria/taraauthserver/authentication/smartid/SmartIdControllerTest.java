@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class SmartIdControllerTest extends BaseTest {
 
     @SpyBean
-    private SmartIdController smartIdController;
+    private AuthSidService authSidService;
 
     @Autowired
     private SessionRepository<Session> sessionRepository;
@@ -51,7 +51,7 @@ class SmartIdControllerTest extends BaseTest {
         AuthenticationHash mockHashToSign = new AuthenticationHash();
         mockHashToSign.setHashInBase64("mri6grZmsF8wXJgTNzGRsoodshrFsdPTorCaBKsDOGSGCh64R+tPbu+ULVvKIh9QRVu0pLiPx3cpeX/TgsdyNA==");
         mockHashToSign.setHashType(HashType.SHA512);
-        Mockito.doReturn(mockHashToSign).when(smartIdController).getAuthenticationHash();
+        Mockito.doReturn(mockHashToSign).when(authSidService).getAuthenticationHash();
     }
 
     @Test
@@ -144,7 +144,7 @@ class SmartIdControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
     }
 
     @Test
@@ -165,7 +165,7 @@ class SmartIdControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
     }
 
     @Test
@@ -186,7 +186,7 @@ class SmartIdControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
     }
 
     @Test
@@ -207,7 +207,7 @@ class SmartIdControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
     }
 
     @Test
@@ -294,7 +294,7 @@ class SmartIdControllerTest extends BaseTest {
         AuthenticationHash mockHashToSign = new AuthenticationHash();
         mockHashToSign.setHashInBase64("mri6grZmsF8wXJgTNzGRsoodshrFsdPTorCaBKsDOGsSGCh64R+tPbu+ULVvKIh9QRVu0pLiPx3cpeX/TgsdyNA==");
         mockHashToSign.setHashType(HashType.SHA512);
-        Mockito.doReturn(mockHashToSign).when(smartIdController).getAuthenticationHash();
+        Mockito.doReturn(mockHashToSign).when(authSidService).getAuthenticationHash();
 
         createSidApiAuthenticationStub("mock_responses/sid/sid_authentication_init_response.json", 200);
         createSidApiPollStub("mock_responses/sid/sid_poll_response_ok.json", 200);
@@ -487,7 +487,7 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_USER_REFUSED, taraSession.getAuthenticationResult().getErrorCode());
 
-        assertErrorIsLogged("Smart-ID poll exception: User pressed cancel in app");
+        assertWarningIsLogged("Smart-ID polling failed: User pressed cancel in app, Error code: SID_USER_REFUSED");
     }
 
     @Test
@@ -516,7 +516,7 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_SESSION_TIMEOUT, taraSession.getAuthenticationResult().getErrorCode());
 
-        assertErrorIsLogged("Smart-ID poll exception: Session timed out without getting any response from user");
+        assertWarningIsLogged("Smart-ID polling failed: Session timed out without getting any response from user, Error code: SID_SESSION_TIMEOUT");
     }
 
     @Test
@@ -545,7 +545,7 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_DOCUMENT_UNUSABLE, taraSession.getAuthenticationResult().getErrorCode());
 
-        assertErrorIsLogged("Smart-ID poll exception: DOCUMENT_UNUSABLE. User must either check his/her Smart-ID mobile application or turn to customer support for getting the exact reason.");
+        assertWarningIsLogged("Smart-ID polling failed: DOCUMENT_UNUSABLE. User must either check his/her Smart-ID mobile application or turn to customer support for getting the exact reason., Error code: SID_DOCUMENT_UNUSABLE");
     }
 
     @Test
@@ -574,7 +574,7 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_WRONG_VC, taraSession.getAuthenticationResult().getErrorCode());
 
-        assertErrorIsLogged("Smart-ID poll exception: User selected wrong verification code");
+        assertWarningIsLogged("Smart-ID polling failed: User selected wrong verification code, Error code: SID_WRONG_VC");
     }
 
     @Test
@@ -603,7 +603,7 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_INTERACTION_NOT_SUPPORTED, taraSession.getAuthenticationResult().getErrorCode());
 
-        assertErrorIsLogged("Smart-ID poll exception: User app version does not support any of the allowedInteractionsOrder interactions.");
+        assertWarningIsLogged("Smart-ID polling failed: User app version does not support any of the allowedInteractionsOrder interactions., Error code: SID_INTERACTION_NOT_SUPPORTED");
     }
 
     @Test
@@ -632,7 +632,7 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_USER_REFUSED_CERT_CHOICE, taraSession.getAuthenticationResult().getErrorCode());
 
-        assertErrorIsLogged("Smart-ID poll exception: User has multiple accounts and pressed Cancel on device choice screen on any device.");
+        assertWarningIsLogged("Smart-ID polling failed: User has multiple accounts and pressed Cancel on device choice screen on any device., Error code: SID_USER_REFUSED_CERT_CHOICE");
     }
 
     @Test
@@ -661,7 +661,7 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_USER_REFUSED_DISAPLAYTEXTANDPIN, taraSession.getAuthenticationResult().getErrorCode());
 
-        assertErrorIsLogged("Smart-ID poll exception: User pressed Cancel on PIN screen.");
+        assertWarningIsLogged("Smart-ID polling failed: User pressed Cancel on PIN screen., Error code: SID_USER_REFUSED_DISAPLAYTEXTANDPIN");
     }
 
     @Test
@@ -690,7 +690,7 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_USER_REFUSED_VC_CHOICE, taraSession.getAuthenticationResult().getErrorCode());
 
-        assertErrorIsLogged("Smart-ID poll exception: User cancelled verificationCodeChoice screen");
+        assertWarningIsLogged("Smart-ID polling failed: User cancelled verificationCodeChoice screen, Error code: SID_USER_REFUSED_VC_CHOICE");
     }
 
     @Test

@@ -64,7 +64,7 @@ class AuthConsentControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User exception: Required String parameter 'consent_challenge' is not present");
+        assertErrorIsLogged("User input exception: Required String parameter 'consent_challenge' is not present");
     }
 
     @Test
@@ -81,7 +81,7 @@ class AuthConsentControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User exception: authConsent.consentChallenge: only characters and numbers allowed");
+        assertErrorIsLogged("User input exception: authConsent.consentChallenge: only characters and numbers allowed");
     }
 
     @Test
@@ -98,7 +98,7 @@ class AuthConsentControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User exception: authConsent.consentChallenge: size must be between 0 and 50");
+        assertErrorIsLogged("User input exception: authConsent.consentChallenge: size must be between 0 and 50");
     }
 
     @Test
