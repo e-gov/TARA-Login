@@ -213,7 +213,7 @@ public class AuthMidService {
                 session.setAttribute(TARA_SESSION, taraSession);
                 sessionRepository.save(session);
             } else {
-                log.debug("Session not found: {}", taraSession.getSessionId());
+                log.error("Session correlated with this Mobile-ID polling process was not found: {}", taraSession.getSessionId());
             }
         }
     }
@@ -234,7 +234,7 @@ public class AuthMidService {
             session.setAttribute(TARA_SESSION, taraSession);
             sessionRepository.save(session);
         } else {
-            log.debug("Session not found: {}", taraSession.getSessionId());
+            log.error("Session correlated with this Mobile-ID polling process was not found: {}", taraSession.getSessionId());
         }
 
         Span span = ElasticApm.currentSpan();

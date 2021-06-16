@@ -196,7 +196,7 @@ public class AuthSidService {
             session.setAttribute(TARA_SESSION, taraSession);
             sessionRepository.save(session);
         } else {
-            log.debug("Session not found: {}", taraSession.getSessionId());
+            log.error("Session correlated with this Smart-ID polling process was not found: {}", taraSession.getSessionId());
         }
     }
 
@@ -216,7 +216,7 @@ public class AuthSidService {
             session.setAttribute(TARA_SESSION, taraSession);
             sessionRepository.save(session);
         } else {
-            log.debug("Session not found: {}", taraSession.getSessionId());
+            log.error("Session correlated with this Smart-ID polling process was not found: {}", taraSession.getSessionId());
         }
 
         Span span = ElasticApm.currentSpan();
