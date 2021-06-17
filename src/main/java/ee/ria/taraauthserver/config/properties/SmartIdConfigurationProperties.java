@@ -52,6 +52,8 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
 
     private int longPollingTimeoutMilliseconds = 30000;
 
+    private int delayInitiateSidSessionInMilliseconds = 3000;
+
     private int delayStatusPollingStartInMilliseconds = 500;
 
     @PostConstruct

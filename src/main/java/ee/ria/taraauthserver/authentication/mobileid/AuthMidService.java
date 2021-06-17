@@ -98,46 +98,56 @@ public class AuthMidService {
     private Executor taskExecutor;
 
     public MidAuthenticationHashToSign startMidAuthSession(TaraSession taraSession, String idCode, String telephoneNumber) {
-        try {
-            MidAuthenticationHashToSign authenticationHash = getAuthenticationHash();
-            MidAuthenticationResponse midAuthentication = initMidAuthentication(taraSession, idCode, telephoneNumber, authenticationHash);
 
-            Map<String, String> contextMap = MDC.getCopyOfContextMap();
-            CompletableFuture.runAsync(() -> {
-                if (contextMap != null) {
-                    MDC.setContextMap(contextMap);
-                }
-                pollAuthenticationResult(taraSession, authenticationHash, midAuthentication, telephoneNumber);
-            }, delayedExecutor(midAuthConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLISECONDS, taskExecutor));
-            return authenticationHash;
-        } catch (MidInternalErrorException | ProcessingException e) {
-            throw new ServiceNotAvailableException(MID_INTERNAL_ERROR, String.format("Mobile-ID service is currently unavailable: %s", e.getMessage()), e);
-        } catch (Exception e) {
-            throw new IllegalStateException("Internal error during Mobile-ID authentication init: " + e.getMessage(), e);
-        }
+        taraSession.setState(INIT_MID);
+        MidAuthenticationHashToSign authenticationHash = getAuthenticationHash();
+        Map<String, String> contextMap = MDC.getCopyOfContextMap();
+        MidLanguage midLanguage = getMidLanguage();
+
+        CompletableFuture.supplyAsync(() -> initMidAuthentication(taraSession, idCode, telephoneNumber, authenticationHash, midLanguage),
+                delayedExecutor(midAuthConfigurationProperties.getDelayInitiateMidSessionInMilliseconds(), MILLISECONDS, taskExecutor))
+                .thenAcceptAsync((midAuthentication) -> {
+                    if (midAuthentication != null) {
+                        if (contextMap != null) {
+                            MDC.setContextMap(contextMap);
+                        }
+                        pollAuthenticationResult(taraSession, authenticationHash, midAuthentication, telephoneNumber);
+                    }
+                }, delayedExecutor(midAuthConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLISECONDS, taskExecutor));
+
+        return authenticationHash;
     }
 
     MidAuthenticationHashToSign getAuthenticationHash() {
         return MidAuthenticationHashToSign.generateRandomHashOfType(MidHashType.valueOf(midAuthConfigurationProperties.getHashType()));
     }
 
-    private MidAuthenticationResponse initMidAuthentication(TaraSession taraSession, String idCode, String telephoneNumber, MidAuthenticationHashToSign authenticationHash) {
-        taraSession.setState(INIT_MID);
-        String shortName = defaultIfNull(taraSession.getOidcClientTranslatedShortName(), midAuthConfigurationProperties.getDisplayText());
-
-        MidClient midClient = getAppropriateMidClient(taraSession);
-        MidAuthenticationRequest midRequest = createMidAuthenticationRequest(idCode, telephoneNumber, authenticationHash, shortName, midClient);
-        MidAuthenticationResponse response = midClient.getMobileIdConnector().authenticate(midRequest);
-        updateAuthSessionWithInitResponse(taraSession, response);
-        return response;
+    private MidAuthenticationResponse initMidAuthentication(TaraSession taraSession, String idCode, String telephoneNumber, MidAuthenticationHashToSign authenticationHash, MidLanguage midLanguage) {
+        try {
+            String shortName = defaultIfNull(taraSession.getOidcClientTranslatedShortName(), midAuthConfigurationProperties.getDisplayText());
+            MidClient midClient = getAppropriateMidClient(taraSession);
+            MidAuthenticationRequest midRequest = createMidAuthenticationRequest(idCode, telephoneNumber, authenticationHash, shortName, midClient, midLanguage);
+            MidAuthenticationResponse response = midClient.getMobileIdConnector().authenticate(midRequest);
+            updateAuthSessionWithInitResponse(taraSession, response);
+            return response;
+        } catch (MidInternalErrorException | ProcessingException e) {
+            log.error(String.format("Mobile-ID service is currently unavailable: %s", e.getMessage()));
+            createMidAuthenticationResult(taraSession, null);
+            handleAuthenticationException(taraSession, e);
+        } catch (Exception e) {
+            log.error("Internal error during Mobile-ID authentication init: " + e.getMessage());
+            createMidAuthenticationResult(taraSession, null);
+            handleAuthenticationException(taraSession, new InternalServerErrorException(e.getMessage(), e.getCause()));
+        }
+        return null;
     }
 
-    private MidAuthenticationRequest createMidAuthenticationRequest(String idCode, String telephoneNumber, MidAuthenticationHashToSign authenticationHash, String translatedShortName, MidClient midClient) {
+    private MidAuthenticationRequest createMidAuthenticationRequest(String idCode, String telephoneNumber, MidAuthenticationHashToSign authenticationHash, String translatedShortName, MidClient midClient, MidLanguage midLanguage) {
         return MidAuthenticationRequest.newBuilder()
                 .withNationalIdentityNumber(idCode)
                 .withPhoneNumber(telephoneNumber)
                 .withHashToSign(authenticationHash)
-                .withLanguage(getMidLanguage())
+                .withLanguage(midLanguage)
                 .withDisplayText(translatedShortName)
                 .withDisplayTextFormat(isServiceNameUsingSpecialCharacters(translatedShortName) ? MidDisplayTextFormat.UCS2 : MidDisplayTextFormat.GSM7)
                 .withRelyingPartyUUID(midClient.getRelyingPartyUUID())
@@ -147,10 +157,14 @@ public class AuthMidService {
 
     private void updateAuthSessionWithInitResponse(TaraSession taraSession, MidAuthenticationResponse response) {
         taraSession.setState(POLL_MID_STATUS);
-        TaraSession.MidAuthenticationResult midAuthenticationResult = new TaraSession.MidAuthenticationResult(response.getSessionID());
+        createMidAuthenticationResult(taraSession, response.getSessionID());
+        log.info("Mobile-ID authentication process with MID session id {} has been initiated", response.getSessionID());
+    }
+
+    private void createMidAuthenticationResult(TaraSession taraSession, String sessionId) {
+        TaraSession.MidAuthenticationResult midAuthenticationResult = new TaraSession.MidAuthenticationResult(sessionId);
         midAuthenticationResult.setAmr(AuthenticationType.MOBILE_ID);
         taraSession.setAuthenticationResult(midAuthenticationResult);
-        log.info("Mobile-ID authentication process with MID session id {} has been initiated", response.getSessionID());
     }
 
     private static boolean isServiceNameUsingSpecialCharacters(String serviceName) {
@@ -224,9 +238,9 @@ public class AuthMidService {
         taraSession.getAuthenticationResult().setErrorCode(errorCode);
 
         if (errorCode == ERROR_GENERAL) {
-            log.error(append("error.code", errorCode.name()), "Mobile-ID poll exception: {}", ex.getMessage(), ex);
+            log.error(append("error.code", errorCode.name()), "Mobile-ID authentication exception: {}", ex.getMessage(), ex);
         } else {
-            log.warn("Mobile-ID polling failed: {}, Error code: {}", value("error.message", ex.getMessage()), value("error.code", errorCode.name()));
+            log.warn("Mobile-ID authentication failed: {}, Error code: {}", value("error.message", ex.getMessage()), value("error.code", errorCode.name()));
         }
 
         Session session = sessionRepository.findById(taraSession.getSessionId());

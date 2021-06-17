@@ -145,6 +145,8 @@ public class AuthConfigurationProperties {
 
         private int intervalBetweenSessionStatusQueriesInMilliseconds = 5000;
 
+        private int delayInitiateMidSessionInMilliseconds = 0;
+
         private int delayStatusPollingStartInMilliseconds = 500;
 
         @PostConstruct

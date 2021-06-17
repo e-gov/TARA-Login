@@ -135,6 +135,7 @@ Table 1.3.3 - Integration with the [SK MID service](https://github.com/SK-EID/MI
 | `tara.auth-methods.mobile-id.read-timeout-milliseconds` | No | Read timeout used for MID requests. Must be at least 5 seconds longer than MID long polling timeout. Default `35000` |
 | `tara.auth-methods.mobile-id.long-polling-timeout-seconds` | No | Long polling timeout period used for MID session status requests. Default `30` |
 | `tara.auth-methods.mobile-id.interval-between-session-status-queries-in-milliseconds` | No | Interval between Mobile-ID status polling queries (from UI to tara-login-service). Default `5000` |
+| `tara.auth-methods.mobile-id.delay-initiate-mid-session-in-milliseconds` | No | Delay before initiating Mobile-ID session after control code is displayed. Default `0` |
 | `tara.auth-methods.mobile-id.delay-status-polling-start-in-milliseconds` | No | Delay before long polling. Default `500` |
 
 <a name="sid_conf"></a>
@@ -168,6 +169,7 @@ Table 1.4.3 - Integration with the [SK SID service](https://github.com/SK-EID/sm
 | `tara.auth-methods.smart-id.connection-timeout-milliseconds` | No | Connection timeout of the SID session status requests. Default `5000` |
 | `tara.auth-methods.smart-id.read-timeout-milliseconds` | No | Read timeout used for SID requests. Must be at least 5 seconds longer than SID long polling timeout. Default `35000` |
 | `tara.auth-methods.smart-id.long-polling-timeout-milliseconds` | No | Long polling timeout period used for SID session status requests. Default `30000` |
+| `tara.auth-methods.smart-id.delay-initiate-sid-session-in-milliseconds` | No | Delay before initiating Smart-ID session after control code is displayed. Default `3000` |
 | `tara.auth-methods.smart-id.delay-status-polling-start-in-milliseconds` | No | Delay before long polling. Default `500` |
 
 <a name="esteid_conf"></a>

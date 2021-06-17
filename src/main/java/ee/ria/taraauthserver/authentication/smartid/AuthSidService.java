@@ -73,6 +73,7 @@ public class AuthSidService {
         errorMap.put(UserAccountNotFoundException.class, SID_USER_ACCOUNT_NOT_FOUND);
         errorMap.put(UserRefusedConfirmationMessageException.class, SID_USER_REFUSED_CONFIRMATIONMESSAGE);
         errorMap.put(UserRefusedConfirmationMessageWithVerificationChoiceException.class, SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE);
+        errorMap.put(ServiceNotAvailableException.class, SID_INTERNAL_ERROR);
     }
 
     @Autowired
@@ -93,15 +94,19 @@ public class AuthSidService {
     public AuthenticationHash startSidAuthSession(SidCredential sidCredential, TaraSession taraSession) {
         AuthenticationHash authenticationHash = getAuthenticationHash();
         AuthenticationRequestBuilder requestBuilder = sidClient.createAuthentication();
-        String sidSessionId = initiateSidAuthenticationSession(sidCredential, taraSession, authenticationHash, requestBuilder);
-
         Map<String, String> contextMap = MDC.getCopyOfContextMap();
-        CompletableFuture.runAsync(() -> {
-            if (contextMap != null) {
-                MDC.setContextMap(contextMap);
-            }
-            pollSidSessionStatus(sidSessionId, taraSession, requestBuilder);
-        }, delayedExecutor(smartIdConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLISECONDS, taskExecutor));
+        taraSession.setState(INIT_SID);
+
+        CompletableFuture.supplyAsync(() -> initiateSidAuthenticationSession(sidCredential, taraSession, authenticationHash, requestBuilder),
+                delayedExecutor(smartIdConfigurationProperties.getDelayInitiateSidSessionInMilliseconds(), MILLISECONDS, taskExecutor))
+                .thenAcceptAsync((sidSessionId) -> {
+                    if (sidSessionId != null) {
+                        if (contextMap != null) {
+                            MDC.setContextMap(contextMap);
+                        }
+                        pollSidSessionStatus(sidSessionId, taraSession, requestBuilder);
+                    }
+                }, delayedExecutor(smartIdConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLISECONDS, taskExecutor));
         return authenticationHash;
     }
 
@@ -111,7 +116,6 @@ public class AuthSidService {
 
     private String initiateSidAuthenticationSession(SidCredential sidCredential, TaraSession taraSession, AuthenticationHash authenticationHash, AuthenticationRequestBuilder requestBuilder) {
         try {
-            taraSession.setState(INIT_SID);
             SemanticsIdentifier semanticsIdentifier = new SemanticsIdentifier(SemanticsIdentifier.IdentityType.PNO, SemanticsIdentifier.CountryCode.EE, sidCredential.getIdCode());
             requestBuilder
                     .withRelyingPartyUUID(taraSession.getSmartIdRelyingPartyUuid().orElse(smartIdConfigurationProperties.getRelyingPartyUuid()))
@@ -125,20 +129,29 @@ public class AuthSidService {
             log.info("Initiated Smart-ID session with id: {}", value("tara.session.authentication_result.sid_session_id", sidSessionId));
 
             taraSession.setState(POLL_SID_STATUS);
-            TaraSession.SidAuthenticationResult sidAuthenticationResult = new TaraSession.SidAuthenticationResult(sidSessionId);
-            sidAuthenticationResult.setAmr(AuthenticationType.SMART_ID);
-            taraSession.setAuthenticationResult(sidAuthenticationResult);
+            createAuthenticationResult(taraSession, sidSessionId);
 
             return sidSessionId;
         } catch (NotAllowedException | SmartIdClientException | NotAuthorizedException e) {
             log.error("Failed to initiate Smart-ID authentication session: " + e.getMessage());
-            throw new IllegalStateException(ERROR_GENERAL.getMessage(), e);
+            createAuthenticationResult(taraSession, null);
+            handleSidAuthenticationException(taraSession, e);
         } catch (UserAccountNotFoundException e) {
-            throw new BadRequestException(SID_USER_ACCOUNT_NOT_FOUND, "User was not found with idCode: " + sidCredential.getIdCode());
+            log.error("User was not found with idCode: " + sidCredential.getIdCode());
+            createAuthenticationResult(taraSession, null);
+            handleSidAuthenticationException(taraSession, e);
         } catch (Exception e) {
             log.error("Failed to initiate Smart-ID authentication session: " + e.getMessage());
-            throw new ServiceNotAvailableException(SID_INTERNAL_ERROR, "Failed to initiate Smart-ID authentication session", e);
+            createAuthenticationResult(taraSession, null);
+            handleSidAuthenticationException(taraSession, new InternalServerErrorException(e.getMessage(), e.getCause()));
         }
+        return null;
+    }
+
+    private void createAuthenticationResult(TaraSession taraSession, String sidSessionId) {
+        TaraSession.SidAuthenticationResult sidAuthenticationResult = new TaraSession.SidAuthenticationResult(sidSessionId);
+        sidAuthenticationResult.setAmr(AuthenticationType.SMART_ID);
+        taraSession.setAuthenticationResult(sidAuthenticationResult);
     }
 
     private List<Interaction> getAppropriateAllowedInteractions(TaraSession taraSession) {
@@ -206,9 +219,9 @@ public class AuthSidService {
         taraSession.getAuthenticationResult().setErrorCode(errorCode);
 
         if (errorCode == ERROR_GENERAL || errorCode == SID_INTERNAL_ERROR) {
-            log.error(append("error.code", errorCode.name()), "Smart-ID poll exception: {}", ex.getMessage(), ex);
+            log.error(append("error.code", errorCode.name()), "Smart-ID authentication exception: {}", ex.getMessage(), ex);
         } else {
-            log.warn("Smart-ID polling failed: {}, Error code: {}", value("error.message", ex.getMessage()), value("error.code", errorCode.name()));
+            log.warn("Smart-ID authentication failed: {}, Error code: {}", value("error.message", ex.getMessage()), value("error.code", errorCode.name()));
         }
 
         Session session = sessionRepository.findById(taraSession.getSessionId());
