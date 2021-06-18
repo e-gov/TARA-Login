@@ -1,3 +1,5 @@
+<img src="src/main/resources/static/assets/eu_regional_development_fund_horizontal.jpg" width="350" height="200">
+
 # TARA login service
 
 - [Overview](#overview)
@@ -539,6 +541,3 @@ tara.alerts.static-alert.message-templates[1].locale=en
 ### API specification
 
 API description in OpenAPI format can be found [here](doc/api-specification.yml).
-
-<img src="src/main/resources/static/assets/eu_regional_development_fund_horizontal.jpg" width="350" height="200">
-
