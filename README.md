@@ -127,8 +127,8 @@ Table 1.3.3 - Integration with the [SK MID service](https://github.com/SK-EID/MI
 | `tara.auth-methods.mobile-id.truststore-path` | Yes | Path to truststore file. Example. `file:src/test/resources/mobileid-truststore-test.p12` |
 | `tara.auth-methods.mobile-id.truststore-type` | Yes | Type of the truststore from truststore-path. Example. `PKCS12` |
 | `tara.auth-methods.mobile-id.truststore-password` | Yes | Password of the truststore from truststore-path. Example `changeit` |
-| `tara.auth-methods.mobile-id.relying-party-uuid` | Yes | UUID from RIA mobile id contract |
-| `tara.auth-methods.mobile-id.relying-party-name` | Yes | Name from RIA mobile id contract |
+| `tara.auth-methods.mobile-id.relying-party-uuid` | Yes | UUID from mobile id contract |
+| `tara.auth-methods.mobile-id.relying-party-name` | Yes | Name from mobile id contract |
 | `tara.auth-methods.mobile-id.display-text` | Yes | Text to be displayed in user's mobile device. Used as a fallback in case the OIDC client has not registered a short name. |
 | `tara.auth-methods.mobile-id.hash-type` | Yes | Type of authentication hash. Possible values `SHA256, SHA384, SHA512` |
 | `tara.auth-methods.mobile-id.connection-timeout-milliseconds` | No | Connection timeout of the MID authentication initiation request. Default `5000` |
@@ -537,3 +537,6 @@ tara.alerts.static-alert.message-templates[1].locale=en
 ### API specification
 
 API description in OpenAPI format can be found [here](doc/api-specification.yml).
+
+<img src="src/main/resources/static/assets/eu_regional_development_fund_horizontal.jpg" width="350" height="200">
+
