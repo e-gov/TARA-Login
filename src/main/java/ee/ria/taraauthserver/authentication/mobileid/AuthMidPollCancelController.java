@@ -23,9 +23,7 @@ public class AuthMidPollCancelController {
     public RedirectView authMidPollCancel(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, ALLOWED_STATES);
         taraSession.setState(POLL_MID_STATUS_CANCELED);
-        String midSessionId = ((TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult()).getMidSessionId();
-        log.warn("Mobile-ID authentication process with MID session id {} has been canceled",
-                value("tara.session.authentication_result.mid_session_id", midSessionId));
+        log.warn("Mobile-ID authentication process has been canceled");
         return new RedirectView("/auth/init?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge());
     }
 }
