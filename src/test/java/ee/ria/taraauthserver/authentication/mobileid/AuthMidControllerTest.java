@@ -24,8 +24,7 @@ import org.springframework.session.SessionRepository;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.ID_CARD;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
-import static ee.ria.taraauthserver.error.ErrorCode.MID_INTERNAL_ERROR;
-import static ee.ria.taraauthserver.error.ErrorCode.SID_INTERNAL_ERROR;
+import static ee.ria.taraauthserver.error.ErrorCode.*;
 import static ee.ria.taraauthserver.session.MockSessionFilter.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
@@ -397,9 +396,9 @@ class AuthMidControllerTest extends BaseTest {
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
 
         TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
-        assertEquals(MID_INTERNAL_ERROR, result.getErrorCode());
+        assertEquals(ERROR_GENERAL, result.getErrorCode());
 
-        assertErrorIsLogged("Internal error during Mobile-ID authentication init: HTTP 400 Bad Request");
+        assertErrorIsLogged("Mobile-ID authentication exception: HTTP 400 Bad Request");
     }
 
     @Test
@@ -425,9 +424,9 @@ class AuthMidControllerTest extends BaseTest {
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
 
         TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
-        assertEquals(MID_INTERNAL_ERROR, result.getErrorCode());
+        assertEquals(ERROR_GENERAL, result.getErrorCode());
 
-        assertErrorIsLogged("Internal error during Mobile-ID authentication init: Request is unauthorized for URI https://localhost:9877/mid-api/authentication: HTTP 401 Unauthorized");
+        assertErrorIsLogged("Mobile-ID authentication exception: Request is unauthorized for URI https://localhost:9877/mid-api/authentication: HTTP 401 Unauthorized");
     }
 
     @Test
@@ -453,9 +452,9 @@ class AuthMidControllerTest extends BaseTest {
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
 
         TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
-        assertEquals(MID_INTERNAL_ERROR, result.getErrorCode());
+        assertEquals(ERROR_GENERAL, result.getErrorCode());
 
-        assertErrorIsLogged("Internal error during Mobile-ID authentication init: HTTP 405 Method Not Allowed");
+        assertErrorIsLogged("Mobile-ID authentication exception: HTTP 405 Method Not Allowed");
     }
 
     @Test
@@ -483,7 +482,7 @@ class AuthMidControllerTest extends BaseTest {
         TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
         assertEquals(MID_INTERNAL_ERROR, result.getErrorCode());
 
-        assertErrorIsLogged("Mobile-ID service is currently unavailable: Error getting response from cert-store/MSSP for URI https://localhost:9877/mid-api/authentication: HTTP 500 Server Error");
+        assertErrorIsLogged("Mobile-ID authentication exception: Error getting response from cert-store/MSSP for URI https://localhost:9877/mid-api/authentication: HTTP 500 Server Error");
     }
 
     @Test
@@ -509,7 +508,7 @@ class AuthMidControllerTest extends BaseTest {
 
         TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
         assertEquals(MID_INTERNAL_ERROR, result.getErrorCode());
-        assertErrorIsLogged("Mobile-ID service is currently unavailable: Error getting response from cert-store/MSSP for URI https://localhost:9877/mid-api/authentication: HTTP 500 Server Error");
+        assertErrorIsLogged("Mobile-ID authentication exception: Error getting response from cert-store/MSSP for URI https://localhost:9877/mid-api/authentication: HTTP 500 Server Error");
     }
 
     @Test
@@ -535,7 +534,7 @@ class AuthMidControllerTest extends BaseTest {
 
         TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
         assertEquals(MID_INTERNAL_ERROR, result.getErrorCode());
-        assertErrorIsLogged("Mobile-ID service is currently unavailable: java.net.SocketTimeoutException: Read timed out");
+        assertErrorIsLogged("Mobile-ID authentication exception: java.net.SocketTimeoutException: Read timed out");
     }
 
     @Test

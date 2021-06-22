@@ -132,18 +132,9 @@ public class AuthSidService {
             createAuthenticationResult(taraSession, sidSessionId);
 
             return sidSessionId;
-        } catch (NotAllowedException | SmartIdClientException | NotAuthorizedException e) {
-            log.error("Failed to initiate Smart-ID authentication session: " + e.getMessage());
-            createAuthenticationResult(taraSession, null);
-            handleSidAuthenticationException(taraSession, e);
-        } catch (UserAccountNotFoundException e) {
-            log.error("User was not found with idCode: " + sidCredential.getIdCode());
-            createAuthenticationResult(taraSession, null);
-            handleSidAuthenticationException(taraSession, e);
         } catch (Exception e) {
-            log.error("Failed to initiate Smart-ID authentication session: " + e.getMessage());
             createAuthenticationResult(taraSession, null);
-            handleSidAuthenticationException(taraSession, new InternalServerErrorException(e.getMessage(), e.getCause()));
+            handleSidAuthenticationException(taraSession, e);
         }
         return null;
     }

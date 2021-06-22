@@ -23,6 +23,7 @@ import org.springframework.session.SessionRepository;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.SMART_ID;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_INTERNAL_ERROR;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_REQUEST_TIMEOUT;
 import static ee.ria.taraauthserver.session.MockSessionFilter.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
@@ -271,7 +272,7 @@ class SmartIdControllerTest extends BaseTest {
         TaraSession taraSession = await().atMost(TEN_SECONDS)
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         TaraSession.SidAuthenticationResult result = (TaraSession.SidAuthenticationResult) taraSession.getAuthenticationResult();
-        assertEquals(SID_INTERNAL_ERROR, result.getErrorCode());
+        assertEquals(SID_REQUEST_TIMEOUT, result.getErrorCode());
     }
 
     @Test

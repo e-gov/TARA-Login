@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import javax.net.ssl.SSLContext;
 import javax.ws.rs.InternalServerErrorException;
+import javax.ws.rs.NotAllowedException;
 import javax.ws.rs.ProcessingException;
 import java.util.HashMap;
 import java.util.Map;
@@ -68,8 +69,8 @@ public class AuthMidService {
         errorMap.put(InternalServerErrorException.class, MID_INTERNAL_ERROR);
         errorMap.put(MidInternalErrorException.class, MID_INTERNAL_ERROR);
         errorMap.put(MidSessionNotFoundException.class, MID_INTEGRATION_ERROR);
-        errorMap.put(MidMissingOrInvalidParameterException.class, MID_INTEGRATION_ERROR);
-        errorMap.put(MidUnauthorizedException.class, MID_INTEGRATION_ERROR);
+        errorMap.put(MidMissingOrInvalidParameterException.class, ERROR_GENERAL);
+        errorMap.put(MidUnauthorizedException.class, ERROR_GENERAL);
         errorMap.put(MidNotMidClientException.class, NOT_MID_CLIENT);
         errorMap.put(MidSessionTimeoutException.class, MID_TRANSACTION_EXPIRED);
         errorMap.put(MidUserCancellationException.class, MID_USER_CANCEL);
@@ -77,6 +78,7 @@ public class AuthMidService {
         errorMap.put(MidPhoneNotAvailableException.class, MID_PHONE_ABSENT);
         errorMap.put(MidDeliveryException.class, MID_DELIVERY_ERROR);
         errorMap.put(ProcessingException.class, MID_INTERNAL_ERROR);
+        errorMap.put(NotAllowedException.class, ERROR_GENERAL);
     }
 
     @Autowired
@@ -130,14 +132,9 @@ public class AuthMidService {
             MidAuthenticationResponse response = midClient.getMobileIdConnector().authenticate(midRequest);
             updateAuthSessionWithInitResponse(taraSession, response);
             return response;
-        } catch (MidInternalErrorException | ProcessingException e) {
-            log.error(String.format("Mobile-ID service is currently unavailable: %s", e.getMessage()));
+        } catch (Exception e) {
             createMidAuthenticationResult(taraSession, null);
             handleAuthenticationException(taraSession, e);
-        } catch (Exception e) {
-            log.error("Internal error during Mobile-ID authentication init: " + e.getMessage());
-            createMidAuthenticationResult(taraSession, null);
-            handleAuthenticationException(taraSession, new InternalServerErrorException(e.getMessage(), e.getCause()));
         }
         return null;
     }
@@ -237,7 +234,7 @@ public class AuthMidService {
         ErrorCode errorCode = translateExceptionToErrorCode(ex);
         taraSession.getAuthenticationResult().setErrorCode(errorCode);
 
-        if (errorCode == ERROR_GENERAL) {
+        if (errorCode == ERROR_GENERAL || errorCode == MID_INTERNAL_ERROR) {
             log.error(append("error.code", errorCode.name()), "Mobile-ID authentication exception: {}", ex.getMessage(), ex);
         } else {
             log.warn("Mobile-ID authentication failed: {}, Error code: {}", value("error.message", ex.getMessage()), value("error.code", errorCode.name()));

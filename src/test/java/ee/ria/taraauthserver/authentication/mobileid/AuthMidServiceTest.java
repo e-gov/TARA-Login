@@ -122,7 +122,7 @@ public class AuthMidServiceTest extends BaseTest {
 
     @Test
     @Tag(value = "MID_AUTH_INIT_RESPONSE")
-    void unchangedAuthenticationSessionStateWhen_MidApi_MidInternalErrorException() {
+    void failedAuthenticationSessionStateWhen_MidApi_MidInternalErrorException() {
         Session session = createNewAuthenticationSession();
         Mockito.doReturn(midConnectorMock).when(midClient).getMobileIdConnector();
         Mockito.doThrow(new MidInternalErrorException("MidInternalErrorException")).when(midConnectorMock).authenticate(Mockito.any());
@@ -133,12 +133,12 @@ public class AuthMidServiceTest extends BaseTest {
 
         TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
-        assertErrorIsLogged("Mobile-ID service is currently unavailable: MidInternalErrorException");
+        assertErrorIsLogged("Mobile-ID authentication exception: MidInternalErrorException");
     }
 
     @Test
     @Tag(value = "MID_AUTH_INIT_RESPONSE")
-    void unchangedAuthenticationSessionStateWhen_MidApi_ProcessingException() {
+    void failedAuthenticationSessionStateWhen_MidApi_ProcessingException() {
         Session session = createNewAuthenticationSession();
         Mockito.doReturn(midConnectorMock).when(midClient).getMobileIdConnector();
         Mockito.doThrow(new ProcessingException("ProcessingException")).when(midConnectorMock).authenticate(Mockito.any());
@@ -149,12 +149,12 @@ public class AuthMidServiceTest extends BaseTest {
 
         TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
-        assertErrorIsLogged("Mobile-ID service is currently unavailable: ProcessingException");
+        assertErrorIsLogged("Mobile-ID authentication exception: ProcessingException");
     }
 
     @Test
     @Tag(value = "MID_AUTH_INIT_RESPONSE")
-    void unchangedAuthenticationSessionStateWhen_MidApi_RuntimeException() {
+    void failedAuthenticationSessionStateWhen_MidApi_RuntimeException() {
         Session session = createNewAuthenticationSession();
         Mockito.doReturn(midConnectorMock).when(midClient).getMobileIdConnector();
         Mockito.doThrow(new RuntimeException("RuntimeException")).when(midConnectorMock).authenticate(Mockito.any());
@@ -165,7 +165,7 @@ public class AuthMidServiceTest extends BaseTest {
 
         TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
-        assertErrorIsLogged("Internal error during Mobile-ID authentication init: RuntimeException");
+        assertErrorIsLogged("Mobile-ID authentication exception: RuntimeException");
     }
 
     @Test
@@ -246,7 +246,7 @@ public class AuthMidServiceTest extends BaseTest {
         String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_empty_response.json", 500);
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertWarningIsLogged("Mobile-ID authentication failed: HTTP 500 Server Error");
+        assertErrorIsLogged("Mobile-ID authentication exception: HTTP 500 Server Error");
         assertEquals(MID_INTERNAL_ERROR, taraSession.getAuthenticationResult().getErrorCode());
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
@@ -258,7 +258,7 @@ public class AuthMidServiceTest extends BaseTest {
         String sessionId = startMidAuthSessionWithPollResponseWithDelay("mock_responses/mid/mid_poll_empty_response.json", 500, 0, 6100);
         TaraSession taraSession = await().atMost(TEN_SECONDS)
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertWarningIsLogged("Mobile-ID authentication failed: java.net.SocketTimeoutException: Read timed out");
+        assertErrorIsLogged("Mobile-ID authentication exception: java.net.SocketTimeoutException: Read timed out");
         assertEquals(MID_INTERNAL_ERROR, taraSession.getAuthenticationResult().getErrorCode());
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
