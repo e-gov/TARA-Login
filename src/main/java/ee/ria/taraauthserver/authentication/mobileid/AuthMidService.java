@@ -155,6 +155,7 @@ public class AuthMidService {
     private void updateAuthSessionWithInitResponse(TaraSession taraSession, MidAuthenticationResponse response) {
         taraSession.setState(POLL_MID_STATUS);
         createMidAuthenticationResult(taraSession, response.getSessionID());
+
         log.info("Mobile-ID authentication process with MID session id {} has been initiated", response.getSessionID());
     }
 
@@ -162,6 +163,18 @@ public class AuthMidService {
         TaraSession.MidAuthenticationResult midAuthenticationResult = new TaraSession.MidAuthenticationResult(sessionId);
         midAuthenticationResult.setAmr(AuthenticationType.MOBILE_ID);
         taraSession.setAuthenticationResult(midAuthenticationResult);
+
+        updateSession(taraSession);
+    }
+
+    private void updateSession(TaraSession taraSession) {
+        Session session = sessionRepository.findById(taraSession.getSessionId());
+        if (session != null) {
+            session.setAttribute(TARA_SESSION, taraSession);
+            sessionRepository.save(session);
+        } else {
+            log.error("Session correlated with this Mobile-ID polling process was not found: {}", taraSession.getSessionId());
+        }
     }
 
     private static boolean isServiceNameUsingSpecialCharacters(String serviceName) {
@@ -219,13 +232,7 @@ public class AuthMidService {
                 log.error("Authentication result validation failed: {}",
                         value("tara.session.authentication_result.mid_errors", midAuthResult.getErrors()));
             }
-            Session session = sessionRepository.findById(taraSession.getSessionId());
-            if (session != null) {
-                session.setAttribute(TARA_SESSION, taraSession);
-                sessionRepository.save(session);
-            } else {
-                log.error("Session correlated with this Mobile-ID polling process was not found: {}", taraSession.getSessionId());
-            }
+            updateSession(taraSession);
         }
     }
 
@@ -240,13 +247,7 @@ public class AuthMidService {
             log.warn("Mobile-ID authentication failed: {}, Error code: {}", value("error.message", ex.getMessage()), value("error.code", errorCode.name()));
         }
 
-        Session session = sessionRepository.findById(taraSession.getSessionId());
-        if (session != null) {
-            session.setAttribute(TARA_SESSION, taraSession);
-            sessionRepository.save(session);
-        } else {
-            log.error("Session correlated with this Mobile-ID polling process was not found: {}", taraSession.getSessionId());
-        }
+        updateSession(taraSession);
 
         Span span = ElasticApm.currentSpan();
         span.setOutcome(FAILURE);

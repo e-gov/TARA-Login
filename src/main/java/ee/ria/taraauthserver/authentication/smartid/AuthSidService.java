@@ -143,6 +143,18 @@ public class AuthSidService {
         TaraSession.SidAuthenticationResult sidAuthenticationResult = new TaraSession.SidAuthenticationResult(sidSessionId);
         sidAuthenticationResult.setAmr(AuthenticationType.SMART_ID);
         taraSession.setAuthenticationResult(sidAuthenticationResult);
+
+        updateSession(taraSession);
+    }
+
+    private void updateSession(TaraSession taraSession) {
+        Session session = sessionRepository.findById(taraSession.getSessionId());
+        if (session != null) {
+            session.setAttribute(TARA_SESSION, taraSession);
+            sessionRepository.save(session);
+        } else {
+            log.error("Session correlated with this Smart-ID polling process was not found: {}", taraSession.getSessionId());
+        }
     }
 
     private List<Interaction> getAppropriateAllowedInteractions(TaraSession taraSession) {
@@ -195,13 +207,7 @@ public class AuthSidService {
         taraAuthResult.setAmr(AuthenticationType.SMART_ID);
         taraAuthResult.setAcr(smartIdConfigurationProperties.getLevelOfAssurance());
 
-        Session session = sessionRepository.findById(taraSession.getSessionId());
-        if (session != null) {
-            session.setAttribute(TARA_SESSION, taraSession);
-            sessionRepository.save(session);
-        } else {
-            log.error("Session correlated with this Smart-ID polling process was not found: {}", taraSession.getSessionId());
-        }
+        updateSession(taraSession);
     }
 
     private void handleSidAuthenticationException(TaraSession taraSession, Exception ex) {
@@ -215,13 +221,7 @@ public class AuthSidService {
             log.warn("Smart-ID authentication failed: {}, Error code: {}", value("error.message", ex.getMessage()), value("error.code", errorCode.name()));
         }
 
-        Session session = sessionRepository.findById(taraSession.getSessionId());
-        if (session != null) {
-            session.setAttribute(TARA_SESSION, taraSession);
-            sessionRepository.save(session);
-        } else {
-            log.error("Session correlated with this Smart-ID polling process was not found: {}", taraSession.getSessionId());
-        }
+        updateSession(taraSession);
 
         Span span = ElasticApm.currentSpan();
         span.setOutcome(FAILURE);

@@ -98,6 +98,6 @@ class AuthSidCancelControllerTest extends BaseTest {
 
         TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.POLL_SID_STATUS_CANCELED, taraSession.getState());
-        assertWarningIsLogged("Smart ID authentication process with SID session id testSessionId has been canceled");
+        assertWarningIsLogged("Smart ID authentication process has been canceled");
     }
 }
