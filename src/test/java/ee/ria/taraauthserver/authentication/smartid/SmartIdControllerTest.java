@@ -22,6 +22,8 @@ import org.springframework.session.SessionRepository;
 
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.SMART_ID;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_INTERNAL_ERROR;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_REQUEST_TIMEOUT;
 import static ee.ria.taraauthserver.session.MockSessionFilter.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
@@ -30,6 +32,7 @@ import static io.restassured.RestAssured.given;
 import static java.util.List.of;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
+import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -254,7 +257,8 @@ class SmartIdControllerTest extends BaseTest {
         MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(SMART_ID))
-                .authenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS).build();
+                .authenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS)
+                .authenticationResult(new TaraSession.SidAuthenticationResult("testSessionId")).build();
 
         given()
                 .filter(sessionFilter)
@@ -263,7 +267,12 @@ class SmartIdControllerTest extends BaseTest {
                 .post("/auth/sid/init")
                 .then()
                 .assertThat()
-                .statusCode(502);
+                .statusCode(200);
+
+        TaraSession taraSession = await().atMost(TEN_SECONDS)
+                .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
+        TaraSession.SidAuthenticationResult result = (TaraSession.SidAuthenticationResult) taraSession.getAuthenticationResult();
+        assertEquals(SID_REQUEST_TIMEOUT, result.getErrorCode());
     }
 
     @Test
@@ -316,7 +325,7 @@ class SmartIdControllerTest extends BaseTest {
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
 
-        assertErrorIsLogged("Smart-ID poll exception: Failed to verify validity of signature returned by Smart-ID");
+        assertErrorIsLogged("Smart-ID authentication exception: Failed to verify validity of signature returned by Smart-ID");
 
     }
 
@@ -345,7 +354,7 @@ class SmartIdControllerTest extends BaseTest {
 
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
 
-        assertErrorIsLogged("Smart-ID poll exception: HTTP 400 Bad Request");
+        assertErrorIsLogged("Smart-ID authentication exception: HTTP 400 Bad Request");
     }
 
     @Test
@@ -373,7 +382,7 @@ class SmartIdControllerTest extends BaseTest {
 
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
 
-        assertErrorIsLogged("Smart-ID poll exception: HTTP 401 Unauthorized");
+        assertErrorIsLogged("Smart-ID authentication exception: HTTP 401 Unauthorized");
     }
 
     @Test
@@ -401,7 +410,7 @@ class SmartIdControllerTest extends BaseTest {
 
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
 
-        assertErrorIsLogged("Smart-ID poll exception: null");
+        assertErrorIsLogged("Smart-ID authentication exception: null");
     }
 
     @Test
@@ -429,7 +438,7 @@ class SmartIdControllerTest extends BaseTest {
 
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
 
-        assertErrorIsLogged("Smart-ID poll exception: HTTP 405 Method Not Allowed");
+        assertErrorIsLogged("Smart-ID authentication exception: HTTP 405 Method Not Allowed");
     }
 
     @Test
@@ -458,7 +467,7 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_INTERNAL_ERROR, taraSession.getAuthenticationResult().getErrorCode());
 
-        assertErrorIsLogged("Smart-ID poll exception: HTTP 500 Server Error");
+        assertErrorIsLogged("Smart-ID authentication exception: HTTP 500 Server Error");
     }
 
     @Test
@@ -487,7 +496,7 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_USER_REFUSED, taraSession.getAuthenticationResult().getErrorCode());
 
-        assertWarningIsLogged("Smart-ID polling failed: User pressed cancel in app, Error code: SID_USER_REFUSED");
+        assertWarningIsLogged("Smart-ID authentication failed: User pressed cancel in app, Error code: SID_USER_REFUSED");
     }
 
     @Test
@@ -516,7 +525,7 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_SESSION_TIMEOUT, taraSession.getAuthenticationResult().getErrorCode());
 
-        assertWarningIsLogged("Smart-ID polling failed: Session timed out without getting any response from user, Error code: SID_SESSION_TIMEOUT");
+        assertWarningIsLogged("Smart-ID authentication failed: Session timed out without getting any response from user, Error code: SID_SESSION_TIMEOUT");
     }
 
     @Test
@@ -545,7 +554,7 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_DOCUMENT_UNUSABLE, taraSession.getAuthenticationResult().getErrorCode());
 
-        assertWarningIsLogged("Smart-ID polling failed: DOCUMENT_UNUSABLE. User must either check his/her Smart-ID mobile application or turn to customer support for getting the exact reason., Error code: SID_DOCUMENT_UNUSABLE");
+        assertWarningIsLogged("Smart-ID authentication failed: DOCUMENT_UNUSABLE. User must either check his/her Smart-ID mobile application or turn to customer support for getting the exact reason., Error code: SID_DOCUMENT_UNUSABLE");
     }
 
     @Test
@@ -574,7 +583,7 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_WRONG_VC, taraSession.getAuthenticationResult().getErrorCode());
 
-        assertWarningIsLogged("Smart-ID polling failed: User selected wrong verification code, Error code: SID_WRONG_VC");
+        assertWarningIsLogged("Smart-ID authentication failed: User selected wrong verification code, Error code: SID_WRONG_VC");
     }
 
     @Test
@@ -603,7 +612,7 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_INTERACTION_NOT_SUPPORTED, taraSession.getAuthenticationResult().getErrorCode());
 
-        assertWarningIsLogged("Smart-ID polling failed: User app version does not support any of the allowedInteractionsOrder interactions., Error code: SID_INTERACTION_NOT_SUPPORTED");
+        assertWarningIsLogged("Smart-ID authentication failed: User app version does not support any of the allowedInteractionsOrder interactions., Error code: SID_INTERACTION_NOT_SUPPORTED");
     }
 
     @Test
@@ -632,7 +641,7 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_USER_REFUSED_CERT_CHOICE, taraSession.getAuthenticationResult().getErrorCode());
 
-        assertWarningIsLogged("Smart-ID polling failed: User has multiple accounts and pressed Cancel on device choice screen on any device., Error code: SID_USER_REFUSED_CERT_CHOICE");
+        assertWarningIsLogged("Smart-ID authentication failed: User has multiple accounts and pressed Cancel on device choice screen on any device., Error code: SID_USER_REFUSED_CERT_CHOICE");
     }
 
     @Test
@@ -661,7 +670,7 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_USER_REFUSED_DISAPLAYTEXTANDPIN, taraSession.getAuthenticationResult().getErrorCode());
 
-        assertWarningIsLogged("Smart-ID polling failed: User pressed Cancel on PIN screen., Error code: SID_USER_REFUSED_DISAPLAYTEXTANDPIN");
+        assertWarningIsLogged("Smart-ID authentication failed: User pressed Cancel on PIN screen., Error code: SID_USER_REFUSED_DISAPLAYTEXTANDPIN");
     }
 
     @Test
@@ -690,7 +699,7 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_USER_REFUSED_VC_CHOICE, taraSession.getAuthenticationResult().getErrorCode());
 
-        assertWarningIsLogged("Smart-ID polling failed: User cancelled verificationCodeChoice screen, Error code: SID_USER_REFUSED_VC_CHOICE");
+        assertWarningIsLogged("Smart-ID authentication failed: User cancelled verificationCodeChoice screen, Error code: SID_USER_REFUSED_VC_CHOICE");
     }
 
     @Test
@@ -719,7 +728,7 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.ERROR_GENERAL, taraSession.getAuthenticationResult().getErrorCode());
 
-        assertErrorIsLogged("Smart-ID poll exception: Session status end result is 'UNKNOWN_STATUS'");
+        assertErrorIsLogged("Smart-ID authentication exception: Session status end result is 'UNKNOWN_STATUS'");
     }
 
 }
