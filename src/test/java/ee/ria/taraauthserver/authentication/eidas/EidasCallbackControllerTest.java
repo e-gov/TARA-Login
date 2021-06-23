@@ -93,7 +93,7 @@ class EidasCallbackControllerTest extends BaseTest {
                 .body("message", equalTo("Required String parameter 'RelayState' is not present"))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: Required String parameter 'RelayState' is not present");
+        assertErrorIsLogged("User input exception: Required String parameter 'RelayState' is not present");
     }
 
     @Test
@@ -114,7 +114,7 @@ class EidasCallbackControllerTest extends BaseTest {
                 .body("message", equalTo("Required String parameter 'SAMLResponse' is not present"))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: Required String parameter 'SAMLResponse' is not present");
+        assertErrorIsLogged("User input exception: Required String parameter 'SAMLResponse' is not present");
     }
 
     @Test

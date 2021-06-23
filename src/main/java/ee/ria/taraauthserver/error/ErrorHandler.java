@@ -6,7 +6,6 @@ import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
 import ee.ria.taraauthserver.error.exceptions.TaraException;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.TaraSession;
-import ee.ria.taraauthserver.utils.RequestUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.BindException;
@@ -20,16 +19,13 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.validation.ConstraintViolationException;
 import java.io.IOException;
-import java.util.Locale;
 
-import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_LOCALE;
 import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_LOGIN_CHALLENGE;
 import static ee.ria.taraauthserver.error.ErrorCode.INTERNAL_ERROR;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static net.logstash.logback.marker.Markers.append;
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
-import static org.springframework.web.servlet.i18n.SessionLocaleResolver.LOCALE_SESSION_ATTRIBUTE_NAME;
 
 @Slf4j
 @ControllerAdvice
@@ -54,6 +50,7 @@ public class ErrorHandler {
             session.invalidate();
             log.warn(append(TARA_SESSION, taraSession), "Session has been invalidated: {}", session.getId());
         }
+
         response.sendError(status);
     }
 
@@ -62,17 +59,27 @@ public class ErrorHandler {
                 taraSession.getAuthenticationResult() != null &&
                 taraSession.getAuthenticationResult().getErrorCode() == null) {
             taraSession.getAuthenticationResult().setErrorCode(defaultIfNull(((TaraException) ex).getErrorCode(), INTERNAL_ERROR));
-        } else if(taraSession.getAuthenticationResult() != null) {
+        } else if (taraSession.getAuthenticationResult() != null) {
             taraSession.getAuthenticationResult().setErrorCode(INTERNAL_ERROR);
         }
     }
 
-    @ExceptionHandler({BadRequestException.class, BindException.class, ConstraintViolationException.class, MissingServletRequestParameterException.class})
+    @ExceptionHandler({BadRequestException.class})
+    public void handleBadRequestException(BadRequestException ex, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        if (ex.getCause() != null)
+            log.error(append("error.code", ex.getErrorCode().name()), "User exception: {}", ex.getMessage(), ex);
+        else {
+            log.error(append("error.code", ex.getErrorCode().name()), "User exception: {}", ex.getMessage());
+        }
+        invalidateSessionAndSendError(request, response, HttpServletResponse.SC_BAD_REQUEST, ex);
+    }
+
+    @ExceptionHandler({BindException.class, ConstraintViolationException.class, MissingServletRequestParameterException.class})
     public void handleBindException(Exception ex, HttpServletRequest request, HttpServletResponse response) throws IOException {
         if (log.isDebugEnabled())
-            log.error("User exception: {}", ex.getMessage(), ex);
+            log.error("User input exception: {}", ex.getMessage(), ex);
         else
-            log.error("User exception: {}", ex.getMessage());
+            log.error("User input exception: {}", ex.getMessage());
         invalidateSessionAndSendError(request, response, HttpServletResponse.SC_BAD_REQUEST, ex);
     }
 

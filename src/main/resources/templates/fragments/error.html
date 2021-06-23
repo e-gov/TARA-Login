@@ -5,8 +5,16 @@
         <p id="error-message">
         </p>
         <p>
-            <label th:utext="#{label.error.incident-number('')}" for="error-incident-number"></label>
+            <label th:text="#{label.error.incident-number('')}" for="error-incident-number"></label>
             <span id="error-incident-number"></span>
+        </p>
+        <p><a id="error-report-url"
+              th:href="#{label.error.error-report-content(${@thymeleafSupport.getErrorReportEmail()})}"
+              th:text="#{label.error.error-report-link}">Send error report</a>
+        </p>
+        <p>
+            <span id="error-report-notification" class="hidden"
+                  th:text="#{label.error.error-report-notification(${@thymeleafSupport.getErrorReportEmail()})}"/>
         </p>
     </div>
     <p th:if="${@thymeleafSupport.getBackUrl() != '#'}" class="link-back">

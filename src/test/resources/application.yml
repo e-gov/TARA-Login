@@ -50,6 +50,7 @@ tara:
     max-connections-total: 3
 
   default-locale: et
+  error-report-email: help@example.com
 
   alerts:
     enabled: true
@@ -104,6 +105,7 @@ tara:
       relying-party-uuid: 00000000-0000-0000-0000-000000000000
       relying-party-name: DEMO
       display-text: default short name
+      delay-initiate-sid-session-in-milliseconds: 0
       long-polling-timeout-milliseconds: 1000
       connection-timeout-milliseconds: 1000
       read-timeout-milliseconds: 6000

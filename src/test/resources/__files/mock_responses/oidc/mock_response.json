@@ -61,7 +61,7 @@
     "response_types": [
       "string"
     ],
-    "scope": "mid idcard",
+    "scope": "mid idcard eidas",
     "sector_identifier_uri": "string",
     "subject_type": "string",
     "token_endpoint_auth_method": "string",
@@ -90,7 +90,10 @@
     "string"
   ],
   "requested_scope": [
-    "openid"
+    "openid",
+    "mid",
+    "idcard",
+    "eidas"
   ],
   "session_id": "string",
   "skip": true,

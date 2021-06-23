@@ -24,14 +24,15 @@ import org.springframework.session.SessionRepository;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.ID_CARD;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
+import static ee.ria.taraauthserver.error.ErrorCode.*;
 import static ee.ria.taraauthserver.session.MockSessionFilter.*;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static java.util.List.of;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
+import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -132,7 +133,7 @@ class AuthMidControllerTest extends BaseTest {
                 .body("message", equalTo("Isikukood ei ole korrektne."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
     }
 
     @Test
@@ -150,7 +151,7 @@ class AuthMidControllerTest extends BaseTest {
                 .body("message", equalTo("Isikukood ei ole korrektne."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
     }
 
     @Test
@@ -168,7 +169,7 @@ class AuthMidControllerTest extends BaseTest {
                 .body("message", equalTo("Isikukood ei ole korrektne."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
     }
 
     @Test
@@ -186,7 +187,7 @@ class AuthMidControllerTest extends BaseTest {
                 .body("message", equalTo("Isikukood ei ole korrektne."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
     }
 
     @Test
@@ -284,7 +285,7 @@ class AuthMidControllerTest extends BaseTest {
                 .body("message", equalTo("Isikukood ei ole korrektne.; Telefoninumber ei ole korrektne."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: org.springframework.validation.BeanPropertyBindingResult: 2 errors");
+        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 2 errors");
     }
 
     @Test
@@ -377,19 +378,27 @@ class AuthMidControllerTest extends BaseTest {
     void midAuthInit_response_400() {
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 400);
 
+        MockSessionFilter sessionFilter = withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(MOBILE_ID)).build();
+
         given()
-                .filter(withTaraSession()
-                        .sessionRepository(sessionRepository)
-                        .authenticationTypes(of(MOBILE_ID)).build())
+                .filter(sessionFilter)
                 .formParam("idCode", "60001019906")
                 .formParam("telephoneNumber", "00000766")
                 .when()
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
-                .statusCode(500);
+                .statusCode(200);
 
-        assertErrorIsLogged("Server encountered an unexpected error: Internal error during Mobile-ID authentication init: HTTP 400 Bad Request");
+        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
+
+        TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
+        assertEquals(ERROR_GENERAL, result.getErrorCode());
+
+        assertErrorIsLogged("Mobile-ID authentication exception: HTTP 400 Bad Request");
     }
 
     @Test
@@ -397,19 +406,27 @@ class AuthMidControllerTest extends BaseTest {
     void midAuthInit_response_401() {
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 401);
 
+        MockSessionFilter sessionFilter = withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(MOBILE_ID)).build();
+
         given()
-                .filter(withTaraSession()
-                        .sessionRepository(sessionRepository)
-                        .authenticationTypes(of(MOBILE_ID)).build())
+                .filter(sessionFilter)
                 .formParam("idCode", "60001019906")
                 .formParam("telephoneNumber", "00000766")
                 .when()
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
-                .statusCode(500);
+                .statusCode(200);
 
-        assertErrorIsLogged("Server encountered an unexpected error: Internal error during Mobile-ID authentication init: Request is unauthorized for URI https://localhost:9877/mid-api/authentication: HTTP 401 Unauthorized");
+        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
+
+        TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
+        assertEquals(ERROR_GENERAL, result.getErrorCode());
+
+        assertErrorIsLogged("Mobile-ID authentication exception: Request is unauthorized for URI https://localhost:9877/mid-api/authentication: HTTP 401 Unauthorized");
     }
 
     @Test
@@ -417,19 +434,27 @@ class AuthMidControllerTest extends BaseTest {
     void midAuthInit_response_405() {
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 405);
 
+        MockSessionFilter sessionFilter = withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(MOBILE_ID)).build();
+
         given()
-                .filter(withTaraSession()
-                        .sessionRepository(sessionRepository)
-                        .authenticationTypes(of(MOBILE_ID)).build())
+                .filter(sessionFilter)
                 .formParam("idCode", "60001019906")
                 .formParam("telephoneNumber", "00000766")
                 .when()
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
-                .statusCode(500);
+                .statusCode(200);
 
-        assertErrorIsLogged("Server encountered an unexpected error: Internal error during Mobile-ID authentication init: HTTP 405 Method Not Allowed");
+        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
+
+        TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
+        assertEquals(ERROR_GENERAL, result.getErrorCode());
+
+        assertErrorIsLogged("Mobile-ID authentication exception: HTTP 405 Method Not Allowed");
     }
 
     @Test
@@ -437,58 +462,79 @@ class AuthMidControllerTest extends BaseTest {
     void midAuthInit_response_500() {
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 500);
 
+        MockSessionFilter sessionFilter = withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(MOBILE_ID)).build();
+
         given()
-                .filter(withTaraSession()
-                        .sessionRepository(sessionRepository)
-                        .authenticationTypes(of(MOBILE_ID)).build())
+                .filter(sessionFilter)
                 .formParam("idCode", "60001019906")
                 .formParam("telephoneNumber", "00000766")
                 .when()
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
-                .statusCode(502);
+                .statusCode(200);
 
-        assertErrorIsLogged("Service not available: Mobile-ID service is currently unavailable: Error getting response from cert-store/MSSP for URI https://localhost:9877/mid-api/authentication: HTTP 500 Server Error");
+        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
+
+        TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
+        assertEquals(MID_INTERNAL_ERROR, result.getErrorCode());
+
+        assertErrorIsLogged("Mobile-ID authentication exception: Error getting response from cert-store/MSSP for URI https://localhost:9877/mid-api/authentication: HTTP 500 Server Error");
     }
 
     @Test
     void midAuthInit_response_no_certificate() { // TODO: no certificate?
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 500);
 
+        MockSessionFilter sessionFilter = withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(MOBILE_ID)).build();
+
         given()
-                .filter(withTaraSession()
-                        .sessionRepository(sessionRepository)
-                        .authenticationTypes(of(MOBILE_ID)).build())
+                .filter(sessionFilter)
                 .formParam("idCode", "60001019906")
                 .formParam("telephoneNumber", "00000766")
                 .when()
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
-                .statusCode(502);
+                .statusCode(200);
 
-        assertErrorIsLogged("Service not available: Mobile-ID service is currently unavailable: Error getting response from cert-store/MSSP for URI https://localhost:9877/mid-api/authentication: HTTP 500 Server Error");
+        TaraSession taraSession = await().atMost(TEN_SECONDS)
+                .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
+
+        TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
+        assertEquals(MID_INTERNAL_ERROR, result.getErrorCode());
+        assertErrorIsLogged("Mobile-ID authentication exception: Error getting response from cert-store/MSSP for URI https://localhost:9877/mid-api/authentication: HTTP 500 Server Error");
     }
 
     @Test
     void midAuthInit_response_timeout() {
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 200, 6100);
 
+        MockSessionFilter sessionFilter = withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(MOBILE_ID)).build();
+
         given()
-                .filter(withTaraSession()
-                        .sessionRepository(sessionRepository)
-                        .authenticationTypes(of(MOBILE_ID)).build())
+                .filter(sessionFilter)
                 .formParam("idCode", "60001019906")
                 .formParam("telephoneNumber", "00000766")
                 .when()
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
-                .statusCode(502)
-                .body("message", equalTo("Mobiil-ID teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti."));
+                .statusCode(200);
 
-        assertErrorIsLogged("Service not available: Mobile-ID service is currently unavailable: java.net.SocketTimeoutException: Read timed out");
+        TaraSession taraSession = await().atMost(TEN_SECONDS)
+                .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
+
+        TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
+        assertEquals(MID_INTERNAL_ERROR, result.getErrorCode());
+        assertErrorIsLogged("Mobile-ID authentication exception: java.net.SocketTimeoutException: Read timed out");
     }
 
     @Test

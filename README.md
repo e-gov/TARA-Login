@@ -76,6 +76,7 @@ Example: to deploy the webapp to a standalone Tomcat server
 | :---------------- | :---------- | :----------------|
 | `tara.default-locale` | No | Locale that is used by default. Default `et` |
 | `tara.default-authentication-methods` | No | default authentication methods. Example `ID_CARD, MOBILE_ID, SMART_ID, EIDAS` |
+| `tara.error-report-address` | Yes | E-mail address where users can send error reports. Example `help@example.com` |
 
 
 <a name="hydra_integration_conf"></a>
@@ -126,14 +127,15 @@ Table 1.3.3 - Integration with the [SK MID service](https://github.com/SK-EID/MI
 | `tara.auth-methods.mobile-id.truststore-path` | Yes | Path to truststore file. Example. `file:src/test/resources/mobileid-truststore-test.p12` |
 | `tara.auth-methods.mobile-id.truststore-type` | Yes | Type of the truststore from truststore-path. Example. `PKCS12` |
 | `tara.auth-methods.mobile-id.truststore-password` | Yes | Password of the truststore from truststore-path. Example `changeit` |
-| `tara.auth-methods.mobile-id.relying-party-uuid` | Yes | UUID from RIA mobile id contract |
-| `tara.auth-methods.mobile-id.relying-party-name` | Yes | Name from RIA mobile id contract |
+| `tara.auth-methods.mobile-id.relying-party-uuid` | Yes | UUID from mobile id contract |
+| `tara.auth-methods.mobile-id.relying-party-name` | Yes | Name from mobile id contract |
 | `tara.auth-methods.mobile-id.display-text` | Yes | Text to be displayed in user's mobile device. Used as a fallback in case the OIDC client has not registered a short name. |
 | `tara.auth-methods.mobile-id.hash-type` | Yes | Type of authentication hash. Possible values `SHA256, SHA384, SHA512` |
 | `tara.auth-methods.mobile-id.connection-timeout-milliseconds` | No | Connection timeout of the MID authentication initiation request. Default `5000` |
 | `tara.auth-methods.mobile-id.read-timeout-milliseconds` | No | Read timeout used for MID requests. Must be at least 5 seconds longer than MID long polling timeout. Default `35000` |
 | `tara.auth-methods.mobile-id.long-polling-timeout-seconds` | No | Long polling timeout period used for MID session status requests. Default `30` |
 | `tara.auth-methods.mobile-id.interval-between-session-status-queries-in-milliseconds` | No | Interval between Mobile-ID status polling queries (from UI to tara-login-service). Default `5000` |
+| `tara.auth-methods.mobile-id.delay-initiate-mid-session-in-milliseconds` | No | Delay before initiating Mobile-ID session after verification code is displayed. Default `0` |
 | `tara.auth-methods.mobile-id.delay-status-polling-start-in-milliseconds` | No | Delay before long polling. Default `500` |
 
 <a name="sid_conf"></a>
@@ -167,6 +169,7 @@ Table 1.4.3 - Integration with the [SK SID service](https://github.com/SK-EID/sm
 | `tara.auth-methods.smart-id.connection-timeout-milliseconds` | No | Connection timeout of the SID session status requests. Default `5000` |
 | `tara.auth-methods.smart-id.read-timeout-milliseconds` | No | Read timeout used for SID requests. Must be at least 5 seconds longer than SID long polling timeout. Default `35000` |
 | `tara.auth-methods.smart-id.long-polling-timeout-milliseconds` | No | Long polling timeout period used for SID session status requests. Default `30000` |
+| `tara.auth-methods.smart-id.delay-initiate-sid-session-in-milliseconds` | No | Delay before initiating Smart-ID session after verification code is displayed. Default `3000` |
 | `tara.auth-methods.smart-id.delay-status-polling-start-in-milliseconds` | No | Delay before long polling. Default `500` |
 
 <a name="esteid_conf"></a>
@@ -341,10 +344,6 @@ Table 1.6.1 - Enabling Eidas authentication
 | `tara.auth-methods.eidas.enabled` | No | Enable or disable Eidas authentication method. Default `false` |
 
 Table 1.6.2 - Assignig the Level of assurance to authentication method
-
-| Parameter        | Mandatory | Description, example |
-| :---------------- | :---------- | :----------------|
-| `tara.auth-methods.eidas.level-of-assurance` | Yes | Level of assurance of this auth method. Example `HIGH` |
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
@@ -540,3 +539,6 @@ tara.alerts.static-alert.message-templates[1].locale=en
 ### API specification
 
 API description in OpenAPI format can be found [here](doc/api-specification.yml).
+
+<img src="src/main/resources/static/assets/eu_regional_development_fund_horizontal.jpg" width="350" height="200">
+

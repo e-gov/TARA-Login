@@ -1,5 +1,8 @@
 jQuery(function ($) {
 	"use strict";
+
+	var defaultErrorReportUrl;
+    var defaultErrorReportNotification;
 	
 	// Hide nav bar in desktop mode if less than 2 auth methods
 	if ($('.c-tab-login__nav-link').length < 2) {
@@ -54,6 +57,20 @@ jQuery(function ($) {
 		$('.c-tab-login__content[data-tab="' + active + '"]').find(".c-tab-login__content-wrap").first().attr("tabindex",-1).focus();
 	});
 
+	$(document).on('click', '#error-report-url', function(event){
+	    var errorReportUrl = $('#error-report-url');
+	    var errorReportNotification = $('#error-report-notification');
+	    var processedErrorReportUrl = errorReportUrl.attr('href');
+	    var processedErrorReportNotification = errorReportNotification.text();
+        processedErrorReportUrl = processedErrorReportUrl.replace("{3}", getCurrentOperatingSystem())
+        processedErrorReportUrl = processedErrorReportUrl.replace("{4}", getCurrentBrowser())
+        processedErrorReportUrl = processedErrorReportUrl.replace("{5}", window.location.host)
+        processedErrorReportNotification = processedErrorReportNotification.replace("{2}", window.location.host)
+        errorReportUrl.attr('href', processedErrorReportUrl);
+        errorReportNotification.text(processedErrorReportNotification);
+        $('#error-report-notification').removeClass('hidden');
+	});
+
 	// Mobile back link
 	$(document).on('click', '.c-tab-login__nav-back-link', function (event) {
 		event.preventDefault();
@@ -70,7 +87,29 @@ jQuery(function ($) {
 	});
 
 	// Country select
-	$('.js-select-country').selectize();
+	if ($('#country-select').length){
+		// Note that when updating tom-select, you have to convert tom-select.base.js from ecmascript-6 to ecmascript-5 for gulp compatibility and comment out the preventDefault(e) method under KEY_TAB settings to use regular tab behaviour.
+        new TomSelect("#country-select",{
+            selectOnTab: true,
+            onChange:function(){
+                // Removes the placeholder text when a country has been selected and a placeholder exists. Also sets the input width to 0 so it wouldn't create a new line on narrow screens.
+                if ($('#country-select-tomselected').is("[placeholder]")) {
+                    $('#country-select-tomselected').removeAttr('placeholder');
+                    $('#country-select-tomselected').css({"width":0, "min-width":0});
+                }
+            },
+            sortField: {
+                field: "text",
+                direction: "asc"
+            },
+            render:{
+                // Removes the "no results found" default message when using the search function.
+                no_results:function(data,escape){
+                    return '';
+                }
+            }
+        });
+	}
 	
 	function validateEstonianIdCode(value){
 		return value && /^[0-9]{11}$/.test(value);
@@ -136,32 +175,79 @@ jQuery(function ($) {
 			    $('#idCardForm').submit();
 			} else if (this.status == 400 || this.status == 502) {
 			    var jsonResponse = JSON.parse(this.responseText);
+
 			    showAlert($('#idCardForm .alert-popup'));
                 var errorMessageTitle = $('#idCardForm .alert-popup #error-message-title');
                 var errorMessage = $('#idCardForm .alert-popup #error-message');
                 var incidentNumber = $('#idCardForm .alert-popup #error-incident-number');
+                var errorReportUrl = $('#idCardForm .alert-popup #error-report-url');
+                var errorReportNotification = $('#idCardForm .alert-popup #error-report-notification');
 
                 errorMessageTitle.text(errorMessageTitle.text());
                 errorMessage.text(jsonResponse.message);
                 incidentNumber.text(jsonResponse.incident_nr);
-                $('#idCardForm .alert-popup #error-incident-number-wrapper').show();
 
+                if (defaultErrorReportUrl == null) {
+                    defaultErrorReportUrl = errorReportUrl.attr('href');
+                }
+
+                var processedErrorReportUrl = defaultErrorReportUrl;
+                processedErrorReportUrl = processedErrorReportUrl.replace("{1}", jsonResponse.message)
+                processedErrorReportUrl = processedErrorReportUrl.replace("{2}", jsonResponse.incident_nr)
+                errorReportUrl.attr('href', processedErrorReportUrl);
+
+                if (defaultErrorReportNotification == null) {
+                    defaultErrorReportNotification = errorReportNotification.text();
+                }
+
+                var proccessedErrorReportNotification = defaultErrorReportNotification;
+                proccessedErrorReportNotification = proccessedErrorReportNotification.replace("{1}", jsonResponse.incident_nr);
+                errorReportNotification.text(proccessedErrorReportNotification);
+
+                $('#idCardForm .alert-popup #error-report-url').show();
+                $('#idCardForm .alert-popup #error-incident-number-wrapper').show();
+                $('#error-report-notification').addClass('hidden');
                 _this.prop('disabled', false);
 			} else {
 			    var errorMessageTitle = $('#idCardForm .alert-popup #error-message-title');
                 var errorMessage = $('#idCardForm .alert-popup #error-message');
                 var incidentNumber = $('#idCardForm .alert-popup #error-incident-number');
+                var errorReportUrl = $('#idCardForm .alert-popup #error-report-url');
+                var errorReportNotification = $('#idCardForm .alert-popup #error-report-notification');
+
 			    showAlert($('#idCardForm .alert-popup'));
 			    if (this.responseText) {
 			        var jsonResponse = JSON.parse(this.responseText);
                     errorMessageTitle.text(errorMessageTitle.text());
                     errorMessage.text(jsonResponse.message);
                     incidentNumber.text(jsonResponse.incident_nr);
+
+                    if (defaultErrorReportUrl == null) {
+                        defaultErrorReportUrl = errorReportUrl.attr('href');
+                    }
+
+                    var processedErrorReportUrl = defaultErrorReportUrl;
+                    processedErrorReportUrl = processedErrorReportUrl.replace("{1}", jsonResponse.message)
+                    processedErrorReportUrl = processedErrorReportUrl.replace("{2}", jsonResponse.incident_nr)
+                    errorReportUrl.attr('href', processedErrorReportUrl);
+
+                    if (defaultErrorReportNotification == null) {
+                        defaultErrorReportNotification = errorReportNotification.text();
+                    }
+
+                    var proccessedErrorReportNotification = defaultErrorReportNotification;
+                    proccessedErrorReportNotification = proccessedErrorReportNotification.replace("{1}", jsonResponse.incident_nr);
+                    errorReportNotification.text(proccessedErrorReportNotification);
+
+                    $('#idCardForm .alert-popup #error-report-url').show();
                     $('#idCardForm .alert-popup #error-incident-number-wrapper').show();
+                    $('#error-report-notification').addClass('hidden');
 			    } else {
                     errorMessageTitle.text(errorMessageTitle.text());
                     errorMessage.text(errorMessage.text());
                     $('#idCardForm .alert-popup #error-incident-number-wrapper').hide();
+                    $('#idCardForm .alert-popup #error-report-url').hide();
+                    $('#error-report-notification').addClass('hidden');
 			    }
 
                 _this.prop('disabled', false);
@@ -325,5 +411,13 @@ jQuery(function ($) {
         content.removeClass('is-active');
         warning.attr("aria-hidden", true);
         warning.removeClass('is-active');
+    }
+
+    function getCurrentBrowser() {
+        return navigator.userAgent;
+    }
+
+    function getCurrentOperatingSystem() {
+        return navigator.platform;
     }
 });

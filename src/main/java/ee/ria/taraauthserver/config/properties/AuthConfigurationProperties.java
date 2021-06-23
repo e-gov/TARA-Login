@@ -35,6 +35,9 @@ public class AuthConfigurationProperties {
     @Pattern(regexp = "(et|en|ru|ET|EN|RU)", message = "invalid default locale value, accepted values are: et, en, ru, ET, EN, RU")
     private String defaultLocale = "et";
 
+    @NotBlank
+    private String errorReportEmail;
+
     @NotEmpty
     private String contentSecurityPolicy = DEFAULT_CONTENT_SECURITY_POLICY;
 
@@ -141,6 +144,8 @@ public class AuthConfigurationProperties {
         private int readTimeoutMilliseconds = 35000;
 
         private int intervalBetweenSessionStatusQueriesInMilliseconds = 5000;
+
+        private int delayInitiateMidSessionInMilliseconds = 0;
 
         private int delayStatusPollingStartInMilliseconds = 500;
 
