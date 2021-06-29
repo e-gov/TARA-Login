@@ -100,6 +100,10 @@ public class ThymeleafSupport {
         return alertsScheduler == null ? emptyList() : alertsScheduler.getActiveAlerts();
     }
 
+    public boolean hasStaticAlerts() {
+        return alertsScheduler.getActiveAlerts().stream().anyMatch(Alert::isLoadedFromConf);
+    }
+
     public String getErrorReportEmail() {
         return authConfigurationProperties.getErrorReportEmail();
     }
