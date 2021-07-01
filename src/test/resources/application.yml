@@ -53,7 +53,7 @@ tara:
   error-report-email: help@example.com
 
   alerts:
-    enabled: true
+    enabled: false
     host-url: https://localhost:9877/alerts
 
   auth-methods:

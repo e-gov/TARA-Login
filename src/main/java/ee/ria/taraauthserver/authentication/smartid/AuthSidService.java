@@ -3,16 +3,13 @@ package ee.ria.taraauthserver.authentication.smartid;
 import co.elastic.apm.api.ElasticApm;
 import co.elastic.apm.api.Scope;
 import co.elastic.apm.api.Span;
-import ee.ria.taraauthserver.authentication.smartid.SmartIdController.SidCredential;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
-import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.sk.mid.MidNationalIdentificationCodeValidator;
 import ee.sk.smartid.*;
-import ee.sk.smartid.exception.permanent.SmartIdClientException;
 import ee.sk.smartid.exception.useraccount.DocumentUnusableException;
 import ee.sk.smartid.exception.useraccount.RequiredInteractionNotSupportedByAppException;
 import ee.sk.smartid.exception.useraccount.UserAccountNotFoundException;
@@ -22,7 +19,6 @@ import ee.sk.smartid.rest.dao.Interaction;
 import ee.sk.smartid.rest.dao.SemanticsIdentifier;
 import ee.sk.smartid.rest.dao.SessionStatus;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.session.Session;
@@ -30,8 +26,6 @@ import org.springframework.session.SessionRepository;
 import org.springframework.stereotype.Service;
 
 import javax.ws.rs.InternalServerErrorException;
-import javax.ws.rs.NotAllowedException;
-import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.ProcessingException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,6 +38,7 @@ import static co.elastic.apm.api.Outcome.FAILURE;
 import static ee.ria.taraauthserver.error.ErrorCode.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static ee.ria.taraauthserver.utils.RequestUtils.withMdc;
 import static java.time.Instant.now;
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.util.concurrent.CompletableFuture.delayedExecutor;
@@ -91,22 +86,16 @@ public class AuthSidService {
     @Autowired
     private Executor taskExecutor;
 
-    public AuthenticationHash startSidAuthSession(SidCredential sidCredential, TaraSession taraSession) {
+    public AuthenticationHash startSidAuthSession(TaraSession taraSession, String idCode) {
         AuthenticationHash authenticationHash = getAuthenticationHash();
         AuthenticationRequestBuilder requestBuilder = sidClient.createAuthentication();
-        Map<String, String> contextMap = MDC.getCopyOfContextMap();
         taraSession.setState(INIT_SID);
 
-        CompletableFuture.supplyAsync(() -> initiateSidAuthenticationSession(sidCredential, taraSession, authenticationHash, requestBuilder),
-                delayedExecutor(smartIdConfigurationProperties.getDelayInitiateSidSessionInMilliseconds(), MILLISECONDS, taskExecutor))
-                .thenAcceptAsync((sidSessionId) -> {
-                    if (sidSessionId != null) {
-                        if (contextMap != null) {
-                            MDC.setContextMap(contextMap);
-                        }
-                        pollSidSessionStatus(sidSessionId, taraSession, requestBuilder);
-                    }
-                }, delayedExecutor(smartIdConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLISECONDS, taskExecutor));
+        CompletableFuture
+                .supplyAsync(withMdc(() -> initAuthentication(idCode, taraSession, authenticationHash, requestBuilder)),
+                        delayedExecutor(smartIdConfigurationProperties.getDelayInitiateSidSessionInMilliseconds(), MILLISECONDS, taskExecutor))
+                .thenAcceptAsync(withMdc((sidSessionId) -> pollAuthenticationResult(sidSessionId, taraSession, requestBuilder)),
+                        delayedExecutor(smartIdConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLISECONDS, taskExecutor));
         return authenticationHash;
     }
 
@@ -114,9 +103,12 @@ public class AuthSidService {
         return AuthenticationHash.generateRandomHash(HashType.valueOf(smartIdConfigurationProperties.getHashType()));
     }
 
-    private String initiateSidAuthenticationSession(SidCredential sidCredential, TaraSession taraSession, AuthenticationHash authenticationHash, AuthenticationRequestBuilder requestBuilder) {
-        try {
-            SemanticsIdentifier semanticsIdentifier = new SemanticsIdentifier(SemanticsIdentifier.IdentityType.PNO, SemanticsIdentifier.CountryCode.EE, sidCredential.getIdCode());
+    private String initAuthentication(String idCode, TaraSession taraSession, AuthenticationHash authenticationHash, AuthenticationRequestBuilder requestBuilder) {
+        Span span = ElasticApm.currentTransaction().startSpan("app", "MID", "poll");
+        span.setName("AuthSidService#initAuthentication");
+        span.setStartTimestamp(now().plus(200, MILLIS).minus(smartIdConfigurationProperties.getDelayInitiateSidSessionInMilliseconds(), MILLIS).toEpochMilli() * 1_000);
+        try (final Scope scope = span.activate()) {
+            SemanticsIdentifier semanticsIdentifier = new SemanticsIdentifier(SemanticsIdentifier.IdentityType.PNO, SemanticsIdentifier.CountryCode.EE, idCode);
             requestBuilder
                     .withRelyingPartyUUID(taraSession.getSmartIdRelyingPartyUuid().orElse(smartIdConfigurationProperties.getRelyingPartyUuid()))
                     .withRelyingPartyName(taraSession.getSmartIdRelyingPartyName().orElse(smartIdConfigurationProperties.getRelyingPartyName()))
@@ -127,14 +119,14 @@ public class AuthSidService {
 
             String sidSessionId = requestBuilder.initiateAuthentication();
             log.info("Initiated Smart-ID session with id: {}", value("tara.session.authentication_result.sid_session_id", sidSessionId));
-
             taraSession.setState(POLL_SID_STATUS);
             createAuthenticationResult(taraSession, sidSessionId);
-
             return sidSessionId;
         } catch (Exception e) {
             createAuthenticationResult(taraSession, null);
             handleSidAuthenticationException(taraSession, e);
+        } finally {
+            span.end();
         }
         return null;
     }
@@ -166,29 +158,30 @@ public class AuthSidService {
         return allowedInteractions;
     }
 
-
-    private void pollSidSessionStatus(String sidSessionId, TaraSession taraSession, AuthenticationRequestBuilder requestBuilder) {
-        Span span = ElasticApm.currentTransaction().startSpan("app", "SID", "poll");
-        span.setName("AuthSidService#startSidAuthSession");
-        span.setStartTimestamp(now().plus(200, MILLIS).minus(smartIdConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLIS).toEpochMilli() * 1_000);
-        try (final Scope scope = span.activate()) {
-            SessionStatusPoller sessionStatusPoller = new SessionStatusPoller(sidClient.getSmartIdConnector());
-            log.info("Starting Smart-ID session status polling with id: {}", value("tara.session.sid_authentication_result.sid_session_id", sidSessionId));
-            SessionStatus sessionStatus = sessionStatusPoller.fetchFinalSessionStatus(sidSessionId);
-            log.info(append("http.response.body.content", sessionStatus), "Smart-ID session polling result");
-            handleSidAuthenticationResult(taraSession, sessionStatus, requestBuilder);
-        } catch (Exception ex) {
-            handleSidAuthenticationException(taraSession, ex);
-        } finally {
-            span.end();
+    private void pollAuthenticationResult(String sidSessionId, TaraSession taraSession, AuthenticationRequestBuilder requestBuilder) {
+        if (sidSessionId != null) {
+            Span span = ElasticApm.currentTransaction().startSpan("app", "SID", "poll");
+            span.setName("AuthSidService#pollAuthenticationResult");
+            span.setStartTimestamp(now().plus(200, MILLIS).minus(smartIdConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLIS).toEpochMilli() * 1_000);
+            try (final Scope scope = span.activate()) {
+                SessionStatusPoller sessionStatusPoller = new SessionStatusPoller(sidClient.getSmartIdConnector());
+                log.info("Starting Smart-ID session status polling with id: {}", value("tara.session.sid_authentication_result.sid_session_id", sidSessionId));
+                SessionStatus sessionStatus = sessionStatusPoller.fetchFinalSessionStatus(sidSessionId);
+                handleSidAuthenticationResult(taraSession, sessionStatus, requestBuilder);
+            } catch (Exception ex) {
+                handleSidAuthenticationException(taraSession, ex);
+            } finally {
+                span.end();
+            }
         }
     }
 
     private void handleSidAuthenticationResult(TaraSession taraSession, SessionStatus sessionStatus, AuthenticationRequestBuilder requestBuilder) {
         String sidSessionId = ((TaraSession.SidAuthenticationResult) taraSession.getAuthenticationResult()).getSidSessionId();
-        log.info("SID session id {} authentication result: {}, status: {}",
+        log.info("SID session id {} authentication result: {}, document number: {}, status: {}",
                 value("tara.session.authentication_result.sid_session_id", sidSessionId),
-                value("tara.session.authentication_result.sid_result", sessionStatus.getResult()),
+                value("tara.session.authentication_result.sid_end_result", sessionStatus.getResult().getEndResult()),
+                value("tara.session.authentication_result.sid_document_number", sessionStatus.getResult().getDocumentNumber()),
                 value("tara.session.authentication_result.sid_state", sessionStatus.getState()));
 
         SmartIdAuthenticationResponse response = requestBuilder.createSmartIdAuthenticationResponse(sessionStatus);

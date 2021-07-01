@@ -9,6 +9,7 @@ import ee.ria.taraauthserver.session.TaraSession;
 import ee.sk.mid.MidAuthenticationHashToSign;
 import ee.sk.mid.MidHashType;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -24,7 +25,9 @@ import org.springframework.session.SessionRepository;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.ID_CARD;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
-import static ee.ria.taraauthserver.error.ErrorCode.*;
+import static ee.ria.taraauthserver.error.ErrorCode.ERROR_GENERAL;
+import static ee.ria.taraauthserver.error.ErrorCode.MID_INTERNAL_ERROR;
+import static ee.ria.taraauthserver.security.SessionManagementFilter.TARA_TRACE_ID;
 import static ee.ria.taraauthserver.session.MockSessionFilter.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
@@ -43,8 +46,6 @@ class AuthMidControllerTest extends BaseTest {
             .withHashType(MidHashType.SHA512)
             .withHashInBase64("bT+0Fuuf0QChq/sYb+Nz8vhLE8n3gLeL/wOXKxxE4ao=").build();
 
-
-    // TODO parameter names (idCode vs id_code)
     @SpyBean
     private AuthMidService authMidService;
 
@@ -59,6 +60,84 @@ class AuthMidControllerTest extends BaseTest {
     @AfterEach
     void afterEach() {
         Mockito.reset(authMidService);
+    }
+
+    @Test
+    @Tag(value = "LOG_TARA_TRACE_ID")
+    void taraTraceIdOnAllLogsWhen_successfulAuthentication() {
+        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 200);
+        createMidApiPollStub("mock_responses/mid/mid_poll_response.json", 200);
+
+        MockSessionFilter sessionFilter = withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(MOBILE_ID)).build();
+        given()
+                .filter(sessionFilter)
+                .formParam("idCode", "60001019939")
+                .formParam("telephoneNumber", "00000266")
+                .when()
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(200);
+
+        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
+
+        String taraTraceId = DigestUtils.sha256Hex(taraSession.getSessionId());
+        assertMessageIsLogged(e -> e.getMDCPropertyMap().getOrDefault(TARA_TRACE_ID, "missing").equals(taraTraceId),
+                                "Initiating Mobile-ID authentication session",
+                "Tara session state change: INIT_AUTH_PROCESS -> INIT_MID",
+                "Mobile-ID service request",
+                "Mobile-ID service response. Status code: 200",
+                "Tara session state change: INIT_MID -> POLL_MID_STATUS",
+                "Saving session with state: POLL_MID_STATUS",
+                "Initiated Mobile-ID session with id: de305d54-75b4-431b-adb2-eb6b9e546015",
+                "Starting Mobile-ID session status polling with id: de305d54-75b4-431b-adb2-eb6b9e546015",
+                "Mobile-ID service response. Status code: 200",
+                "MID session id de305d54-75b4-431b-adb2-eb6b9e546015 authentication result: OK, status: COMPLETE",
+                "Tara session state change: POLL_MID_STATUS -> NATURAL_PERSON_AUTHENTICATION_COMPLETED",
+                "Saving session with state: NATURAL_PERSON_AUTHENTICATION_COMPLETED");
+    }
+
+    @Test
+    @Tag(value = "LOG_TARA_TRACE_ID")
+    void taraTraceIdOnAllLogsWhen_failedAuthentication() {
+        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 200);
+        createMidApiPollStub("mock_responses/mid/mid_poll_response_sim_error.json", 200);
+
+        MockSessionFilter sessionFilter = withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(MOBILE_ID)).build();
+        given()
+                .filter(sessionFilter)
+                .formParam("idCode", "60001019939")
+                .formParam("telephoneNumber", "00000266")
+                .when()
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(200);
+
+        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
+
+        String taraTraceId = DigestUtils.sha256Hex(taraSession.getSessionId());
+        assertMessageIsLogged(e -> e.getMDCPropertyMap().getOrDefault(TARA_TRACE_ID, "missing").equals(taraTraceId),
+                "Initiating Mobile-ID authentication session",
+                "Tara session state change: INIT_AUTH_PROCESS -> INIT_MID",
+                "Mobile-ID service request",
+                "Mobile-ID service response. Status code: 200",
+                "Tara session state change: INIT_MID -> POLL_MID_STATUS",
+                "Saving session with state: POLL_MID_STATUS",
+                "Initiated Mobile-ID session with id: de305d54-75b4-431b-adb2-eb6b9e546015",
+                "Starting Mobile-ID session status polling with id: de305d54-75b4-431b-adb2-eb6b9e546015",
+                "Mobile-ID service response. Status code: 200",
+                "Error with SIM or communicating with it",
+                "Tara session state change: POLL_MID_STATUS -> AUTHENTICATION_FAILED",
+                "Mobile-ID authentication failed: SMS sending error, Error code: MID_DELIVERY_ERROR",
+                "Authentication result: AUTHENTICATION_FAILED",
+                "Saving session with state: AUTHENTICATION_FAILED");
     }
 
     @Test
@@ -335,20 +414,21 @@ class AuthMidControllerTest extends BaseTest {
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
 
         TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
-        assertEquals("60001019906", result.getIdCode());
-        assertEquals("EE", result.getCountry());
-        assertEquals("MARY ÄNN", result.getFirstName());
-        assertEquals("O’CONNEŽ-ŠUSLIK TESTNUMBER", result.getLastName());
-        assertEquals("+37200000266", result.getPhoneNumber());
-        assertEquals("EE60001019906", result.getSubject());
-        assertEquals("2000-01-01", result.getDateOfBirth().toString());
-        assertEquals(MOBILE_ID, result.getAmr());
-        assertEquals(LevelOfAssurance.HIGH, result.getAcr());
+        assertAuthenticationResult(result);
 
-        assertInfoIsLogged("Initiating Mobile-ID authentication session");
-        assertInfoIsLogged("Mobile-ID authentication process with MID session id de305d54-75b4-431b-adb2-eb6b9e546015 has been initiated");
-        assertInfoIsLogged("Polling Mobile-ID authentication process with MID session id de305d54-75b4-431b-adb2-eb6b9e546015");
-        assertInfoIsLogged("MID session id de305d54-75b4-431b-adb2-eb6b9e546015 authentication result: OK, status: COMPLETE");
+        assertInfoIsLogged(
+                "Initiating Mobile-ID authentication session",
+                "Tara session state change: INIT_AUTH_PROCESS -> INIT_MID",
+                "Mobile-ID service request",
+                "Mobile-ID service response. Status code: 200",
+                "Tara session state change: INIT_MID -> POLL_MID_STATUS",
+                "Saving session with state: POLL_MID_STATUS",
+                "Initiated Mobile-ID session with id: de305d54-75b4-431b-adb2-eb6b9e546015",
+                "Starting Mobile-ID session status polling with id: de305d54-75b4-431b-adb2-eb6b9e546015",
+                "Mobile-ID service response. Status code: 200",
+                "MID session id de305d54-75b4-431b-adb2-eb6b9e546015 authentication result: OK, status: COMPLETE",
+                "Tara session state change: POLL_MID_STATUS -> NATURAL_PERSON_AUTHENTICATION_COMPLETED",
+                "Saving session with state: NATURAL_PERSON_AUTHENTICATION_COMPLETED");
     }
 
     @Test
@@ -360,10 +440,14 @@ class AuthMidControllerTest extends BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withStatus(200)));
 
+        createMidApiPollStub("mock_responses/mid/mid_poll_response.json", 200);
+
+        MockSessionFilter sessionFilter = withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(MOBILE_ID)).build();
+
         given()
-                .filter(withTaraSession()
-                        .sessionRepository(sessionRepository)
-                        .authenticationTypes(of(MOBILE_ID)).build())
+                .filter(sessionFilter)
                 .formParam("idCode", "60001019939")
                 .formParam("telephoneNumber", "00000266")
                 .when()
@@ -371,6 +455,11 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(200);
+
+        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
+        TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
+        assertAuthenticationResult(result);
     }
 
     @Test
@@ -486,7 +575,7 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
-    void midAuthInit_response_no_certificate() { // TODO: no certificate?
+    void midAuthInit_response_no_certificate() {
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 500);
 
         MockSessionFilter sessionFilter = withTaraSession()
@@ -552,5 +641,17 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(200);
+    }
+
+    private void assertAuthenticationResult(TaraSession.MidAuthenticationResult result) {
+        assertEquals("60001019906", result.getIdCode());
+        assertEquals("EE", result.getCountry());
+        assertEquals("MARY ÄNN", result.getFirstName());
+        assertEquals("O’CONNEŽ-ŠUSLIK TESTNUMBER", result.getLastName());
+        assertEquals("+37200000266", result.getPhoneNumber());
+        assertEquals("EE60001019906", result.getSubject());
+        assertEquals("2000-01-01", result.getDateOfBirth().toString());
+        assertEquals(MOBILE_ID, result.getAmr());
+        assertEquals(LevelOfAssurance.HIGH, result.getAcr());
     }
 }

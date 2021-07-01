@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.test.context.TestPropertySource;
 
 import javax.cache.Cache;
 import java.util.List;
@@ -27,6 +28,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
+@TestPropertySource(
+        locations = "classpath:application.yml",
+        properties = {"tara.alerts.enabled=true"})
 public class AlertsSchedulerTest extends BaseTest {
 
     @Autowired
