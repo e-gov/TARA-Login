@@ -2,7 +2,6 @@ package ee.ria.taraauthserver.authentication.mobileid;
 
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
-import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
 import ee.ria.taraauthserver.session.MockTaraSessionBuilder;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.sk.mid.*;
@@ -90,15 +89,20 @@ public class AuthMidServiceTest extends BaseTest {
         assertEquals(MOBILE_ID, result.getAmr());
         assertEquals(LevelOfAssurance.HIGH, result.getAcr());
 
-        assertInfoIsLogged("Tara session state change: NOT_SET -> INIT_AUTH_PROCESS");
-        assertInfoIsLogged("Tara session state change: INIT_AUTH_PROCESS -> INIT_MID");
-        assertInfoIsLogged("Mobile-ID service request");
-        assertInfoIsLogged("Tara session state change: INIT_MID -> POLL_MID_STATUS");
-        assertInfoIsLogged("Mobile-ID service response");
-        assertInfoIsLogged("Mobile-ID authentication process with MID session id de305d54-75b4-431b-adb2-eb6b9e546015 has been initiated");
-        assertInfoIsLogged("Polling Mobile-ID authentication process with MID session id de305d54-75b4-431b-adb2-eb6b9e546015");
-        assertInfoIsLogged("MID session id de305d54-75b4-431b-adb2-eb6b9e546015 authentication result: OK, status: COMPLETE");
-        assertInfoIsLogged("Tara session state change: POLL_MID_STATUS -> NATURAL_PERSON_AUTHENTICATION_COMPLETED");
+        assertInfoIsLogged("Tara session state change: NOT_SET -> INIT_AUTH_PROCESS",
+                "Saving session with state: INIT_AUTH_PROCESS",
+                "Tara session state change: INIT_AUTH_PROCESS -> INIT_MID",
+                "Mobile-ID service request",
+                "Mobile-ID service response. Status code: 200",
+                "Tara session state change: INIT_MID -> POLL_MID_STATUS",
+                "Saving session with state: POLL_MID_STATUS",
+                "Initiated Mobile-ID session with id: de305d54-75b4-431b-adb2-eb6b9e546015",
+                "Starting Mobile-ID session status polling with id: de305d54-75b4-431b-adb2-eb6b9e546015",
+                "Mobile-ID service response. Status code: 200",
+                "MID session id de305d54-75b4-431b-adb2-eb6b9e546015 authentication result: OK, status: COMPLETE",
+                "Tara session state change: POLL_MID_STATUS -> NATURAL_PERSON_AUTHENTICATION_COMPLETED",
+                "Saving session with state: NATURAL_PERSON_AUTHENTICATION_COMPLETED");
+
         assertMidApiRequests();
     }
 
