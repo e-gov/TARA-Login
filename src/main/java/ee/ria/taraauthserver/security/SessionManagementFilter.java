@@ -28,6 +28,7 @@ public class SessionManagementFilter extends OncePerRequestFilter {
     private static final RequestMatcher AUTH_INIT_REQUEST_MATCHER = new AntPathRequestMatcher(AUTH_INIT_REQUEST_MAPPING);
     private static final RequestMatcher EIDAS_CALLBACK_REQUEST_MATCHER = new AntPathRequestMatcher(EIDAS_CALLBACK_REQUEST_MAPPING);
     private static final RequestMatcher AUTH_REQUEST_MATCHER = new AntPathRequestMatcher("/auth/**");
+    public static final String TARA_TRACE_ID = "labels.tara_trace_id";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -44,12 +45,13 @@ public class SessionManagementFilter extends OncePerRequestFilter {
             correlateApmWithLogs(session);
         }
         filterChain.doFilter(request, response);
+        // TODO: Could clear MDC in finally block, but tests fail while application itself behaves correctly, needs investigation.
     }
 
     private void correlateApmWithLogs(HttpSession session) {
         String taraTraceId = DigestUtils.sha256Hex(session.getId());
         ElasticApm.currentTransaction().setLabel("tara_trace_id", taraTraceId);
-        MDC.put("labels.tara_trace_id", taraTraceId);
+        MDC.put(TARA_TRACE_ID, taraTraceId);
     }
 
     private HttpSession createNewSession(HttpServletRequest request, HttpSession session) {

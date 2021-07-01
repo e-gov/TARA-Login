@@ -9,6 +9,7 @@ import ee.ria.taraauthserver.session.TaraSession;
 import ee.sk.smartid.AuthenticationHash;
 import ee.sk.smartid.HashType;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -22,8 +23,8 @@ import org.springframework.session.SessionRepository;
 
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.SMART_ID;
-import static ee.ria.taraauthserver.error.ErrorCode.SID_INTERNAL_ERROR;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_REQUEST_TIMEOUT;
+import static ee.ria.taraauthserver.security.SessionManagementFilter.TARA_TRACE_ID;
 import static ee.ria.taraauthserver.session.MockSessionFilter.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
@@ -246,6 +247,86 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals("1801-01-01", result.getDateOfBirth().toString());
         assertEquals(SMART_ID, result.getAmr());
         assertEquals(LevelOfAssurance.HIGH, result.getAcr());
+    }
+
+    @Test
+    @Tag(value = "LOG_TARA_TRACE_ID")
+    void taraTraceIdOnAllLogsWhen_successfulAuthentication() {
+        createSidApiAuthenticationStub("mock_responses/sid/sid_authentication_init_response.json", 200);
+        createSidApiPollStub("mock_responses/sid/sid_poll_response_ok.json", 200);
+
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(SMART_ID))
+                .authenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS).build();
+
+        given()
+                .filter(sessionFilter)
+                .when()
+                .formParam(ID_CODE, ID_CODE_VALUE)
+                .post("/auth/sid/init")
+                .then()
+                .assertThat()
+                .statusCode(200);
+
+        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
+
+        String taraTraceId = DigestUtils.sha256Hex(taraSession.getSessionId());
+        assertMessageIsLogged(e -> e.getMDCPropertyMap().getOrDefault(TARA_TRACE_ID, "missing").equals(taraTraceId),
+                "Initiating Smart-ID authentication session",
+                "Tara session state change: INIT_AUTH_PROCESS -> INIT_SID",
+                "Smart-ID service request",
+                "Smart-ID service response. Status code: 200",
+                "Initiated Smart-ID session with id: de305d54-75b4-431b-adb2-eb6b9e546014",
+                "Tara session state change: INIT_SID -> POLL_SID_STATUS",
+                "Saving session with state: POLL_SID_STATUS",
+                "Starting Smart-ID session status polling with id: de305d54-75b4-431b-adb2-eb6b9e546014",
+                "Smart-ID service response. Status code: 200",
+                "SID session id de305d54-75b4-431b-adb2-eb6b9e546014 authentication result: OK, document number: PNOEE-10101010005-Z1B2-Q, status: COMPLETE",
+                "Tara session state change: POLL_SID_STATUS -> NATURAL_PERSON_AUTHENTICATION_COMPLETED",
+                "Saving session with state: NATURAL_PERSON_AUTHENTICATION_COMPLETED");
+    }
+
+    @Test
+    @Tag(value = "LOG_TARA_TRACE_ID")
+    void taraTraceIdOnAllLogsWhen_failedAuthentication() {
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(SMART_ID))
+                .authenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS).build();
+
+        createSidApiAuthenticationStub("mock_responses/sid/sid_authentication_init_response.json", 200);
+        createSidApiPollStub("mock_responses/sid/sid_poll_response_user_refused.json", 200);
+
+        given()
+                .filter(sessionFilter)
+                .when()
+                .formParam(ID_CODE, ID_CODE_VALUE)
+                .post("/auth/sid/init")
+                .then()
+                .assertThat()
+                .statusCode(200);
+
+        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
+
+        String taraTraceId = DigestUtils.sha256Hex(taraSession.getSessionId());
+        assertMessageIsLogged(e -> e.getMDCPropertyMap().getOrDefault(TARA_TRACE_ID, "missing").equals(taraTraceId),
+                "Initiating Smart-ID authentication session",
+                "Tara session state change: INIT_AUTH_PROCESS -> INIT_SID",
+                "Smart-ID service request",
+                "Smart-ID service response. Status code: 200",
+                "Initiated Smart-ID session with id: de305d54-75b4-431b-adb2-eb6b9e546014",
+                "Tara session state change: INIT_SID -> POLL_SID_STATUS",
+                "Saving session with state: POLL_SID_STATUS",
+                "Starting Smart-ID session status polling with id: de305d54-75b4-431b-adb2-eb6b9e546014",
+                "Smart-ID service response. Status code: 200",
+                "SID session id de305d54-75b4-431b-adb2-eb6b9e546014 authentication result: USER_REFUSED, document number: null, status: COMPLETE",
+                "Tara session state change: POLL_SID_STATUS -> AUTHENTICATION_FAILED",
+                "Smart-ID authentication failed: User pressed cancel in app, Error code: SID_USER_REFUSED",
+                "Authentication result: AUTHENTICATION_FAILED",
+                "Saving session with state: AUTHENTICATION_FAILED");
     }
 
     @Test

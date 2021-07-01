@@ -42,6 +42,8 @@ public class RequestUtils {
             try {
                 if (mdc != null) {
                     MDC.setContextMap(mdc);
+                } else {
+                    MDC.clear();
                 }
                 consumer.accept(t);
             } finally {
@@ -56,6 +58,8 @@ public class RequestUtils {
             try {
                 if (mdc != null) {
                     MDC.setContextMap(mdc);
+                } else {
+                    MDC.clear();
                 }
                 return supplier.get();
             } finally {
