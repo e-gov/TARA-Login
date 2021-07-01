@@ -104,7 +104,7 @@ public class AuthMidService {
         MidLanguage midLanguage = getMidLanguage();
 
         CompletableFuture
-                .supplyAsync(withMdc(() -> initMidAuthentication(taraSession, idCode, telephoneNumber, authenticationHash, midLanguage)),
+                .supplyAsync(withMdc(() -> initAuthentication(taraSession, idCode, telephoneNumber, authenticationHash, midLanguage)),
                         delayedExecutor(midAuthConfigurationProperties.getDelayInitiateMidSessionInMilliseconds(), MILLISECONDS, taskExecutor))
                 .thenAcceptAsync(withMdc((midAuthentication) -> pollAuthenticationResult(taraSession, authenticationHash, midAuthentication, telephoneNumber)),
                         delayedExecutor(midAuthConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLISECONDS, taskExecutor));
@@ -116,17 +116,26 @@ public class AuthMidService {
         return MidAuthenticationHashToSign.generateRandomHashOfType(MidHashType.valueOf(midAuthConfigurationProperties.getHashType()));
     }
 
-    private MidAuthenticationResponse initMidAuthentication(TaraSession taraSession, String idCode, String telephoneNumber, MidAuthenticationHashToSign authenticationHash, MidLanguage midLanguage) {
-        try {
+    private MidAuthenticationResponse initAuthentication(TaraSession taraSession, String idCode, String telephoneNumber, MidAuthenticationHashToSign authenticationHash, MidLanguage midLanguage) {
+        Span span = ElasticApm.currentTransaction().startSpan("app", "MID", "poll");
+        span.setName("AuthMidService#initAuthentication");
+        span.setStartTimestamp(now().plus(200, MILLIS).minus(midAuthConfigurationProperties.getDelayInitiateMidSessionInMilliseconds(), MILLIS).toEpochMilli() * 1_000);
+
+        try (final Scope scope = span.activate()) {
             String shortName = defaultIfNull(taraSession.getOidcClientTranslatedShortName(), midAuthConfigurationProperties.getDisplayText());
             MidClient midClient = getAppropriateMidClient(taraSession);
             MidAuthenticationRequest midRequest = createMidAuthenticationRequest(idCode, telephoneNumber, authenticationHash, shortName, midClient, midLanguage);
             MidAuthenticationResponse response = midClient.getMobileIdConnector().authenticate(midRequest);
-            updateAuthSessionWithInitResponse(taraSession, response);
+            taraSession.setState(POLL_MID_STATUS);
+            String midSessionId = response.getSessionID();
+            createMidAuthenticationResult(taraSession, midSessionId);
+            log.info("Initiated Mobile-ID session with id: {}", value("tara.session.authentication_result.mid_session_id", midSessionId));
             return response;
         } catch (Exception e) {
             createMidAuthenticationResult(taraSession, null);
             handleAuthenticationException(taraSession, e);
+        } finally {
+            span.end();
         }
         return null;
     }
@@ -144,18 +153,10 @@ public class AuthMidService {
                 .build();
     }
 
-    private void updateAuthSessionWithInitResponse(TaraSession taraSession, MidAuthenticationResponse response) {
-        taraSession.setState(POLL_MID_STATUS);
-        createMidAuthenticationResult(taraSession, response.getSessionID());
-
-        log.info("Mobile-ID authentication process with MID session id {} has been initiated", response.getSessionID());
-    }
-
     private void createMidAuthenticationResult(TaraSession taraSession, String sessionId) {
         TaraSession.MidAuthenticationResult midAuthenticationResult = new TaraSession.MidAuthenticationResult(sessionId);
         midAuthenticationResult.setAmr(AuthenticationType.MOBILE_ID);
         taraSession.setAuthenticationResult(midAuthenticationResult);
-
         updateSession(taraSession);
     }
 
@@ -180,10 +181,10 @@ public class AuthMidService {
             span.setName("AuthMidService#pollAuthenticationResult");
             span.setStartTimestamp(now().plus(200, MILLIS).minus(midAuthConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLIS).toEpochMilli() * 1_000);
             try (final Scope scope = span.activate()) {
-                log.info("Polling Mobile-ID authentication process with MID session id {}",
-                        value("tara.session.authentication_result.mid_session_id", response.getSessionID()));
+                String midSessionId = response.getSessionID();
+                log.info("Starting Mobile-ID session status polling with id: {}", value("tara.session.sid_authentication_result.mid_session_id", midSessionId));
                 MidSessionStatus midSessionStatus = midClient.getSessionStatusPoller()
-                        .fetchFinalSessionStatus(response.getSessionID(), "/authentication/session/" + response.getSessionID());
+                        .fetchFinalSessionStatus(midSessionId, "/authentication/session/" + midSessionId);
                 handleAuthenticationResult(taraSession, authenticationHash, midSessionStatus, telephoneNumber);
             } catch (Exception ex) {
                 handleAuthenticationException(taraSession, ex);
