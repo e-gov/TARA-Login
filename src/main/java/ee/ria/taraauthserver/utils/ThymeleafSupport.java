@@ -101,7 +101,7 @@ public class ThymeleafSupport {
     }
 
     public boolean hasStaticAlerts() {
-        return alertsScheduler.getActiveAlerts().stream().anyMatch(Alert::isLoadedFromConf);
+        return alertsScheduler != null && alertsScheduler.getActiveAlerts().stream().anyMatch(Alert::isLoadedFromConf);
     }
 
     public String getErrorReportEmail() {
