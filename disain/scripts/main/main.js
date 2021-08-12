@@ -4,9 +4,11 @@ jQuery(function ($) {
 	var defaultErrorReportUrl;
     var defaultErrorReportNotification;
 	
-	// Hide nav bar in desktop mode if less than 2 auth methods
+	// Hide nav bar in desktop mode and display authentication method content in mobile mode if less than 2 auth methods
 	if ($('.c-tab-login__nav-link').length < 2) {
 		$('.c-tab-login__header').addClass('hide-in-desktop');
+        $('body').addClass('is-mobile-subview');
+        $('.c-tab-login__nav-item').addClass('is-active');
 	}
 
 	// Activate previously selected or first auth method
