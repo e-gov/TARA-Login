@@ -26,6 +26,7 @@ import static java.lang.String.join;
 import static org.springframework.boot.web.error.ErrorAttributeOptions.Include.BINDING_ERRORS;
 import static org.springframework.boot.web.error.ErrorAttributeOptions.Include.MESSAGE;
 import static org.springframework.web.context.request.RequestAttributes.SCOPE_REQUEST;
+import static ee.ria.taraauthserver.error.ErrorCode.*;
 
 @Slf4j
 @Component
@@ -35,14 +36,47 @@ public class ErrorAttributes extends DefaultErrorAttributes {
     public static final String ERROR_ATTR_LOCALE = "locale";
     public static final String ERROR_ATTR_LOGIN_CHALLENGE = "login_challenge";
     public static final String ERROR_ATTR_INCIDENT_NR = "incident_nr";
+    public static final String ERROR_ATTR_REPORTABLE = "reportable";
     private final MessageSource messageSource;
+
+    public static final Set<ErrorCode> reportableErrors;
+
+    static {
+        reportableErrors = new HashSet<>();
+        reportableErrors.add(EIDAS_AUTHENTICATION_FAILED);
+        reportableErrors.add(EIDAS_INTERNAL_ERROR);
+        reportableErrors.add(INVALID_OIDC_CLIENT);
+        reportableErrors.add(INVALID_OIDC_REQUEST);
+        reportableErrors.add(INVALID_CSRF_TOKEN);
+        reportableErrors.add(SESSION_STATE_INVALID);
+        reportableErrors.add(ERROR_GENERAL);
+        reportableErrors.add(MID_INTEGRATION_ERROR);
+        reportableErrors.add(INTERNAL_ERROR);
+        reportableErrors.add(MID_HASH_MISMATCH);
+        reportableErrors.add(INVALID_LOGIN_CHALLENGE);
+        reportableErrors.add(ESTEID_INVALID_REQUEST);
+        reportableErrors.add(NO_VALID_AUTHMETHODS_AVAILABLE);
+        reportableErrors.add(MID_INTERNAL_ERROR);
+        reportableErrors.add(SID_INTERNAL_ERROR);
+        reportableErrors.add(SID_REQUEST_TIMEOUT);
+        reportableErrors.add(SID_INTERACTION_NOT_SUPPORTED);
+        reportableErrors.add(EIDAS_COUNTRY_NOT_SUPPORTED);
+        reportableErrors.add(IDC_CERT_NOT_YET_VALID);
+        reportableErrors.add(IDC_OCSP_NOT_AVAILABLE);
+        reportableErrors.add(LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE);
+        reportableErrors.add(MISSING_SCOPE);
+        reportableErrors.add(IDC_UNKNOWN);
+        reportableErrors.add(INVALID_REQUEST);
+        reportableErrors.add(INVALID_LEGAL_PERSON);
+        reportableErrors.add(MID_VALIDATION_ERROR);
+    }
 
     @Override
     public Map<String, Object> getErrorAttributes(WebRequest webRequest, ErrorAttributeOptions options) {
         Map<String, Object> attr = super.getErrorAttributes(webRequest, options.including(MESSAGE, BINDING_ERRORS));
 
         HttpStatus status = HttpStatus.resolve((int) attr.get("status"));
-        if(status == null || status.is5xxServerError()) {
+        if (status == null || status.is5xxServerError()) {
             handle5xxError(webRequest, attr);
         } else if (status.is4xxClientError()) {
             handle4xxClientError(webRequest, attr);
@@ -52,8 +86,20 @@ public class ErrorAttributes extends DefaultErrorAttributes {
         attr.put(ERROR_ATTR_LOCALE, locale);
         attr.put(ERROR_ATTR_LOGIN_CHALLENGE, webRequest.getAttribute(ERROR_ATTR_LOGIN_CHALLENGE, SCOPE_REQUEST));
         attr.put(ERROR_ATTR_INCIDENT_NR, MDC.get(MDC_ATTRIBUTE_TRACE_ID));
+        attr.put(ERROR_ATTR_REPORTABLE, isReportable(getError(webRequest), status));
         attr.remove("errors");
         return attr;
+    }
+
+    private boolean isReportable(Throwable error, HttpStatus status) {
+
+        if (status == null || status.is5xxServerError())
+            return true;
+        else if (isTaraErrorWithErrorCode(error)) {
+            ErrorCode errorCode = ((TaraException) error).getErrorCode();
+            return reportableErrors.contains(errorCode);
+        } else
+            return false;
     }
 
     private void handle4xxClientError(WebRequest webRequest, Map<String, Object> attr) {

@@ -206,8 +206,16 @@ jQuery(function ($) {
                 proccessedErrorReportNotification = proccessedErrorReportNotification.replace("{1}", jsonResponse.incident_nr);
                 errorReportNotification.text(proccessedErrorReportNotification);
 
-                $('#idCardForm .alert-popup #error-report-url').show();
-                $('#idCardForm .alert-popup #error-incident-number-wrapper').show();
+                console.log(jsonResponse.reportable);
+
+                if (jsonResponse.reportable === "true") {
+                    $('#idCardForm .alert-popup #error-incident-number-wrapper').show();
+                    $('#idCardForm .alert-popup #error-report-url').show();
+                } else {
+                    $('#idCardForm .alert-popup #error-incident-number-wrapper').hide();
+                    $('#idCardForm .alert-popup #error-report-url').hide();
+                }
+
                 $('#error-report-notification').addClass('hidden');
                 _this.prop('disabled', false);
 			} else {
@@ -241,8 +249,14 @@ jQuery(function ($) {
                     proccessedErrorReportNotification = proccessedErrorReportNotification.replace("{1}", jsonResponse.incident_nr);
                     errorReportNotification.text(proccessedErrorReportNotification);
 
-                    $('#idCardForm .alert-popup #error-report-url').show();
-                    $('#idCardForm .alert-popup #error-incident-number-wrapper').show();
+                    if (jsonResponse.reportable) {
+                        $('#idCardForm .alert-popup #error-incident-number-wrapper').show();
+                        $('#idCardForm .alert-popup #error-report-url').show();
+                    } else {
+                        $('#idCardForm .alert-popup #error-incident-number-wrapper').hide();
+                        $('#idCardForm .alert-popup #error-report-url').hide();
+                    }
+
                     $('#error-report-notification').addClass('hidden');
 			    } else {
                     errorMessageTitle.text(errorMessageTitle.text());

@@ -36,7 +36,8 @@ class AuthSidCancelControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(403)
-                .body("message", equalTo("Keelatud päring. Päring esitati topelt, sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."));
+                .body("message", equalTo("Keelatud päring. Päring esitati topelt, sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
+                .body("reportable", equalTo(true));
     }
 
     @Test
@@ -51,7 +52,8 @@ class AuthSidCancelControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
-                .body("error", equalTo("Bad Request"));
+                .body("error", equalTo("Bad Request"))
+                .body("reportable", equalTo(false));
 
         assertErrorIsLogged("User exception: Invalid session");
     }
@@ -71,7 +73,8 @@ class AuthSidCancelControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
-                .body("error", equalTo("Bad Request"));
+                .body("error", equalTo("Bad Request"))
+                .body("reportable", equalTo(true));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'COMPLETE', expected one of: [INIT_SID, POLL_SID_STATUS, AUTHENTICATION_FAILED]");
     }

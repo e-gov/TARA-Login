@@ -35,7 +35,8 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(403)
                 .body("error", equalTo("Forbidden"))
-                .body("message", equalTo("Keelatud päring. Päring esitati topelt, sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."));
+                .body("message", equalTo("Keelatud päring. Päring esitati topelt, sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
+                .body("reportable", equalTo(true));
 
         assertErrorIsLogged("Access denied: Invalid CSRF token.");
     }
@@ -56,7 +57,8 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."));
+                .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
+                .body("reportable", equalTo(false));
     }
 
     @Test
@@ -73,7 +75,8 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."));
+                .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
+                .body("reportable", equalTo(true));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED]");
         ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, ERROR, "Authentication result: AUTHENTICATION_FAILED");
@@ -103,7 +106,8 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
+                .body("reportable", equalTo(true));
 
         assertErrorIsLogged("HTTP client exception");
         ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, ERROR, "Authentication result: AUTHENTICATION_FAILED");
@@ -133,7 +137,8 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
+                .body("reportable", equalTo(true));
 
         assertErrorIsLogged("Server encountered an unexpected error: Invalid OIDC server response. Redirect URL missing from response.");
         ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, ERROR, "Authentication result: AUTHENTICATION_FAILED");
@@ -245,7 +250,8 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .post("/auth/accept")
                 .then()
                 .assertThat()
-                .statusCode(500);
+                .statusCode(500)
+                .body("reportable", equalTo(true));
 
         assertErrorIsLogged("Server encountered an unexpected error: I/O error on PUT request for \"https://localhost:9877/oauth2/auth/requests/login/accept\": Read timed out; nested exception is java.net.SocketTimeoutException: Read timed out");
         ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, ERROR, "Authentication result: AUTHENTICATION_FAILED");
