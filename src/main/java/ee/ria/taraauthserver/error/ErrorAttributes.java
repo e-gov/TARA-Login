@@ -42,7 +42,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
         Map<String, Object> attr = super.getErrorAttributes(webRequest, options.including(MESSAGE, BINDING_ERRORS));
 
         HttpStatus status = HttpStatus.resolve((int) attr.get("status"));
-        if(status == null || status.is5xxServerError()) {
+        if (status == null || status.is5xxServerError()) {
             handle5xxError(webRequest, attr);
         } else if (status.is4xxClientError()) {
             handle4xxClientError(webRequest, attr);

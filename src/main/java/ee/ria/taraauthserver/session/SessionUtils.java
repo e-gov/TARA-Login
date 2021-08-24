@@ -10,11 +10,11 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import java.util.Arrays;
+import java.util.EnumSet;
 
 import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
-import static java.util.Arrays.stream;
+import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.value;
 
 @Slf4j
@@ -29,11 +29,19 @@ public class SessionUtils {
         return httpSession == null ? null : (TaraSession) httpSession.getAttribute(TARA_SESSION);
     }
 
-    public void assertSessionInState(TaraSession taraSession, TaraAuthenticationState... validSessionStates) {
+    public void assertSessionInState(TaraSession taraSession, EnumSet<TaraAuthenticationState> validSessionStates) {
         if (taraSession == null) {
             throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
-        } else if (stream(validSessionStates).noneMatch(s -> s == taraSession.getState())) {
-            throw new BadRequestException(ErrorCode.SESSION_STATE_INVALID, String.format("Invalid authentication state: '%s', expected one of: %s", taraSession.getState(), Arrays.toString(validSessionStates)));
+        } else if (!validSessionStates.contains(taraSession.getState())) {
+            throw new BadRequestException(ErrorCode.SESSION_STATE_INVALID, format("Invalid authentication state: '%s', expected one of: %s", taraSession.getState(), validSessionStates));
+        }
+    }
+
+    public void assertSessionInState(TaraSession taraSession, TaraAuthenticationState validSessionState) {
+        if (taraSession == null) {
+            throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
+        } else if (validSessionState != taraSession.getState()) {
+            throw new BadRequestException(ErrorCode.SESSION_STATE_INVALID, format("Invalid authentication state: '%s', expected one of: [%s]", taraSession.getState(), validSessionState));
         }
     }
 

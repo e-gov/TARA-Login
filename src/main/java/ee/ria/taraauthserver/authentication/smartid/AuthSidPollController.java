@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.EnumSet;
 import java.util.Map;
 
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
@@ -18,7 +19,7 @@ import static java.util.Map.of;
 @Slf4j
 @RestController
 public class AuthSidPollController {
-    private static final TaraAuthenticationState[] ALLOWED_STATES = {INIT_SID, POLL_SID_STATUS, AUTHENTICATION_FAILED, NATURAL_PERSON_AUTHENTICATION_COMPLETED};
+    private static final EnumSet<TaraAuthenticationState> ALLOWED_STATES = EnumSet.of(INIT_SID, POLL_SID_STATUS, AUTHENTICATION_FAILED, NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 
     @GetMapping(value = "/auth/sid/poll")
     public Map<String, String> authSidPoll() {

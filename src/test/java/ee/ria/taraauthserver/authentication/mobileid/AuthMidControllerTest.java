@@ -86,7 +86,7 @@ class AuthMidControllerTest extends BaseTest {
 
         String taraTraceId = DigestUtils.sha256Hex(taraSession.getSessionId());
         assertMessageIsLogged(e -> e.getMDCPropertyMap().getOrDefault(TARA_TRACE_ID, "missing").equals(taraTraceId),
-                                "Initiating Mobile-ID authentication session",
+                "Initiating Mobile-ID authentication session",
                 "Tara session state change: INIT_AUTH_PROCESS -> INIT_MID",
                 "Mobile-ID service request",
                 "Mobile-ID service response. Status code: 200",

@@ -4,13 +4,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.session.SessionUtils;
+import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -21,15 +21,21 @@ import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.view.RedirectView;
 
+import java.util.EnumSet;
+
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static java.util.EnumSet.of;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static net.logstash.logback.marker.Markers.append;
+import static org.springframework.http.HttpMethod.PUT;
 
 @Slf4j
 @Validated
 @Controller
 class AuthAcceptController {
+    private static final EnumSet<TaraAuthenticationState> ALLOWED_STATES = of(AUTHENTICATION_SUCCESS, NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED);
+    private static final EnumSet<TaraAuthenticationState> OIDC_AUTH_ACCEPT_STATES = of(NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED);
 
     @Autowired
     private AuthConfigurationProperties authConfigurationProperties;
@@ -39,18 +45,32 @@ class AuthAcceptController {
 
     @PostMapping("/auth/accept")
     public RedirectView authAccept(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
-        SessionUtils.assertSessionInState(taraSession, NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED);
-        if (isLegalPersonAttributesRequested(taraSession)) {
-            return new RedirectView("/auth/legalperson/init");
+        SessionUtils.assertSessionInState(taraSession, ALLOWED_STATES);
+
+        if (OIDC_AUTH_ACCEPT_STATES.contains(taraSession.getState())) {
+            if (isLegalPersonAttributesRequested(taraSession)) {
+                return new RedirectView("/auth/legalperson/init");
+            }
+            return acceptLoginRequest(taraSession);
+        } else if (taraSession.getState() == AUTHENTICATION_SUCCESS && taraSession.getLoginRequestInfo().getLoginVerifierRedirectUrl() != null) {
+            return new RedirectView(taraSession.getLoginRequestInfo().getLoginVerifierRedirectUrl());
+        } else {
+            throw new IllegalStateException("Invalid OIDC server response. Redirect URL missing from response.");
         }
-        String url = authConfigurationProperties.getHydraService().getAcceptLoginUrl() + "?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge();
-        log.info(append("url.full", url), "OIDC login accept request for challenge: {}", value("tara.session.login_request_info.challenge", taraSession.getLoginRequestInfo().getChallenge()));
-        ResponseEntity<LoginAcceptResponseBody> response = hydraService.exchange(url, HttpMethod.PUT, createRequestBody(taraSession), LoginAcceptResponseBody.class);
+    }
+
+    private RedirectView acceptLoginRequest(TaraSession taraSession) {
+        TaraSession.LoginRequestInfo loginRequestInfo = taraSession.getLoginRequestInfo();
+        String url = authConfigurationProperties.getHydraService().getAcceptLoginUrl() + "?login_challenge=" + loginRequestInfo.getChallenge();
+        log.info(append("url.full", url), "OIDC login accept request for challenge: {}", value("tara.session.login_request_info.challenge", loginRequestInfo.getChallenge()));
+        ResponseEntity<LoginAcceptResponseBody> response = hydraService.exchange(url, PUT, createRequestBody(taraSession), LoginAcceptResponseBody.class);
 
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && response.getBody().getRedirectUrl() != null) {
             taraSession.setState(AUTHENTICATION_SUCCESS);
-            taraSession.getLoginRequestInfo().setLoginChallengeExpired(true);
-            return new RedirectView(response.getBody().getRedirectUrl());
+            String loginVerifierRedirectUrl = response.getBody().getRedirectUrl();
+            loginRequestInfo.setLoginVerifierRedirectUrl(loginVerifierRedirectUrl);
+            loginRequestInfo.setLoginChallengeExpired(true);
+            return new RedirectView(loginVerifierRedirectUrl);
         } else {
             throw new IllegalStateException("Invalid OIDC server response. Redirect URL missing from response.");
         }

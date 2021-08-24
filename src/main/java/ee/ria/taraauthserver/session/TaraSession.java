@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.session;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
@@ -144,6 +145,8 @@ public class TaraSession implements Serializable {
         private OidcContext oidcContext = new OidcContext();
         @JsonProperty("request_url")
         private URL url;
+        @JsonIgnore
+        private String loginVerifierRedirectUrl;
 
         public String getOidcState() {
             return URLEncodedUtils.parse(url.getQuery(), UTF_8)
