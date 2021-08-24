@@ -39,54 +39,46 @@ public class ErrorAttributes extends DefaultErrorAttributes {
     public static final String ERROR_ATTR_REPORTABLE = "reportable";
     private final MessageSource messageSource;
 
-    public static final Set<ErrorCode> reportableErrors;
-
-    static {
-        reportableErrors = new HashSet<>();
-        reportableErrors.add(EIDAS_AUTHENTICATION_FAILED);
-        reportableErrors.add(EIDAS_INTERNAL_ERROR);
-        reportableErrors.add(INVALID_OIDC_CLIENT);
-        reportableErrors.add(INVALID_OIDC_REQUEST);
-        reportableErrors.add(INVALID_CSRF_TOKEN);
-        reportableErrors.add(SESSION_STATE_INVALID);
-        reportableErrors.add(ERROR_GENERAL);
-        reportableErrors.add(MID_INTEGRATION_ERROR);
-        reportableErrors.add(INTERNAL_ERROR);
-        reportableErrors.add(MID_HASH_MISMATCH);
-        reportableErrors.add(INVALID_LOGIN_CHALLENGE);
-        reportableErrors.add(ESTEID_INVALID_REQUEST);
-        reportableErrors.add(NO_VALID_AUTHMETHODS_AVAILABLE);
-        reportableErrors.add(MID_INTERNAL_ERROR);
-        reportableErrors.add(SID_INTERNAL_ERROR);
-        reportableErrors.add(SID_REQUEST_TIMEOUT);
-        reportableErrors.add(SID_INTERACTION_NOT_SUPPORTED);
-        reportableErrors.add(EIDAS_COUNTRY_NOT_SUPPORTED);
-        reportableErrors.add(IDC_CERT_NOT_YET_VALID);
-        reportableErrors.add(IDC_OCSP_NOT_AVAILABLE);
-        reportableErrors.add(LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE);
-        reportableErrors.add(MISSING_SCOPE);
-        reportableErrors.add(IDC_UNKNOWN);
-        reportableErrors.add(INVALID_REQUEST);
-        reportableErrors.add(INVALID_LEGAL_PERSON);
-        reportableErrors.add(MID_VALIDATION_ERROR);
-    }
+    public static final Set<ErrorCode> notReportableErrors = EnumSet.of(
+            MID_USER_CANCEL,
+            MID_PHONE_ABSENT,
+            MID_DELIVERY_ERROR,
+            MID_SIM_ERROR,
+            MID_TRANSACTION_EXPIRED,
+            NOT_MID_CLIENT,
+            SID_USER_REFUSED,
+            SID_SESSION_TIMEOUT,
+            SID_WRONG_VC,
+            SID_USER_REFUSED_CERT_CHOICE,
+            SID_USER_REFUSED_DISAPLAYTEXTANDPIN,
+            SID_USER_ACCOUNT_NOT_FOUND,
+            SID_USER_REFUSED_VC_CHOICE,
+            SID_USER_REFUSED_CONFIRMATIONMESSAGE,
+            SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE,
+            IDC_CERT_EXPIRED,
+            IDC_REVOKED,
+            EIDAS_USER_CONSENT_NOT_GIVEN,
+            SID_DOCUMENT_UNUSABLE,
+            SESSION_NOT_FOUND
+    );
 
     @Override
     public Map<String, Object> getErrorAttributes(WebRequest webRequest, ErrorAttributeOptions options) {
         Map<String, Object> attr = super.getErrorAttributes(webRequest, options.including(MESSAGE, BINDING_ERRORS));
-
         HttpStatus status = HttpStatus.resolve((int) attr.get("status"));
+        Throwable error = getError(webRequest);
+
         if (status == null || status.is5xxServerError()) {
-            handle5xxError(webRequest, attr);
+            handle5xxError(error, attr);
         } else if (status.is4xxClientError()) {
-            handle4xxClientError(webRequest, attr);
+            handle4xxClientError(error, attr);
         }
 
         Locale locale = RequestUtils.getLocale();
         attr.put(ERROR_ATTR_LOCALE, locale);
         attr.put(ERROR_ATTR_LOGIN_CHALLENGE, webRequest.getAttribute(ERROR_ATTR_LOGIN_CHALLENGE, SCOPE_REQUEST));
         attr.put(ERROR_ATTR_INCIDENT_NR, MDC.get(MDC_ATTRIBUTE_TRACE_ID));
-        attr.put(ERROR_ATTR_REPORTABLE, isReportable(getError(webRequest), status));
+        attr.put(ERROR_ATTR_REPORTABLE, isReportable(error, status));
         attr.remove("errors");
         return attr;
     }
@@ -97,13 +89,12 @@ public class ErrorAttributes extends DefaultErrorAttributes {
             return true;
         else if (isTaraErrorWithErrorCode(error)) {
             ErrorCode errorCode = ((TaraException) error).getErrorCode();
-            return reportableErrors.contains(errorCode);
+            return !notReportableErrors.contains(errorCode);
         } else
             return false;
     }
 
-    private void handle4xxClientError(WebRequest webRequest, Map<String, Object> attr) {
-        Throwable error = getError(webRequest);
+    private void handle4xxClientError(Throwable error, Map<String, Object> attr) {
         if (isTaraErrorWithErrorCode(error)) {
             attr.replace(ERROR_ATTR_MESSAGE, translateErrorCode(((TaraException) error).getErrorCode()));
         } else if (isBindingError(error)) {
@@ -111,9 +102,8 @@ public class ErrorAttributes extends DefaultErrorAttributes {
         }
     }
 
-    private void handle5xxError(WebRequest webRequest, Map<String, Object> attr) {
+    private void handle5xxError(Throwable error, Map<String, Object> attr) {
         int status = (int) attr.get("status");
-        Throwable error = getError(webRequest);
         if (status == 502 && isTaraErrorWithErrorCode(error)) {
             attr.replace(ERROR_ATTR_MESSAGE, translateErrorCode(((TaraException) error).getErrorCode()));
         } else {

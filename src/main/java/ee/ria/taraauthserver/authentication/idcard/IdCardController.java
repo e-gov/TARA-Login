@@ -33,8 +33,7 @@ import java.util.Map;
 
 import static ee.ria.taraauthserver.authentication.idcard.CertificateStatus.REVOKED;
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
-import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_INCIDENT_NR;
-import static ee.ria.taraauthserver.error.ErrorAttributes.reportableErrors;
+import static ee.ria.taraauthserver.error.ErrorAttributes.*;
 import static ee.ria.taraauthserver.error.ErrorCode.*;
 import static ee.ria.taraauthserver.security.RequestCorrelationFilter.MDC_ATTRIBUTE_TRACE_ID;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
@@ -110,8 +109,8 @@ public class IdCardController {
         taraSession.setState(AUTHENTICATION_FAILED);
         taraSession.getAuthenticationResult().setErrorCode(errorCode);
         String errorMessage = messageSource.getMessage(errorCode.getMessage(), null, getLocale());
-        Boolean reportable = reportableErrors.contains(errorCode);
-        return ResponseEntity.status(httpStatus).body(of("status", "ERROR", "message", errorMessage, ERROR_ATTR_INCIDENT_NR, MDC.get(MDC_ATTRIBUTE_TRACE_ID), "reportable", reportable.toString()));
+        Boolean reportable = !notReportableErrors.contains(errorCode);
+        return ResponseEntity.status(httpStatus).body(of("status", "ERROR", "message", errorMessage, ERROR_ATTR_INCIDENT_NR, MDC.get(MDC_ATTRIBUTE_TRACE_ID), ERROR_ATTR_REPORTABLE, reportable.toString()));
     }
 
     private X509Certificate getCertificateFromRequest(TaraSession taraSession, HttpServletRequest request) {

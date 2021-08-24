@@ -37,7 +37,6 @@ public enum ErrorCode {
     IDC_OCSP_NOT_AVAILABLE("message.idc.error.ocsp.not.available"),
     IDC_CERT_NOT_YET_VALID("message.idc.cert-not-yet-valid"),
     IDC_CERT_EXPIRED("message.idc.cert-expired"),
-    IDC_CERTIFICATE_FAILED("message.idc.certificate-failed"),
     IDC_REVOKED("message.idc.revoked"),
     IDC_UNKNOWN("message.idc.unknown"),
     ERROR_GENERAL("message.error.general"),
