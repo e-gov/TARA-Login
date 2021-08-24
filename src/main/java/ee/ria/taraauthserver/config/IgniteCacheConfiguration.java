@@ -63,11 +63,11 @@ public class IgniteCacheConfiguration {
     @Bean
     public Cache<String, BinaryObject> sessionCache(Ignite igniteInstance, @Value("${spring.session.timeout}") Duration sessionTimeout) {
         return igniteInstance.getOrCreateCache(new CacheConfiguration<String, Session>()
-                .setName(SESSION_CACHE_NAME)
-                .setCacheMode(PARTITIONED)
-                .setAtomicityMode(ATOMIC)
-                .setBackups(0)
-                .setExpiryPolicyFactory(factoryOf(new javax.cache.expiry.Duration(SECONDS, sessionTimeout.toSeconds()))))
+                        .setName(SESSION_CACHE_NAME)
+                        .setCacheMode(PARTITIONED)
+                        .setAtomicityMode(ATOMIC)
+                        .setBackups(0)
+                        .setExpiryPolicyFactory(factoryOf(new javax.cache.expiry.Duration(SECONDS, sessionTimeout.toSeconds()))))
                 .withKeepBinary();
     }
 
@@ -84,11 +84,11 @@ public class IgniteCacheConfiguration {
     @Bean
     public Cache<String, BinaryObject> alertsCache(Ignite igniteInstance, @Value("${tara.alerts.alerts_cache_duration_in_seconds:86400}") Integer alertsCacheTimeout) {
         return igniteInstance.getOrCreateCache(new CacheConfiguration<String, List<Alert>>()
-                .setName(ALERTS_CACHE_NAME)
-                .setCacheMode(PARTITIONED)
-                .setAtomicityMode(ATOMIC)
-                .setExpiryPolicyFactory(factoryOf(new javax.cache.expiry.Duration(SECONDS, alertsCacheTimeout)))
-                .setBackups(0))
+                        .setName(ALERTS_CACHE_NAME)
+                        .setCacheMode(PARTITIONED)
+                        .setAtomicityMode(ATOMIC)
+                        .setExpiryPolicyFactory(factoryOf(new javax.cache.expiry.Duration(SECONDS, alertsCacheTimeout)))
+                        .setBackups(0))
                 .withKeepBinary();
     }
 }

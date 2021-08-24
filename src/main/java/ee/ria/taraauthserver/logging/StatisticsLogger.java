@@ -33,9 +33,9 @@ public class StatisticsLogger {
                 processAuthenticationResult(taraSession, statisticsBuilder);
                 SessionStatistics sessionStatistics = statisticsBuilder.build();
                 if (ex == null) {
-                    log.info(appendFields(sessionStatistics), "Authentication result: {}", taraSession.getState());
+                    log.info(appendFields(sessionStatistics), "Authentication result: {}", state);
                 } else {
-                    log.error(appendFields(sessionStatistics), "Authentication result: " + taraSession.getState(), ex);
+                    log.error(appendFields(sessionStatistics), "Authentication result: " + state, ex);
                 }
             }
         }
