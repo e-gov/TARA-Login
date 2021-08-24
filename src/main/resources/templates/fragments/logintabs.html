@@ -48,7 +48,7 @@
 
 <a th:fragment="nav_alt_link(tab_id, suffix, lang)"
    xmlns:th="http://www.w3.org/1999/xhtml"
-   th:class="'c-tab-login\_\_nav-link c-tab-login\_\_nav-link--' + ${suffix}"
+   th:class="'c-tab-login\_\_nav-link--' + ${suffix} + ' c-tab-login\_\_nav-link'"
    href="#"
    th:lang="${lang}"
    th:data-tab="${tab_id}">
