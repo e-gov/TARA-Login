@@ -1,10 +1,7 @@
 package ee.ria.taraauthserver.authentication;
 
 import ee.ria.taraauthserver.BaseTest;
-import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
-import ee.ria.taraauthserver.config.properties.AuthenticationType;
-import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
-import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.config.properties.*;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import io.restassured.RestAssured;
@@ -41,6 +38,9 @@ class AuthInitControllerTest extends BaseTest {
 
     @Autowired
     private EidasConfigurationProperties eidasConfigurationProperties;
+
+    @Autowired
+    private AlertsConfigurationProperties alertsConfigurationProperties;
 
     @Test
     @Tag(value = "AUTH_INIT_ENDPOINT")
