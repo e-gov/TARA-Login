@@ -216,7 +216,7 @@ class EidasCallbackControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Eidas autentimine ebaõnnestus."))
+                .body("message", equalTo("eIDAS autentimine ebaõnnestus."))
                 .body("error", equalTo("Bad Request"));
 
         assertWarningIsLogged("Session has been invalidated: " + sessionFilter.getSession().getId());
@@ -249,7 +249,7 @@ class EidasCallbackControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Kasutaja nõusolekut ei antud."))
+                .body("message", equalTo("Te keeldusite e-teenusele vajalike andmete edastamiseks nõusoleku andmisest."))
                 .body("error", equalTo("Bad Request"));
 
         assertWarningIsLogged("Session has been invalidated: " + sessionFilter.getSession().getId());
@@ -316,7 +316,7 @@ class EidasCallbackControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(502)
-                .body("message", equalTo("Eidas teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti."))
+                .body("message", equalTo("eIDAS teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti."))
                 .body("error", equalTo("Bad Gateway"));
 
         assertWarningIsLogged("Session has been invalidated: " + sessionFilter.getSession().getId());
