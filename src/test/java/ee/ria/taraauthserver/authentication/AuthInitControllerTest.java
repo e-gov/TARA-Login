@@ -171,7 +171,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(200)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
                 .header(HttpHeaders.CONTENT_LANGUAGE, "et")
-                .body("html.head.title", equalTo("Riigi autentimisteenus - Turvaline autentimine asutuste e-teenustes"))
+                .body(containsString("Sisestage ID-kaart kaardilugejasse ja vajutage \"Jätkan\""))
                 .cookie("SESSION", matchesPattern("[A-Za-z0-9,-]{36,36}"))
                 .extract().cookie("SESSION");
 
@@ -312,7 +312,7 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200)
                 .header(HttpHeaders.CONTENT_LANGUAGE, "et")
-                .body("html.head.title", equalTo("Riigi autentimisteenus - Turvaline autentimine asutuste e-teenustes"));
+                .body(containsString("Sisestage ID-kaart kaardilugejasse ja vajutage \"Jätkan\""));
     }
 
     @Test
@@ -331,7 +331,7 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200)
                 .header(HttpHeaders.CONTENT_LANGUAGE, "ru")
-                .body("html.head.title", equalTo("Национальный сервис аутентификации - Для безопасной аутентификации в э-услугах"));
+                .body(containsString("Поместите ID-карту в считыватель и нажмите кнопку \"Продолжить\""));
     }
 
     @Test
@@ -352,7 +352,7 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200)
                 .header(HttpHeaders.CONTENT_LANGUAGE, "en")
-                .body("html.head.title", equalTo("National authentication service - Secure authentication for e-services"));
+                .body(containsString("Insert your ID-card into the card reader and click \"Continue\""));
     }
 
     @Test
@@ -373,7 +373,7 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200)
                 .header(HttpHeaders.CONTENT_LANGUAGE, "et")
-                .body("html.head.title", equalTo("Riigi autentimisteenus - Turvaline autentimine asutuste e-teenustes"));
+                .body(containsString("Sisenemiseks Mobiil-ID-ga sisestage oma isikukood ja telefoninumber"));
     }
 
     @Test
