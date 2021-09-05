@@ -157,6 +157,15 @@ public class TaraSession implements Serializable {
                     .orElse("not set");
         }
 
+        public String getRedirectUri() {
+            return URLEncodedUtils.parse(url.getQuery(), UTF_8)
+                    .stream()
+                    .filter(p -> p.getName().equals("redirect_uri"))
+                    .map(NameValuePair::getValue)
+                    .findFirst()
+                    .orElse("not set");
+        }
+
         public String getClientId() {
             return Optional.of(this)
                     .map(TaraSession.LoginRequestInfo::getClient)

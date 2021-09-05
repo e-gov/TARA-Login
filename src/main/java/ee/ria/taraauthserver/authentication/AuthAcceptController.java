@@ -3,6 +3,8 @@ package ee.ria.taraauthserver.authentication;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.TaraScope;
+import ee.ria.taraauthserver.error.ErrorCode;
+import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
@@ -23,8 +25,10 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import java.util.EnumSet;
 
+import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static java.lang.String.format;
 import static java.util.EnumSet.of;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static net.logstash.logback.marker.Markers.append;
@@ -45,6 +49,14 @@ class AuthAcceptController {
 
     @PostMapping("/auth/accept")
     public RedirectView authAccept(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+        if (taraSession == null) {
+            throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
+        } else if (taraSession.getState().equals(POLL_MID_STATUS_CANCELED) || taraSession.getState().equals(POLL_SID_STATUS_CANCELED)) {
+            return new RedirectView("/auth/init?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge());
+        } else if (!ALLOWED_STATES.contains(taraSession.getState())) {
+            throw new BadRequestException(ErrorCode.SESSION_STATE_INVALID, format("Invalid authentication state: '%s', expected one of: %s", taraSession.getState(), ALLOWED_STATES));
+        }
+
         SessionUtils.assertSessionInState(taraSession, ALLOWED_STATES);
 
         if (OIDC_AUTH_ACCEPT_STATES.contains(taraSession.getState())) {
