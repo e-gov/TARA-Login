@@ -4,11 +4,11 @@
         </p>
         <p id="error-message">
         </p>
-        <p th:if="${reportable == true}">
+        <p id="error-incident-number-wrapper">
             <label th:text="#{label.error.incident-number('')}" for="error-incident-number"></label>
             <span id="error-incident-number"></span>
         </p>
-        <p th:if="${reportable == true}"><a id="error-report-url"
+        <p><a id="error-report-url"
               th:href="#{label.error.error-report-content(${@thymeleafSupport.getErrorReportEmail()})}"
               th:text="#{label.error.error-report-link}">Send error report</a>
         </p>
