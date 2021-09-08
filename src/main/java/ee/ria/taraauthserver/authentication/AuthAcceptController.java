@@ -57,8 +57,6 @@ class AuthAcceptController {
             throw new BadRequestException(ErrorCode.SESSION_STATE_INVALID, format("Invalid authentication state: '%s', expected one of: %s", taraSession.getState(), ALLOWED_STATES));
         }
 
-        SessionUtils.assertSessionInState(taraSession, ALLOWED_STATES);
-
         if (OIDC_AUTH_ACCEPT_STATES.contains(taraSession.getState())) {
             if (isLegalPersonAttributesRequested(taraSession)) {
                 return new RedirectView("/auth/legalperson/init");
