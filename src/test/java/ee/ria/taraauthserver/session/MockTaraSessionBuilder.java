@@ -4,6 +4,7 @@ import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import lombok.Builder;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -12,6 +13,8 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -36,8 +39,10 @@ public class MockTaraSessionBuilder {
     public static final String MOCK_NATURAL_PERSON_ID_CODE = "47101010033";
     public static final String MOCK_NATURAL_PERSON_FIRSTNAME = "Mari-Liis";
     public static final String MOCK_NATURAL_PERSON_LASTNAME = "Männik";
+    public static final String MOCK_LOGIN_REQUEST_URL = "https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et";
     public static final LocalDate MOCK_NATURAL_PERSON_DATE_OF_BIRTH = LocalDate.of(1971, 1, 1);
 
+    @SneakyThrows
     @Builder
     public static TaraSession buildTaraSession(@NonNull String sessionId, TaraAuthenticationState authenticationState, List<AuthenticationType> authenticationTypes,
                                                List<String> clientAllowedScopes, List<String> requestedScopes, List<TaraSession.LegalPerson> legalPersonList,
@@ -62,6 +67,7 @@ public class MockTaraSessionBuilder {
         client.setMetaData(metaData);
         client.setScope(clientAllowedScopes == null ? "" : join(" ", clientAllowedScopes));
         lri.setClient(client);
+        lri.setUrl(new URL(MOCK_LOGIN_REQUEST_URL));
 
         taraSession.setAllowedAuthMethods(authenticationTypes);
         taraSession.setState(authenticationState == null ? TaraAuthenticationState.INIT_AUTH_PROCESS : authenticationState);

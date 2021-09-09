@@ -4,11 +4,14 @@ import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.MockSessionFilter;
 import ee.ria.taraauthserver.session.MockTaraSessionBuilder;
+import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.marker.ObjectFieldsAppendingMarker;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.http.HttpHeaders;
 
 import static ch.qos.logback.classic.Level.ERROR;
@@ -303,5 +306,28 @@ public class AuthAcceptControllerTest extends BaseTest {
         assertEquals("StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, " +
                         "ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)",
                 statisticsMarker.toStringSelf());
+    }
+
+    @ParameterizedTest
+    @EnumSource(
+            value = TaraAuthenticationState.class,
+            names = {"POLL_MID_STATUS_CANCELED", "POLL_SID_STATUS_CANCELED"},
+            mode = EnumSource.Mode.INCLUDE)
+    @Tag(value = "ACCEPT_LOGIN")
+    @Tag(value = "AUTH_ACCEPT_LOGIN_ENDPOINT")
+    void authAccept_sessionStatusIsCanceled_Redirected(TaraAuthenticationState state) {
+        given()
+                .filter(withTaraSession()
+                        .sessionRepository(sessionRepository)
+                        .authenticationState(state)
+                        .requestedScopes(of("legalperson"))
+                        .authenticationResult(MockTaraSessionBuilder.buildMockCredential())
+                        .build())
+                .when()
+                .post("/auth/accept")
+                .then()
+                .assertThat()
+                .statusCode(302)
+                .header("Location", Matchers.endsWith("http://localhost:"+port+"/auth/init?login_challenge=abcdefg098AAdsCC"));
     }
 }

@@ -5,7 +5,6 @@ import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.MockSessionFilter;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -15,10 +14,9 @@ import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
 import static ch.qos.logback.classic.Level.INFO;
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.SMART_ID;
 import static ee.ria.taraauthserver.session.MockSessionFilter.*;
-import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.MOCK_LOGIN_CHALLENGE;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.COMPLETE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
@@ -26,7 +24,6 @@ import static java.util.List.of;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-
 
 class AuthSidCancelControllerTest extends BaseTest {
 
@@ -111,5 +108,25 @@ class AuthSidCancelControllerTest extends BaseTest {
         assertEquals(TaraAuthenticationState.POLL_SID_STATUS_CANCELED, taraSession.getState());
         assertWarningIsLogged("Smart ID authentication process has been canceled");
         assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, INFO, "Authentication result: AUTHENTICATION_CANCELED");
+    }
+
+    @Test
+    @Tag(value = "SID_AUTH_CANCELED")
+    void authSidPollCancel_redirectToClientWhenAuthenticationStateIsSuccess() {
+        MockSessionFilter sessionFilter = withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(SMART_ID))
+                .authenticationState(AUTHENTICATION_SUCCESS).build();
+        given()
+                .filter(sessionFilter)
+                .when()
+                .post("/auth/sid/poll/cancel")
+                .then()
+                .assertThat()
+                .header("Location", "https://oidc-client-mock:8451/oauth/response?error=user_cancel&error_description=User+canceled+the+authentication+process.&state=c46b216b-e73d-4cd2-907b-6c809b44cec1")
+                .statusCode(302);
+
+        Session session = sessionRepository.findById(sessionFilter.getSession().getId());
+        assertNull(session);
     }
 }
