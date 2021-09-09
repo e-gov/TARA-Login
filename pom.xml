@@ -23,7 +23,8 @@
     </licenses>
 
     <properties>
-        <java.version>11</java.version>
+        <maven.compiler.release>11</maven.compiler.release>
+
         <rest-assured.version>4.2.0</rest-assured.version>
         <spring-cloud.version>2020.0.0</spring-cloud.version>
     </properties>
@@ -201,6 +202,17 @@
     <build>
         <finalName>${artifactId}</finalName>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <!--
+                        Setting target value here is only needed to fix IntelliJ IDEA not detecting target version from
+                        global maven.compiler.release property. Maven compiler works correctly without it.
+                    -->
+                    <target>${maven.compiler.release}</target>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
