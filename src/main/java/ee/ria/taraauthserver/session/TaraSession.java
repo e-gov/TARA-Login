@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.session;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
@@ -12,6 +13,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.util.Assert;
+import org.springframework.web.servlet.view.RedirectView;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -20,6 +22,7 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -144,6 +147,8 @@ public class TaraSession implements Serializable {
         private OidcContext oidcContext = new OidcContext();
         @JsonProperty("request_url")
         private URL url;
+        @JsonIgnore
+        private String loginVerifierRedirectUrl;
 
         public String getOidcState() {
             return URLEncodedUtils.parse(url.getQuery(), UTF_8)
@@ -152,6 +157,21 @@ public class TaraSession implements Serializable {
                     .map(NameValuePair::getValue)
                     .findFirst()
                     .orElse("not set");
+        }
+
+        public String getRedirectUri() {
+            return URLEncodedUtils.parse(url.getQuery(), UTF_8)
+                    .stream()
+                    .filter(p -> p.getName().equals("redirect_uri"))
+                    .map(NameValuePair::getValue)
+                    .findFirst()
+                    .orElse("not set");
+        }
+
+        public String getUserCancelUri() {
+            String redirectUri = getRedirectUri();
+            String encodedState = URLEncoder.encode(getOidcState(), UTF_8);
+            return redirectUri + "?error=user_cancel&error_description=User+canceled+the+authentication+process.&state=" + encodedState;
         }
 
         public String getClientId() {

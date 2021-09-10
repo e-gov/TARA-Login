@@ -39,7 +39,8 @@ class AuthRejectControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."));
+                .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
+                .body("reportable", equalTo(false));
     }
 
     @Test
@@ -52,6 +53,7 @@ class AuthRejectControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .body("message", equalTo("authReject.errorCode: the only supported value is: 'user_cancel'"))
+                .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: authReject.errorCode: the only supported value is: 'user_cancel'");
@@ -69,6 +71,7 @@ class AuthRejectControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Multiple request parameters with the same name not allowed"))
                 .body("error", equalTo("Bad Request"))
+                .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("Duplicate parameters not allowed in request. Found multiple parameters with name: error_code");
@@ -126,6 +129,7 @@ class AuthRejectControllerTest extends BaseTest {
                 .assertThat()
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("error", equalTo("Internal Server Error"))
+                .body("reportable", equalTo(true))
                 .statusCode(500);
 
         assertErrorIsLogged("HTTP client exception: 400 Bad Request: [{}]");
@@ -150,6 +154,7 @@ class AuthRejectControllerTest extends BaseTest {
                 .assertThat()
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("error", equalTo("Internal Server Error"))
+                .body("reportable", equalTo(true))
                 .statusCode(500);
 
         assertErrorIsLogged("Server encountered an unexpected error: Invalid OIDC server response. Redirect URL missing from response.");

@@ -33,7 +33,7 @@ import java.util.Map;
 
 import static ee.ria.taraauthserver.authentication.idcard.CertificateStatus.REVOKED;
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
-import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_INCIDENT_NR;
+import static ee.ria.taraauthserver.error.ErrorAttributes.*;
 import static ee.ria.taraauthserver.error.ErrorCode.*;
 import static ee.ria.taraauthserver.security.RequestCorrelationFilter.MDC_ATTRIBUTE_TRACE_ID;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
@@ -65,7 +65,7 @@ public class IdCardController {
     private OCSPValidator ocspValidator;
 
     @GetMapping(path = {AUTH_ID_REQUEST_MAPPING})
-    public ResponseEntity<Map<String, String>> handleRequest(HttpServletRequest request, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+    public ResponseEntity<Map<String, Object>> handleRequest(HttpServletRequest request, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
         initIdCardAuthentication(taraSession);
 
@@ -104,12 +104,13 @@ public class IdCardController {
     }
 
     @NotNull
-    private ResponseEntity<Map<String, String>> createErrorResponse(TaraSession taraSession, ErrorCode errorCode, String logMessage, HttpStatus httpStatus) {
+    private ResponseEntity<Map<String, Object>> createErrorResponse(TaraSession taraSession, ErrorCode errorCode, String logMessage, HttpStatus httpStatus) {
         log.warn(append("error.code", errorCode.name()), "OCSP validation failed: {}", value("error.message", logMessage));
         taraSession.setState(AUTHENTICATION_FAILED);
         taraSession.getAuthenticationResult().setErrorCode(errorCode);
         String errorMessage = messageSource.getMessage(errorCode.getMessage(), null, getLocale());
-        return ResponseEntity.status(httpStatus).body(of("status", "ERROR", "message", errorMessage, ERROR_ATTR_INCIDENT_NR, MDC.get(MDC_ATTRIBUTE_TRACE_ID)));
+        Boolean reportable = !notReportableErrors.contains(errorCode);
+        return ResponseEntity.status(httpStatus).body(of("status", "ERROR", "message", errorMessage, ERROR_ATTR_INCIDENT_NR, MDC.get(MDC_ATTRIBUTE_TRACE_ID), ERROR_ATTR_REPORTABLE, reportable));
     }
 
     private X509Certificate getCertificateFromRequest(TaraSession taraSession, HttpServletRequest request) {

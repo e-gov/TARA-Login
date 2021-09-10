@@ -69,7 +69,9 @@ class SmartIdControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(403)
-                .body("message", equalTo("Keelatud päring. Päring esitati topelt, sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."));
+                .body("message", equalTo("Keelatud päring. Päring esitati topelt, sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
+                .body("reportable", equalTo(true));
+
     }
 
     @Test
@@ -84,7 +86,8 @@ class SmartIdControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
-                .body("error", equalTo("Bad Request"));
+                .body("error", equalTo("Bad Request"))
+                .body("reportable", equalTo(false));
 
         assertErrorIsLogged("User exception: Invalid session");
     }
@@ -105,6 +108,7 @@ class SmartIdControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
                 .body("error", equalTo("Bad Request"))
+                .body("reportable", equalTo(true))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [INIT_AUTH_PROCESS]");
@@ -126,6 +130,7 @@ class SmartIdControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Ebakorrektne päring."))
                 .body("error", equalTo("Bad Request"))
+                .body("reportable", equalTo(true))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: Smart-ID authentication method is not allowed");
@@ -146,6 +151,7 @@ class SmartIdControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Isikukood ei ole korrektne."))
                 .body("error", equalTo("Bad Request"))
+                .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
@@ -167,6 +173,7 @@ class SmartIdControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Isikukood ei ole korrektne."))
                 .body("error", equalTo("Bad Request"))
+                .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
@@ -188,6 +195,7 @@ class SmartIdControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Isikukood ei ole korrektne."))
                 .body("error", equalTo("Bad Request"))
+                .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
@@ -209,6 +217,7 @@ class SmartIdControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Isikukood ei ole korrektne."))
                 .body("error", equalTo("Bad Request"))
+                .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");

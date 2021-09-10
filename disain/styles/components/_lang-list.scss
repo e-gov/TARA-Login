@@ -6,12 +6,12 @@
   &__link {
     display: block;
     padding: 0 17px;
-    color: #fff;
+    color: #344255;
     font-weight: 500;
     text-transform: uppercase;
     text-decoration: none;
     &:hover {
-      color: #fff;
+      color: #000000;
       text-decoration: underline;
     }
     @media (max-width: $breakpoint-mobile) {

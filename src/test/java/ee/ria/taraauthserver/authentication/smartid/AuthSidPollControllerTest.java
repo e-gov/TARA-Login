@@ -44,7 +44,8 @@ class AuthSidPollControllerTest extends BaseTest {
                 .statusCode(400)
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
-                .body("error", equalTo("Bad Request"));
+                .body("error", equalTo("Bad Request"))
+                .body("reportable", equalTo(false));
 
         assertErrorIsLogged("User exception: Invalid session");
     }
@@ -64,9 +65,10 @@ class AuthSidPollControllerTest extends BaseTest {
                 .statusCode(400)
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
-                .body("error", equalTo("Bad Request"));
+                .body("error", equalTo("Bad Request"))
+                .body("reportable", equalTo(true));
 
-        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [INIT_SID, POLL_SID_STATUS, AUTHENTICATION_FAILED, NATURAL_PERSON_AUTHENTICATION_COMPLETED]");
+        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [AUTHENTICATION_FAILED, INIT_SID, POLL_SID_STATUS, NATURAL_PERSON_AUTHENTICATION_COMPLETED]");
     }
 
     @Test
@@ -129,7 +131,8 @@ class AuthSidPollControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .body("error", equalTo("Bad Request"))
-                .body("message", equalTo("Kasutajal on mitu Smart-ID kontot ja ühe kontoga tühistati autentimisprotsess."))
+                .body("message", equalTo("Kasutajal on mitu Smart-ID kontot ja ühe kontoga tühistati autentimine."))
+                .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
 
         String sessionId = sessionFilter.getSession().getId();
@@ -159,6 +162,7 @@ class AuthSidPollControllerTest extends BaseTest {
                 .statusCode(500)
                 .body("error", equalTo("Internal Server Error"))
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
+                .body("reportable", equalTo(true))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
 
 
@@ -191,6 +195,7 @@ class AuthSidPollControllerTest extends BaseTest {
                 .statusCode(502)
                 .body("error", equalTo("Bad Gateway"))
                 .body("message", equalTo("Smart-ID teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti."))
+                .body("reportable", equalTo(true))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
 
         String sessionId = sessionFilter.getSession().getId();

@@ -938,7 +938,7 @@ public class OCSPValidatorTest {
     private static void validateNonceDerOctetString(DEROctetString nonceDerOctetString) {
         try (ASN1InputStream asn1InputStream = new ASN1InputStream(nonceDerOctetString.getOctetStream())) {
             ASN1Primitive asn1Primitive = asn1InputStream.readObject();
-            if (!DEROctetString.class.isInstance(asn1Primitive))
+            if (!(asn1Primitive instanceof DEROctetString))
                 throw new IllegalStateException("Nonce must be doubly wrapped in octet string");
         } catch (IOException e) {
             throw new IllegalStateException("Failed to extract an octet string from nonce octet string", e);

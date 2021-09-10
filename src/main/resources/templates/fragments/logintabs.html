@@ -1,5 +1,6 @@
 <li class="c-tab-login__nav-item" aria-selected="false" th:fragment="nav_default(tab_id)"
     th:classappend="${static} ? is-active : ''" xmlns:th="http://www.w3.org/1999/xhtml">
+    <span th:classappend="${static} ? '' : c-tab-login__nav-back-link"></span>
     <th:block th:switch="${tab_id}">
         <th:block th:case="id-card"><a th:replace="~{fragments/logintabs :: nav_default_link(${tab_id}, '')}"/>
         </th:block>
@@ -47,7 +48,7 @@
 
 <a th:fragment="nav_alt_link(tab_id, suffix, lang)"
    xmlns:th="http://www.w3.org/1999/xhtml"
-   th:class="'c-tab-login\_\_nav-link c-tab-login\_\_nav-link--' + ${suffix}"
+   th:class="'c-tab-login\_\_nav-link--' + ${suffix} + ' c-tab-login\_\_nav-link'"
    href="#"
    th:lang="${lang}"
    th:data-tab="${tab_id}">
@@ -72,7 +73,7 @@
                 <div role="heading" aria-level="2">
                     <h2 th:utext="${#messages.msg('label.' + tab_id + '.' + (title ?: 'title'))}"></h2>
                 </div>
-                <p th:utext="${#strings.isEmpty(@thymeleafSupport.getServiceName()) ? #messages.msg('label.' + tab_id + '.' + (instruction ?: 'instruction')) : #messages.msg('label.' + tab_id + '.' + (instructionWithShortName ?: 'instruction-with-short-name'), @thymeleafSupport.getServiceName())}"></p>
+                <p th:utext="${#strings.isEmpty(instruction) ? #messages.msg('label.' + tab_id + '.' + (#strings.isEmpty(@thymeleafSupport.getServiceName()) ? 'instruction' : 'instruction-with-short-name'), @thymeleafSupport.getServiceName()) : #messages.msg('label.' + tab_id + '.' + instruction)}"></p>
                 <form role="form" layout:fragment="login-form-content"></form>
             </div>
         </div>

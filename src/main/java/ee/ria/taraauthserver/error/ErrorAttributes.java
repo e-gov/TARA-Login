@@ -26,6 +26,7 @@ import static java.lang.String.join;
 import static org.springframework.boot.web.error.ErrorAttributeOptions.Include.BINDING_ERRORS;
 import static org.springframework.boot.web.error.ErrorAttributeOptions.Include.MESSAGE;
 import static org.springframework.web.context.request.RequestAttributes.SCOPE_REQUEST;
+import static ee.ria.taraauthserver.error.ErrorCode.*;
 
 @Slf4j
 @Component
@@ -35,29 +36,65 @@ public class ErrorAttributes extends DefaultErrorAttributes {
     public static final String ERROR_ATTR_LOCALE = "locale";
     public static final String ERROR_ATTR_LOGIN_CHALLENGE = "login_challenge";
     public static final String ERROR_ATTR_INCIDENT_NR = "incident_nr";
+    public static final String ERROR_ATTR_REPORTABLE = "reportable";
     private final MessageSource messageSource;
+
+    public static final Set<ErrorCode> notReportableErrors = EnumSet.of(
+            MID_USER_CANCEL,
+            MID_PHONE_ABSENT,
+            MID_DELIVERY_ERROR,
+            MID_SIM_ERROR,
+            MID_TRANSACTION_EXPIRED,
+            NOT_MID_CLIENT,
+            SID_USER_REFUSED,
+            SID_SESSION_TIMEOUT,
+            SID_WRONG_VC,
+            SID_USER_REFUSED_CERT_CHOICE,
+            SID_USER_REFUSED_DISAPLAYTEXTANDPIN,
+            SID_USER_ACCOUNT_NOT_FOUND,
+            SID_USER_REFUSED_VC_CHOICE,
+            SID_USER_REFUSED_CONFIRMATIONMESSAGE,
+            SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE,
+            IDC_CERT_EXPIRED,
+            IDC_REVOKED,
+            EIDAS_USER_CONSENT_NOT_GIVEN,
+            SID_DOCUMENT_UNUSABLE,
+            SESSION_NOT_FOUND
+    );
 
     @Override
     public Map<String, Object> getErrorAttributes(WebRequest webRequest, ErrorAttributeOptions options) {
         Map<String, Object> attr = super.getErrorAttributes(webRequest, options.including(MESSAGE, BINDING_ERRORS));
-
         HttpStatus status = HttpStatus.resolve((int) attr.get("status"));
-        if(status == null || status.is5xxServerError()) {
-            handle5xxError(webRequest, attr);
+        Throwable error = getError(webRequest);
+
+        if (status == null || status.is5xxServerError()) {
+            handle5xxError(error, attr);
         } else if (status.is4xxClientError()) {
-            handle4xxClientError(webRequest, attr);
+            handle4xxClientError(error, attr);
         }
 
         Locale locale = RequestUtils.getLocale();
         attr.put(ERROR_ATTR_LOCALE, locale);
         attr.put(ERROR_ATTR_LOGIN_CHALLENGE, webRequest.getAttribute(ERROR_ATTR_LOGIN_CHALLENGE, SCOPE_REQUEST));
         attr.put(ERROR_ATTR_INCIDENT_NR, MDC.get(MDC_ATTRIBUTE_TRACE_ID));
+        attr.put(ERROR_ATTR_REPORTABLE, isReportable(error, status));
         attr.remove("errors");
         return attr;
     }
 
-    private void handle4xxClientError(WebRequest webRequest, Map<String, Object> attr) {
-        Throwable error = getError(webRequest);
+    private boolean isReportable(Throwable error, HttpStatus status) {
+
+        if (status == null || status.is5xxServerError())
+            return true;
+        else if (isTaraErrorWithErrorCode(error)) {
+            ErrorCode errorCode = ((TaraException) error).getErrorCode();
+            return !notReportableErrors.contains(errorCode);
+        } else
+            return false;
+    }
+
+    private void handle4xxClientError(Throwable error, Map<String, Object> attr) {
         if (isTaraErrorWithErrorCode(error)) {
             attr.replace(ERROR_ATTR_MESSAGE, translateErrorCode(((TaraException) error).getErrorCode()));
         } else if (isBindingError(error)) {
@@ -65,9 +102,8 @@ public class ErrorAttributes extends DefaultErrorAttributes {
         }
     }
 
-    private void handle5xxError(WebRequest webRequest, Map<String, Object> attr) {
+    private void handle5xxError(Throwable error, Map<String, Object> attr) {
         int status = (int) attr.get("status");
-        Throwable error = getError(webRequest);
         if (status == 502 && isTaraErrorWithErrorCode(error)) {
             attr.replace(ERROR_ATTR_MESSAGE, translateErrorCode(((TaraException) error).getErrorCode()));
         } else {

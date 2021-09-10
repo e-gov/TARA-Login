@@ -155,7 +155,7 @@ public abstract class BaseTest {
     public void beforeEachTest() {
         RestAssured.responseSpecification = new ResponseSpecBuilder().expectHeaders(EXPECTED_RESPONSE_HEADERS).build();
         RestAssured.port = port;
-        configureMockLogAppender();
+        resetMockLogAppender();
         wireMockServer.resetAll();
     }
 
@@ -164,7 +164,7 @@ public abstract class BaseTest {
         ((Logger) getLogger(ROOT_LOGGER_NAME)).detachAppender(mockAppender);
     }
 
-    private void configureMockLogAppender() {
+    protected void resetMockLogAppender() {
         mockAppender = new ListAppender<>();
         mockAppender.start();
         ((Logger) getLogger(ROOT_LOGGER_NAME)).addAppender(mockAppender);
@@ -209,7 +209,7 @@ public abstract class BaseTest {
                 .filter(e -> loggingLevel == null || e.getLevel() == loggingLevel)
                 .filter(e -> loggerClass == null || e.getLoggerName().equals(loggerClass.getCanonicalName()))
                 .filter(e -> expectedMessages.stream().anyMatch(expected -> e.getFormattedMessage().startsWith(expected)));
-        if(additionalFilter != null) {
+        if (additionalFilter != null) {
             eventStream = eventStream.filter(additionalFilter);
         }
         List<ILoggingEvent> events = eventStream.collect(toList());
@@ -219,7 +219,7 @@ public abstract class BaseTest {
         return events;
     }
 
-    protected void assertMessageNotIsLogged(Class<?> loggerClass, String message) {
+    protected void assertMessageIsNotLogged(Class<?> loggerClass, String message) {
         String loggedMessage = mockAppender.list.stream()
                 .filter(e -> (loggerClass == null || e.getLoggerName().equals(loggerClass.getCanonicalName())))
                 .map(ILoggingEvent::getFormattedMessage)

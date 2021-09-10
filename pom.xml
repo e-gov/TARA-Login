@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
@@ -10,7 +10,7 @@
     </parent>
     <groupId>ee.ria.tara</groupId>
     <artifactId>tara-login-server</artifactId>
-    <version>1.0.9</version>
+    <version>1.0.10</version>
     <packaging>war</packaging>
     <name>tara-login-server</name>
     <description>TARA login server</description>
@@ -23,7 +23,10 @@
     </licenses>
 
     <properties>
-        <java.version>11</java.version>
+        <maven.compiler.release>11</maven.compiler.release>
+
+        <!-- Using newer Lombok fixes compilation with JDK 17. Remove when upgrading spring-boot-starter-parent version. -->
+        <lombok.version>1.18.20</lombok.version>
         <rest-assured.version>4.2.0</rest-assured.version>
         <spring-cloud.version>2020.0.0</spring-cloud.version>
     </properties>
@@ -202,6 +205,17 @@
         <finalName>${artifactId}</finalName>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <!--
+                        Setting target value here is only needed to fix IntelliJ IDEA not detecting target version from
+                        global maven.compiler.release property. Maven compiler works correctly without it.
+                    -->
+                    <target>${maven.compiler.release}</target>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
@@ -251,6 +265,9 @@
             <plugin>
                 <groupId>pl.project13.maven</groupId>
                 <artifactId>git-commit-id-plugin</artifactId>
+                <configuration>
+                    <offline>true</offline><!-- TODO Remove when >= 5.0.0 is used, there offline=true is default. -->
+                </configuration>
             </plugin>
         </plugins>
     </build>

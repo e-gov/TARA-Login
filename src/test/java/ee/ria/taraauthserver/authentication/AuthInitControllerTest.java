@@ -1,10 +1,7 @@
 package ee.ria.taraauthserver.authentication;
 
 import ee.ria.taraauthserver.BaseTest;
-import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
-import ee.ria.taraauthserver.config.properties.AuthenticationType;
-import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
-import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.config.properties.*;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import io.restassured.RestAssured;
@@ -42,6 +39,9 @@ class AuthInitControllerTest extends BaseTest {
     @Autowired
     private EidasConfigurationProperties eidasConfigurationProperties;
 
+    @Autowired
+    private AlertsConfigurationProperties alertsConfigurationProperties;
+
     @Test
     @Tag(value = "AUTH_INIT_ENDPOINT")
     void authInit_loginChallenge_EmptyValue() {
@@ -55,6 +55,7 @@ class AuthInitControllerTest extends BaseTest {
                 .body("message", equalTo("authInit.loginChallenge: only characters and numbers allowed"))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue())
+                .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
     }
 
@@ -70,6 +71,7 @@ class AuthInitControllerTest extends BaseTest {
                 .body("message", equalTo("Required String parameter 'login_challenge' is not present"))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue())
+                .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: Required String parameter 'login_challenge' is not present");
@@ -88,6 +90,7 @@ class AuthInitControllerTest extends BaseTest {
                 .body("message", equalTo("authInit.loginChallenge: only characters and numbers allowed"))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue())
+                .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: authInit.loginChallenge: only characters and numbers allowed");
@@ -106,6 +109,7 @@ class AuthInitControllerTest extends BaseTest {
                 .body("message", equalTo("authInit.loginChallenge: size must be between 0 and 50"))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue())
+                .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: authInit.loginChallenge: size must be between 0 and 50");
@@ -125,6 +129,7 @@ class AuthInitControllerTest extends BaseTest {
                 .body("message", equalTo("Multiple request parameters with the same name not allowed"))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue())
+                .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
     }
 
@@ -142,6 +147,7 @@ class AuthInitControllerTest extends BaseTest {
                 .body("message", equalTo("authInit.language: supported values are: 'et', 'en', 'ru'"))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue())
+                .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
     }
 
@@ -165,7 +171,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(200)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
                 .header(HttpHeaders.CONTENT_LANGUAGE, "et")
-                .body("html.head.title", equalTo("Riigi autentimisteenus - Turvaline autentimine asutuste e-teenustes"))
+                .body(containsString("Sisestage ID-kaart kaardilugejasse ja vajutage \"Jätkan\""))
                 .cookie("SESSION", matchesPattern("[A-Za-z0-9,-]{36,36}"))
                 .extract().cookie("SESSION");
 
@@ -212,7 +218,8 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(500)
                 .body("incident_nr", notNullValue())
-                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
+                .body("reportable", equalTo(true));
     }
 
     @Test
@@ -232,7 +239,8 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(500)
                 .body("incident_nr", notNullValue())
-                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
+                .body("reportable", equalTo(true));
     }
 
     @Test
@@ -252,7 +260,8 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(500)
                 .body("incident_nr", notNullValue())
-                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
+                .body("reportable", equalTo(true));
 
         assertErrorIsLogged("Server encountered an unexpected error: Invalid hydra response: client.metaData.oidcClient.institution.registryCode: must not be blank");
     }
@@ -303,7 +312,7 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200)
                 .header(HttpHeaders.CONTENT_LANGUAGE, "et")
-                .body("html.head.title", equalTo("Riigi autentimisteenus - Turvaline autentimine asutuste e-teenustes"));
+                .body(containsString("Sisestage ID-kaart kaardilugejasse ja vajutage \"Jätkan\""));
     }
 
     @Test
@@ -322,7 +331,7 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200)
                 .header(HttpHeaders.CONTENT_LANGUAGE, "ru")
-                .body("html.head.title", equalTo("Национальный сервис аутентификации - Для безопасной аутентификации в э-услугах"));
+                .body(containsString("Поместите ID-карту в считыватель и нажмите кнопку \"Продолжить\""));
     }
 
     @Test
@@ -343,7 +352,7 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200)
                 .header(HttpHeaders.CONTENT_LANGUAGE, "en")
-                .body("html.head.title", equalTo("National authentication service - Secure authentication for e-services"));
+                .body(containsString("Insert your ID-card into the card reader and click \"Continue\""));
     }
 
     @Test
@@ -364,7 +373,7 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200)
                 .header(HttpHeaders.CONTENT_LANGUAGE, "et")
-                .body("html.head.title", equalTo("Riigi autentimisteenus - Turvaline autentimine asutuste e-teenustes"));
+                .body(containsString("Sisenemiseks Mobiil-ID-ga sisestage oma isikukood ja telefoninumber"));
     }
 
     @Test
@@ -484,7 +493,8 @@ class AuthInitControllerTest extends BaseTest {
                 .get("/auth/init")
                 .then()
                 .assertThat()
-                .statusCode(500);
+                .statusCode(500)
+                .body("reportable", equalTo(true));
 
         assertErrorIsLogged("Server encountered an unexpected error: Level of assurance must be configured for authentication method: mobile-id. Please check the application configuration.");
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.LOW);
@@ -539,7 +549,8 @@ class AuthInitControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8)
                 .body("message", equalTo("Autentimispäring ei ole korrektne. Soovitud autentimistasemele vastavaid autentimisvahendeid pole antud infosüsteemile lubatud."))
                 .body("error", equalTo("Bad Request"))
-                .body("incident_nr", notNullValue());
+                .body("incident_nr", notNullValue())
+                .body("reportable", equalTo(true));
 
     }
 
@@ -560,7 +571,8 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(500)
                 .body("incident_nr", notNullValue())
-                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
+                .body("reportable", equalTo(true));
 
         assertErrorIsLogged("Server encountered an unexpected error: Unsupported acr value requested by client: 'wrongvalue'");
     }
@@ -582,7 +594,8 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .body("incident_nr", notNullValue())
-                .body("message", equalTo("Vigane päring. Päringu volituskood ei ole korrektne."));
+                .body("message", equalTo("Vigane päring. Päringu volituskood ei ole korrektne."))
+                .body("reportable", equalTo(true));
     }
 
     @Test
@@ -602,7 +615,8 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(500)
                 .body("incident_nr", notNullValue())
-                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
+                .body("reportable", equalTo(true));
     }
 
     @Test
@@ -622,7 +636,8 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .body("incident_nr", notNullValue())
-                .body("message", equalTo("Päringus puudub scope parameeter."));
+                .body("message", equalTo("Päringus puudub scope parameeter."))
+                .body("reportable", equalTo(true));
     }
 
     @Test
@@ -642,7 +657,8 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(500)
                 .body("incident_nr", notNullValue())
-                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."));
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
+                .body("reportable", equalTo(true));
 
         assertErrorIsLogged("Server encountered an unexpected error: Invalid hydra response: client.metaData.oidcClient.institution.sector: invalid sector value, accepted values are: private, public, client.scope: must not be blank");
     }

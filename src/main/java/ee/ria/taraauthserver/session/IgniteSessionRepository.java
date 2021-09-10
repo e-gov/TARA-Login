@@ -6,6 +6,7 @@ import lombok.experimental.Delegate;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.binary.BinaryObject;
+import org.apache.ignite.internal.GridDirectTransient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,11 +37,11 @@ public class IgniteSessionRepository implements SessionRepository<Session> {
     @Autowired
     private Ignite ignite;
 
-    @Autowired
-    private StatisticsLogger statisticsLogger;
-
     @Value("${spring.session.timeout}")
     private Duration sessionTimeout;
+
+    @Autowired
+    private StatisticsLogger statisticsLogger;
 
     @Override
     public IgniteSession createSession() {
@@ -54,13 +55,24 @@ public class IgniteSessionRepository implements SessionRepository<Session> {
         IgniteSession igniteSession = (IgniteSession) session;
         if (igniteSession.isChanged()) {
             igniteSession.setChanged(false);
-            TaraSession taraSession = session.getAttribute(TARA_SESSION);
-            if (taraSession != null) {
-                statisticsLogger.log(taraSession);
-                log.info(append(TARA_SESSION, taraSession), "Saving session with state: {}", defaultIfNull(taraSession.getState(), "NOT_SET"));
-            }
+            logStateChange(session, igniteSession);
             BinaryObject binaryObject = ignite.binary().toBinary(session);
             sessionCache.put(session.getId(), binaryObject);
+        }
+    }
+
+    private void logStateChange(Session session, IgniteSession igniteSession) {
+        TaraSession taraSession = session.getAttribute(TARA_SESSION);
+        if (taraSession != null) {
+            logStateChangeToStatisticsLog(igniteSession, taraSession);
+            log.info(append(TARA_SESSION, taraSession), "Saving session with state: {}", defaultIfNull(taraSession.getState(), "NOT_SET"));
+        }
+    }
+
+    private void logStateChangeToStatisticsLog(IgniteSession igniteSession, TaraSession taraSession) {
+        if (igniteSession.getSavedState() != taraSession.getState()) {
+            statisticsLogger.log(taraSession);
+            igniteSession.setSavedState(taraSession.getState());
         }
     }
 
@@ -89,7 +101,11 @@ public class IgniteSessionRepository implements SessionRepository<Session> {
     @Data
     static final class IgniteSession implements Session, Serializable {
         private static final long serialVersionUID = 7160779239673823561L;
+
+        @GridDirectTransient
         private boolean changed;
+
+        private TaraAuthenticationState savedState;
 
         @Delegate(excludes = SetAttribute.class)
         private final MapSession mapSession = new MapSession();

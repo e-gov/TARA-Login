@@ -39,7 +39,7 @@
           justify-content: center;
           margin: -15px -15px 0 -15px;
           border-radius: 0;
-          background-color: #003168;
+          background-color: #344255;
           color: #fff;
         }
       }
@@ -55,7 +55,7 @@
     justify-content: center;
     height: 50px;
     padding: 0 10px;
-    color: #003168;
+    color: #5d6071;
     text-decoration: none;
     border-radius: 8px;
     background-color: #fff;
@@ -95,19 +95,19 @@
     &:hover {
       text-decoration: none;
       color: #fff;
-      background-color: #005f87;
+      background-color: #5d6071;
       @media (max-width: $breakpoint-mobile) {
-        color: #003168;
+        color: #344255;
         background-color: #fff;
       }
     }
     &--eu {
-      color: #fff;
-      background-color: #0c4da2;
+      color: #f2f2f2;
+      background-color: #5d6071;
       &.is-active,
       &:hover {
         color: #fff;
-        background-color: #0c4da2;
+        background-color: #34394c;
       }
     }
   }
@@ -182,7 +182,7 @@
     padding: 30px 0;
     text-align: center;
     .icon {
-      color: #003168;
+      color: #344255;
     }
     .icon-eu-citizen,
     .icon-bank-link,
@@ -209,7 +209,7 @@
     h2 {
       margin-bottom: 25px;
       font-size: 30px;
-      color: #003168;
+      color: #34394c;
       font-weight: 400;
       @media (max-width: $breakpoint-mobile) {
         display: none;

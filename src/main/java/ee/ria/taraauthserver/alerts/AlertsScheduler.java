@@ -56,7 +56,6 @@ public class AlertsScheduler {
             log.info("Requesting alerts from: {}", value("url.full", url));
             ResponseEntity<Alert[]> response = alertsRestTemplate.exchange(url, HttpMethod.GET, null, Alert[].class);
             List<Alert> alerts = new ArrayList<>();
-            getStaticAlert().ifPresent(alerts::add);
             alerts.addAll(asList(response.getBody()));
             BinaryObject binaryObject = ignite.binary().toBinary(new ApplicationAlerts(alerts));
             alertsCache.put(ALERTS_CACHE_KEY, binaryObject);
@@ -74,25 +73,6 @@ public class AlertsScheduler {
         return applicationAlerts.getAlerts().stream()
                 .filter(Alert::isActive)
                 .collect(toList());
-    }
-
-    public Optional<Alert> getStaticAlert() {
-        StaticAlert staticAlert = alertsConfigurationProperties.getStaticAlert();
-        if (staticAlert == null) {
-            return Optional.empty();
-        }
-        LoginAlert loginAlert = LoginAlert.builder()
-                .enabled(true)
-                .authMethods(AuthenticationType.getFormalNames())
-                .messageTemplates(staticAlert.getMessageTemplates())
-                .build();
-        Alert alert = Alert.builder()
-                .startTime(OffsetDateTime.now())
-                .endTime(OffsetDateTime.now().plusYears(1))
-                .build();
-        alert.setLoginAlert(loginAlert);
-        alert.setLoadedFromConf(true);
-        return Optional.of(alert);
     }
 
     @Data

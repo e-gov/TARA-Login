@@ -14,7 +14,11 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
+import static java.util.Optional.empty;
+import static java.util.Optional.of;
 import static net.logstash.logback.marker.Markers.appendFields;
 
 @Slf4j
@@ -26,22 +30,22 @@ public class StatisticsLogger {
 
     public void log(TaraSession taraSession, Exception ex) {
         if (taraSession != null && taraSession.getLoginRequestInfo() != null) {
-            TaraAuthenticationState state = getState(taraSession);
-            if (state != null) {
-                SessionStatisticsBuilder statisticsBuilder = SessionStatistics.builder();
-                processAuthenticationRequest(taraSession, state, statisticsBuilder);
-                processAuthenticationResult(taraSession, statisticsBuilder);
-                SessionStatistics sessionStatistics = statisticsBuilder.build();
-                if (ex == null) {
-                    log.info(appendFields(sessionStatistics), "Authentication result: {}", taraSession.getState());
-                } else {
-                    log.error(appendFields(sessionStatistics), "Authentication result: " + taraSession.getState(), ex);
-                }
-            }
+            getStateToLog(taraSession)
+                    .ifPresent(state -> {
+                        SessionStatisticsBuilder statisticsBuilder = SessionStatistics.builder();
+                        processAuthenticationRequest(taraSession, state, statisticsBuilder);
+                        processAuthenticationResult(taraSession, statisticsBuilder);
+                        SessionStatistics sessionStatistics = statisticsBuilder.build();
+                        if (ex == null) {
+                            log.info(appendFields(sessionStatistics), "Authentication result: {}", state);
+                        } else {
+                            log.error(appendFields(sessionStatistics), "Authentication result: " + state, ex);
+                        }
+                    });
         }
     }
 
-    private SessionStatisticsBuilder processAuthenticationRequest(TaraSession taraSession, TaraAuthenticationState state, SessionStatisticsBuilder statisticsBuilder) {
+    private void processAuthenticationRequest(TaraSession taraSession, TaraAuthenticationState state, SessionStatisticsBuilder statisticsBuilder) {
         LoginRequestInfo loginRequestInfo = taraSession.getLoginRequestInfo();
         LegalPerson selectedLegalPerson = taraSession.getSelectedLegalPerson();
         statisticsBuilder
@@ -52,7 +56,6 @@ public class StatisticsLogger {
             statisticsBuilder.registryCode(i.getRegistryCode());
             statisticsBuilder.sector(i.getSector());
         });
-        return statisticsBuilder;
     }
 
     private void processAuthenticationResult(TaraSession taraSession, SessionStatisticsBuilder sessionStatisticsBuilder) {
@@ -71,14 +74,14 @@ public class StatisticsLogger {
         }
     }
 
-    private TaraAuthenticationState getState(TaraSession taraSession) {
+    private Optional<TaraAuthenticationState> getStateToLog(TaraSession taraSession) {
         TaraAuthenticationState state = taraSession.getState();
         if (AUTHENTICATION_SUCCESS == state || AUTHENTICATION_FAILED == state) {
-            return state;
+            return of(state);
         } else if (AUTHENTICATION_CANCELED == state || POLL_MID_STATUS_CANCELED == state || POLL_SID_STATUS_CANCELED == state) {
-            return AUTHENTICATION_CANCELED;
+            return of(AUTHENTICATION_CANCELED);
         } else {
-            return null;
+            return empty();
         }
     }
 

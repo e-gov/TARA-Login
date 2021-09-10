@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.authentication.consent;
 
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
@@ -37,6 +38,9 @@ public class AuthConsentConfirmController {
 
     @Autowired
     private RestTemplate hydraService;
+
+    @Autowired
+    private StatisticsLogger statisticsLogger;
 
     @PostMapping(value = "/auth/consent/confirm", produces = MediaType.TEXT_HTML_VALUE)
     public RedirectView authConsentConfirm(
@@ -79,6 +83,7 @@ public class AuthConsentConfirmController {
         });
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && response.getBody().get(REDIRECT_TO) != null) {
             taraSession.setState(taraSessionState);
+            statisticsLogger.log(taraSession);
             SessionUtils.invalidateSession();
             return new RedirectView(response.getBody().get(REDIRECT_TO));
         } else {

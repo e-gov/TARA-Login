@@ -23,6 +23,7 @@
     }
   }
   &__block-logo {
+    padding: 25px 25px;
     @media (max-width: $breakpoint-mobile) {
       margin-bottom: 15px;
     }

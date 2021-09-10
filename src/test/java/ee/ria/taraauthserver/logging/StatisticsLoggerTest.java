@@ -37,7 +37,7 @@ class StatisticsLoggerTest extends BaseTest {
         taraSession.setState(state);
         statisticsLogger.log(taraSession);
 
-        assertMessageNotIsLogged(StatisticsLogger.class, "Authentication result: " + state.name());
+        assertMessageIsNotLogged(StatisticsLogger.class, "Authentication result: " + state.name());
     }
 
     @ParameterizedTest
@@ -47,7 +47,7 @@ class StatisticsLoggerTest extends BaseTest {
         taraSession.setState(state);
         taraSession.setLoginRequestInfo(null);
         statisticsLogger.log(taraSession);
-        assertMessageNotIsLogged(StatisticsLogger.class, "Authentication result: " + state.name());
+        assertMessageIsNotLogged(StatisticsLogger.class, "Authentication result: " + state.name());
     }
 
     @ParameterizedTest
@@ -61,7 +61,7 @@ class StatisticsLoggerTest extends BaseTest {
         taraSession.setAuthenticationResult(null);
         statisticsLogger.log(taraSession);
         TaraAuthenticationState expectedState = (state == POLL_MID_STATUS_CANCELED || state == POLL_SID_STATUS_CANCELED) ? AUTHENTICATION_CANCELED : state;
-        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, INFO, format("Authentication result: %s", state.name()));
+        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, INFO, format("Authentication result: %s", expectedState.name()));
         assertEquals(format("StatisticsLogger.SessionStatistics(clientId=test_client_id, sector=test_sector, registryCode=test_registry_code, legalPerson=false, country=null, " +
                         "idCode=null, ocspUrl=null, authenticationType=null, authenticationState=%s, errorCode=null)", expectedState.name()),
                 statisticsMarker.toStringSelf());
@@ -78,7 +78,7 @@ class StatisticsLoggerTest extends BaseTest {
         statisticsLogger.log(taraSession);
 
         TaraAuthenticationState expectedState = (state == POLL_MID_STATUS_CANCELED || state == POLL_SID_STATUS_CANCELED) ? AUTHENTICATION_CANCELED : state;
-        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, INFO, format("Authentication result: %s", state.name()));
+        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, INFO, format("Authentication result: %s", expectedState.name()));
         assertEquals(format("StatisticsLogger.SessionStatistics(clientId=test_client_id, sector=test_sector, registryCode=test_registry_code, legalPerson=false, country=EE, " +
                         "idCode=test_person_id_code, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=%s, errorCode=null)", expectedState.name()),
                 statisticsMarker.toStringSelf());
@@ -96,7 +96,7 @@ class StatisticsLoggerTest extends BaseTest {
         statisticsLogger.log(taraSession);
 
         TaraAuthenticationState expectedState = (state == POLL_MID_STATUS_CANCELED || state == POLL_SID_STATUS_CANCELED) ? AUTHENTICATION_CANCELED : state;
-        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, INFO, format("Authentication result: %s", state.name()));
+        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, INFO, format("Authentication result: %s", expectedState.name()));
         assertEquals(format("StatisticsLogger.SessionStatistics(clientId=test_client_id, sector=test_sector, registryCode=test_registry_code, legalPerson=false, country=EE, " +
                         "idCode=test_person_id_code, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=%s, errorCode=INTERNAL_ERROR)", expectedState.name()),
                 statisticsMarker.toStringSelf());

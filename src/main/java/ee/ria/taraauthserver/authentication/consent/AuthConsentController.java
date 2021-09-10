@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.authentication.consent;
 
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
@@ -39,6 +40,9 @@ public class AuthConsentController {
 
     @Autowired
     private RestTemplate hydraService;
+
+    @Autowired
+    private StatisticsLogger statisticsLogger;
 
     @GetMapping(value = "/auth/consent", produces = MediaType.TEXT_HTML_VALUE)
     public String authConsent(@RequestParam(name = "consent_challenge") @Size(max = 50)
@@ -92,6 +96,7 @@ public class AuthConsentController {
         });
 
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && response.getBody().get(REDIRECT_URL) != null) {
+            statisticsLogger.log(taraSession);
             SessionUtils.invalidateSession();
             return "redirect:" + response.getBody().get(REDIRECT_URL);
         } else {

@@ -9,8 +9,8 @@
             <p><strong><span th:text="#{message.error.auth.title}" th:remove="tag"></span></strong></p>
             <p th:if="${message != null}" th:text="${message}"></p>
             <p th:unless="${message != null}" th:text="#{message.error.general}"></p>
-            <p th:if="${incident_nr != null}" th:text="#{label.error.incident-number(${incident_nr})}"></p>
-            <p th:if="${incident_nr != null}"><a id="error-report-url" class="mailto-link"
+            <p th:if="${incident_nr != null && reportable == true}" th:text="#{label.error.incident-number(${incident_nr})}"></p>
+            <p th:if="${incident_nr != null && reportable == true}"><a id="error-report-url" class="mailto-link"
                                                  th:href="#{label.error.error-report-content(${@thymeleafSupport.getErrorReportEmail()},${message},${incident_nr})}"
                                                  th:text="#{label.error.error-report-link}">Send error report</a></p>
             <p th:if="${incident_nr != null}" id="error-report-notification" class="hidden"

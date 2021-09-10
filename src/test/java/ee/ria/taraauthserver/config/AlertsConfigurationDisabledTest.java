@@ -18,7 +18,6 @@ public class AlertsConfigurationDisabledTest extends DisabledConfigurationTest {
     @Tag(value = "ALERT_CONFIG")
     public void whenHeartbeatEndpointDisabledThenBeansNotLoaded() {
         assertBeanNotInitiated(AlertsScheduler.class);
-        assertBeanNotInitiated(AlertsConfigurationProperties.class);
         assertBeanNotInitiated(AlertsConfiguration.class);
     }
 }

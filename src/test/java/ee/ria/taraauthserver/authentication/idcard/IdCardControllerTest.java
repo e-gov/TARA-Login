@@ -8,12 +8,10 @@ import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import io.restassured.path.xml.XmlPath;
 import io.restassured.response.Response;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.bouncycastle.asn1.x509.CRLReason;
 import org.bouncycastle.cert.ocsp.CertificateStatus;
 import org.bouncycastle.cert.ocsp.OCSPResp;
@@ -52,7 +50,6 @@ import static ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest.gene
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
-import static io.restassured.path.xml.XmlPath.CompatibilityMode.HTML;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.junit.Assert.assertTrue;
@@ -94,7 +91,7 @@ class IdCardControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Sertifikaadi küsimine ei õnnestunud. Palun proovige mõne aja pärast uuesti."))
+                .body("message", equalTo("ID-kaardi sertifikaadi küsimine ei õnnestunud. Palun proovige mõne aja pärast uuesti."))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
@@ -117,7 +114,7 @@ class IdCardControllerTest extends BaseTest {
                 .response();
 
         assertTrue(response.body().htmlPath().getInt("**.find { strong -> strong.text() == 'Kasutaja tuvastamine ebaõnnestus.'}.size()") > 0);
-        assertTrue(response.body().htmlPath().getInt("**.find { p -> p.text() == 'Sertifikaadi küsimine ei õnnestunud. Palun proovige mõne aja pärast uuesti.'}.size()") > 0);
+        assertTrue(response.body().htmlPath().getInt("**.find { p -> p.text() == 'ID-kaardi sertifikaadi küsimine ei õnnestunud. Palun proovige mõne aja pärast uuesti.'}.size()") > 0);
         assertTrue(response.body().htmlPath().getString("**.find { it.@role == 'alert'}.p.text()").contains("Intsidendi number:"));
         assertTrue(response.body().htmlPath().getString("**.find { it.@role == 'alert'}.p.a.@href").contains("mailto:"));
         assertTrue(response.body().htmlPath().getString("**.find { it.@role == 'alert'}.p.text()").contains("Palun saatke e-kiri aadressile"));
@@ -158,7 +155,7 @@ class IdCardControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Sertifikaadi küsimine ei õnnestunud. Palun proovige mõne aja pärast uuesti."))
+                .body("message", equalTo("ID-kaardi sertifikaadi küsimine ei õnnestunud. Palun proovige mõne aja pärast uuesti."))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
@@ -372,7 +369,7 @@ class IdCardControllerTest extends BaseTest {
                 .statusCode(400)
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
-                .body("message", equalTo("Kasutaja sertifikaat on tühistatud või peatatud staatuses."))
+                .body("message", equalTo("ID-kaardi sertifikaadid on peatatud või tühistatud. Palun pöörduge Politsei- ja Piirivalveameti teenindusse."))
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertWarningIsLogged("OCSP validation failed: Invalid certificate status <REVOKED> received");
@@ -410,7 +407,7 @@ class IdCardControllerTest extends BaseTest {
                 .statusCode(400)
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
-                .body("message", equalTo("Kasutaja sertifikaadi staatus on teadmata."));
+                .body("message", equalTo("ID-kaardi sertifikaadi staatus on teadmata."));
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
 
@@ -561,7 +558,7 @@ class IdCardControllerTest extends BaseTest {
                 .statusCode(502)
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
-                .body("message", equalTo("Sertifikaadi kehtivuse info küsimine ei õnnestunud. Palun proovige mõne aja pärast uuesti."))
+                .body("message", equalTo("ID-kaardi sertifikaadi kehtivuse info küsimine ei õnnestunud. Palun proovige mõne aja pärast uuesti."))
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertWarningIsLogged("OCSP validation failed: OCSP service is currently not available");
@@ -587,7 +584,7 @@ class IdCardControllerTest extends BaseTest {
                 .statusCode(400)
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
-                .body("message", equalTo("Teie sertifikaadid ei kehti."))
+                .body("message", equalTo("ID-kaardi sertifikaadid ei kehti."))
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertWarningIsLogged("OCSP validation failed: User certificate is not yet valid");
@@ -613,7 +610,7 @@ class IdCardControllerTest extends BaseTest {
                 .statusCode(400)
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("ERROR"))
-                .body("message", equalTo("Teie sertifikaadid ei kehti."))
+                .body("message", equalTo("ID-kaardi sertifikaadid ei kehti."))
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);

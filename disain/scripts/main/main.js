@@ -4,9 +4,11 @@ jQuery(function ($) {
 	var defaultErrorReportUrl;
     var defaultErrorReportNotification;
 	
-	// Hide nav bar in desktop mode if less than 2 auth methods
+	// Hide nav bar in desktop mode and display authentication method content in mobile mode if less than 2 auth methods
 	if ($('.c-tab-login__nav-link').length < 2) {
 		$('.c-tab-login__header').addClass('hide-in-desktop');
+        $('body').addClass('is-mobile-subview');
+        $('.c-tab-login__nav-item').addClass('is-active');
 	}
 
 	// Activate previously selected or first auth method
@@ -204,8 +206,16 @@ jQuery(function ($) {
                 proccessedErrorReportNotification = proccessedErrorReportNotification.replace("{1}", jsonResponse.incident_nr);
                 errorReportNotification.text(proccessedErrorReportNotification);
 
-                $('#idCardForm .alert-popup #error-report-url').show();
-                $('#idCardForm .alert-popup #error-incident-number-wrapper').show();
+                console.log(jsonResponse.reportable);
+
+                if (jsonResponse.reportable === "true") {
+                    $('#idCardForm .alert-popup #error-incident-number-wrapper').show();
+                    $('#idCardForm .alert-popup #error-report-url').show();
+                } else {
+                    $('#idCardForm .alert-popup #error-incident-number-wrapper').hide();
+                    $('#idCardForm .alert-popup #error-report-url').hide();
+                }
+
                 $('#error-report-notification').addClass('hidden');
                 _this.prop('disabled', false);
 			} else {
@@ -239,8 +249,14 @@ jQuery(function ($) {
                     proccessedErrorReportNotification = proccessedErrorReportNotification.replace("{1}", jsonResponse.incident_nr);
                     errorReportNotification.text(proccessedErrorReportNotification);
 
-                    $('#idCardForm .alert-popup #error-report-url').show();
-                    $('#idCardForm .alert-popup #error-incident-number-wrapper').show();
+                    if (jsonResponse.reportable) {
+                        $('#idCardForm .alert-popup #error-incident-number-wrapper').show();
+                        $('#idCardForm .alert-popup #error-report-url').show();
+                    } else {
+                        $('#idCardForm .alert-popup #error-incident-number-wrapper').hide();
+                        $('#idCardForm .alert-popup #error-report-url').hide();
+                    }
+
                     $('#error-report-notification').addClass('hidden');
 			    } else {
                     errorMessageTitle.text(errorMessageTitle.text());

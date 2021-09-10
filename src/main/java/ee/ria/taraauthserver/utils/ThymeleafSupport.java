@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.utils;
 
 import ee.ria.taraauthserver.alerts.AlertsScheduler;
+import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.Alert;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
@@ -14,12 +15,9 @@ import org.springframework.util.Assert;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponents;
 
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.time.OffsetDateTime;
+import java.util.*;
 
-import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 
 @Slf4j
@@ -30,6 +28,9 @@ public class ThymeleafSupport {
 
     @Autowired(required = false)
     private AuthConfigurationProperties authConfigurationProperties;
+
+    @Autowired
+    private AlertsConfigurationProperties alertsConfigurationProperties;
 
     @Autowired(required = false)
     private AlertsScheduler alertsScheduler;
@@ -97,10 +98,38 @@ public class ThymeleafSupport {
     }
 
     public List<Alert> getActiveAlerts() {
-        return alertsScheduler == null ? emptyList() : alertsScheduler.getActiveAlerts();
+        List<Alert> alerts = new ArrayList<>();
+        getStaticAlert().ifPresent(alerts::add);
+
+        if (alertsScheduler != null)
+            alerts.addAll(alertsScheduler.getActiveAlerts());
+        return alerts;
+    }
+
+    public boolean hasStaticAlert() {
+        return getStaticAlert().isPresent();
     }
 
     public String getErrorReportEmail() {
         return authConfigurationProperties.getErrorReportEmail();
+    }
+
+    private Optional<Alert> getStaticAlert() {
+        AlertsConfigurationProperties.StaticAlert staticAlert = alertsConfigurationProperties.getStaticAlert();
+        if (staticAlert == null) {
+            return Optional.empty();
+        }
+        AlertsConfigurationProperties.LoginAlert loginAlert = AlertsConfigurationProperties.LoginAlert.builder()
+                .enabled(true)
+                .authMethods(AuthenticationType.getFormalNames())
+                .messageTemplates(staticAlert.getMessageTemplates())
+                .build();
+        Alert alert = Alert.builder()
+                .startTime(OffsetDateTime.now())
+                .endTime(OffsetDateTime.now().plusYears(1))
+                .build();
+        alert.setLoginAlert(loginAlert);
+        alert.setLoadedFromConf(true);
+        return Optional.of(alert);
     }
 }
