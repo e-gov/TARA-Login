@@ -12,7 +12,11 @@ import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.PostConstruct;
 import javax.validation.Valid;
-import javax.validation.constraints.*;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
@@ -45,7 +49,7 @@ public class AuthConfigurationProperties {
 
     private HydraConfigurationProperties hydraService = new HydraConfigurationProperties();
 
-    private TruststoreProperties tls = new TruststoreProperties();
+    private TlsConfigurationProperties tls = new TlsConfigurationProperties();
 
     private EnumMap<AuthenticationType, AuthMethodProperties> authMethods = new EnumMap<>(AuthenticationType.class);
 
@@ -85,7 +89,7 @@ public class AuthConfigurationProperties {
     @Data
     @Validated
     @ConfigurationProperties(prefix = "tara.tls")
-    public static class TruststoreProperties {
+    public static class TlsConfigurationProperties {
 
         @NotBlank
         private String truststoreLocation;
@@ -94,6 +98,12 @@ public class AuthConfigurationProperties {
         private String truststorePassword;
 
         private String trustStoreType = "PKCS12";
+
+        private String defaultProtocol;
+
+        List<@NotBlank String> enabledProtocols;
+
+        List<@NotBlank String> enabledCipherSuites;
     }
 
     @Data

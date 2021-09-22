@@ -5,9 +5,11 @@ import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.utils.ThymeleafSupport;
 import lombok.extern.slf4j.Slf4j;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.ignite.ssl.SSLContextWrapper;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.MessageSource;
@@ -18,6 +20,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.util.CollectionUtils;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.LocaleResolver;
@@ -27,6 +30,7 @@ import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 import javax.validation.Validator;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -50,12 +54,33 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
 
     @Bean
     public SSLContext trustContext(AuthConfigurationProperties authConfigurationProperties) throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
-        return SSLContextBuilder
-                .create().setKeyStoreType(authConfigurationProperties.getTls().getTrustStoreType())
+        AuthConfigurationProperties.TlsConfigurationProperties tlsProperties = authConfigurationProperties.getTls();
+
+        SSLContextBuilder sslContextBuilder = SSLContextBuilder.create()
+                .setKeyStoreType(authConfigurationProperties.getTls().getTrustStoreType())
                 .loadTrustMaterial(
                         getFile(authConfigurationProperties.getTls().getTruststoreLocation()),
-                        authConfigurationProperties.getTls().getTruststorePassword().toCharArray())
-                .build();
+                        authConfigurationProperties.getTls().getTruststorePassword().toCharArray()
+                );
+        if (StringUtils.isNotBlank(tlsProperties.getDefaultProtocol())) {
+            sslContextBuilder.setProtocol(tlsProperties.getDefaultProtocol());
+        }
+        SSLContext sslContext = sslContextBuilder.build();
+
+        if (!CollectionUtils.isEmpty(tlsProperties.getEnabledProtocols()) || !CollectionUtils.isEmpty(tlsProperties.getEnabledCipherSuites())) {
+            SSLParameters sslParameters = new SSLParameters();
+            if (!CollectionUtils.isEmpty(tlsProperties.getEnabledProtocols())) {
+                sslParameters.setProtocols(tlsProperties.getEnabledProtocols().toArray(new String[0]));
+            }
+            if (!CollectionUtils.isEmpty(tlsProperties.getEnabledCipherSuites())) {
+                sslParameters.setCipherSuites(tlsProperties.getEnabledCipherSuites().toArray(new String[0]));
+            }
+            // Use Ignite's SSLContext wrapper to apply enabled protocols and enabled cipher suites lists
+            // to the SSL sockets that will be created by this SSLContext.
+            sslContext = new SSLContextWrapper(sslContext, sslParameters);
+        }
+
+        return sslContext;
     }
 
     @Bean
