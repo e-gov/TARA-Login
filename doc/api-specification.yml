@@ -35,7 +35,7 @@ paths:
           required: true
           schema:
             type: string
-            pattern: 'a-zA-Z0-9'
+            pattern: '[a-zA-Z0-9]'
             minimum: 0
             maximum: 50
             example: '824113da6da44889943b98715a06d699'
@@ -48,12 +48,14 @@ paths:
       responses:
         '200':
           description: HTML response with a list of eligible login methods
+          # TODO Multiple headers with same name is not supported, using workaround described in
+          #  https://github.com/OAI/OpenAPI-Specification/issues/1237
           headers:
-            - Set-Cookie:
+            Set-Cookie:
               description: SESSION=abcde12345; Path=/; HttpOnly; Secure
               schema:
                 type: string
-            - Set-Cookie:
+            "\0Set-Cookie":
               description: LOGIN_LOCALE=et; Path=/
               schema:
                 type: string
@@ -319,6 +321,7 @@ paths:
           required: true
           description: Session cookie
           schema:
+            type: string
         - name: Locale cookie
           in: header
           required: false
@@ -733,7 +736,7 @@ paths:
                   example: 'c316e550-23e3-4fee-8cee-f8079a630fba'
                 country:
                   type: string
-                  pattern: 'A-Z{2,2}'
+                  pattern: '[A-Z]{2,2}'
                   description: 'Country code'
               required:
                 - _csrf
@@ -992,7 +995,7 @@ paths:
                   example: 'c316e550-23e3-4fee-8cee-f8079a630fba'
                 legal_person_identifier:
                   type: string
-                  pattern: 'a-zA-Z0-9'
+                  pattern: '[a-zA-Z0-9]'
                   minimum: 0
                   maximum: 50
                   example: '60001019906'
@@ -1067,7 +1070,7 @@ paths:
           required: true
           schema:
             type: string
-            pattern: 'a-zA-Z0-9'
+            pattern: '[a-zA-Z0-9]'
             minimum: 0
             maximum: 50
             example: '824113da6da44889943b98715a06d699'
