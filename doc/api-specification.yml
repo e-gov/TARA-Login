@@ -3,9 +3,6 @@ info:
   description: TARA login service
   version: 1.0.0-oas3
   title: TARA login service
-  license:
-    name: Apache 2.0
-    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
 tags:
   - name: oidc-server-integration
     description: Operations related to integration with the OIDC service
