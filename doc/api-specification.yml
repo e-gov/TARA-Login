@@ -44,7 +44,7 @@ paths:
           description: Language for UI initialization
           schema:
             type: string
-            enum: [et, en, ru]
+            enum: [ et, en, ru ]
       responses:
         '200':
           description: HTML response with a list of eligible login methods
@@ -338,7 +338,7 @@ paths:
                 properties:
                   name:
                     type: string
-                    enum: [PENDING, COMPLETED]
+                    enum: [ PENDING, COMPLETED ]
         '400':
           description: Bad request
           content:
@@ -472,7 +472,7 @@ paths:
                 properties:
                   name:
                     type: string
-                    enum: [COMPLETED]
+                    enum: [ COMPLETED ]
         '400':
           description: Bad request. The user's client certificate is expired, or has been revoked, or has an unknown status.
           content:
@@ -609,7 +609,7 @@ paths:
                 properties:
                   name:
                     type: string
-                    enum: [PENDING, COMPLETED]
+                    enum: [ PENDING, COMPLETED ]
         '400':
           description: Bad request
           content:
@@ -1312,11 +1312,11 @@ components:
         status:
           type: string
           description: The status of the service
-          enum: [UP, DOWN]
+          enum: [ UP, DOWN ]
         name:
           type: string
           description: The name of the dependency
-          enum: [truststore, oidcServer]
+          enum: [ truststore, oidcServer ]
           example: 'truststore'
     HeartbeatResponse:
       type: object
@@ -1324,7 +1324,7 @@ components:
         status:
           type: string
           description: The status of the service
-          enum: [UP, DOWN]
+          enum: [ UP, DOWN ]
         name:
           type: string
           description: The name of the application
