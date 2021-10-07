@@ -493,11 +493,11 @@ Ignite is used for storing user’s session information.
 
 | Environment variable        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `LOG_HOME` | No | Log files path. Default value `/var/log` |
+| `LOG_HOME` | No | Log files path. Default value Java IO temp dir (java.io.tmpdir) or `/tmp` |
 | `LOG_FILES_MAX_COUNT` | No | Rolling file appender max files history. Default value `31` |
-| `LOG_FILE_LEVEL` | No | Log level for file logging. Default value `INFO` |
+| `LOG_FILE_LEVEL` | No | Log level for file logging. Default value `OFF` |
 | `LOG_CONSOLE_PATTERN` | No | Log files path. Default value `%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z',GMT} [${springAppName}] [%15.15t] %highlight(%-5level) %-40.40logger{39} %green(%marker) [%X{trace.id},%X{transaction.id}] -%X{remoteHost} -%msg%n}` |
-| `LOG_CONSOLE_LEVEL` | No | Log files path. Default value `OFF` |
+| `LOG_CONSOLE_LEVEL` | No | Log files path. Default value `INFO` |
 
 Application logs:
 
