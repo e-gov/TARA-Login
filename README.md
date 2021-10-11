@@ -8,7 +8,7 @@
     * [Building the webapp](#building)
     * [Deploying the webapp](#deployment)
 - [Configuration parameters](#configuration)
-    * [Integration with Hydra service](#hydra_integration_conf)
+    * [Integration with Ory Hydra service](#hydra_integration_conf)
     * [Trusted TLS certificates](#tls_conf)
     * [Mobile-ID auth method](#mid_conf)
     * [Smart-ID auth method](#sid_conf)
@@ -29,7 +29,7 @@
 <a name="overview"></a>
 ## Overview
 
-TARA login service is a webapp that integrates with the [ORY Hydra OIDC server](https://github.com/ory/hydra) implementation. TARA login service provides [login](https://www.ory.sh/hydra/docs/concepts/login) and [consent](https://www.ory.sh/hydra/docs/concepts/login) flow implementations. Apache Ignite is used for session persistence between requests. 
+TARA login service is a webapp that integrates with the [Ory Hydra OIDC server](https://github.com/ory/hydra) implementation. TARA login service provides [login](https://www.ory.sh/hydra/docs/concepts/login) and [consent](https://www.ory.sh/hydra/docs/concepts/login) flow implementations. Apache Ignite is used for session persistence between requests. 
 
 The webapp provides implementation for following authentication methods:
 * Estonian ID-card
@@ -82,17 +82,17 @@ Example: to deploy the webapp to a standalone Tomcat server
 
 
 <a name="hydra_integration_conf"></a>
-### 1.1 Integration with Hydra service
+### 1.1 Integration with Ory Hydra service
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `tara.hydra-service.login-url` | Yes | Url to initialize Hydra OIDC server login process |
-| `tara.hydra-service.accept-login-url` | Yes | Url to accept Hydra OIDC server login request |
-| `tara.hydra-service.reject-login-url` | Yes | Url to reject Hydra OIDC server login request |
-| `tara.hydra-service.accept-consent-url` | Yes | Url to accept Hydra OIDC server consent |
-| `tara.hydra-service.reject-consent-url` | Yes | Url to reject Hydra OIDC server consent |
-| `tara.hydra-service.health-url` | Yes | Hydra service health url |
-| `tara.hydra-service.request-timeout-in-seconds` | No | Hydra service request timeout |
+| `tara.hydra-service.login-url` | Yes | Url to initialize Ory Hydra OIDC server login process |
+| `tara.hydra-service.accept-login-url` | Yes | Url to accept Ory Hydra OIDC server login request |
+| `tara.hydra-service.reject-login-url` | Yes | Url to reject Ory Hydra OIDC server login request |
+| `tara.hydra-service.accept-consent-url` | Yes | Url to accept Ory Hydra OIDC server consent |
+| `tara.hydra-service.reject-consent-url` | Yes | Url to reject Ory Hydra OIDC server consent |
+| `tara.hydra-service.health-url` | Yes | Ory Hydra service health url |
+| `tara.hydra-service.request-timeout-in-seconds` | No | Ory Hydra service request timeout |
 | `tara.hydra-service.max-connections-total` | No | Max connection pool size for hydra requests. Defaults to 50 |
 
 
