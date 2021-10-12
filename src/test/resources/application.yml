@@ -37,6 +37,11 @@ ignite:
     trust-store-file-path: src/test/resources/tls-truststore.jks
     trust-store-password: changeit
     protocol: TLSv1.2
+    protocols:
+      - TLSv1.2
+    cipher-suites:
+      - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+      - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 
 tara:
   hydra-service:
@@ -137,3 +142,12 @@ tara:
     trust-store-location: classpath:tls-truststore.jks
     trust-store-password: changeit
     trust-store-type: jks
+    default-protocol: TLSv1.3
+    enabled-protocols:
+      - TLSv1.2
+      - TLSv1.3
+    enabled-cipher-suites:
+      - TLS_AES_128_GCM_SHA256
+      - TLS_AES_256_GCM_SHA384
+      - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+      - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384

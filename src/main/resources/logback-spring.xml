@@ -8,10 +8,10 @@
 
     <springProperty scope="context" name="springAppName" source="spring.application.name"/>
 
-    <property name="log.files.dir" value="${LOG_HOME:-/var/log}"/>
+    <property name="log.files.dir" value="${LOG_HOME:-${java.io.tmpdir:-/tmp}}"/>
     <property name="log.files.max.count" value="${LOG_FILES_MAX_COUNT:-31}"/>
-    <property name="log.level.console" value="${LOG_CONSOLE_LEVEL:-OFF}"/>
-    <property name="log.level.tara-login-service" value="${LOG_FILE_LEVEL:-INFO}"/>
+    <property name="log.level.console" value="${LOG_CONSOLE_LEVEL:-INFO}"/>
+    <property name="log.level.file" value="${LOG_FILE_LEVEL:-OFF}"/>
 
     <property name="log.console.pattern"
               value="${LOG_CONSOLE_PATTERN:-%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z',GMT} [${springAppName}] [%15.15t] %highlight(%-5level) %-40.40logger{39} %green(%marker) [%X{trace.id},%X{transaction.id}] -%X{remoteHost} -%msg%n}"/>
@@ -35,7 +35,7 @@
             <maxHistory>${log.files.max.count}</maxHistory>
         </rollingPolicy>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>${log.level.tara-login-service}</level>
+            <level>${log.level.file}</level>
         </filter>
         <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
             <evaluator> <!-- defaults to type ch.qos.logback.classic.boolex.JaninoEventEvaluator -->
@@ -143,7 +143,6 @@
         </encoder>
     </appender>
 
-    <logger name="ee.ria.taraauthserver" level="${log.level.tara-login-service}"/>
     <logger name="ee.sk.smartid.rest.SmartIdRestConnector" level="ERROR"/>
     <logger name="ee.sk.mid.MidAuthenticationResponseValidator" level="ERROR"/>
 

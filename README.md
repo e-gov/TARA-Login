@@ -8,7 +8,7 @@
     * [Building the webapp](#building)
     * [Deploying the webapp](#deployment)
 - [Configuration parameters](#configuration)
-    * [Integration with Hydra service](#hydra_integration_conf)
+    * [Integration with Ory Hydra service](#hydra_integration_conf)
     * [Trusted TLS certificates](#tls_conf)
     * [Mobile-ID auth method](#mid_conf)
     * [Smart-ID auth method](#sid_conf)
@@ -29,7 +29,7 @@
 <a name="overview"></a>
 ## Overview
 
-TARA login service is a webapp that integrates with the [ORY Hydra OIDC server](https://github.com/ory/hydra) implementation. TARA login service provides [login](https://www.ory.sh/hydra/docs/concepts/login) and [consent](https://www.ory.sh/hydra/docs/concepts/login) flow implementations. Apache Ignite is used for session persistence between requests. 
+TARA login service is a webapp that integrates with the [Ory Hydra OIDC server](https://github.com/ory/hydra) implementation. TARA login service provides [login](https://www.ory.sh/hydra/docs/concepts/login) and [consent](https://www.ory.sh/hydra/docs/concepts/login) flow implementations. Apache Ignite is used for session persistence between requests. 
 
 The webapp provides implementation for following authentication methods:
 * Estonian ID-card
@@ -82,28 +82,31 @@ Example: to deploy the webapp to a standalone Tomcat server
 
 
 <a name="hydra_integration_conf"></a>
-### 1.1 Integration with Hydra service
+### 1.1 Integration with Ory Hydra service
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `tara.hydra-service.login-url` | Yes | Url to initialize Hydra OIDC server login process |
-| `tara.hydra-service.accept-login-url` | Yes | Url to accept Hydra OIDC server login request |
-| `tara.hydra-service.reject-login-url` | Yes | Url to reject Hydra OIDC server login request |
-| `tara.hydra-service.accept-consent-url` | Yes | Url to accept Hydra OIDC server consent |
-| `tara.hydra-service.reject-consent-url` | Yes | Url to reject Hydra OIDC server consent |
-| `tara.hydra-service.health-url` | Yes | Hydra service health url |
-| `tara.hydra-service.request-timeout-in-seconds` | No | Hydra service request timeout |
+| `tara.hydra-service.login-url` | Yes | Url to initialize Ory Hydra OIDC server login process |
+| `tara.hydra-service.accept-login-url` | Yes | Url to accept Ory Hydra OIDC server login request |
+| `tara.hydra-service.reject-login-url` | Yes | Url to reject Ory Hydra OIDC server login request |
+| `tara.hydra-service.accept-consent-url` | Yes | Url to accept Ory Hydra OIDC server consent |
+| `tara.hydra-service.reject-consent-url` | Yes | Url to reject Ory Hydra OIDC server consent |
+| `tara.hydra-service.health-url` | Yes | Ory Hydra service health url |
+| `tara.hydra-service.request-timeout-in-seconds` | No | Ory Hydra service request timeout |
 | `tara.hydra-service.max-connections-total` | No | Max connection pool size for hydra requests. Defaults to 50 |
 
 
 <a name="tls_conf"></a>
-### 1.2 Trusted TLS certificates
+### 1.2 TLS configuration for outbound connections
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.tls.trust-store-location` | Yes | Location of the truststore. Path to the location of the trusted CA certificates. In case the certificate files are to be loaded from classpath, this path should be prefixed with `classpath:` (example: `classpath:tls-truststore.p12`). In case the certificate files are to be loaded from disk, this path should be prefixed with `file:` (exaple ``file:/etc/tara/tls-truststore.p12``).  |
 | `tara.tls.trust-store-password` | Yes | Truststore password |
-| `tara.tls.trust-store-location` | No | Truststore type (jks, pkcs12). Defaults to PKCS12 if not specified |
+| `tara.tls.trust-store-type` | No | Truststore type (jks, pkcs12). Defaults to PKCS12 if not specified |
+| `tara.tls.default-protocol` | No | Default protocol (see the list of supported [values](https://docs.oracle.com/en/java/javase/11/docs/specs/security/standard-names.html#sslcontext-algorithms)). Defaults to `TLS` if not specified |
+| `tara.tls.enabled-protocols` | No | List of enabled protocols (see the list of [standard names for protocols](https://docs.oracle.com/en/java/javase/11/docs/specs/security/standard-names.html#additional-jsse-standard-names)). Defaults to JVM specific configuration if not specified |
+| `tara.tls.enabled-cipher-suites` | No | List of enabled cipher suites (see the list of [standard names for cipher suites](https://docs.oracle.com/en/java/javase/11/docs/specs/security/standard-names.html#jsse-cipher-suite-names)). Defaults to JVM specific configuration if not specified |
 
 <a name="mid_conf"></a>
 ### 1.3 Mobile-ID auth method
@@ -468,6 +471,11 @@ Ignite is used for storing user’s session information.
 | `ignite.ssl-context-factory.trust-store-type` | Yes | Ignite trust store type. Example value `PKCS12` |
 | `ignite.ssl-context-factory.trust-store-file-path` | Yes | Ignite trust store path. Example value `/test/resources/tls-truststore.p12` |
 | `ignite.ssl-context-factory.trust-store-password` | Yes | Ignite trust store password. |
+| `ignite.ssl-context-factory.protocol` | No | Default protocol* (see the list of supported [values](https://docs.oracle.com/en/java/javase/11/docs/specs/security/standard-names.html#sslcontext-algorithms)). Defaults to `TLS` if not specified |
+| `ignite.ssl-context-factory.protocols` | No | List of enabled protocols* (see the list of [standard names for protocols](https://docs.oracle.com/en/java/javase/11/docs/specs/security/standard-names.html#additional-jsse-standard-names)). Defaults to JVM specific configuration if not specified |
+| `ignite.ssl-context-factory.cipher-suites` | No | List of enabled cipher suites (see the list of [standard names for cipher suites](https://docs.oracle.com/en/java/javase/11/docs/specs/security/standard-names.html#jsse-cipher-suite-names)). Defaults to JVM specific configuration if not specified |
+
+\* For Ignite 2.10.0 and older, [TLSv1.3 is not supported](https://ignite.apache.org/docs/2.10.0/quick-start/java#running-ignite-with-java-11).
 
 <a name="sec_conf"></a>
 ## 1.10 Security and Session management
@@ -485,11 +493,11 @@ Ignite is used for storing user’s session information.
 
 | Environment variable        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `LOG_HOME` | No | Log files path. Default value `/var/log` |
+| `LOG_HOME` | No | Log files path. Default value Java IO temp dir (java.io.tmpdir) or `/tmp` |
 | `LOG_FILES_MAX_COUNT` | No | Rolling file appender max files history. Default value `31` |
-| `LOG_FILE_LEVEL` | No | Log level for file logging. Default value `INFO` |
+| `LOG_FILE_LEVEL` | No | Log level for file logging. Default value `OFF` |
 | `LOG_CONSOLE_PATTERN` | No | Log files path. Default value `%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z',GMT} [${springAppName}] [%15.15t] %highlight(%-5level) %-40.40logger{39} %green(%marker) [%X{trace.id},%X{transaction.id}] -%X{remoteHost} -%msg%n}` |
-| `LOG_CONSOLE_LEVEL` | No | Log files path. Default value `OFF` |
+| `LOG_CONSOLE_LEVEL` | No | Log files path. Default value `INFO` |
 
 Application logs:
 
