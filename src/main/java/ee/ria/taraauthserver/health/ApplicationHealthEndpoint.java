@@ -4,11 +4,11 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.TimeGauge;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.boot.actuate.health.HealthContributorRegistry;
 import org.springframework.boot.actuate.health.HealthIndicator;
-import org.springframework.boot.actuate.health.NamedContributor;
 import org.springframework.boot.actuate.health.Status;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.info.BuildProperties;
@@ -22,12 +22,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static java.lang.Double.valueOf;
 import static java.time.Duration.ofSeconds;
 import static java.time.Instant.now;
 import static java.time.Instant.ofEpochMilli;
+import static java.util.Map.of;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
@@ -53,6 +53,9 @@ public class ApplicationHealthEndpoint {
     @Autowired
     private TruststoreHealthIndicator truststoreHealthIndicator;
 
+    @Value("${management.endpoint.health.show-details:never}")
+    private String showDetails;
+
     @ReadOperation(produces = "application/json")
     public ResponseEntity<Map<String, Object>> health() {
         HttpHeaders headers = new HttpHeaders();
@@ -67,9 +70,8 @@ public class ApplicationHealthEndpoint {
     }
 
     private Map<String, Object> getHealthDetails() {
-        Map<String, Status> healthIndicatorStatuses = getHealthIndicatorStatuses();
         Map<String, Object> details = new HashMap<>();
-        details.put("status", getAggregatedStatus(healthIndicatorStatuses).getCode());
+        details.put("status", getAggregatedStatus().getCode());
         details.put("name", buildProperties.getName());
         details.put("version", buildProperties.getVersion());
         details.put("buildTime", buildProperties.getTime());
@@ -79,7 +81,7 @@ public class ApplicationHealthEndpoint {
         details.computeIfAbsent("startTime", v -> getServiceStartTime());
         details.computeIfAbsent("upTime", v -> getServiceUpTime());
         details.computeIfAbsent("warnings", v -> getTrustStoreWarnings());
-        details.put("dependencies", getFormattedStatuses(healthIndicatorStatuses));
+        details.put("dependencies", getDependencies());
         return details;
     }
 
@@ -98,26 +100,32 @@ public class ApplicationHealthEndpoint {
         return upTime != null ? ofSeconds(valueOf(upTime.value(SECONDS)).longValue()).toString() : null;
     }
 
-    private Map<String, Status> getHealthIndicatorStatuses() {
-        return healthContributorRegistry.stream()
+    private Status getAggregatedStatus() {
+        Optional<Status> anyDown = healthContributorRegistry.stream()
                 .filter(hc -> hc.getContributor() instanceof HealthIndicator)
-                .collect(Collectors.toMap(NamedContributor::getName,
-                        healthContributorNamedContributor -> ((HealthIndicator) healthContributorNamedContributor
-                                .getContributor()).health().getStatus()));
-    }
-
-    private Status getAggregatedStatus(Map<String, Status> healthIndicatorStatuses) {
-        Optional<Status> anyDown = healthIndicatorStatuses.values().stream()
-                .filter(status -> Status.DOWN.equals(status))
+                .map(hc -> (HealthIndicator) hc.getContributor())
+                .map(hi -> hi.health().getStatus())
+                .filter(Status.DOWN::equals)
                 .findAny();
         return anyDown.isPresent() ? Status.DOWN : Status.UP;
     }
 
-    private List<HashMap<String, String>> getFormattedStatuses(Map<String, Status> healthIndicatorStatuses) {
-        return healthIndicatorStatuses.entrySet().stream()
-                .map(healthIndicator -> new HashMap<String, String>() {{
-                    put("name", healthIndicator.getKey());
-                    put("status", healthIndicator.getValue().getCode());
-                }}).collect(toList());
+    private List<Map<String, ?>> getDependencies() {
+        return healthContributorRegistry
+                .stream()
+                .filter(hc -> hc.getContributor() instanceof HealthIndicator)
+                .map(hc -> {
+                    HealthIndicator healthIndicator = (HealthIndicator) hc.getContributor();
+                    Status status = healthIndicator.health().getStatus();
+
+                    if ("always".equals(showDetails)) {
+                        return of("name", hc.getName(),
+                                "status", status.getCode(),
+                                "details", healthIndicator.health().getDetails());
+                    } else {
+                        return of("name", hc.getName(), "status", status.getCode());
+                    }
+                })
+                .collect(toList());
     }
 }

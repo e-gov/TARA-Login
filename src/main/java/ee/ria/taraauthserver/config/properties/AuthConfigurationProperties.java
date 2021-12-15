@@ -250,5 +250,7 @@ public class AuthConfigurationProperties {
     public static class HealthConfigurationProperties {
 
         private int expirationWarningPeriodInDays = 30;
+
+        private int loggerErrorThresholdInMillis = 5000;
     }
 }

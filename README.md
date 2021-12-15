@@ -400,6 +400,11 @@ The webapp uses `Spring Boot Actuator` to enable endpoints for monitoring suppor
 <a name="monitoring_heartbeat_conf"></a>
 ### 1.8.1 Custom application health endpoint configuration
 
+| Parameter                                                | Mandatory | Description, example                                                                                                                                                   |
+|:---------------------------------------------------------| :---------- |:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `tara.health-endpoint.expiration-warning-period-in-days` | No | Truststore health indicator certificates expiriation warning period. Certificate expiration warnings appear under `warnings` element in health response. Default `30`  |
+| `tara.health-endpoint.logger-error-threshold-in-millis`  | No | Logger health indicator logger status manager error threshold. All I/O related errors in this time window are considered in health response evaluation. Default `5000` |
+
 The webapp implements [custom health endpoint](https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#production-ready-endpoints-custom) with id `heartbeat` and [custom health indicators](https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#writing-custom-healthindicators) with id's `oidcServer`,  `truststore`. This endpoint is disabled by default.
 
 Request:
@@ -423,6 +428,10 @@ Response:
 	"dependencies": [
 	    {
 			"name": "ignite",
+			"status": "UP"
+		},
+		{
+			"name": "logger",
 			"status": "UP"
 		},
 		{

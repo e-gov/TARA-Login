@@ -59,24 +59,20 @@ public class TruststoreHealthIndicator extends AbstractHealthIndicator {
 
     @Override
     protected void doHealthCheck(Health.Builder builder) {
-        if (getCertificatesExpiredAt(now(getSystemClock())).isEmpty()) {
-            builder.up().withDetails(trustStoreCertificates).build();
+        Map<String, CertificateInfo> expiredAtCertificates = getCertificatesExpiredAt(now(getSystemClock()));
+        if (expiredAtCertificates.isEmpty()) {
+            builder.up().withDetail("certificates", trustStoreCertificates).build();
         } else {
-            builder.unknown().withDetails(trustStoreCertificates).build();
+            builder.unknown().withDetail("certificates", trustStoreCertificates).withDetail("expiration-warnings", expiredAtCertificates).build();
         }
     }
 
     List<String> getCertificateExpirationWarnings() {
-        return getCertificatesExpiredAt(now(getSystemClock()).plus(Period.ofDays(healthConfiguration.getExpirationWarningPeriodInDays()))).values().stream()
-                .map(certificateInfo -> format(TRUSTSTORE_WARNING, certificateInfo.getSubjectDN(),
-                        certificateInfo.getSerialNumber(), certificateInfo.getValidTo()))
-                .collect(toList());
+        return getCertificatesExpiredAt(now(getSystemClock()).plus(Period.ofDays(healthConfiguration.getExpirationWarningPeriodInDays()))).values().stream().map(certificateInfo -> format(TRUSTSTORE_WARNING, certificateInfo.getSubjectDN(), certificateInfo.getSerialNumber(), certificateInfo.getValidTo())).collect(toList());
     }
 
     private Map<String, CertificateInfo> getCertificatesExpiredAt(Instant expired) {
-        return trustStoreCertificates.entrySet().stream()
-                .filter(es -> expired.isAfter(es.getValue().validTo))
-                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+        return trustStoreCertificates.entrySet().stream().filter(es -> expired.isAfter(es.getValue().validTo)).collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     @PostConstruct
@@ -91,11 +87,7 @@ public class TruststoreHealthIndicator extends AbstractHealthIndicator {
                 Certificate certificate = keyStore.getCertificate(alias);
                 if (X_509.equals(certificate.getType())) {
                     X509Certificate x509 = (X509Certificate) certificate;
-                    trustStoreCertificates.put(alias, CertificateInfo.builder()
-                            .validTo(x509.getNotAfter().toInstant())
-                            .subjectDN(x509.getSubjectDN().getName())
-                            .serialNumber(x509.getSerialNumber().toString())
-                            .build());
+                    trustStoreCertificates.put(alias, CertificateInfo.builder().validTo(x509.getNotAfter().toInstant()).subjectDN(x509.getSubjectDN().getName()).serialNumber(x509.getSerialNumber().toString()).build());
                 }
             }
         }
