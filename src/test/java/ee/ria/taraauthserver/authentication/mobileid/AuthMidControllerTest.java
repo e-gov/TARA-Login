@@ -637,7 +637,7 @@ class AuthMidControllerTest extends BaseTest {
 
         TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
         assertEquals(MID_INTERNAL_ERROR, result.getErrorCode());
-        assertErrorIsLogged("Mobile-ID authentication exception: java.net.SocketTimeoutException: Read timed out");
+        assertErrorIsLogged("Mobile-ID authentication exception: Unknown error when connecting to Host");
     }
 
     @Test

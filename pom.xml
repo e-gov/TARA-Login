@@ -134,7 +134,7 @@
         <dependency>
             <groupId>ee.sk.mid</groupId>
             <artifactId>mid-rest-java-client</artifactId>
-            <version>1.3</version>
+            <version>1.4</version>
         </dependency>
         <dependency>
             <groupId>ee.sk.smartid</groupId>
