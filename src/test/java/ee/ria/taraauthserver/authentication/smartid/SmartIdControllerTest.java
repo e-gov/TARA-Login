@@ -70,7 +70,7 @@ class SmartIdControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(403)
                 .body("message", equalTo("Keelatud päring. Päring esitati topelt, sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
-                .body("reportable", equalTo(true));
+                .body("reportable", equalTo(false));
 
     }
 
@@ -108,7 +108,7 @@ class SmartIdControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
                 .body("error", equalTo("Bad Request"))
-                .body("reportable", equalTo(true))
+                .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [INIT_AUTH_PROCESS]");
@@ -130,7 +130,7 @@ class SmartIdControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Ebakorrektne päring."))
                 .body("error", equalTo("Bad Request"))
-                .body("reportable", equalTo(true))
+                .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: Smart-ID authentication method is not allowed");

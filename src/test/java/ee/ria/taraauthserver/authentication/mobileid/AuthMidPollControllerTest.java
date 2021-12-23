@@ -60,7 +60,7 @@ class AuthMidPollControllerTest extends BaseTest {
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
                 .body("error", equalTo("Bad Request"))
-                .body("reportable", equalTo(true));
+                .body("reportable", equalTo(false));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [AUTHENTICATION_FAILED, INIT_MID, POLL_MID_STATUS, NATURAL_PERSON_AUTHENTICATION_COMPLETED]");
     }

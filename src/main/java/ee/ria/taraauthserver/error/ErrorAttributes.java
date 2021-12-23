@@ -59,7 +59,11 @@ public class ErrorAttributes extends DefaultErrorAttributes {
             IDC_REVOKED,
             EIDAS_USER_CONSENT_NOT_GIVEN,
             SID_DOCUMENT_UNUSABLE,
-            SESSION_NOT_FOUND
+            SESSION_NOT_FOUND,
+            SESSION_STATE_INVALID,
+            INVALID_REQUEST,
+            INVALID_CSRF_TOKEN,
+            INVALID_LOGIN_CHALLENGE
     );
 
     @Override
