@@ -40,7 +40,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .statusCode(403)
                 .body("error", equalTo("Forbidden"))
                 .body("message", equalTo("Keelatud päring. Päring esitati topelt, sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
-                .body("reportable", equalTo(true));
+                .body("reportable", equalTo(false));
 
         assertErrorIsLogged("Access denied: Invalid CSRF token.");
     }
@@ -80,7 +80,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
-                .body("reportable", equalTo(true));
+                .body("reportable", equalTo(false));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [AUTHENTICATION_SUCCESS, NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED]");
         ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, ERROR, "Authentication result: AUTHENTICATION_FAILED");

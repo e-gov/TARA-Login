@@ -595,7 +595,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("incident_nr", notNullValue())
                 .body("message", equalTo("Vigane päring. Päringu volituskood ei ole korrektne."))
-                .body("reportable", equalTo(true));
+                .body("reportable", equalTo(false));
     }
 
     @Test
