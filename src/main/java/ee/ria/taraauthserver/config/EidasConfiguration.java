@@ -23,9 +23,9 @@ import org.springframework.web.client.RestTemplate;
 import javax.net.ssl.SSLContext;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import static net.logstash.logback.argument.StructuredArguments.value;
 
@@ -55,7 +55,11 @@ public class EidasConfiguration {
         String url = eidasConfigurationProperties.getClientUrl() + "/supportedCountries";
         log.info("Refreshing countries list from: {}", value("url.full", url));
         ResponseEntity<String[]> response = restTemplate.exchange(url, HttpMethod.GET, null, String[].class);
-        Set<String> countries = Set.of(response.getBody());
+        if (response.getBody() == null || response.getBody().length == 0) {
+            throw new IllegalStateException("Eidas client responded with empty supported countries list");
+        }
+        List<String> countries = Arrays.asList(response.getBody());
+        Collections.sort(countries);
         eidasConfigurationProperties.setAvailableCountries(countries);
         log.info("Updated countries list to: {}", value("tara.conf.auth-methods.eidas.available_countries", countries));
     }
