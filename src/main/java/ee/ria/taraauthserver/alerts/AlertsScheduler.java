@@ -1,9 +1,6 @@
 package ee.ria.taraauthserver.alerts;
 
 import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties;
-import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.LoginAlert;
-import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.StaticAlert;
-import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -19,10 +16,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import javax.cache.Cache;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.Alert;
 import static java.util.Arrays.asList;

@@ -13,7 +13,10 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.EnumSet;
 import java.util.Map;
 
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_SID;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_STATUS;
 import static java.util.Map.of;
 
 @Slf4j
