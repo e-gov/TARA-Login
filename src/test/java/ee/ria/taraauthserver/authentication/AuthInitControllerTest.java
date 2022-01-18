@@ -180,7 +180,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(200)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
                 .header(HttpHeaders.CONTENT_LANGUAGE, "et")
-                .body(containsString("Sisestage ID-kaart kaardilugejasse ja vajutage \"Jätkan\""))
+                .body(containsString("Sisestage ID-kaart kaardilugejasse ja vajutage \"Jätka\""))
                 .cookie("SESSION", matchesPattern("[A-Za-z0-9,-]{36,36}"))
                 .extract().cookie("SESSION");
 
@@ -321,7 +321,7 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200)
                 .header(HttpHeaders.CONTENT_LANGUAGE, "et")
-                .body(containsString("Sisestage ID-kaart kaardilugejasse ja vajutage \"Jätkan\""));
+                .body(containsString("Sisestage ID-kaart kaardilugejasse ja vajutage \"Jätka\""));
     }
 
     @Test
@@ -382,7 +382,7 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200)
                 .header(HttpHeaders.CONTENT_LANGUAGE, "et")
-                .body(containsString("Sisenemiseks Mobiil-ID-ga sisestage oma isikukood ja telefoninumber"));
+                .body(containsString("Sisestage oma isikukood ja telefoninumber ning vajutage \"Jätka\""));
     }
 
     @Test
