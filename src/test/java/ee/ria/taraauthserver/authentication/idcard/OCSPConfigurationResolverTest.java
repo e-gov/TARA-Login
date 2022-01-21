@@ -17,9 +17,17 @@ import java.util.List;
 
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp;
-import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp.*;
+import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp.DEFAULT_ACCEPTED_CLOCK_SKEW_IN_SECONDS;
+import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp.DEFAULT_CONNECT_TIMEOUT_IN_MILLISECONDS;
+import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp.DEFAULT_READ_TIMEOUT_IN_MILLISECONDS;
+import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp.DEFAULT_RESPONSE_LIFETIME_IN_SECONDS;
 import static java.util.List.of;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {TestIDCardConfiguration.class})

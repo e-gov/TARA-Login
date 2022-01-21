@@ -18,9 +18,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
-import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.*;
+import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.MOCK_CLIENT_LEGACY_URL;
+import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.MOCK_CLIENT_NAME_EN;
+import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.buildMockHttpSession;
+import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.buildMockLoginRequestInfo;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)

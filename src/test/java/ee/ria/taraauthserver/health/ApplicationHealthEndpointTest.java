@@ -16,7 +16,9 @@ import org.springframework.test.context.TestPropertySource;
 import java.time.Clock;
 import java.time.Instant;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.any;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static io.restassured.RestAssured.given;
 import static java.time.ZoneId.of;
 import static org.hamcrest.Matchers.equalTo;

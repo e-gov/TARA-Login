@@ -16,14 +16,19 @@ import org.springframework.test.context.TestPropertySource;
 import javax.cache.Cache;
 import java.util.List;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.Alert;
-import static ee.ria.taraauthserver.config.properties.AuthenticationType.*;
+import static ee.ria.taraauthserver.config.properties.AuthenticationType.ID_CARD;
+import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
+import static ee.ria.taraauthserver.config.properties.AuthenticationType.SMART_ID;
 import static java.time.OffsetDateTime.parse;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

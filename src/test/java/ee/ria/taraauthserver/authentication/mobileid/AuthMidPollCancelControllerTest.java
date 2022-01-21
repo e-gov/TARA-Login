@@ -15,8 +15,9 @@ import org.springframework.session.SessionRepository;
 
 import static ch.qos.logback.classic.Level.INFO;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
-import static ee.ria.taraauthserver.config.properties.AuthenticationType.SMART_ID;
-import static ee.ria.taraauthserver.session.MockSessionFilter.*;
+import static ee.ria.taraauthserver.session.MockSessionFilter.withTaraSession;
+import static ee.ria.taraauthserver.session.MockSessionFilter.withoutCsrf;
+import static ee.ria.taraauthserver.session.MockSessionFilter.withoutTaraSession;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.COMPLETE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
