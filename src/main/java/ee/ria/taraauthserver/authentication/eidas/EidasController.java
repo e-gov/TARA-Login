@@ -107,9 +107,11 @@ public class EidasController {
     }
 
     private ErrorCode getAppropriateErrorCode() {
-        Object[] allowedCountries = eidasConfigurationProperties.getAvailableCountries().toArray(new Object[0]);
+        List<String> allowedCountries = eidasConfigurationProperties.getAvailableCountries();
         ErrorCode errorCode = ErrorCode.EIDAS_COUNTRY_NOT_SUPPORTED;
-        errorCode.setMessageParameters(allowedCountries);
+        Object[] messageParameters = new Object[1];
+        messageParameters[0] = String.join(", ", allowedCountries);
+        errorCode.setMessageParameters(messageParameters);
         return errorCode;
     }
 

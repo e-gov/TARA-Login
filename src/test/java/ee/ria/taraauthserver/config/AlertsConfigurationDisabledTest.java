@@ -1,7 +1,6 @@
 package ee.ria.taraauthserver.config;
 
 import ee.ria.taraauthserver.alerts.AlertsScheduler;
-import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

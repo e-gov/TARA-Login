@@ -16,9 +16,13 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponents;
 
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 
-import static java.util.Collections.emptySet;
+import static java.util.Collections.emptyList;
 
 @Slf4j
 public class ThymeleafSupport {
@@ -70,8 +74,8 @@ public class ThymeleafSupport {
         return uriComponents.getPath() + "?" + uriComponents.getQuery();
     }
 
-    public Set<String> getListOfCountries() {
-        return eidasConfigurationProperties == null ? emptySet() : eidasConfigurationProperties.getAvailableCountries();
+    public List<String> getListOfCountries() {
+        return eidasConfigurationProperties == null ? emptyList() : eidasConfigurationProperties.getAvailableCountries();
     }
 
     public String getBackUrl() {

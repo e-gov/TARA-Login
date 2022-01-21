@@ -18,15 +18,44 @@ import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.context.request.WebRequest;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
+import static ee.ria.taraauthserver.error.ErrorCode.EIDAS_USER_CONSENT_NOT_GIVEN;
+import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_EXPIRED;
+import static ee.ria.taraauthserver.error.ErrorCode.IDC_REVOKED;
+import static ee.ria.taraauthserver.error.ErrorCode.INVALID_CSRF_TOKEN;
+import static ee.ria.taraauthserver.error.ErrorCode.INVALID_LOGIN_CHALLENGE;
+import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
+import static ee.ria.taraauthserver.error.ErrorCode.MID_DELIVERY_ERROR;
+import static ee.ria.taraauthserver.error.ErrorCode.MID_PHONE_ABSENT;
+import static ee.ria.taraauthserver.error.ErrorCode.MID_SIM_ERROR;
+import static ee.ria.taraauthserver.error.ErrorCode.MID_TRANSACTION_EXPIRED;
+import static ee.ria.taraauthserver.error.ErrorCode.MID_USER_CANCEL;
+import static ee.ria.taraauthserver.error.ErrorCode.NOT_MID_CLIENT;
+import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
+import static ee.ria.taraauthserver.error.ErrorCode.SESSION_STATE_INVALID;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_DOCUMENT_UNUSABLE;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_SESSION_TIMEOUT;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_ACCOUNT_NOT_FOUND;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_CERT_CHOICE;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_CONFIRMATIONMESSAGE;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_DISAPLAYTEXTANDPIN;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_VC_CHOICE;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_WRONG_VC;
 import static ee.ria.taraauthserver.security.RequestCorrelationFilter.MDC_ATTRIBUTE_TRACE_ID;
 import static java.lang.String.format;
 import static java.lang.String.join;
 import static org.springframework.boot.web.error.ErrorAttributeOptions.Include.BINDING_ERRORS;
 import static org.springframework.boot.web.error.ErrorAttributeOptions.Include.MESSAGE;
 import static org.springframework.web.context.request.RequestAttributes.SCOPE_REQUEST;
-import static ee.ria.taraauthserver.error.ErrorCode.*;
 
 @Slf4j
 @Component

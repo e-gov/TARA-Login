@@ -17,9 +17,11 @@ import org.springframework.test.annotation.DirtiesContext;
 
 import javax.cache.Cache;
 import java.util.Arrays;
-import java.util.Set;
+import java.util.List;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.any;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.EIDAS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.WAITING_EIDAS_RESPONSE;
@@ -104,6 +106,7 @@ public class EidasControllerTest extends BaseTest {
     @Test
     @Tag(value = "EIDAS_AUTH_INIT_REQUEST_CHECKS")
     void eidasAuthInit_request_country_not_supported() {
+        eidasConfigurationProperties.setAvailableCountries(List.of("CA", "LV", "LT"));
         createEidasCountryStub("mock_responses/eidas/eidas-response.json", 200);
         createEidasLoginStub("mock_responses/eidas/eidas-login-response.json", 200);
 
@@ -119,7 +122,7 @@ public class EidasControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Antud riigikood ei ole lubatud. Lubatud riigikoodid on: CA"))
+                .body("message", equalTo("Antud riigikood ei ole lubatud. Lubatud riigikoodid on: CA, LV, LT"))
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
@@ -130,7 +133,7 @@ public class EidasControllerTest extends BaseTest {
     @DirtiesContext
     @Tag(value = "EIDAS_AUTH_INIT_GET_REQUEST")
     void eidasAuthInit_timeout_responds_with_500() {
-        eidasConfigurationProperties.setAvailableCountries(Set.of("CA"));
+        eidasConfigurationProperties.setAvailableCountries(List.of("CA"));
 
         createEidasCountryStub("mock_responses/eidas/eidas-response.json", 200);
         wireMockServer.stubFor(any(urlPathMatching("/login"))
