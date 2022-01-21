@@ -25,9 +25,7 @@ import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.SMART_ID;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_REQUEST_TIMEOUT;
 import static ee.ria.taraauthserver.security.SessionManagementFilter.TARA_TRACE_ID;
-import static ee.ria.taraauthserver.session.MockSessionFilter.withTaraSession;
-import static ee.ria.taraauthserver.session.MockSessionFilter.withoutCsrf;
-import static ee.ria.taraauthserver.session.MockSessionFilter.withoutTaraSession;
+import static ee.ria.taraauthserver.session.MockSessionFilter.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
