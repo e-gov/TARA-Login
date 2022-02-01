@@ -29,6 +29,7 @@
         <lombok.version>1.18.20</lombok.version>
         <rest-assured.version>4.2.0</rest-assured.version>
         <spring-cloud.version>2020.0.0</spring-cloud.version>
+        <logback.version>1.2.6</logback.version>
     </properties>
 
     <dependencies>
@@ -95,6 +96,21 @@
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
             <version>6.6</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-access</artifactId>
+            <version>${logback.version}</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.janino</groupId>
