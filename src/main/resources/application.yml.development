@@ -1,0 +1,162 @@
+spring:
+  application:
+    name: tara-login-service
+  session:
+    timeout: 300s
+    servlet:
+      filter-order: -2147483648
+  mvc:
+    static-path-pattern: /content/**
+
+management:
+  health:
+    defaults:
+      enabled: false
+  info:
+    git:
+      mode: full
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        exclude: "*"
+        include: "heartbeat"
+    jmx:
+      exposure:
+        exclude: "*"
+
+ignite:
+  ignite-instance-name: tara-ignite
+  metrics-log-frequency: 300000
+  discovery-spi:
+    ip-finder:
+      addresses:
+        - 127.0.0.1
+  ssl-context-factory:
+    key-store-type: JKS
+    key-store-file-path: /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/tls-keystore.jks
+    key-store-password: changeit
+    trust-store-type: JKS
+    trust-store-file-path: /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/tls-truststore.jks
+    trust-store-password: changeit
+    protocol: TLSv1.2
+    protocols:
+      - TLSv1.2
+    cipher-suites:
+      - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+      - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+      - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+      - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+
+tara:
+  hydra-service:
+    login-url: http://hydra:4445/oauth2/auth/requests/login
+    accept-login-url: http://hydra:4445/oauth2/auth/requests/login/accept
+    reject-login-url: http://hydra:4445/oauth2/auth/requests/login/reject
+    accept-consent-url: http://hydra:4445/oauth2/auth/requests/consent/accept
+    reject-consent-url: http://hydra:4445/oauth2/auth/requests/consent/reject
+    health-url: http://hydra:4445/health/ready
+    request-timeout-in-seconds: 1
+    max-connections-total: 3
+
+  default-locale: et
+  error-report-email: help@example.com
+
+  alerts:
+    enabled: false
+    host-url: https://localhost:8080/alerts
+
+  auth-methods:
+    id-card:
+      enabled: true
+      ocsp-enabled: false
+      level-of-assurance: HIGH
+      truststore-path: file:/usr/local/tomcat/webapps/ROOT/WEB-INF/classes/idcard-truststore-test.p12
+      truststore-type: PKCS12
+      truststore-password: changeit
+      ocsp:
+        - issuer-cn: TEST of ESTEID-SK 2011
+          url: http://aia.sk.ee/esteid2011
+          accepted-clock-skew: 5
+          response-lifetime: 60
+          responder-certificate-cn: TEST_of_ESTEID-SK_2011.crt
+
+        - issuer-cn: TEST of ESTEID-SK 2015
+          url: https://localhost:9877/esteid2015
+          connect-timeout-in-milliseconds: 500
+
+        - issuer-cn: TEST of ESTEID-SK2018
+          url: http://aia.demo.sk.ee/esteid2018
+
+      fallback-ocsp:
+        - url: https://localhost:9877/ocsp
+          issuer-cn: TEST of ESTEID-SK 2011, TEST of ESTEID-SK 2015, TEST of ESTEID2018
+    mobile-id:
+      enabled: true
+      level-of-assurance: HIGH
+      truststore-path: file:/usr/local/tomcat/webapps/ROOT/WEB-INF/classes/mobileid-truststore-test.p12
+      host-url: https://tsp.demo.sk.ee/mid-api
+      relying-party-uuid: 00000000-0000-0000-0000-000000000000
+      relying-party-name: DEMO
+      display-text: EIS-TARA2
+      truststore-type: PKCS12
+      truststore-password: changeit
+      long-polling-timeout-seconds: 1
+      connection-timeout-milliseconds: 5000
+      read-timeout-milliseconds: 30000
+      interval-between-session-status-queries-in-milliseconds: 3000
+    smart-id:
+      enabled: true
+      host-url: https://localhost:9877/smart-id-rp/v2/
+      level-of-assurance: HIGH
+      truststore-path: file:/usr/local/tomcat/webapps/ROOT/WEB-INF/classes/sid-truststore-test.p12
+      truststore-type: PKCS12
+      truststore-password: changeit
+      relying-party-uuid: 00000000-0000-0000-0000-000000000000
+      relying-party-name: DEMO
+      display-text: default short name
+      delay-initiate-sid-session-in-milliseconds: 0
+      long-polling-timeout-milliseconds: 1000
+      connection-timeout-milliseconds: 1000
+      read-timeout-milliseconds: 6000
+    eidas:
+      enabled: false
+      client-url: https://localhost:9877
+      refresh-countries-interval-in-milliseconds: 300000
+      request-timeout-in-seconds: 1
+      read-timeout-in-seconds: 1
+      relay-state-cache-duration-in-seconds: 30
+
+  legal-person-authentication:
+    enabled: true
+    x-road-server-url: https://localhost:9877/cgi-bin/consumer_proxy
+
+    x-road-service-instance: ee-dev
+    x-road-service-member-class: GOV
+    x-road-service-member-code: 70000310
+    x-road-service-subsystem-code: arireg
+
+    x-road-client-subsystem-instance: ee-dev
+    x-road-client-subsystem-member-class: GOV
+    x-road-client-subsystem-member-code: 70006317
+    x-road-client-subsystem-code: idp
+
+    x-road-server-read-timeout-in-milliseconds: 1000
+    x-road-server-connect-timeout-in-milliseconds: 1000
+  
+
+  tls:
+    trust-store-location: classpath:tls-truststore.jks
+    trust-store-password: changeit
+    trust-store-type: jks
+    default-protocol: TLSv1.3
+    enabled-protocols:
+      - TLSv1.2
+      - TLSv1.3
+    enabled-cipher-suites:
+      - TLS_AES_128_GCM_SHA256
+      - TLS_AES_256_GCM_SHA384
+      - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+      - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+      - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+      - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384

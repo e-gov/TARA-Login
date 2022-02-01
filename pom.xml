@@ -24,7 +24,7 @@
 
     <properties>
         <maven.compiler.release>11</maven.compiler.release>
-
+        <logback.version>1.2.6</logback.version>
         <spring-cloud.version>2021.0.5</spring-cloud.version>
     </properties>
 
@@ -98,6 +98,21 @@
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
             <version>7.2</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-access</artifactId>
+            <version>${logback.version}</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.janino</groupId>
