@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<configuration scan="true" scanPeriod="30 minutes">
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+    <conversionRule conversionWord="wex" converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
+    <conversionRule conversionWord="wEx" converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
+    <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator"/>
+
+    <springProperty scope="context" name="springAppName" source="spring.application.name"/>
+
+    <property name="log.files.dir" value="${LOG_HOME:-${java.io.tmpdir:-/tmp}}"/>
+    <property name="log.files.max.count" value="${LOG_FILES_MAX_COUNT:-31}"/>
+    <property name="log.level.console" value="${LOG_CONSOLE_LEVEL:-INFO}"/>
+    <property name="log.level.file" value="${LOG_FILE_LEVEL:-OFF}"/>
+
+    <property name="log.console.pattern"
+              value="${LOG_CONSOLE_PATTERN:-%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z',GMT} [${springAppName}] [%15.15t] %highlight(%-5level) %-40.40logger{39} %green(%marker) [%X{trace.id},%X{transaction.id}] -%X{remoteHost} -%msg%n}"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${log.level.console}</level>
+        </filter>
+        <encoder>
+            <pattern>${log.console.pattern}</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.files.dir}/TaraLoginService.%d{yyyy-MM-dd,GMT}.log</file>
+        <!-- Support multiple-JVM writing to the same log file -->
+        <prudent>true</prudent>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.files.dir}/TaraLoginService.%d{yyyy-MM-dd,GMT}.log</fileNamePattern>
+            <maxHistory>${log.files.max.count}</maxHistory>
+        </rollingPolicy>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${log.level.file}</level>
+        </filter>
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+            <evaluator> <!-- defaults to type ch.qos.logback.classic.boolex.JaninoEventEvaluator -->
+                <expression>return logger.equals("ee.ria.taraauthserver.logging.StatisticsLogger");</expression>
+            </evaluator>
+            <onMismatch>NEUTRAL</onMismatch>
+            <onMatch>DENY</onMatch>
+        </filter>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <jsonFactoryDecorator class="ee.ria.taraauthserver.logging.LogbackJsonFactoryDecorator"/>
+            <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
+                <valueMasker class="ee.ria.taraauthserver.logging.LogbackFieldValueMasker"/>
+            </jsonGeneratorDecorator>
+            <providers>
+                <timestamp>
+                    <fieldName>@timestamp</fieldName>
+                    <pattern>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</pattern>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+                <message/>
+                <pattern>
+                    <omitEmptyFields>true</omitEmptyFields>
+                    <pattern>
+                        {
+                        "log.level": "%level",
+                        "log.logger": "%logger",
+                        "process.pid": "#asLong{%property{PID}}",
+                        "process.thread.name": "%thread",
+                        "service.name": "${springAppName}",
+                        "service.type": "tara"
+                        }
+                    </pattern>
+                </pattern>
+                <stackTrace>
+                    <fieldName>error.stack_trace</fieldName>
+                    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                        <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                        <maxLength>2048</maxLength>
+                        <shortenedClassNameLength>20</shortenedClassNameLength>
+                        <exclude>^sun\.reflect\..*\.invoke</exclude>
+                        <exclude>^net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
+                        <rootCauseFirst>true</rootCauseFirst>
+                        <inlineHash>true</inlineHash>
+                    </throwableConverter>
+                </stackTrace>
+                <stackHash/>
+                <rootStackTraceElement/>
+                <throwableRootCauseClassName>
+                    <fieldName>error.type</fieldName>
+                </throwableRootCauseClassName>
+                <logstashMarkers/>
+                <mdc/>
+                <arguments/>
+            </providers>
+        </encoder>
+    </appender>
+
+    <appender name="FILE_STATISTICS" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.files.dir}/TaraLoginServiceStatistics.%d{yyyy-MM-dd,GMT}.log</file>
+        <!-- Support multiple-JVM writing to the same log file -->
+        <prudent>true</prudent>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.files.dir}/TaraLoginServiceStatistics.%d{yyyy-MM-dd,GMT}.log</fileNamePattern>
+            <maxHistory>${log.files.max.count}</maxHistory>
+        </rollingPolicy>
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+            <evaluator> <!-- defaults to type ch.qos.logback.classic.boolex.JaninoEventEvaluator -->
+                <expression>return logger.equals("ee.ria.taraauthserver.logging.StatisticsLogger");</expression>
+            </evaluator>
+            <onMismatch>DENY</onMismatch>
+            <onMatch>ACCEPT</onMatch>
+        </filter>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <fieldName>@timestamp</fieldName>
+                    <pattern>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</pattern>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+                <message/>
+                <stackTrace>
+                    <fieldName>error.stack_trace</fieldName>
+                    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                        <maxDepthPerThrowable>1</maxDepthPerThrowable>
+                        <maxLength>512</maxLength>
+                        <shortenedClassNameLength>20</shortenedClassNameLength>
+                        <exclude>^sun\.reflect\..*\.invoke</exclude>
+                        <exclude>^net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
+                        <rootCauseFirst>true</rootCauseFirst>
+                        <inlineHash>true</inlineHash>
+                    </throwableConverter>
+                </stackTrace>
+                <stackHash/>
+                <rootStackTraceElement/>
+                <throwableRootCauseClassName>
+                    <fieldName>error.type</fieldName>
+                </throwableRootCauseClassName>
+                <logstashMarkers/>
+                <mdc>
+                    <includeMdcKeyName>client.ip</includeMdcKeyName>
+                </mdc>
+                <arguments/>
+            </providers>
+        </encoder>
+    </appender>
+    <appender name="STASH" class="net.logstash.logback.appender.LogstashUdpSocketAppender">
+        <host></host>
+        <!-- port is optional (default value shown) -->
+        <port></port>
+        <!-- layout is required -->
+        <layout class="net.logstash.logback.layout.LogstashLayout" />
+    </appender>
+
+    <logger name="ee.sk.smartid.rest.SmartIdRestConnector" level="ERROR"/>
+    <logger name="ee.sk.mid.MidAuthenticationResponseValidator" level="ERROR"/>
+
+    <root level="INFO">
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="FILE_STATISTICS"/>
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="STASH" />
+    </root>
+</configuration>
