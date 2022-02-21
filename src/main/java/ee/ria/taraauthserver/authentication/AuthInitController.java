@@ -6,6 +6,7 @@ import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.RequestUtils;
@@ -13,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
@@ -32,10 +32,9 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
-import static net.logstash.logback.argument.StructuredArguments.value;
 import static net.logstash.logback.marker.Markers.append;
-import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 @Slf4j
@@ -44,6 +43,7 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 public class AuthInitController {
     public static final String AUTH_INIT_REQUEST_MAPPING = "/auth/init";
     private static final Predicate<String> SUPPORTED_LANGUAGES = java.util.regex.Pattern.compile("(?i)(et|en|ru)").asMatchPredicate();
+    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.HYDRA, this.getClass());
 
     @Autowired
     private AuthConfigurationProperties taraProperties;
@@ -52,7 +52,7 @@ public class AuthInitController {
     private EidasConfigurationProperties eidasConfigurationProperties;
 
     @Autowired
-    private RestTemplate hydraService;
+    private RestTemplate hydraRestTemplate;
 
     @Autowired
     private Validator validator;
@@ -90,10 +90,6 @@ public class AuthInitController {
         }
     }
 
-    private String getUiLanguage(String language, TaraSession taraSession) {
-        return isNotEmpty(language) ? language : getDefaultOrRequestedLocale(taraSession);
-    }
-
     private String getDefaultOrRequestedLocale(TaraSession taraSession) {
         return taraSession.getLoginRequestInfo().getOidcContext().getUiLocales()
                 .stream()
@@ -104,12 +100,16 @@ public class AuthInitController {
 
     private TaraSession.LoginRequestInfo fetchLoginRequestInfo(String loginChallenge) {
         String url = taraProperties.getHydraService().getLoginUrl() + "?login_challenge=" + loginChallenge;
-        log.info(append("url.full", url), "OIDC login request for challenge: {}", value("tara.session.login_request_info.challenge", loginChallenge));
         try {
-            ResponseEntity<TaraSession.LoginRequestInfo> response = hydraService.exchange(url, HttpMethod.GET, null, TaraSession.LoginRequestInfo.class);
-            log.info(append("tara.session.login_request_info", response.getBody()), "OIDC login response for challenge: {}, Status code: {}",
-                    loginChallenge,
-                    response.getStatusCodeValue());
+
+            requestLogger.logRequest(url, HttpMethod.GET);
+            var response = hydraRestTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    TaraSession.LoginRequestInfo.class);
+            requestLogger.logResponse(response);
+
             validateResponse(response.getBody(), loginChallenge);
             return response.getBody();
         } catch (HttpClientErrorException.NotFound e) {

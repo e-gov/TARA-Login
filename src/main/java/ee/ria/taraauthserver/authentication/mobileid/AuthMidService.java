@@ -6,7 +6,7 @@ import co.elastic.apm.api.Span;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.MidAuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.error.ErrorCode;
-import ee.ria.taraauthserver.logging.ClientRequestLoggingFilter;
+import ee.ria.taraauthserver.logging.JaxRsClientRequestLogger;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.sk.mid.MidAuthentication;
 import ee.sk.mid.MidAuthenticationHashToSign;
@@ -311,7 +311,7 @@ public class AuthMidService {
         ClientConfig clientConfig = new ClientConfig();
         clientConfig.property(ClientProperties.CONNECT_TIMEOUT, midAuthConfigurationProperties.getConnectionTimeoutMilliseconds());
         clientConfig.property(ClientProperties.READ_TIMEOUT, midAuthConfigurationProperties.getReadTimeoutMilliseconds());
-        clientConfig.register(new ClientRequestLoggingFilter("Mobile-ID"));
+        clientConfig.register(new JaxRsClientRequestLogger("Mobile-ID"));
         return clientConfig;
     }
 

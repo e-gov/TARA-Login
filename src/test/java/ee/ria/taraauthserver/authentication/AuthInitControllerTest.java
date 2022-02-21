@@ -1,7 +1,6 @@
 package ee.ria.taraauthserver.authentication;
 
 import ee.ria.taraauthserver.BaseTest;
-import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
@@ -23,6 +22,8 @@ import org.springframework.test.annotation.DirtiesContext;
 import java.net.URL;
 import java.util.List;
 
+import static ch.qos.logback.classic.Level.ERROR;
+import static ch.qos.logback.classic.Level.INFO;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
@@ -48,9 +49,6 @@ class AuthInitControllerTest extends BaseTest {
     @Autowired
     private EidasConfigurationProperties eidasConfigurationProperties;
 
-    @Autowired
-    private AlertsConfigurationProperties alertsConfigurationProperties;
-
     @Test
     @Tag(value = "AUTH_INIT_ENDPOINT")
     void authInit_loginChallenge_EmptyValue() {
@@ -66,6 +64,8 @@ class AuthInitControllerTest extends BaseTest {
                 .body("incident_nr", notNullValue())
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -84,6 +84,7 @@ class AuthInitControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: Required request parameter 'login_challenge' for method parameter type String is not present");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -103,6 +104,7 @@ class AuthInitControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: authInit.loginChallenge: only characters and numbers allowed");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -122,6 +124,7 @@ class AuthInitControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: authInit.loginChallenge: size must be between 0 and 50");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -140,6 +143,8 @@ class AuthInitControllerTest extends BaseTest {
                 .body("incident_nr", notNullValue())
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -158,13 +163,14 @@ class AuthInitControllerTest extends BaseTest {
                 .body("incident_nr", notNullValue())
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
+
+        assertStatisticsIsNotLogged();
     }
 
     @SneakyThrows
     @Test
     @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
     void authInit_Ok() {
-
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -196,12 +202,13 @@ class AuthInitControllerTest extends BaseTest {
         assertEquals("testRelyingPartyName", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getRelyingPartyName());
         assertEquals("testRelyingPartyId123", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getRelyingPartyUuid());
         assertEquals(false, taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getShouldUseAdditionalVerificationCodeCheck());
-
-        assertInfoIsLogged("New authentication session");
-        assertInfoIsLogged("OIDC login request for challenge: " + TEST_LOGIN_CHALLENGE);
-        assertInfoIsLogged("OIDC login response for challenge: abcdefg098AAdsCC, Status code: 200");
-        assertInfoIsLogged("Tara session state change: NOT_SET -> INIT_AUTH_PROCESS");
-        assertInfoIsLogged("Saving session with state: INIT_AUTH_PROCESS");
+        assertInfoIsLogged("New authentication session",
+                "HYDRA request",
+                "HYDRA response: 200",
+                "State: NOT_SET -> INIT_AUTH_PROCESS");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"openIdDemo\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"},\"smartid_settings\":{\"relying_party_UUID\":\"testRelyingPartyId123\",\"relying_party_name\":\"testRelyingPartyName\",\"should_use_additional_verification_code_check\":false}}},\"scope\":\"idcard mid\"},\"client_id\":\"openIdDemo\",\"institution\":{\"empty\":false,\"present\":true},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"low\"],\"ui_locales\":[]},\"oidc_state\":\"c46b216b-e73d-4cd2-907b-6c809b44cec1\",\"redirect_uri\":\"https://oidc-client-mock:8451/oauth/response\",\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"idcard\",\"mid\"],\"user_cancel_uri\":\"https://oidc-client-mock:8451/oauth/response?error=user_cancel&error_description=User+canceled+the+authentication+process.&state=c46b216b-e73d-4cd2-907b-6c809b44cec1\"}");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -210,8 +217,7 @@ class AuthInitControllerTest extends BaseTest {
     void authInit_configuredTimeoutFails() {
         AuthConfigurationProperties.HydraConfigurationProperties test = new AuthConfigurationProperties.HydraConfigurationProperties();
         test.setRequestTimeoutInSeconds(1);
-        authConfigurationProperties.setHydraService(test);
-
+        authConfigurationProperties.setHydraService(test); // TODO AUT-857
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -225,7 +231,7 @@ class AuthInitControllerTest extends BaseTest {
                 .get("/auth/init")
                 .then()
                 .assertThat()
-                .statusCode(500)
+                .statusCode(502)
                 .body("incident_nr", notNullValue())
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("reportable", equalTo(true));
@@ -283,7 +289,6 @@ class AuthInitControllerTest extends BaseTest {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response.json")));
-
         String cookie = given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
                 .when()
@@ -303,6 +308,7 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200)
                 .cookie("SESSION", not(equalTo(cookie)));
+
     }
 
     @Test
@@ -362,6 +368,8 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(200)
                 .header(HttpHeaders.CONTENT_LANGUAGE, "en")
                 .body(containsString("Insert your ID-card into the card reader and click \"Continue\""));
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -383,6 +391,8 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(200)
                 .header(HttpHeaders.CONTENT_LANGUAGE, "et")
                 .body(containsString("Sisestage oma isikukood ja telefoninumber ning vajutage \"Jätka\""));
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -393,8 +403,7 @@ class AuthInitControllerTest extends BaseTest {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response-ok_ui_locales-not-set.json")));
-
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setEnabled(false);
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setEnabled(false); // TODO AUT-857
 
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
@@ -407,6 +416,8 @@ class AuthInitControllerTest extends BaseTest {
                         ";charset=UTF-8")
                 .body(not(containsString("idCardForm")))
                 .body(containsString("mobileIdForm"));
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -429,6 +440,8 @@ class AuthInitControllerTest extends BaseTest {
                         ";charset=UTF-8")
                 .body((containsString("mobileIdForm")))
                 .body((containsString("idCardForm")));
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -439,8 +452,7 @@ class AuthInitControllerTest extends BaseTest {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response-ok_scope-unknown.json")));
-
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.HIGH);
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.HIGH); // TODO AUT-857
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.HIGH);
 
         given()
@@ -457,6 +469,7 @@ class AuthInitControllerTest extends BaseTest {
 
         assertWarningIsLogged("Requested scope value 'ldap' is not allowed, entry ignored!");
         assertWarningIsLogged("Unsupported scope value 'banklink', entry ignored!");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -467,8 +480,7 @@ class AuthInitControllerTest extends BaseTest {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response.json")));
-
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.HIGH);
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.HIGH); // TODO AUT-857
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.LOW);
 
         given()
@@ -482,6 +494,8 @@ class AuthInitControllerTest extends BaseTest {
                         ";charset=UTF-8")
                 .body((containsString("idCardForm")))
                 .body(not(containsString("mobileIdForm")));
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -492,8 +506,7 @@ class AuthInitControllerTest extends BaseTest {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response.json")));
-
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.HIGH);
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.HIGH); // TODO AUT-857
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(null);
 
         given()
@@ -506,7 +519,10 @@ class AuthInitControllerTest extends BaseTest {
                 .body("reportable", equalTo(true));
 
         assertErrorIsLogged("Server encountered an unexpected error: Level of assurance must be configured for authentication method: mobile-id. Please check the application configuration.");
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.LOW);
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"openIdDemo\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"}}},\"scope\":\"mid idcard eidas\"},\"client_id\":\"openIdDemo\",\"institution\":{\"empty\":false,\"present\":true},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"high\"],\"ui_locales\":[\"zu\",\"fi\",\"Ru\",\"ET\",\"en\"]},\"oidc_state\":\"c46b216b-e73d-4cd2-907b-6c809b44cec1\",\"redirect_uri\":\"https://oidc-client-mock:8451/oauth/response\",\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"openid\",\"mid\",\"idcard\",\"eidas\"],\"user_cancel_uri\":\"https://oidc-client-mock:8451/oauth/response?error=user_cancel&error_description=User+canceled+the+authentication+process.&state=c46b216b-e73d-4cd2-907b-6c809b44cec1\"}");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=70006317, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.LOW);  // TODO AUT-857
     }
 
     @Test
@@ -517,8 +533,7 @@ class AuthInitControllerTest extends BaseTest {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response-ok_acr-not-set.json")));
-
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.LOW);
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.LOW); // TODO AUT-857
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.HIGH);
 
         given()
@@ -533,6 +548,7 @@ class AuthInitControllerTest extends BaseTest {
                 .body(containsString("idCardForm"))
                 .body(containsString("mobileIdForm"));
 
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -544,8 +560,7 @@ class AuthInitControllerTest extends BaseTest {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response-ok_scope-unknown.json")));
-
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.LOW);
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.LOW);  // TODO AUT-857
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.LOW);
 
         given()
@@ -561,6 +576,9 @@ class AuthInitControllerTest extends BaseTest {
                 .body("incident_nr", notNullValue())
                 .body("reportable", equalTo(true));
 
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"openIdDemo\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"}}},\"scope\":\"idcard mid banklink\"},\"client_id\":\"openIdDemo\",\"institution\":{\"empty\":false,\"present\":true},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"high\"],\"ui_locales\":[]},\"oidc_state\":\"c46b216b-e73d-4cd2-907b-6c809b44cec1\",\"redirect_uri\":\"https://oidc-client-mock:8451/oauth/response\",\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"idcard\",\"ldap\",\"banklink\"],\"user_cancel_uri\":\"https://oidc-client-mock:8451/oauth/response?error=user_cancel&error_description=User+canceled+the+authentication+process.&state=c46b216b-e73d-4cd2-907b-6c809b44cec1\"}");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=70006317, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=NO_VALID_AUTHMETHODS_AVAILABLE)");
     }
 
     @Test
@@ -584,6 +602,9 @@ class AuthInitControllerTest extends BaseTest {
                 .body("reportable", equalTo(true));
 
         assertErrorIsLogged("Server encountered an unexpected error: Unsupported acr value requested by client: 'wrongvalue'");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"openIdDemo\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"}}},\"scope\":\"idcard mid\"},\"client_id\":\"openIdDemo\",\"institution\":{\"empty\":false,\"present\":true},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"wrongvalue\"],\"ui_locales\":[]},\"oidc_state\":\"c46b216b-e73d-4cd2-907b-6c809b44cec1\",\"redirect_uri\":\"https://oidc-client-mock:8451/oauth/response\",\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"idcard\",\"mid\"],\"user_cancel_uri\":\"https://oidc-client-mock:8451/oauth/response?error=user_cancel&error_description=User+canceled+the+authentication+process.&state=c46b216b-e73d-4cd2-907b-6c809b44cec1\"}");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=70006317, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
@@ -605,6 +626,8 @@ class AuthInitControllerTest extends BaseTest {
                 .body("incident_nr", notNullValue())
                 .body("message", equalTo("Vigane päring. Päringu volituskood ei ole korrektne."))
                 .body("reportable", equalTo(false));
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -622,10 +645,12 @@ class AuthInitControllerTest extends BaseTest {
                 .get("/auth/init")
                 .then()
                 .assertThat()
-                .statusCode(500)
+                .statusCode(502)
                 .body("incident_nr", notNullValue())
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("reportable", equalTo(true));
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -647,6 +672,10 @@ class AuthInitControllerTest extends BaseTest {
                 .body("incident_nr", notNullValue())
                 .body("message", equalTo("Päringus puudub scope parameeter."))
                 .body("reportable", equalTo(true));
+
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"openIdDemo\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"}}},\"scope\":\"mid idcard\"},\"client_id\":\"openIdDemo\",\"institution\":{\"empty\":false,\"present\":true},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"high\"],\"ui_locales\":[\"zu\",\"fi\",\"Et\",\"RU\",\"en\"]},\"oidc_state\":\"c46b216b-e73d-4cd2-907b-6c809b44cec1\",\"redirect_uri\":\"https://oidc-client-mock:8451/oauth/response\",\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[],\"user_cancel_uri\":\"https://oidc-client-mock:8451/oauth/response?error=user_cancel&error_description=User+canceled+the+authentication+process.&state=c46b216b-e73d-4cd2-907b-6c809b44cec1\"}");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=70006317, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=MISSING_SCOPE)");
     }
 
     @Test
@@ -670,6 +699,7 @@ class AuthInitControllerTest extends BaseTest {
                 .body("reportable", equalTo(true));
 
         assertErrorIsLogged("Server encountered an unexpected error: Invalid hydra response: client.metaData.oidcClient.institution.sector: invalid sector value, accepted values are: private, public, client.scope: must not be blank");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -697,6 +727,7 @@ class AuthInitControllerTest extends BaseTest {
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -724,5 +755,6 @@ class AuthInitControllerTest extends BaseTest {
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
+        assertStatisticsIsNotLogged();
     }
 }

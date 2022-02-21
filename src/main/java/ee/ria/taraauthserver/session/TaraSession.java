@@ -62,7 +62,7 @@ public class TaraSession implements Serializable {
 
     public void setState(TaraAuthenticationState newState) {
         if (state == null || !state.equals(newState)) {
-            log.info("Tara session state change: {} -> {}",
+            log.info("State: {} -> {}",
                     value("tara.session.old_state", state != null ? state.name() : "NOT_SET"),
                     value("tara.session.state", newState.name()));
         }

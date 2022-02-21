@@ -1,11 +1,11 @@
 package ee.ria.taraauthserver.authentication.consent;
 
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
-import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
@@ -13,7 +13,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
@@ -26,24 +25,22 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.util.Map;
 
+import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_CONSENT_PROCESS;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
-import static net.logstash.logback.argument.StructuredArguments.value;
-import static net.logstash.logback.marker.Markers.append;
 
-@Slf4j
 @Validated
 @Controller
 public class AuthConsentController {
-
     private static final String REDIRECT_URL = "redirect_to";
+    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.HYDRA, this.getClass());
 
     @Autowired
     private AuthConfigurationProperties authConfigurationProperties;
 
     @Autowired
-    private RestTemplate hydraService;
+    private RestTemplate hydraRestTemplate;
 
     @Autowired
     private StatisticsLogger statisticsLogger;
@@ -94,10 +91,15 @@ public class AuthConsentController {
     private String acceptConsent(String consentChallenge, TaraSession taraSession) {
         String url = authConfigurationProperties.getHydraService().getAcceptConsentUrl() + "?consent_challenge=" + consentChallenge;
         AcceptConsentRequest acceptConsentRequest = AcceptConsentRequest.buildWithTaraSession(taraSession);
-        log.info(append("tara.session.accept_consent_request", acceptConsentRequest).and(append("url.full", url)),
-                "OIDC accept consent request for challenge: {}", value("tara.session.consent_challenge", consentChallenge));
-        ResponseEntity<Map<String, String>> response = hydraService.exchange(url, HttpMethod.PUT, new HttpEntity<>(acceptConsentRequest), new ParameterizedTypeReference<>() {
-        });
+
+        requestLogger.logRequest(url, HttpMethod.PUT, acceptConsentRequest);
+        var response = hydraRestTemplate.exchange(
+                url,
+                HttpMethod.PUT,
+                new HttpEntity<>(acceptConsentRequest),
+                new ParameterizedTypeReference<Map<String, String>>() {
+                });
+        requestLogger.logResponse(response);
 
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && response.getBody().get(REDIRECT_URL) != null) {
             statisticsLogger.log(taraSession);

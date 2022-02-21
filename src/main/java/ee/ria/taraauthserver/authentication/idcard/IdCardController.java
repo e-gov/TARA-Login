@@ -114,7 +114,7 @@ public class IdCardController {
     }
 
     @NotNull
-    private ResponseEntity<Map<String, Object>> createErrorResponse(TaraSession taraSession, ErrorCode errorCode, String logMessage, HttpStatus httpStatus) {
+    private ResponseEntity<Map<String, Object>> createErrorResponse(TaraSession taraSession, ErrorCode errorCode, String logMessage, HttpStatus httpStatus) { // TODO AUT-855
         log.warn(append("error.code", errorCode.name()), "OCSP validation failed: {}", value("error.message", logMessage));
         taraSession.setState(AUTHENTICATION_FAILED);
         taraSession.getAuthenticationResult().setErrorCode(errorCode);

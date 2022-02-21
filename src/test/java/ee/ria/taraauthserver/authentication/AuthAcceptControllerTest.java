@@ -1,12 +1,11 @@
 package ee.ria.taraauthserver.authentication;
 
 import ee.ria.taraauthserver.BaseTest;
-import ee.ria.taraauthserver.logging.StatisticsLogger;
+import ee.ria.taraauthserver.logging.RestTemplateErrorLogger;
 import ee.ria.taraauthserver.session.MockSessionFilter;
 import ee.ria.taraauthserver.session.MockTaraSessionBuilder;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import lombok.extern.slf4j.Slf4j;
-import net.logstash.logback.marker.ObjectFieldsAppendingMarker;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -16,14 +15,16 @@ import org.springframework.http.HttpHeaders;
 
 import static ch.qos.logback.classic.Level.ERROR;
 import static ch.qos.logback.classic.Level.INFO;
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static ee.ria.taraauthserver.session.MockSessionFilter.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.put;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.MOCK_LOGIN_CHALLENGE;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_COMPLETED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
 import static io.restassured.RestAssured.given;
 import static java.util.List.of;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
 public class AuthAcceptControllerTest extends BaseTest {
@@ -32,7 +33,7 @@ public class AuthAcceptControllerTest extends BaseTest {
     @Tag("CSRF_PROTCTION")
     void authAccept_NoCsrf() {
         given()
-                .filter(withoutCsrf().sessionRepository(sessionRepository).build())
+                .filter(MockSessionFilter.withoutCsrf().sessionRepository(sessionRepository).build())
                 .when()
                 .post("/auth/accept")
                 .then()
@@ -43,19 +44,14 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("Access denied: Invalid CSRF token.");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
     @Tag(value = "ACCEPT_LOGIN")
     void authAccept_missingSession() {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
-
         given()
-                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
+                .filter(MockSessionFilter.withoutTaraSession().sessionRepository(sessionRepository).build())
                 .when()
                 .post("/auth/accept")
                 .then()
@@ -63,6 +59,8 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("reportable", equalTo(false));
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -70,7 +68,7 @@ public class AuthAcceptControllerTest extends BaseTest {
     @Tag(value = "LOG_EVENT_UNIQUE_STATUS")
     void authAccept_incorrectSessionState() {
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(INIT_AUTH_PROCESS)
                         .build())
@@ -83,10 +81,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [AUTHENTICATION_SUCCESS, NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED]");
-        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, ERROR, "Authentication result: AUTHENTICATION_FAILED");
-        assertEquals("StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, " +
-                        "ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=SESSION_STATE_INVALID)",
-                statisticsMarker.toStringSelf());
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=SESSION_STATE_INVALID)");
     }
 
     @Test
@@ -96,11 +91,10 @@ public class AuthAcceptControllerTest extends BaseTest {
         wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(400)
-                        .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")));
 
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(NATURAL_PERSON_AUTHENTICATION_COMPLETED)
                         .authenticationResult(MockTaraSessionBuilder.buildMockCredential())
@@ -113,11 +107,10 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("reportable", equalTo(true));
 
-        assertErrorIsLogged("HTTP client exception");
-        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, ERROR, "Authentication result: AUTHENTICATION_FAILED");
-        assertEquals("StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, " +
-                        "ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)",
-                statisticsMarker.toStringSelf());
+        assertErrorIsLogged("HYDRA response: 400");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertMessageWithMarkerIsLoggedOnce(RestTemplateErrorLogger.class, ERROR, "HYDRA response: 400", "http.response.status_code=400");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
@@ -131,7 +124,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                         .withBodyFile("mock_responses/incorrectMockLoginAcceptResponse.json")));
 
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(NATURAL_PERSON_AUTHENTICATION_COMPLETED)
                         .authenticationResult(MockTaraSessionBuilder.buildMockCredential())
@@ -145,10 +138,9 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .body("reportable", equalTo(true));
 
         assertErrorIsLogged("Server encountered an unexpected error: Invalid OIDC server response. Redirect URL missing from response.");
-        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, ERROR, "Authentication result: AUTHENTICATION_FAILED");
-        assertEquals("StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, " +
-                        "ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)",
-                statisticsMarker.toStringSelf());
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "HYDRA response: 200", "http.response.status_code=200, http.response.body.content={}");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
@@ -164,7 +156,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                         .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
 
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(NATURAL_PERSON_AUTHENTICATION_COMPLETED)
                         .authenticationResult(MockTaraSessionBuilder.buildMockCredential())
@@ -176,10 +168,9 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .statusCode(302)
                 .header("Location", Matchers.endsWith("some/test/url"));
 
-        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, INFO, "Authentication result: AUTHENTICATION_SUCCESS");
-        assertEquals("StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, " +
-                        "ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null)",
-                statisticsMarker.toStringSelf());
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null)");
     }
 
     @Test
@@ -193,8 +184,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                         .withHeader(HttpHeaders.CONNECTION, "close")
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
-
-        MockSessionFilter sessionFilter = withTaraSession()
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationState(NATURAL_PERSON_AUTHENTICATION_COMPLETED)
                 .authenticationResult(MockTaraSessionBuilder.buildMockCredential())
@@ -208,10 +198,11 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(302)
                 .header("Location", Matchers.endsWith("some/test/url"));
-        assertInfoIsLogged("OIDC login accept request for challenge: abcdefg098AAdsCC",
-                "Tara session state change: NATURAL_PERSON_AUTHENTICATION_COMPLETED -> AUTHENTICATION_SUCCESS");
 
-        assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, INFO, "Authentication result: AUTHENTICATION_SUCCESS");
+        assertInfoIsLogged("State: NATURAL_PERSON_AUTHENTICATION_COMPLETED -> AUTHENTICATION_SUCCESS");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null)");
 
         resetMockLogAppender();
         given()
@@ -223,21 +214,16 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .statusCode(302)
                 .header("Location", Matchers.endsWith("some/test/url"));
 
-        assertMessageIsNotLogged(StatisticsLogger.class, "Authentication result: AUTHENTICATION_SUCCESS");
+        assertMessageIsNotLogged(AuthAcceptController.class, "HYDRA request");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
     @Tag(value = "AUTH_REDIRECT_TO_LEGALPERSON_INIT")
     @Tag(value = "AUTH_ACCEPT_LOGIN_ENDPOINT")
     void authAccept_LegalPersonAuthenticationRequest_Redirected() {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
-
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(NATURAL_PERSON_AUTHENTICATION_COMPLETED)
                         .requestedScopes(of("legalperson"))
@@ -249,6 +235,9 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(302)
                 .header("Location", Matchers.endsWith("/auth/legalperson/init"));
+
+        assertMessageIsNotLogged(AuthAcceptController.class, "HYDRA request");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -262,7 +251,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                         .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
 
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(LEGAL_PERSON_AUTHENTICATION_COMPLETED)
                         .requestedScopes(of("legalperson"))
@@ -274,6 +263,10 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(302)
                 .header("Location", Matchers.endsWith("some/test/url"));
+
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null)");
     }
 
     @Test
@@ -288,7 +281,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                         .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
 
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(LEGAL_PERSON_AUTHENTICATION_COMPLETED)
                         .requestedScopes(of("legalperson"))
@@ -298,14 +291,12 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .post("/auth/accept")
                 .then()
                 .assertThat()
-                .statusCode(500)
+                .statusCode(502)
                 .body("reportable", equalTo(true));
 
-        assertErrorIsLogged("Server encountered an unexpected error: I/O error on PUT request for \"https://localhost:9877/oauth2/auth/requests/login/accept\": Read timed out; nested exception is java.net.SocketTimeoutException: Read timed out");
-        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, ERROR, "Authentication result: AUTHENTICATION_FAILED");
-        assertEquals("StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, " +
-                        "ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)",
-                statisticsMarker.toStringSelf());
+        assertErrorIsLogged("Service not available: I/O error on PUT request for \"https://localhost:9877/oauth2/auth/requests/login/accept\": Read timed out; nested exception is java.net.SocketTimeoutException: Read timed out");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @ParameterizedTest
@@ -317,7 +308,7 @@ public class AuthAcceptControllerTest extends BaseTest {
     @Tag(value = "AUTH_ACCEPT_LOGIN_ENDPOINT")
     void authAccept_sessionStatusIsCanceled_Redirected(TaraAuthenticationState state) {
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationState(state)
                         .requestedScopes(of("legalperson"))
@@ -328,6 +319,9 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(302)
-                .header("Location", Matchers.endsWith("http://localhost:"+port+"/auth/init?login_challenge=abcdefg098AAdsCC"));
+                .header("Location", Matchers.endsWith("http://localhost:" + port + "/auth/init?login_challenge=abcdefg098AAdsCC"));
+
+        assertMessageIsNotLogged(AuthAcceptController.class, "HYDRA request");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_CANCELED, errorCode=null)");
     }
 }

@@ -1,7 +1,7 @@
 package ee.ria.taraauthserver.config;
 
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
-import ee.ria.taraauthserver.logging.ClientRequestLoggingFilter;
+import ee.ria.taraauthserver.logging.JaxRsClientRequestLogger;
 import ee.sk.smartid.AuthenticationResponseValidator;
 import ee.sk.smartid.SmartIdClient;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +52,7 @@ public class SmartIdConfiguration {
         ClientConfig clientConfig = new ClientConfig();
         clientConfig.property(ClientProperties.CONNECT_TIMEOUT, smartIdConfigurationProperties.getConnectionTimeoutMilliseconds());
         clientConfig.property(ClientProperties.READ_TIMEOUT, smartIdConfigurationProperties.getReadTimeoutMilliseconds());
-        clientConfig.register(new ClientRequestLoggingFilter("Smart-ID"));
+        clientConfig.register(new JaxRsClientRequestLogger("Smart-ID"));
         return clientConfig;
     }
 

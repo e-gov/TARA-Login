@@ -9,13 +9,13 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest;
+import ee.ria.taraauthserver.logging.StatisticsLogger;
 import io.restassured.RestAssured;
 import io.restassured.builder.ResponseSpecBuilder;
 import io.restassured.config.SessionConfig;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import lombok.extern.slf4j.Slf4j;
-import net.logstash.logback.marker.ObjectFieldsAppendingMarker;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.AfterEach;
@@ -34,8 +34,14 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static ch.qos.logback.classic.Level.*;
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static ch.qos.logback.classic.Level.ERROR;
+import static ch.qos.logback.classic.Level.INFO;
+import static ch.qos.logback.classic.Level.WARN;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.any;
+import static com.github.tomakehurst.wiremock.client.WireMock.matchingJsonPath;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.DEFAULT_CONTENT_SECURITY_POLICY;
 import static io.restassured.RestAssured.config;
 import static io.restassured.config.RedirectConfig.redirectConfig;
@@ -44,7 +50,8 @@ import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInRelativeOrder;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.hamcrest.Matchers.startsWith;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -170,41 +177,41 @@ public abstract class BaseTest {
         ((Logger) getLogger(ROOT_LOGGER_NAME)).addAppender(mockAppender);
     }
 
-    protected List<ILoggingEvent> assertInfoIsLogged(String... messagesInRelativeOrder) {
-        return assertMessageIsLogged(null, INFO, messagesInRelativeOrder);
+    protected List<ILoggingEvent> assertInfoIsLogged(String... messagePrefixesInRelativeOrder) {
+        return assertMessageIsLogged(null, INFO, messagePrefixesInRelativeOrder);
     }
 
-    protected List<ILoggingEvent> assertWarningIsLogged(String... messagesInRelativeOrder) {
-        return assertMessageIsLogged(null, WARN, messagesInRelativeOrder);
+    protected List<ILoggingEvent> assertWarningIsLogged(String... messagePrefixesInRelativeOrder) {
+        return assertMessageIsLogged(null, WARN, messagePrefixesInRelativeOrder);
     }
 
-    protected List<ILoggingEvent> assertErrorIsLogged(String... messagesInRelativeOrder) {
-        return assertMessageIsLogged(null, ERROR, messagesInRelativeOrder);
+    protected List<ILoggingEvent> assertErrorIsLogged(String... messagePrefixesInRelativeOrder) {
+        return assertMessageIsLogged(null, ERROR, messagePrefixesInRelativeOrder);
     }
 
-    protected List<ILoggingEvent> assertInfoIsLogged(Class<?> loggerClass, String... messagesInRelativeOrder) {
-        return assertMessageIsLogged(loggerClass, INFO, messagesInRelativeOrder);
+    protected List<ILoggingEvent> assertInfoIsLogged(Class<?> loggerClass, String... messagePrefixesInRelativeOrder) {
+        return assertMessageIsLogged(loggerClass, INFO, messagePrefixesInRelativeOrder);
     }
 
-    protected List<ILoggingEvent> assertWarningIsLogged(Class<?> loggerClass, String... messagesInRelativeOrder) {
-        return assertMessageIsLogged(loggerClass, WARN, messagesInRelativeOrder);
+    protected List<ILoggingEvent> assertWarningIsLogged(Class<?> loggerClass, String... messagePrefixesInRelativeOrder) {
+        return assertMessageIsLogged(loggerClass, WARN, messagePrefixesInRelativeOrder);
     }
 
-    protected List<ILoggingEvent> assertErrorIsLogged(Class<?> loggerClass, String... messagesInRelativeOrder) {
-        return assertMessageIsLogged(loggerClass, ERROR, messagesInRelativeOrder);
+    protected List<ILoggingEvent> assertErrorIsLogged(Class<?> loggerClass, String... messagePrefixesInRelativeOrder) {
+        return assertMessageIsLogged(loggerClass, ERROR, messagePrefixesInRelativeOrder);
     }
 
-    protected List<ILoggingEvent> assertMessageIsLogged(Predicate<ILoggingEvent> additionalFilter, String... messagesInRelativeOrder) {
-        return assertMessageIsLogged(null, null, additionalFilter, messagesInRelativeOrder);
+    protected List<ILoggingEvent> assertMessageIsLogged(Predicate<ILoggingEvent> additionalFilter, String... messagePrefixesInRelativeOrder) {
+        return assertMessageIsLogged(null, null, additionalFilter, messagePrefixesInRelativeOrder);
     }
 
-    private List<ILoggingEvent> assertMessageIsLogged(Class<?> loggerClass, Level loggingLevel, String... messagesInRelativeOrder) {
-        return assertMessageIsLogged(loggerClass, loggingLevel, null, messagesInRelativeOrder);
+    private List<ILoggingEvent> assertMessageIsLogged(Class<?> loggerClass, Level loggingLevel, String... messagePrefixesInRelativeOrder) {
+        return assertMessageIsLogged(loggerClass, loggingLevel, null, messagePrefixesInRelativeOrder);
     }
 
     @SuppressWarnings("unchecked")
-    private List<ILoggingEvent> assertMessageIsLogged(Class<?> loggerClass, Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String... messagesInRelativeOrder) {
-        List<String> expectedMessages = of(messagesInRelativeOrder);
+    private List<ILoggingEvent> assertMessageIsLogged(Class<?> loggerClass, Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String... messagePrefixesInRelativeOrder) {
+        List<String> expectedMessages = of(messagePrefixesInRelativeOrder);
         Stream<ILoggingEvent> eventStream = mockAppender.list.stream()
                 .filter(e -> loggingLevel == null || e.getLevel() == loggingLevel)
                 .filter(e -> loggerClass == null || e.getLoggerName().equals(loggerClass.getCanonicalName()))
@@ -214,30 +221,41 @@ public abstract class BaseTest {
         }
         List<ILoggingEvent> events = eventStream.collect(toList());
         List<String> messages = events.stream().map(ILoggingEvent::getFormattedMessage).collect(toList());
-        assertThat("Expected log messages not found in output.\n\tExpected log messages: " + of(messagesInRelativeOrder) + ",\n\tActual log messages: " + messages,
+        assertThat("Expected log messages not found in output.\n\tExpected log messages: " + of(messagePrefixesInRelativeOrder) + ",\n\tActual log messages: " + messages,
                 messages, containsInRelativeOrder(expectedMessages.stream().map(CoreMatchers::startsWith).toArray(Matcher[]::new)));
         return events;
     }
 
-    protected void assertMessageIsNotLogged(Class<?> loggerClass, String message) {
+    protected void assertMessageIsNotLogged(Class<?> loggerClass, String exactMessage) {
         String loggedMessage = mockAppender.list.stream()
                 .filter(e -> (loggerClass == null || e.getLoggerName().equals(loggerClass.getCanonicalName())))
                 .map(ILoggingEvent::getFormattedMessage)
-                .filter(msg -> msg.equals(message))
+                .filter(msg -> msg.equals(exactMessage))
                 .findFirst()
                 .orElse(null);
         assertNull(loggedMessage);
     }
 
-    protected ObjectFieldsAppendingMarker assertMessageWithMarkerIsLoggedOnce(Class<?> loggerClass, Level loggingLevel, String message) {
-        List<ObjectFieldsAppendingMarker> markers = mockAppender.list.stream()
-                .filter(e -> e.getLevel() == loggingLevel &&
-                        (loggerClass == null || e.getLoggerName().equals(loggerClass.getCanonicalName())) &&
-                        e.getFormattedMessage().equals(message))
-                .map(e -> (ObjectFieldsAppendingMarker) e.getMarker())
+    protected void assertMessageWithMarkerIsLoggedOnce(Class<?> loggerClass, Level loggingLevel, String exactMessage, String markerValuePrefix) {
+        List<ILoggingEvent> loggingEvents = mockAppender.list.stream()
+                .filter(e -> (loggerClass == null || e.getLoggerName().equals(loggerClass.getCanonicalName())) &&
+                        e.getMarker() != null &&
+                        e.getFormattedMessage().equals(exactMessage))
                 .collect(toList());
-        assertNotNull(markers);
-        assertThat(markers, hasSize(1));
-        return markers.get(0);
+        assertThat(loggingEvents, hasSize(1));
+        ILoggingEvent loggingEvent = loggingEvents.get(0);
+        assertEquals(loggingLevel, loggingEvent.getLevel());
+        assertThat(loggingEvent.getMarker().toString(), startsWith(markerValuePrefix));
+    }
+
+    protected void assertStatisticsIsLoggedOnce(Level loggingLevel, String exactMessage, String markerValuePrefix) {
+        assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, loggingLevel, exactMessage, markerValuePrefix);
+    }
+
+    protected void assertStatisticsIsNotLogged() {
+        List<ILoggingEvent> loggingEvents = mockAppender.list.stream()
+                .filter(e -> e.getLoggerName().equals(StatisticsLogger.class.getCanonicalName()))
+                .collect(toList());
+        assertThat("No statistics should be logged", loggingEvents, hasSize(0));
     }
 }

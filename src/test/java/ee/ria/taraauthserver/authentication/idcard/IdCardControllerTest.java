@@ -43,7 +43,11 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static ch.qos.logback.classic.Level.ERROR;
+import static ch.qos.logback.classic.Level.INFO;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static ee.ria.taraauthserver.authentication.idcard.IdCardController.HEADER_SSL_CLIENT_CERT;
 import static ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest.generateOcspResponderCertificate;
 import static ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest.generateUserCertificate;
@@ -52,9 +56,9 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.matchesPattern;
-import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 class IdCardControllerTest extends BaseTest {
@@ -84,6 +88,7 @@ class IdCardControllerTest extends BaseTest {
     @Tag(value = "ESTEID_AUTH_ENDPOINT")
     void idAuth_certificate_missing() {
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+
         given()
                 .when()
                 .sessionId("SESSION", sessionId)
@@ -96,6 +101,7 @@ class IdCardControllerTest extends BaseTest {
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertErrorIsLogged("User exception: XCLIENTCERTIFICATE can not be null");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=null, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
@@ -103,6 +109,7 @@ class IdCardControllerTest extends BaseTest {
     @Tag(value = "ESTEID_AUTH_ENDPOINT")
     void idAuth_certificate_missing_html_response() {
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+
         Response response = given()
                 .when()
                 .header("Accept", "text/html")
@@ -118,8 +125,8 @@ class IdCardControllerTest extends BaseTest {
         assertTrue(response.body().htmlPath().getString("**.find { it.@role == 'alert'}.p.text()").contains("Intsidendi number:"));
         assertTrue(response.body().htmlPath().getString("**.find { it.@role == 'alert'}.p.a.@href").contains("mailto:"));
         assertTrue(response.body().htmlPath().getString("**.find { it.@role == 'alert'}.p.text()").contains("Palun saatke e-kiri aadressile"));
-
         assertErrorIsLogged("User exception: XCLIENTCERTIFICATE can not be null");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=null, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
@@ -127,6 +134,7 @@ class IdCardControllerTest extends BaseTest {
     @Tag(value = "ESTEID_AUTH_ENDPOINT")
     void idAuth_certificate_incorrect() {
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+
         given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, "testing")
@@ -140,6 +148,7 @@ class IdCardControllerTest extends BaseTest {
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertErrorIsLogged("Server encountered an unexpected error: Failed to decode certificate");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=null, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
@@ -147,6 +156,7 @@ class IdCardControllerTest extends BaseTest {
     @Tag(value = "ESTEID_AUTH_ENDPOINT")
     void idAuth_certificate_empty_string() {
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+
         given()
                 .when()
                 .sessionId("SESSION", sessionId)
@@ -160,6 +170,7 @@ class IdCardControllerTest extends BaseTest {
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertErrorIsLogged("User exception: XCLIENTCERTIFICATE can not be an empty string");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=null, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
@@ -175,12 +186,15 @@ class IdCardControllerTest extends BaseTest {
                 .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
     @Tag(value = "ESTEID_INIT")
     void idAuth_session_incorrect_authentication_state() {
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_MID);
+
         given()
                 .when()
                 .sessionId("SESSION", sessionId)
@@ -194,6 +208,7 @@ class IdCardControllerTest extends BaseTest {
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [INIT_AUTH_PROCESS]");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=null, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=SESSION_STATE_INVALID)");
     }
 
     @Test
@@ -205,7 +220,6 @@ class IdCardControllerTest extends BaseTest {
         KeyPair certKeyPair = rsa.generateKeyPair();
         X509Certificate ocspResponderCert = generateOcspResponderCertificate("CN=MOCK OCSP RESPONDER, C=EE", certKeyPair, responderKeys, "CN=TEST of ESTEID-SK 2015").getCertificate();
         ocspResponseTransformer.setSignerKey(certKeyPair.getPrivate());
-
         setUpMockOcspResponse(MockOcspResponseParams.builder()
                 .ocspServer(wireMockServer)
                 .responseStatus(OCSPResp.SUCCESSFUL)
@@ -215,7 +229,6 @@ class IdCardControllerTest extends BaseTest {
                 .responderCertificate(
                         ocspResponderCert
                 ).build(), "/esteid2015");
-
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
 
         given()
@@ -239,6 +252,9 @@ class IdCardControllerTest extends BaseTest {
         assertEquals("EE", result.getCountry());
         assertNull(result.getEmail());
         assertEquals(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, taraSession.getState());
+        assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
+        assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -250,7 +266,6 @@ class IdCardControllerTest extends BaseTest {
         KeyPair certKeyPair = rsa.generateKeyPair();
         X509Certificate ocspResponderCert = generateOcspResponderCertificate("CN=MOCK OCSP RESPONDER, C=EE", certKeyPair, responderKeys, "CN=TEST of ESTEID-SK 2015").getCertificate();
         ocspResponseTransformer.setSignerKey(certKeyPair.getPrivate());
-
         setUpMockOcspResponse(MockOcspResponseParams.builder()
                 .ocspServer(wireMockServer)
                 .responseStatus(OCSPResp.SUCCESSFUL)
@@ -260,7 +275,6 @@ class IdCardControllerTest extends BaseTest {
                 .responderCertificate(
                         ocspResponderCert
                 ).build(), "/esteid2015");
-
         Session session = sessionRepository.createSession();
         TaraSession authSession = new TaraSession(session.getId());
         authSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
@@ -295,20 +309,21 @@ class IdCardControllerTest extends BaseTest {
         assertEquals("EE", result.getCountry());
         assertEquals("mari-liis.mannik@eesti.ee", result.getEmail());
         assertEquals(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, taraSession.getState());
+        assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
+        assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
     @DirtiesContext
     @Tag(value = "OCSP_DISABLED")
     void idAuth_ok_ocsp_disabled() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
-        configurationProperties.setOcspEnabled(false);
-
+        configurationProperties.setOcspEnabled(false); // TODO AUT-857
         KeyPairGenerator rsa = KeyPairGenerator.getInstance("RSA");
         rsa.initialize(2048);
         KeyPair certKeyPair = rsa.generateKeyPair();
         X509Certificate ocspResponderCert = generateOcspResponderCertificate("CN=MOCK OCSP RESPONDER, C=EE", certKeyPair, responderKeys, "CN=TEST of ESTEID-SK 2015").getCertificate();
         ocspResponseTransformer.setSignerKey(certKeyPair.getPrivate());
-
         setUpMockOcspResponse(MockOcspResponseParams.builder()
                 .ocspServer(wireMockServer)
                 .responseStatus(OCSPResp.SUCCESSFUL)
@@ -318,7 +333,6 @@ class IdCardControllerTest extends BaseTest {
                 .responderCertificate(
                         ocspResponderCert
                 ).build(), "/esteid2015");
-
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
 
         given()
@@ -334,6 +348,7 @@ class IdCardControllerTest extends BaseTest {
                 .body("status", equalTo("COMPLETED"));
 
         assertInfoIsLogged("Skipping OCSP validation because OCSP is disabled.");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -345,7 +360,6 @@ class IdCardControllerTest extends BaseTest {
         KeyPair certKeyPair = rsa.generateKeyPair();
         X509Certificate ocspResponderCert = generateOcspResponderCertificate("CN=MOCK OCSP RESPONDER, C=EE", certKeyPair, responderKeys, "CN=TEST of ESTEID-SK 2015").getCertificate();
         ocspResponseTransformer.setSignerKey(certKeyPair.getPrivate());
-
         setUpMockOcspResponse(MockOcspResponseParams.builder()
                 .ocspServer(wireMockServer)
                 .responseStatus(OCSPResp.SUCCESSFUL)
@@ -357,8 +371,8 @@ class IdCardControllerTest extends BaseTest {
                 .responderCertificate(
                         ocspResponderCert
                 ).build(), "/esteid2015");
-
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+
         given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
@@ -373,6 +387,9 @@ class IdCardControllerTest extends BaseTest {
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertWarningIsLogged("OCSP validation failed: Invalid certificate status <REVOKED> received");
+        assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
+        assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=null, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_REVOKED)");
     }
 
     @Test
@@ -385,7 +402,6 @@ class IdCardControllerTest extends BaseTest {
         KeyPair certKeyPair = rsa.generateKeyPair();
         X509Certificate ocspResponderCert = generateOcspResponderCertificate("CN=MOCK OCSP RESPONDER, C=EE", certKeyPair, responderKeys, "CN=TEST of ESTEID-SK 2015").getCertificate();
         ocspResponseTransformer.setSignerKey(certKeyPair.getPrivate());
-
         setUpMockOcspResponse(MockOcspResponseParams.builder()
                 .ocspServer(wireMockServer)
                 .responseStatus(OCSPResp.SUCCESSFUL)
@@ -395,8 +411,8 @@ class IdCardControllerTest extends BaseTest {
                 .responderCertificate(
                         ocspResponderCert
                 ).build(), "/esteid2015");
-
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+
         given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
@@ -410,9 +426,11 @@ class IdCardControllerTest extends BaseTest {
                 .body("message", equalTo("ID-kaardi sertifikaadi staatus on teadmata."));
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
-
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertWarningIsLogged("OCSP validation failed: Invalid certificate status <UNKNOWN> received");
+        assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
+        assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=null, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_UNKNOWN)");
     }
 
     @Test
@@ -423,7 +441,6 @@ class IdCardControllerTest extends BaseTest {
         KeyPair certKeyPair = rsa.generateKeyPair();
         X509Certificate ocspResponderCert = generateOcspResponderCertificate("CN=MOCK OCSP RESPONDER, C=EE", certKeyPair, responderKeys, "CN=TEST of ESTEID-SK 2015").getCertificate();
         ocspResponseTransformer.setSignerKey(certKeyPair.getPrivate());
-
         setUpMockOcspResponse(MockOcspResponseParams.builder()
                 .ocspServer(wireMockServer)
                 .responseStatus(OCSPResp.SUCCESSFUL)
@@ -433,8 +450,8 @@ class IdCardControllerTest extends BaseTest {
                 .responderCertificate(
                         ocspResponderCert
                 ).build(), "/ocsp");
-
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+
         given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
@@ -445,6 +462,8 @@ class IdCardControllerTest extends BaseTest {
                 .statusCode(200)
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("COMPLETED"));
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -455,7 +474,6 @@ class IdCardControllerTest extends BaseTest {
         KeyPair certKeyPair = rsa.generateKeyPair();
         X509Certificate ocspResponderCert = generateOcspResponderCertificate("CN=\"MOCK OCSP RESPONDER\", C=EE", certKeyPair, responderKeys, "CN=WRONG CN").getCertificate();
         ocspResponseTransformer.setSignerKey(certKeyPair.getPrivate());
-
         setUpMockOcspResponse(MockOcspResponseParams.builder()
                 .ocspServer(wireMockServer)
                 .responseStatus(OCSPResp.SUCCESSFUL)
@@ -465,8 +483,8 @@ class IdCardControllerTest extends BaseTest {
                 .responderCertificate(
                         ocspResponderCert
                 ).build(), "/esteid2015");
-
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+
         given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
@@ -478,6 +496,9 @@ class IdCardControllerTest extends BaseTest {
                 .statusCode(500);
 
         assertErrorIsLogged("Server encountered an unexpected error: OCSP validation failed: Issuer certificate with CN 'WRONG CN' is not a trusted certificate!");
+        assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
+        assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=null, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
@@ -488,7 +509,6 @@ class IdCardControllerTest extends BaseTest {
         KeyPair certKeyPair = rsa.generateKeyPair();
         X509Certificate ocspResponderCert = generateOcspResponderCertificate("CN=\"MOCK OCSP RESPONDER\", C=EE", certKeyPair, responderKeys, "CN=TEST of ESTEID-SK 2011").getCertificate();
         ocspResponseTransformer.setSignerKey(certKeyPair.getPrivate());
-
         setUpMockOcspResponse(MockOcspResponseParams.builder()
                 .ocspServer(wireMockServer)
                 .responseStatus(OCSPResp.SUCCESSFUL)
@@ -498,8 +518,8 @@ class IdCardControllerTest extends BaseTest {
                 .responderCertificate(
                         ocspResponderCert
                 ).build(), "/esteid2015");
-
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+
         given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
@@ -511,21 +531,21 @@ class IdCardControllerTest extends BaseTest {
                 .statusCode(500);
 
         assertErrorIsLogged("Server encountered an unexpected error: OCSP validation failed: In case of AIA OCSP, the OCSP responder certificate must be issued by the authority that issued the user certificate. Expected issuer: 'CN=TEST of ESTEID-SK 2015, OID.2.5.4.97=NTREE-10747013, O=AS Sertifitseerimiskeskus, C=EE', but the OCSP responder signing certificate was issued by 'EMAILADDRESS=pki@sk.ee, CN=TEST of ESTEID-SK 2011, O=AS Sertifitseerimiskeskus, C=EE'");
+        assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
+        assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=null, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
     @Tag(value = "OCSP_VALID_RESPONSE")
     void idAuth_response_500_when_response_body_is_missing() {
         wireMockServer.stubFor(WireMock.post("/esteid2015")
-                .willReturn(
-                        WireMock.aResponse()
-                                .withStatus(200)
-                                .withTransformer("ocsp", "ignore", true)
-                                .withHeader("Content-Type", "application/ocsp-response")
-                )
-        );
-
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withTransformer("ocsp", "ignore", true)
+                        .withHeader("Content-Type", "application/ocsp-response")));
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+
         given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
@@ -537,6 +557,9 @@ class IdCardControllerTest extends BaseTest {
                 .statusCode(500);
 
         assertErrorIsLogged("Server encountered an unexpected error: OCSP validation failed: malformed response: no response data found");
+        assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                "StatisticsLogger.SessionStatistics(clientId=null, sector=null, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
@@ -546,8 +569,8 @@ class IdCardControllerTest extends BaseTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withFixedDelay(2000)));
-
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+
         given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
@@ -562,18 +585,21 @@ class IdCardControllerTest extends BaseTest {
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertWarningIsLogged("OCSP validation failed: OCSP service is currently not available");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                "StatisticsLogger.SessionStatistics(clientId=null, sector=null, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_OCSP_NOT_AVAILABLE)");
     }
 
     @Test
     @Tag(value = "CERTIFICATE_IS_VALID")
     @Tag(value = "IDCARD_ERROR_HANDLING")
     void idAuth_response_userCert_notYetValid() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
-        X509Certificate userCert =
-                generateUserCertificate("SERIALNUMBER=PNOEE-38001085718, GIVENNAME=JAAK-KRISTJAN, SURNAME=JÕEORG, CN=\"JÕEORG,JAAK-KRISTJAN,38001085718\", C=EE", responderKeys, "CN=TEST of ESTEID-SK 2015",
-                        Date.from(Instant.now().plus(Duration.ofHours(1))), Date.from(Instant.now().plus(Duration.ofHours(2)))).getCertificate();
+        X509Certificate userCert = generateUserCertificate("SERIALNUMBER=PNOEE-38001085718, GIVENNAME=JAAK-KRISTJAN, SURNAME=JÕEORG, CN=\"JÕEORG,JAAK-KRISTJAN,38001085718\", C=EE",
+                responderKeys,
+                "CN=TEST of ESTEID-SK 2015",
+                Date.from(Instant.now().plus(Duration.ofHours(1))), Date.from(Instant.now().plus(Duration.ofHours(2)))).getCertificate();
         String cert = formatCrtFileContents(userCert);
-
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+
         given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, cert)
@@ -588,18 +614,21 @@ class IdCardControllerTest extends BaseTest {
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertWarningIsLogged("OCSP validation failed: User certificate is not yet valid");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                "StatisticsLogger.SessionStatistics(clientId=null, sector=null, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_CERT_NOT_YET_VALID)");
     }
 
     @Test
     @Tag(value = "CERTIFICATE_IS_VALID")
     @Tag(value = "IDCARD_ERROR_HANDLING")
     void idAuth_response_userCert_expired() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
-        X509Certificate userCert =
-                generateUserCertificate("SERIALNUMBER=PNOEE-38001085718, GIVENNAME=JAAK-KRISTJAN, SURNAME=JÕEORG, CN=\"JÕEORG,JAAK-KRISTJAN,38001085718\", C=EE", responderKeys, "CN=TEST of ESTEID-SK 2015",
-                        Date.from(Instant.now().minus(Duration.ofHours(2))), Date.from(Instant.now().minus(Duration.ofHours(1)))).getCertificate();
+        X509Certificate userCert = generateUserCertificate("SERIALNUMBER=PNOEE-38001085718, GIVENNAME=JAAK-KRISTJAN, SURNAME=JÕEORG, CN=\"JÕEORG,JAAK-KRISTJAN,38001085718\", C=EE",
+                responderKeys,
+                "CN=TEST of ESTEID-SK 2015",
+                Date.from(Instant.now().minus(Duration.ofHours(2))), Date.from(Instant.now().minus(Duration.ofHours(1)))).getCertificate();
         String cert = formatCrtFileContents(userCert);
-
         String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+
         given()
                 .when()
                 .header(HEADER_SSL_CLIENT_CERT, cert)
@@ -616,12 +645,15 @@ class IdCardControllerTest extends BaseTest {
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertWarningIsLogged("OCSP validation failed: User certificate is expired");
+
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=null, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_CERT_EXPIRED)");
     }
 
     private String createSessionWithAuthenticationState(TaraAuthenticationState authenticationState) {
         Session session = sessionRepository.createSession();
         TaraSession authSession = new TaraSession(session.getId());
         authSession.setState(authenticationState);
+        authSession.setLoginRequestInfo(new TaraSession.LoginRequestInfo());
         session.setAttribute(TARA_SESSION, authSession);
         sessionRepository.save(session);
         return session.getId();

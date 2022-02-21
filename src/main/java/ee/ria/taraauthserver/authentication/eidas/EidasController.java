@@ -4,7 +4,7 @@ import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
-import ee.ria.taraauthserver.error.exceptions.EidasInternalException;
+import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
@@ -30,16 +30,17 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
+import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.WAITING_EIDAS_RESPONSE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static net.logstash.logback.argument.StructuredArguments.value;
-import static net.logstash.logback.marker.Markers.append;
 
 @Slf4j
 @RestController
 @ConditionalOnProperty(value = "tara.auth-methods.eidas.enabled")
 public class EidasController {
+    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.EIDAS, this.getClass());
 
     @Autowired
     private EidasConfigurationProperties eidasConfigurationProperties;
@@ -55,29 +56,24 @@ public class EidasController {
         String relayState = UUID.randomUUID().toString();
         log.info("Initiating EIDAS authentication session with relay state: {}", value("tara.session.eidas.relay_state", relayState));
         validateSession(taraSession);
-        eidasRelayStateCache.put(relayState, taraSession.getSessionId());
+        eidasRelayStateCache.put(relayState, taraSession.getSessionId()); // TODO AUT-854
 
-        if (!eidasConfigurationProperties.getAvailableCountries().contains(country))
+        if (!eidasConfigurationProperties.getAvailableCountries().contains(country)) {
             throw new BadRequestException(getAppropriateErrorCode(), "Requested country not supported.");
-
-        try {
-            String requestUrl = createRequestUrl(country, taraSession, relayState);
-            log.info(append("http.request.method", HttpMethod.GET.name())
-                            .and(append("url.full", requestUrl))
-                            .and(append("tara.session.eidas.relay_state", relayState)),
-                    "EIDAS request");
-            ResponseEntity<String> response = eidasRestTemplate.exchange(requestUrl, HttpMethod.GET, null, String.class);
-            log.info(append("url.full", requestUrl)
-                            .and(append("http.request.method", HttpMethod.GET.name()))
-                            .and(append("http.response.status_code", response.getStatusCodeValue()))
-                            .and(append("http.response.body.content", response.getBody()))
-                            .and(append("tara.session.eidas.relay_state", relayState)),
-                    "EIDAS response");
-            updateSession(country, taraSession, relayState);
-            return getHtmlRedirectPageFromResponse(servletResponse, response);
-        } catch (Exception e) {
-            throw new EidasInternalException(ErrorCode.ERROR_GENERAL, e.getMessage());
         }
+
+        String requestUrl = createRequestUrl(country, taraSession, relayState);
+
+        requestLogger.logRequest(requestUrl, HttpMethod.GET);
+        var response = eidasRestTemplate.exchange(
+                requestUrl,
+                HttpMethod.GET,
+                null,
+                String.class);
+        requestLogger.logResponse(response);
+
+        updateSession(country, taraSession, relayState);
+        return getHtmlRedirectPageFromResponse(servletResponse, response);
     }
 
     @Nullable

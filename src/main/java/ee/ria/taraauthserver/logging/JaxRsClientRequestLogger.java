@@ -1,7 +1,9 @@
 package ee.ria.taraauthserver.logging;
 
 import lombok.extern.slf4j.Slf4j;
+import net.logstash.logback.marker.LogstashMarker;
 import org.glassfish.jersey.message.MessageUtils;
+import org.springframework.http.HttpStatus;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.ClientRequestContext;
@@ -28,7 +30,7 @@ import static net.logstash.logback.marker.Markers.append;
  * @see ee.sk.smartid.rest.LoggingFilter
  */
 @Slf4j
-public class ClientRequestLoggingFilter implements ClientRequestFilter, ClientResponseFilter, WriterInterceptor {
+public class JaxRsClientRequestLogger implements ClientRequestFilter, ClientResponseFilter, WriterInterceptor {
     private static final String PROP_OUTPUT_STREAM = "loggingOutputStream";
     private static final String PROP_URL_FULL = "url.full";
     private static final String PROP_REQUEST_METHOD = "http.request.method";
@@ -38,9 +40,9 @@ public class ClientRequestLoggingFilter implements ClientRequestFilter, ClientRe
     private final String LOG_REQUEST_MESSAGE;
     private final String LOG_RESPONSE_MESSAGE;
 
-    public ClientRequestLoggingFilter(String serviceName) {
-        LOG_REQUEST_MESSAGE = String.format("%s service request", serviceName);
-        LOG_RESPONSE_MESSAGE = String.format("%s service response. Status code: {}  ", serviceName);
+    public JaxRsClientRequestLogger(String serviceName) {
+        LOG_REQUEST_MESSAGE = String.format("%s request", serviceName);
+        LOG_RESPONSE_MESSAGE = String.format("%s response: {}", serviceName);
     }
 
     @Override
@@ -77,10 +79,14 @@ public class ClientRequestLoggingFilter implements ClientRequestFilter, ClientRe
         InputStream entityStream = responseContext.getEntityStream();
         byte[] bodyBytes = readInputStreamBytes(entityStream);
         responseContext.setEntityStream(new ByteArrayInputStream(bodyBytes));
-        log.info(append(PROP_URL_FULL, requestContext.getUri().toString())
-                        .and(append(PROP_REQUEST_METHOD, requestContext.getMethod()))
-                        .and(append(PROP_RESPONSE_BODY_CONTENT, new String(bodyBytes, charset))), // NB! Do not use appendRaw. Can create elasticsearch mapping conflict.
-                LOG_RESPONSE_MESSAGE, value(PROP_RESPONSE_STATUS_CODE, responseContext.getStatus()));
+        LogstashMarker marker = append(PROP_URL_FULL, requestContext.getUri().toString())
+                .and(append(PROP_REQUEST_METHOD, requestContext.getMethod()))
+                .and(append(PROP_RESPONSE_BODY_CONTENT, new String(bodyBytes, charset))); // NB! Do not use appendRaw. Can create elasticsearch mapping conflict.
+        if (HttpStatus.valueOf(responseContext.getStatus()).is2xxSuccessful()) {
+            log.info(marker, LOG_RESPONSE_MESSAGE, value(PROP_RESPONSE_STATUS_CODE, responseContext.getStatus()));
+        } else {
+            log.error(marker, LOG_RESPONSE_MESSAGE, value(PROP_RESPONSE_STATUS_CODE, responseContext.getStatus()));
+        }
     }
 
     private byte[] readInputStreamBytes(InputStream entityStream) throws IOException {

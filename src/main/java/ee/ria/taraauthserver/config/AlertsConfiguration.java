@@ -1,6 +1,8 @@
 package ee.ria.taraauthserver.config;
 
 import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties;
+import ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
+import ee.ria.taraauthserver.logging.RestTemplateErrorLogger;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -21,7 +23,7 @@ import java.time.Duration;
 @ConditionalOnProperty(value = "tara.alerts.enabled")
 public class AlertsConfiguration {
 
-    @Bean(value = "alertsRestTemplate")
+    @Bean
     public RestTemplate alertsRestTemplate(RestTemplateBuilder builder, SSLContext sslContext, AlertsConfigurationProperties alertsConfigurationProperties) {
         HttpClient client = HttpClients.custom()
                 .setSSLContext(sslContext)
@@ -33,6 +35,7 @@ public class AlertsConfiguration {
                 .setConnectTimeout(Duration.ofSeconds(alertsConfigurationProperties.getConnectionTimeoutMilliseconds()))
                 .setReadTimeout(Duration.ofSeconds(alertsConfigurationProperties.getReadTimeoutMilliseconds()))
                 .requestFactory(() -> new HttpComponentsClientHttpRequestFactory(client))
+                .errorHandler(new RestTemplateErrorLogger(Service.ALERTS))
                 .build();
     }
 }

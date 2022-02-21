@@ -1,7 +1,6 @@
 package ee.ria.taraauthserver.authentication.smartid;
 
 import ee.ria.taraauthserver.BaseTest;
-import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.MockSessionFilter;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
@@ -13,9 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
+import static ch.qos.logback.classic.Level.ERROR;
 import static ch.qos.logback.classic.Level.INFO;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.SMART_ID;
-import static ee.ria.taraauthserver.session.MockSessionFilter.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.COMPLETE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
@@ -34,7 +33,7 @@ class AuthSidCancelControllerTest extends BaseTest {
     @Tag("CSRF_PROTCTION")
     void authSidPollCancel_NoCsrf() {
         given()
-                .filter(withoutCsrf().sessionRepository(sessionRepository).build())
+                .filter(MockSessionFilter.withoutCsrf().sessionRepository(sessionRepository).build())
                 .when()
                 .post("/auth/sid/poll/cancel")
                 .then()
@@ -42,14 +41,16 @@ class AuthSidCancelControllerTest extends BaseTest {
                 .statusCode(403)
                 .body("message", equalTo("Keelatud päring. Päring esitati topelt, sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("reportable", equalTo(false));
+
+        assertErrorIsLogged("Access denied: Invalid CSRF token.");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
     @Tag(value = "SID_AUTH_STATUS_CHECK_VALID_SESSION")
     void authSidPollCancel_sessionMissing() {
-
         given()
-                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
+                .filter(MockSessionFilter.withoutTaraSession().sessionRepository(sessionRepository).build())
                 .when()
                 .post("/auth/sid/poll/cancel")
                 .then()
@@ -60,14 +61,14 @@ class AuthSidCancelControllerTest extends BaseTest {
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("User exception: Invalid session");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
     @Tag(value = "SID_AUTH_STATUS_CHECK_VALID_SESSION")
     void authSidPollCancel_sessionIncorrectState() {
-
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationTypes(of(SMART_ID))
                         .authenticationState(COMPLETE).build())
@@ -81,6 +82,7 @@ class AuthSidCancelControllerTest extends BaseTest {
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'COMPLETE', expected one of: [AUTHENTICATION_FAILED, INIT_SID, POLL_SID_STATUS, NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED]");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=SESSION_STATE_INVALID)");
     }
 
     @ParameterizedTest
@@ -91,10 +93,11 @@ class AuthSidCancelControllerTest extends BaseTest {
     @Tag(value = "SID_AUTH_CANCELED")
     @Tag(value = "LOG_EVENT_UNIQUE_STATUS")
     void authSidPollCancel_redirectToAuthInit(TaraAuthenticationState state) {
-        MockSessionFilter sessionFilter = withTaraSession()
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(SMART_ID))
                 .authenticationState(state).build();
+
         given()
                 .filter(sessionFilter)
                 .when()
@@ -107,16 +110,17 @@ class AuthSidCancelControllerTest extends BaseTest {
         TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.POLL_SID_STATUS_CANCELED, taraSession.getState());
         assertWarningIsLogged("Smart ID authentication process has been canceled");
-        assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, INFO, "Authentication result: AUTHENTICATION_CANCELED");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_CANCELED, errorCode=null)");
     }
 
     @Test
     @Tag(value = "SID_AUTH_CANCELED")
     void authSidPollCancel_redirectToClientWhenAuthenticationStateIsSuccess() {
-        MockSessionFilter sessionFilter = withTaraSession()
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(SMART_ID))
                 .authenticationState(AUTHENTICATION_SUCCESS).build();
+
         given()
                 .filter(sessionFilter)
                 .when()

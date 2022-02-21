@@ -2,6 +2,8 @@ package ee.ria.taraauthserver.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
+import ee.ria.taraauthserver.logging.RestTemplateErrorLogger;
 import ee.ria.taraauthserver.utils.ThymeleafSupport;
 import lombok.extern.slf4j.Slf4j;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
@@ -15,7 +17,6 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -91,15 +92,14 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
     }
 
     @Bean
-    @Primary
-    public RestTemplate restTemplate(RestTemplateBuilder builder, SSLContext sslContext, AuthConfigurationProperties authConfigurationProperties) {
+    public RestTemplate hydraRestTemplate(RestTemplateBuilder builder, SSLContext sslContext, AuthConfigurationProperties authConfigurationProperties) {
         HttpClient client = HttpClients.custom()
                 .setSSLContext(sslContext)
                 .setMaxConnPerRoute(authConfigurationProperties.getHydraService().getMaxConnectionsTotal())
                 .setMaxConnTotal(authConfigurationProperties.getHydraService().getMaxConnectionsTotal())
                 .build();
 
-        List<HttpMessageConverter<?>> converters = new ArrayList<HttpMessageConverter<?>>();
+        List<HttpMessageConverter<?>> converters = new ArrayList<>();
         MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
         converter.setSupportedMediaTypes(Collections.singletonList(MediaType.TEXT_HTML));
         converters.add(converter);
@@ -109,6 +109,7 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
                 .setConnectTimeout(Duration.ofSeconds(authConfigurationProperties.getHydraService().getRequestTimeoutInSeconds()))
                 .setReadTimeout(Duration.ofSeconds(authConfigurationProperties.getHydraService().getRequestTimeoutInSeconds()))
                 .requestFactory(() -> new HttpComponentsClientHttpRequestFactory(client))
+                .errorHandler(new RestTemplateErrorLogger(Service.HYDRA))
                 .build();
     }
 

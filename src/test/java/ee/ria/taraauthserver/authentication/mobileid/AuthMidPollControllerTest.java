@@ -11,8 +11,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
+import static ch.qos.logback.classic.Level.ERROR;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_MID_STATUS;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static java.util.List.of;
@@ -63,6 +67,7 @@ class AuthMidPollControllerTest extends BaseTest {
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [AUTHENTICATION_FAILED, INIT_MID, POLL_MID_STATUS, NATURAL_PERSON_AUTHENTICATION_COMPLETED]");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=SESSION_STATE_INVALID)");
     }
 
     @Test
@@ -130,7 +135,7 @@ class AuthMidPollControllerTest extends BaseTest {
 
         String sessionId = sessionFilter.getSession().getId();
         assertNull(sessionRepository.findById(sessionId));
-        assertInfoIsLogged("Tara session state change: NOT_SET -> AUTHENTICATION_FAILED");
+        assertInfoIsLogged("State: NOT_SET -> AUTHENTICATION_FAILED");
         assertErrorIsLogged("Server encountered an unexpected error");
         assertWarningIsLogged("Session has been invalidated: " + sessionId);
         assertInfoIsLogged("Session is removed from cache: " + sessionId);
@@ -161,7 +166,7 @@ class AuthMidPollControllerTest extends BaseTest {
 
         String sessionId = sessionFilter.getSession().getId();
         assertNull(sessionRepository.findById(sessionId));
-        assertInfoIsLogged("Tara session state change: NOT_SET -> AUTHENTICATION_FAILED");
+        assertInfoIsLogged("State: NOT_SET -> AUTHENTICATION_FAILED");
         assertErrorIsLogged("Service not available: Mobile-ID poll failed");
         assertWarningIsLogged("Session has been invalidated: " + sessionId);
         assertInfoIsLogged("Session is removed from cache: " + sessionId);

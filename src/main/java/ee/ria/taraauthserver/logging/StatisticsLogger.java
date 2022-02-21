@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.logging;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.error.ErrorCode;
+import ee.ria.taraauthserver.error.exceptions.TaraException;
 import ee.ria.taraauthserver.logging.StatisticsLogger.SessionStatistics.SessionStatisticsBuilder;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
+import static ee.ria.taraauthserver.error.ErrorCode.INTERNAL_ERROR;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
@@ -38,12 +40,15 @@ public class StatisticsLogger {
                     .ifPresent(state -> {
                         SessionStatisticsBuilder statisticsBuilder = SessionStatistics.builder();
                         processAuthenticationRequest(taraSession, state, statisticsBuilder);
-                        processAuthenticationResult(taraSession, statisticsBuilder);
+                        processAuthenticationResult(taraSession, ex, statisticsBuilder);
                         SessionStatistics sessionStatistics = statisticsBuilder.build();
-                        if (ex == null) {
-                            log.info(appendFields(sessionStatistics), "Authentication result: {}", state);
-                        } else {
+                        if (ex != null) {
                             log.error(appendFields(sessionStatistics), "Authentication result: " + state, ex);
+                        } else if (taraSession.getAuthenticationResult() != null
+                                && taraSession.getAuthenticationResult().getErrorCode() != null) {
+                            log.error(appendFields(sessionStatistics), "Authentication result: {}", state);
+                        } else {
+                            log.info(appendFields(sessionStatistics), "Authentication result: {}", state);
                         }
                     });
         }
@@ -62,7 +67,7 @@ public class StatisticsLogger {
         });
     }
 
-    private void processAuthenticationResult(TaraSession taraSession, SessionStatisticsBuilder sessionStatisticsBuilder) {
+    private void processAuthenticationResult(TaraSession taraSession, Exception ex, SessionStatisticsBuilder sessionStatisticsBuilder) {
         AuthenticationResult authenticationResult = taraSession.getAuthenticationResult();
         LegalPerson selectedLegalPerson = taraSession.getSelectedLegalPerson();
         if (authenticationResult != null) {
@@ -74,6 +79,12 @@ public class StatisticsLogger {
                     .errorCode(authenticationResult.getErrorCode());
             if (authenticationResult.getAmr() == AuthenticationType.ID_CARD) {
                 sessionStatisticsBuilder.ocspUrl(((TaraSession.IdCardAuthenticationResult) authenticationResult).getOcspUrl());
+            }
+        } else if (taraSession.getState() == AUTHENTICATION_FAILED) {
+            if (ex instanceof TaraException) {
+                sessionStatisticsBuilder.errorCode(((TaraException) ex).getErrorCode());
+            } else {
+                sessionStatisticsBuilder.errorCode(INTERNAL_ERROR);
             }
         }
     }
