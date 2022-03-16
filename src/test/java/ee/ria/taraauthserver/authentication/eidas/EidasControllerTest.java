@@ -96,11 +96,11 @@ public class EidasControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Required String parameter 'country' is not present"))
+                .body("message", equalTo("Required request parameter 'country' for method parameter type String is not present"))
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User input exception: Required String parameter 'country' is not present");
+        assertErrorIsLogged("User input exception: Required request parameter 'country' for method parameter type String is not present");
     }
 
     @Test

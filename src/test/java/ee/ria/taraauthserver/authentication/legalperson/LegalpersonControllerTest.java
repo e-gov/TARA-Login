@@ -441,10 +441,10 @@ public class LegalpersonControllerTest extends BaseTest {
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
-                .body("message", equalTo("Required String parameter 'legal_person_identifier' is not present"))
+                .body("message", equalTo("Required request parameter 'legal_person_identifier' for method parameter type String is not present"))
                 .body("path", equalTo("/auth/legalperson/confirm"));
 
-        assertErrorIsLogged("User input exception: Required String parameter 'legal_person_identifier' is not present");
+        assertErrorIsLogged("User input exception: Required request parameter 'legal_person_identifier' for method parameter type String is not present");
     }
 
     @Test

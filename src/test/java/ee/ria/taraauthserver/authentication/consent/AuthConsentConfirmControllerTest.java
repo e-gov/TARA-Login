@@ -65,11 +65,11 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Required String parameter 'consent_given' is not present"))
+                .body("message", equalTo("Required request parameter 'consent_given' for method parameter type String is not present"))
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User input exception: Required String parameter 'consent_given' is not present");
+        assertErrorIsLogged("User input exception: Required request parameter 'consent_given' for method parameter type String is not present");
     }
 
     @Test

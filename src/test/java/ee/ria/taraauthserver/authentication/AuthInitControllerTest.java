@@ -77,13 +77,13 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Required String parameter 'login_challenge' is not present"))
+                .body("message", equalTo("Required request parameter 'login_challenge' for method parameter type String is not present"))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue())
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User input exception: Required String parameter 'login_challenge' is not present");
+        assertErrorIsLogged("User input exception: Required request parameter 'login_challenge' for method parameter type String is not present");
     }
 
     @Test

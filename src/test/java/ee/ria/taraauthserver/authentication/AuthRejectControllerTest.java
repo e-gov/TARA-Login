@@ -16,7 +16,9 @@ import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
 import static ch.qos.logback.classic.Level.INFO;
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.put;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.MOCK_LOGIN_CHALLENGE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
@@ -132,7 +134,7 @@ class AuthRejectControllerTest extends BaseTest {
                 .body("reportable", equalTo(true))
                 .statusCode(500);
 
-        assertErrorIsLogged("HTTP client exception: 400 Bad Request: [{}]");
+        assertErrorIsLogged("HTTP client exception: 400 Bad Request: \"{}\"");
     }
 
     @Test

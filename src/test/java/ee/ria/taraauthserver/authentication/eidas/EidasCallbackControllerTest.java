@@ -12,7 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.cache.Cache;
 import java.util.UUID;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.any;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.EIDAS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
@@ -90,10 +92,10 @@ class EidasCallbackControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Required String parameter 'RelayState' is not present"))
+                .body("message", equalTo("Required request parameter 'RelayState' for method parameter type String is not present"))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User input exception: Required String parameter 'RelayState' is not present");
+        assertErrorIsLogged("User input exception: Required request parameter 'RelayState' for method parameter type String is not present");
     }
 
     @Test
@@ -111,10 +113,10 @@ class EidasCallbackControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Required String parameter 'SAMLResponse' is not present"))
+                .body("message", equalTo("Required request parameter 'SAMLResponse' for method parameter type String is not present"))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User input exception: Required String parameter 'SAMLResponse' is not present");
+        assertErrorIsLogged("User input exception: Required request parameter 'SAMLResponse' for method parameter type String is not present");
     }
 
     @Test
