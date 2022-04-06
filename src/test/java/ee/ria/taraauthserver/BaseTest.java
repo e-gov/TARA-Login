@@ -64,12 +64,15 @@ public abstract class BaseTest {
     public static final String CHARSET_UTF_8 = ";charset=UTF-8";
 
     protected static final Map<String, Object> EXPECTED_RESPONSE_HEADERS = new HashMap<>() {{
-        put("X-XSS-Protection", "1; mode=block");
+        put("X-XSS-Protection", "0");
         put("X-Content-Type-Options", "nosniff");
         put("X-Frame-Options", "DENY");
         put("Content-Security-Policy", DEFAULT_CONTENT_SECURITY_POLICY);
         put("Pragma", "no-cache");
+        put("Expires", "0");
         put("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
+        // TODO: Returned during actual application run but for some reason not returned during tests
+        // put("Strict-Transport-Security", "max-age=16070400 ; includeSubDomains");
     }};
 
     protected static final OCSPValidatorTest.OcspResponseTransformer ocspResponseTransformer = new OCSPValidatorTest.OcspResponseTransformer(false);
