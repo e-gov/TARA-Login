@@ -35,7 +35,7 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 @Controller
 public class AuthConsentConfirmController {
     public static final String REDIRECT_TO = "redirect_to";
-    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.HYDRA, this.getClass());
+    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.TARA_HYDRA, this.getClass());
 
     @Autowired
     private AuthConfigurationProperties authConfigurationProperties;

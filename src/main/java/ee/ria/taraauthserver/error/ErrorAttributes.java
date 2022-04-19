@@ -30,6 +30,7 @@ import static ee.ria.taraauthserver.error.ErrorCode.EIDAS_USER_CONSENT_NOT_GIVEN
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_EXPIRED;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_REVOKED;
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_CSRF_TOKEN;
+import static ee.ria.taraauthserver.error.ErrorCode.INVALID_GOVSSO_LOGIN_CHALLENGE;
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_LOGIN_CHALLENGE;
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.error.ErrorCode.MID_DELIVERY_ERROR;
@@ -92,7 +93,8 @@ public class ErrorAttributes extends DefaultErrorAttributes {
             SESSION_STATE_INVALID,
             INVALID_REQUEST,
             INVALID_CSRF_TOKEN,
-            INVALID_LOGIN_CHALLENGE
+            INVALID_LOGIN_CHALLENGE,
+            INVALID_GOVSSO_LOGIN_CHALLENGE
     );
 
     @Override

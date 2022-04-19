@@ -85,6 +85,14 @@ public abstract class BaseTest {
             .extensions(ocspResponseTransformer)
             .notifier(new ConsoleNotifier(true))
     );
+    protected static final WireMockServer govssoWireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig()
+            .httpDisabled(true)
+            .httpsPort(8877)
+            .keystorePath("src/test/resources/tls-keystore.jks")
+            .keystorePassword("changeit")
+            .keyManagerPassword("changeit")
+            .notifier(new ConsoleNotifier(true))
+    );
     private static ListAppender<ILoggingEvent> mockAppender;
     @Autowired
     protected SessionRepository<Session> sessionRepository;
@@ -99,6 +107,7 @@ public abstract class BaseTest {
         System.setProperty("IGNITE_HOME", System.getProperty("java.io.tmpdir"));
         System.setProperty("java.net.preferIPv4Stack", "true");
         wireMockServer.start();
+        govssoWireMockServer.start();
     }
 
     private static void configureRestAssured() {
@@ -167,6 +176,7 @@ public abstract class BaseTest {
         RestAssured.port = port;
         resetMockLogAppender();
         wireMockServer.resetAll();
+        govssoWireMockServer.resetAll();
     }
 
     @AfterEach

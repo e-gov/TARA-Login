@@ -167,6 +167,15 @@ public class TaraSession implements Serializable {
                     .orElse("not set");
         }
 
+        public String getGovssoChallenge() {
+            return URLEncodedUtils.parse(url.getQuery(), UTF_8)
+                    .stream()
+                    .filter(p -> p.getName().equals("govsso_login_challenge"))
+                    .map(NameValuePair::getValue)
+                    .findFirst()
+                    .orElse(null);
+        }
+
         public String getRedirectUri() {
             return URLEncodedUtils.parse(url.getQuery(), UTF_8)
                     .stream()
@@ -348,6 +357,8 @@ public class TaraSession implements Serializable {
         private SmartIdSettings smartIdSettings;
         @JsonProperty("mid_settings")
         private MidSettings midSettings;
+        @JsonProperty("logo")
+        private String logo;
     }
 
     @Data

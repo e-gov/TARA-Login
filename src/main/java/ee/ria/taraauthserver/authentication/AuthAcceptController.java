@@ -40,7 +40,7 @@ import static java.util.EnumSet.of;
 class AuthAcceptController {
     private static final EnumSet<TaraAuthenticationState> ALLOWED_STATES = of(AUTHENTICATION_SUCCESS, NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED);
     private static final EnumSet<TaraAuthenticationState> OIDC_AUTH_ACCEPT_STATES = of(NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED);
-    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.HYDRA, this.getClass());
+    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.TARA_HYDRA, this.getClass());
 
     @Autowired
     private AuthConfigurationProperties authConfigurationProperties;

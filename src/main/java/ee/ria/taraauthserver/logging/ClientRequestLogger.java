@@ -28,7 +28,8 @@ public class ClientRequestLogger {
     public enum Service {
         ALERTS,
         EIDAS,
-        HYDRA,
+        TARA_HYDRA,
+        GOVSSO_HYDRA,
         OCSP,
         X_ROAD
     }

@@ -109,7 +109,7 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
                 .setConnectTimeout(Duration.ofSeconds(authConfigurationProperties.getHydraService().getRequestTimeoutInSeconds()))
                 .setReadTimeout(Duration.ofSeconds(authConfigurationProperties.getHydraService().getRequestTimeoutInSeconds()))
                 .requestFactory(() -> new HttpComponentsClientHttpRequestFactory(client))
-                .errorHandler(new RestTemplateErrorLogger(Service.HYDRA))
+                .errorHandler(new RestTemplateErrorLogger(Service.TARA_HYDRA))
                 .build();
     }
 

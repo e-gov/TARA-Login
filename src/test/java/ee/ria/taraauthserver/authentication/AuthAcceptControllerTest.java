@@ -107,9 +107,9 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("reportable", equalTo(true));
 
-        assertErrorIsLogged("HYDRA response: 400");
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"remember\":false,\"subject\":\"EE47101010033\"}");
-        assertMessageWithMarkerIsLoggedOnce(RestTemplateErrorLogger.class, ERROR, "HYDRA response: 400", "http.response.status_code=400");
+        assertErrorIsLogged("TARA_HYDRA response: 400");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertMessageWithMarkerIsLoggedOnce(RestTemplateErrorLogger.class, ERROR, "TARA_HYDRA response: 400", "http.response.status_code=400");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
@@ -138,8 +138,8 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .body("reportable", equalTo(true));
 
         assertErrorIsLogged("Server encountered an unexpected error: Invalid OIDC server response. Redirect URL missing from response.");
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"remember\":false,\"subject\":\"EE47101010033\"}");
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "HYDRA response: 200", "http.response.status_code=200, http.response.body.content={}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={}");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
@@ -168,8 +168,8 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .statusCode(302)
                 .header("Location", Matchers.endsWith("some/test/url"));
 
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"remember\":false,\"subject\":\"EE47101010033\"}");
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null)");
     }
 
@@ -200,8 +200,8 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .header("Location", Matchers.endsWith("some/test/url"));
 
         assertInfoIsLogged("State: NATURAL_PERSON_AUTHENTICATION_COMPLETED -> AUTHENTICATION_SUCCESS");
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"remember\":false,\"subject\":\"EE47101010033\"}");
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null)");
 
         resetMockLogAppender();
@@ -214,7 +214,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .statusCode(302)
                 .header("Location", Matchers.endsWith("some/test/url"));
 
-        assertMessageIsNotLogged(AuthAcceptController.class, "HYDRA request");
+        assertMessageIsNotLogged(AuthAcceptController.class, "TARA_HYDRA request");
         assertStatisticsIsNotLogged();
     }
 
@@ -236,7 +236,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .statusCode(302)
                 .header("Location", Matchers.endsWith("/auth/legalperson/init"));
 
-        assertMessageIsNotLogged(AuthAcceptController.class, "HYDRA request");
+        assertMessageIsNotLogged(AuthAcceptController.class, "TARA_HYDRA request");
         assertStatisticsIsNotLogged();
     }
 
@@ -264,8 +264,8 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .statusCode(302)
                 .header("Location", Matchers.endsWith("some/test/url"));
 
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"remember\":false,\"subject\":\"EE47101010033\"}");
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null)");
     }
 
@@ -295,7 +295,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .body("reportable", equalTo(true));
 
         assertErrorIsLogged("Service not available: I/O error on PUT request for \"https://localhost:9877/oauth2/auth/requests/login/accept\": Read timed out; nested exception is java.net.SocketTimeoutException: Read timed out");
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"remember\":false,\"subject\":\"EE47101010033\"}");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
@@ -321,7 +321,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .statusCode(302)
                 .header("Location", Matchers.endsWith("http://localhost:" + port + "/auth/init?login_challenge=abcdefg098AAdsCC"));
 
-        assertMessageIsNotLogged(AuthAcceptController.class, "HYDRA request");
+        assertMessageIsNotLogged(AuthAcceptController.class, "TARA_HYDRA request");
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_CANCELED, errorCode=null)");
     }
 }

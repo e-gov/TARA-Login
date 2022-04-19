@@ -30,7 +30,7 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 @Validated
 @Controller
 public class AuthRejectController {
-    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.HYDRA, this.getClass());
+    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.TARA_HYDRA, this.getClass());
 
     @Autowired
     private AuthConfigurationProperties configurationProperties;

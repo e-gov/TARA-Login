@@ -43,10 +43,14 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 public class AuthInitController {
     public static final String AUTH_INIT_REQUEST_MAPPING = "/auth/init";
     private static final Predicate<String> SUPPORTED_LANGUAGES = java.util.regex.Pattern.compile("(?i)(et|en|ru)").asMatchPredicate();
-    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.HYDRA, this.getClass());
+    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.TARA_HYDRA, this.getClass());
+    private final ClientRequestLogger govssoRequestLogger = new ClientRequestLogger(Service.GOVSSO_HYDRA, this.getClass());
 
     @Autowired
     private AuthConfigurationProperties taraProperties;
+
+    @Autowired
+    private AuthConfigurationProperties.GovssoHydraConfigurationProperties govssoHydraConfigurationProperties;
 
     @Autowired(required = false)
     private EidasConfigurationProperties eidasConfigurationProperties;
@@ -69,6 +73,14 @@ public class AuthInitController {
         TaraSession.LoginRequestInfo loginRequestInfo = fetchLoginRequestInfo(loginChallenge);
         newTaraSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
         newTaraSession.setLoginRequestInfo(loginRequestInfo);
+
+        if (govssoHydraConfigurationProperties.getClientId() != null && govssoHydraConfigurationProperties.getClientId().equals(loginRequestInfo.getClientId())) {
+            if (loginRequestInfo.getGovssoChallenge() != null && loginRequestInfo.getGovssoChallenge().matches("^[a-f0-9]{32}$")) {
+                TaraSession.LoginRequestInfo ssoLoginRequestInfo = fetchGovssoLoginRequestInfo(loginRequestInfo.getGovssoChallenge());
+            } else {
+                throw new BadRequestException(ErrorCode.INVALID_GOVSSO_LOGIN_CHALLENGE, "Incorrect GOVSSO login challenge format.");
+            }
+        }
 
         if (loginRequestInfo.getRequestedScopes().isEmpty())
             throw new BadRequestException(ErrorCode.MISSING_SCOPE, "No scope is requested");
@@ -112,9 +124,26 @@ public class AuthInitController {
 
             validateResponse(response.getBody(), loginChallenge);
             return response.getBody();
-        } catch (HttpClientErrorException.NotFound e) {
+        } catch (HttpClientErrorException.NotFound | HttpClientErrorException.Gone e) {
             log.error("Unable to fetch login request info!", e);
             throw new BadRequestException(ErrorCode.INVALID_LOGIN_CHALLENGE, "Login challenge not found.");
+        }
+    }
+
+    private TaraSession.LoginRequestInfo fetchGovssoLoginRequestInfo(String ssoChallenge) {
+        String requestUrl = govssoHydraConfigurationProperties.getLoginUrl() + "?login_challenge="+ ssoChallenge;
+        try {
+            govssoRequestLogger.logRequest(requestUrl, HttpMethod.GET);
+            var response = hydraRestTemplate.exchange(
+                    requestUrl,
+                    HttpMethod.GET,
+                    null,
+                    TaraSession.LoginRequestInfo.class);
+            govssoRequestLogger.logResponse(response);
+            return response.getBody();
+        } catch(HttpClientErrorException.NotFound | HttpClientErrorException.Gone e) {
+            log.error("Unable to fetch SSO login request info!", e);
+            throw new BadRequestException(ErrorCode.INVALID_GOVSSO_LOGIN_CHALLENGE, "Login challenge not found.");
         }
     }
 

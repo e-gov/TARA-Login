@@ -8,6 +8,7 @@ import lombok.Setter;
 @RequiredArgsConstructor
 public enum ErrorCode {
     INVALID_LOGIN_CHALLENGE("message.error.invalid-login-challenge"),
+    INVALID_GOVSSO_LOGIN_CHALLENGE("message.error.invalid-govsso-login-challenge"),
     NO_VALID_AUTHMETHODS_AVAILABLE("message.error.no-allowed-authmethods"),
     ESTEID_INVALID_REQUEST("message.idc.error"),
     MID_USER_CANCEL("message.mid-rest.error.user-cancel"),

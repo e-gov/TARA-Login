@@ -35,7 +35,7 @@ import static net.logstash.logback.argument.StructuredArguments.value;
 @EnableScheduling
 @ConditionalOnProperty(value = "tara.auth-methods.eidas.enabled")
 public class EidasConfiguration {
-    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.HYDRA, this.getClass());
+    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.TARA_HYDRA, this.getClass());
 
     @Autowired
     private EidasConfigurationProperties eidasConfigurationProperties;
