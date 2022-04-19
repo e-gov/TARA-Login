@@ -65,9 +65,7 @@
         <br th:if="${not #lists.isEmpty(alerts)}">
         <div class="c-tab-login__content-wrap">
             <div class="c-tab-login__content-icon" aria-hidden="true">
-                <svg role="img" aria-label="" th:class="'icon icon-' + ${tab_id}">
-                    <use th:attr="'xlink:href'='#icon-' + ${tab_id}"></use>
-                </svg>
+                <img class="icon" th:if="${@thymeleafSupport.getServiceLogo() != null}" th:src="${'data:image/svg+xml;base64,' + @thymeleafSupport.getServiceLogo()}">
             </div>
             <div class="c-tab-login__content-text">
                 <div role="heading" aria-level="2">

@@ -188,6 +188,7 @@ class AuthInitControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
                 .header(HttpHeaders.CONTENT_LANGUAGE, "et")
                 .body(containsString("Sisestage ID-kaart kaardilugejasse ja vajutage \"Jätka\""))
+                .body(not(containsString("src=\"data:image/svg+xml;base64")))
                 .cookie("SESSION", matchesPattern("[A-Za-z0-9,-]{36,36}"))
                 .extract().cookie("SESSION");
 
@@ -209,6 +210,63 @@ class AuthInitControllerTest extends BaseTest {
                 "State: NOT_SET -> INIT_AUTH_PROCESS");
         assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
         assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"openIdDemo\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"},\"smartid_settings\":{\"relying_party_UUID\":\"testRelyingPartyId123\",\"relying_party_name\":\"testRelyingPartyName\",\"should_use_additional_verification_code_check\":false}}},\"scope\":\"idcard mid\"},\"client_id\":\"openIdDemo\",\"institution\":{\"empty\":false,\"present\":true},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"low\"],\"ui_locales\":[]},\"oidc_state\":\"c46b216b-e73d-4cd2-907b-6c809b44cec1\",\"redirect_uri\":\"https://oidc-client-mock:8451/oauth/response\",\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"idcard\",\"mid\"],\"user_cancel_uri\":\"https://oidc-client-mock:8451/oauth/response?error=user_cancel&error_description=User+canceled+the+authentication+process.&state=c46b216b-e73d-4cd2-907b-6c809b44cec1\"}");
+        assertStatisticsIsNotLogged();
+    }
+
+    @SneakyThrows
+    @Test
+    @Tag(value = "AUTH_INIT_GOVSSO_GET_OIDC_REQUEST")
+    void authInit_Ok_requestMadeFromGovssoClient() {
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_with_govsso_hydra_parameters.json")));
+
+        govssoWireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_GOVSSO_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/govsso_mock_response.json")));
+
+        String sessionId = given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
+                .header(HttpHeaders.CONTENT_LANGUAGE, "et")
+                .body(containsString("Sisestage ID-kaart kaardilugejasse ja vajutage \"Jätka\""))
+                .body(containsString("src=\"data:image/svg+xml;base64,testLogo\""))
+                .body(containsString("govsso test client et"))
+                .cookie("SESSION", matchesPattern("[A-Za-z0-9,-]{36,36}"))
+                .extract().cookie("SESSION");
+
+        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
+        assertEquals(TEST_LOGIN_CHALLENGE, taraSession.getLoginRequestInfo().getChallenge());
+        assertEquals(new URL("https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&govsso_login_challenge=abcdeff098aadfccabcdeff098aadfcc&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et"), taraSession.getLoginRequestInfo().getUrl());
+        assertEquals("govssoClientId", taraSession.getLoginRequestInfo().getClient().getClientId());
+        assertEquals("idcard mid", taraSession.getLoginRequestInfo().getClient().getScope());
+        assertEquals("idcard", taraSession.getLoginRequestInfo().getRequestedScopes().get(0));
+        assertEquals("mid", taraSession.getLoginRequestInfo().getRequestedScopes().get(1));
+        assertEquals("test client et", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getNameTranslations().get("et"));
+        assertEquals("govsso test client et", taraSession.getGovssoLoginRequestInfo().getClient().getMetaData().getOidcClient().getNameTranslations().get("et"));
+        assertEquals("testRelyingPartyName", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getRelyingPartyName());
+        assertEquals("testRelyingPartyId123", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getRelyingPartyUuid());
+        assertEquals(false, taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getShouldUseAdditionalVerificationCodeCheck());
+        assertInfoIsLogged("New authentication session",
+                "TARA_HYDRA request",
+                "TARA_HYDRA response: 200",
+                "State: NOT_SET -> INIT_AUTH_PROCESS",
+                "GOVSSO_HYDRA request",
+                "GOVSSO_HYDRA response: 200");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "GOVSSO_HYDRA request", "http.request.method=GET, url.full=https://localhost:8877/oauth2/auth/requests/login?login_challenge=abcdeff098aadfccabcdeff098aadfcc");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"govssoClientId\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"},\"smartid_settings\":{\"relying_party_UUID\":\"testRelyingPartyId123\",\"relying_party_name\":\"testRelyingPartyName\",\"should_use_additional_verification_code_check\":false}}},\"scope\":\"idcard mid\"},\"client_id\":\"govssoClientId\",\"govsso_challenge\":\"abcdeff098aadfccabcdeff098aadfcc\",\"institution\":{\"empty\":false,\"present\":true},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"low\"],\"ui_locales\":[]},\"oidc_state\":\"c46b216b-e73d-4cd2-907b-6c809b44cec1\",\"redirect_uri\":\"https://oidc-client-mock:8451/oauth/response\",\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&govsso_login_challenge=abcdeff098aadfccabcdeff098aadfcc&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"idcard\",\"mid\"],\"user_cancel_uri\":\"https://oidc-client-mock:8451/oauth/response?error=user_cancel&error_description=User+canceled+the+authentication+process.&state=c46b216b-e73d-4cd2-907b-6c809b44cec1\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "GOVSSO_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdeff098aadfccabcdeff098aadfcc\",\"client\":{\"client_id\":\"govssoDemo\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"logo\":\"testLogo\",\"name_translations\":{\"en\":\"govsso test client en\",\"et\":\"govsso test client et\",\"ru\":\"govsso test client ru\"},\"short_name_translations\":{\"en\":\"govsso short test client en\",\"et\":\"govsso short test client et\",\"ru\":\"govsso short test client ru\"}}},\"scope\":\"mid idcard eidas\"},\"client_id\":\"govssoDemo\",\"client_logo\":\"testLogo\",\"institution\":{\"empty\":false,\"present\":true},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"high\"],\"ui_locales\":[\"zu\",\"fi\",\"Ru\",\"ET\",\"en\"]},\"oidc_state\":\"c46b216b-e73d-4cd2-907b-6c809b44cec1\",\"redirect_uri\":\"https://oidc-client-mock:8451/oauth/response\",\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"openid\",\"mid\",\"idcard\",\"eidas\"],\"user_cancel_uri\":\"https://oidc-client-mock:8451/oauth/response?error=user_cancel&error_description=User+canceled+the+authentication+process.&state=c46b216b-e73d-4cd2-907b-6c809b44cec1\"}");
         assertStatisticsIsNotLogged();
     }
 

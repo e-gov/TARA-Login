@@ -60,13 +60,16 @@ public class ThymeleafSupport {
         if (taraSession == null || taraSession.getLoginRequestInfo() == null)
             return null;
 
-        String defaultServicename = taraSession.getClientName();
-        if (defaultServicename == null)
+        return taraSession.getOidcClientTranslatedName();
+    }
+
+    public String getServiceLogo() {
+        TaraSession taraSession = SessionUtils.getAuthSession();
+        if (taraSession == null || taraSession.getLoginRequestInfo() == null)
             return null;
 
-        Map<String, String> serviceNameTranslations = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getNameTranslations();
-        Locale locale = LocaleContextHolder.getLocale();
-        return serviceNameTranslations.getOrDefault(locale.getLanguage(), defaultServicename);
+        TaraSession.LoginRequestInfo loginRequestInfo = taraSession.getAppropriateLoginRequestInfo();
+        return loginRequestInfo.getClientLogo();
     }
 
     public String getLocaleUrl(String locale) {

@@ -76,7 +76,8 @@ public class AuthInitController {
 
         if (govssoHydraConfigurationProperties.getClientId() != null && govssoHydraConfigurationProperties.getClientId().equals(loginRequestInfo.getClientId())) {
             if (loginRequestInfo.getGovssoChallenge() != null && loginRequestInfo.getGovssoChallenge().matches("^[a-f0-9]{32}$")) {
-                TaraSession.LoginRequestInfo ssoLoginRequestInfo = fetchGovssoLoginRequestInfo(loginRequestInfo.getGovssoChallenge());
+                TaraSession.LoginRequestInfo govssoLoginRequestInfo = fetchGovssoLoginRequestInfo(loginRequestInfo.getGovssoChallenge());
+                newTaraSession.setGovssoLoginRequestInfo(govssoLoginRequestInfo);
             } else {
                 throw new BadRequestException(ErrorCode.INVALID_GOVSSO_LOGIN_CHALLENGE, "Incorrect GOVSSO login challenge format.");
             }

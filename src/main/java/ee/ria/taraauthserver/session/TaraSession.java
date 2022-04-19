@@ -54,6 +54,7 @@ public class TaraSession implements Serializable {
 
     private TaraAuthenticationState state;
     private LoginRequestInfo loginRequestInfo;
+    private LoginRequestInfo govssoLoginRequestInfo;
     private List<AuthenticationType> allowedAuthMethods;
     private AuthenticationResult authenticationResult;
     private List<LegalPerson> legalPersonList;
@@ -67,17 +68,6 @@ public class TaraSession implements Serializable {
                     value("tara.session.state", newState.name()));
         }
         this.state = newState;
-    }
-
-    public String getClientName() {
-        return Optional.of(this)
-                .map(TaraSession::getLoginRequestInfo)
-                .map(TaraSession.LoginRequestInfo::getClient)
-                .map(TaraSession.Client::getMetaData)
-                .map(TaraSession.MetaData::getOidcClient)
-                .map(TaraSession.OidcClient::getNameTranslations)
-                .map(m -> m.get("et"))
-                .orElse(null);
     }
 
     public boolean isEmailScopeRequested() {
@@ -195,6 +185,15 @@ public class TaraSession implements Serializable {
             return Optional.of(this)
                     .map(TaraSession.LoginRequestInfo::getClient)
                     .map(TaraSession.Client::getClientId)
+                    .orElse(null);
+        }
+
+        public String getClientLogo() {
+            return Optional.of(this)
+                    .map(TaraSession.LoginRequestInfo::getClient)
+                    .map(TaraSession.Client::getMetaData)
+                    .map(TaraSession.MetaData::getOidcClient)
+                    .map(TaraSession.OidcClient::getLogo)
                     .orElse(null);
         }
 
@@ -401,15 +400,35 @@ public class TaraSession implements Serializable {
     }
 
     public String getOidcClientTranslatedShortName() {
-        OidcClient oidcClient = getLoginRequestInfo().getClient().getMetaData().getOidcClient();
+        OidcClient oidcClient = getAppropriateLoginRequestInfo().getClient().getMetaData().getOidcClient();
+        Map<String, String> shortNameTranslations = oidcClient.getShortNameTranslations();
         String translatedShortName = oidcClient.getShortNameTranslations().get("et");
 
-        Map<String, String> shortNameTranslations = oidcClient.getShortNameTranslations();
-        Locale locale = LocaleContextHolder.getLocale();
-        if (shortNameTranslations.containsKey(locale.getLanguage()))
-            translatedShortName = shortNameTranslations.get(locale.getLanguage());
+        String language = LocaleContextHolder.getLocale().getLanguage();
+        if (shortNameTranslations.containsKey(language))
+            translatedShortName = shortNameTranslations.get(language);
 
         return translatedShortName;
+    }
+
+    public String getOidcClientTranslatedName() {
+        OidcClient oidcClient = getAppropriateLoginRequestInfo().getClient().getMetaData().getOidcClient();
+        Map<String, String> nameTranslations = oidcClient.getNameTranslations();
+        String translatedName = oidcClient.getNameTranslations().get("et");
+
+        String language = LocaleContextHolder.getLocale().getLanguage();
+        if (nameTranslations.containsKey(language))
+            translatedName = nameTranslations.get(language);
+
+        return translatedName;
+    }
+
+    public TaraSession.LoginRequestInfo getAppropriateLoginRequestInfo() {
+        TaraSession.LoginRequestInfo loginRequestInfo = getGovssoLoginRequestInfo();
+        if (loginRequestInfo == null) {
+            loginRequestInfo = getLoginRequestInfo();
+        }
+        return loginRequestInfo;
     }
 
     public Boolean isAdditionalSmartIdVerificationCodeCheckNeeded() {
