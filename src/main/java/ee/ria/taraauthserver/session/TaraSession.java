@@ -348,6 +348,9 @@ public class TaraSession implements Serializable {
         @Size(max = 1000)
         @JsonProperty("legacy_return_url")
         private String legacyReturnUrl;
+        @Pattern(regexp = "\\w+:(\\/?\\/?)[^\\s]+", message = "invalid eidas_requester_id, must be valid URI")
+        @JsonProperty("eidas_requester_id")
+        private String eidasRequesterId;
         @Valid
         @JsonProperty("institution")
         private Institution institution = new Institution();

@@ -4,8 +4,10 @@ import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.logging.RestTemplateErrorLogger;
 import ee.ria.taraauthserver.session.MockSessionFilter;
+import ee.ria.taraauthserver.session.MockTaraSessionBuilder;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
+import ee.ria.taraauthserver.session.TaraSession.OidcClient;
 import io.restassured.RestAssured;
 import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.Matchers;
@@ -162,7 +164,7 @@ public class EidasControllerTest extends BaseTest {
                 .statusCode(502);
 
         assertErrorIsLogged("Service not available: I/O error on GET request for \"https://localhost:9877/login\": Read timed out; nested exception is java.net.SocketTimeoutException: Read timed out");
-        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request", "http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&RelayState="); // Regex?
+        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request", "http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&RequesterID=a:b:c&SPType=public&RelayState="); // Regex?
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
@@ -191,11 +193,14 @@ public class EidasControllerTest extends BaseTest {
                 .statusCode(200);
 
         TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
+        OidcClient oidcClient = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient();
         String relayState = ((TaraSession.EidasAuthenticationResult) taraSession.getAuthenticationResult()).getRelayState();
         assertEquals(WAITING_EIDAS_RESPONSE, taraSession.getState());
         assertEquals("CA", (taraSession.getAuthenticationResult()).getCountry());
         assertEquals(eidasRelayStateCache.get(relayState), sessionFilter.getSession().getId());
-        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request", "http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&RelayState="); // Regex?
+        assertEquals("a:b:c", oidcClient.getEidasRequesterId());
+        assertEquals("public", oidcClient.getInstitution().getSector());
+        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request", "http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&RequesterID=a:b:c&SPType=public&RelayState="); // Regex?
         assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS response: 200", "http.response.status_code=200, http.response.body.content=\"<html xmlns=\\\"http://www.w3.org/1999/xhtml\\\" xml:lang=\\\"en\\\"><body onload=\\\"document.forms[0].submit()\\\"><noscript><p><strong>Note: </strong> Since your browser does not support JavaScript, you must press the Continue button once to proceed.</p></noscript><form action=\\\"https&#x3a;&#x2f;&#x2f;eidastest.eesti.ee/&#x3a;8080&#x2f;EidasNode&#x2f;ServiceProvider\\\" method=\\\"post\\\"><div><input type=\\\"hidden\\\" name=\\\"SAMLRequest\\\" value=\\\"PD94bWw...........MnA6QXV0aG5SZXF1ZXN0Pg==\\\"/><input type=\\\"hidden\\\" name=\\\"country\\\" value=\\\"CA\\\"/></div><noscript><div><input type=\\\"submit\\\" value=\\\"Continue\\\"/></div></noscript></form></body></html>");
         assertStatisticsIsNotLogged();
     }
@@ -224,7 +229,7 @@ public class EidasControllerTest extends BaseTest {
                 .body("error", equalTo("Internal Server Error"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request", "http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&RelayState="); // Regex?
+        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request", "http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&RequesterID=a:b:c&SPType=public&RelayState="); // Regex?
         assertMessageWithMarkerIsLoggedOnce(RestTemplateErrorLogger.class, ERROR, "EIDAS response: 400", "http.response.status_code=400");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }

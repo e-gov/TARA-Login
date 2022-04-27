@@ -27,6 +27,8 @@ public class MockTaraSessionBuilder {
     public static final String MOCK_LOGIN_CHALLENGE = "abcdefg098AAdsCC";
     public static final String MOCK_CLIENT_ID = "openIdDemo";
     public static final String MOCK_INSTITUTION_REGISTRY_CODE = "10001234";
+    public static final String MOCK_INSTITUTION_SECTOR = "public";
+    public static final String MOCK_REQUESTER_ID = "a:b:c";
     public static final String MOCK_CLIENT_NAME_EN = "institution.name.en";
     public static final String MOCK_CLIENT_LEGACY_URL = "http://legacy.url";
     public static final String MOCK_CLIENT_NAME_ET = "institution.name.et";
@@ -60,8 +62,9 @@ public class MockTaraSessionBuilder {
         }
         client.setClientId(MOCK_CLIENT_ID);
         institution.setRegistryCode(MOCK_INSTITUTION_REGISTRY_CODE);
-        institution.setSector("public");
+        institution.setSector(MOCK_INSTITUTION_SECTOR);
         oidcClient.setInstitution(institution);
+        oidcClient.setEidasRequesterId(MOCK_REQUESTER_ID);
         metaData.setOidcClient(oidcClient);
         client.setMetaData(metaData);
         client.setScope(clientAllowedScopes == null ? "" : join(" ", clientAllowedScopes));

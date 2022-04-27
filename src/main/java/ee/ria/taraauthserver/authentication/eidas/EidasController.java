@@ -7,6 +7,7 @@ import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
+import ee.ria.taraauthserver.session.TaraSession.OidcClient;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,8 +94,11 @@ public class EidasController {
 
     private String createRequestUrl(String country, TaraSession taraSession, String relayState) {
         String url = eidasConfigurationProperties.getClientUrl() + "/login";
+        OidcClient oidcClient = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient();
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
                 .queryParam("Country", country)
+                .queryParam("RequesterID", oidcClient.getEidasRequesterId())
+                .queryParam("SPType", oidcClient.getInstitution().getSector())
                 .queryParam("RelayState", relayState);
         List<String> acr = getAcrFromSessionOidcContext(taraSession);
         if (acr != null)
