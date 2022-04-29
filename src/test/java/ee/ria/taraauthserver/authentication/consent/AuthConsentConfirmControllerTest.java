@@ -283,6 +283,37 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "USER_CONSENT_CONFIRM_ENDPOINT")
+    @Tag(value = "USER_CONSENT_POST_ACCEPT")
+    void authConsent_acceptSuccessful_withGovssoLoginChallenge() {
+        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
+        Session session = createSession(MOBILE_ID, List.of("openid"), "https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&govsso_login_challenge=govssoLoginChallenge&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c80393c7-6666-4dd2-b890-0ada47161cfa&nonce=fa97f828-eda3-4975-bca2-4bfbb9b24d28&ui_locales=et", true);
+
+        given()
+                .filter(new MockSessionFilter(session))
+                .queryParam("consent_given", "true")
+                .when()
+                .post("/auth/consent/confirm")
+                .then()
+                .assertThat()
+                .statusCode(302)
+                .header("Location", Matchers.endsWith("some/test/url"));
+
+        assertInfoIsLogged("State: NOT_SET -> INIT_CONSENT_PROCESS");
+        assertInfoIsLogged("State: INIT_CONSENT_PROCESS -> CONSENT_GIVEN");
+        assertWarningIsLogged("Session has been invalidated: " + session.getId());
+        assertInfoIsLogged("Session is removed from cache: " + session.getId());
+        assertNull(sessionRepository.findById(session.getId()));
+        assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"grant_scope\":[\"openid\"],\"remember\":false,\"session\":{\"id_token\":{\"acr\":\"high\",\"amr\":[\"mID\"],\"govsso_login_challenge\":\"govssoLoginChallenge\",\"profile_attributes\":{\"date_of_birth\":\"1992-12-17\",\"family_name\":\"lastname\",\"given_name\":\"firstname\"},\"state\":\"c80393c7-6666-4dd2-b890-0ada47161cfa\"}}}");
+        assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
     @Tag(value = "USER_CONSENT_POST_ACCEPT")
     void authConsent_acceptNoRedirect() {
         wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
@@ -375,6 +406,11 @@ class AuthConsentConfirmControllerTest extends BaseTest {
 
     @SneakyThrows
     private Session createSession(AuthenticationType authenticationType, List<String> requestedScopes, String url) {
+        return createSession(authenticationType, requestedScopes, url, false);
+    }
+
+    @SneakyThrows
+    private Session createSession(AuthenticationType authenticationType, List<String> requestedScopes, String url, boolean hasGovssoLoginRequestInfo) {
         Session session = sessionRepository.createSession();
         TaraSession authSession = new TaraSession(session.getId());
         authSession.setState(INIT_CONSENT_PROCESS);
@@ -388,6 +424,8 @@ class AuthConsentConfirmControllerTest extends BaseTest {
         lri.setRequestedScopes(requestedScopes);
         lri.setUrl(new URL(url));
         authSession.setLoginRequestInfo(lri);
+        if (hasGovssoLoginRequestInfo)
+            authSession.setGovssoLoginRequestInfo(lri);
         TaraSession.AuthenticationResult ar = new TaraSession.AuthenticationResult();
         ar.setIdCode("abc123idcode");
         ar.setFirstName("firstname");

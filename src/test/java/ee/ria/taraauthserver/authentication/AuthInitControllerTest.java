@@ -216,6 +216,7 @@ class AuthInitControllerTest extends BaseTest {
     @SneakyThrows
     @Test
     @Tag(value = "AUTH_INIT_GOVSSO_GET_OIDC_REQUEST")
+    @Tag(value = "AUTH_INIT_GOVSSO_VIEW")
     void authInit_Ok_requestMadeFromGovssoClient() {
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
