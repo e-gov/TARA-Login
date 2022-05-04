@@ -69,9 +69,9 @@ public abstract class BaseTest {
         put("X-Frame-Options", "DENY");
         put("Content-Security-Policy", DEFAULT_CONTENT_SECURITY_POLICY);
         put("Pragma", "no-cache");
-        put("Expires", "0");
         put("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
-        // TODO: Returned during actual application run but for some reason not returned during tests
+        put("Expires", "0");
+        // TODO: Use HTTPS for API tests. Given header only returned over https.
         // put("Strict-Transport-Security", "max-age=16070400 ; includeSubDomains");
     }};
 
