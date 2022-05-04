@@ -95,8 +95,7 @@ Example: to deploy the webapp to a standalone Tomcat server
 | `tara.hydra-service.request-timeout-in-seconds` | No | Ory Hydra service request timeout |
 | `tara.hydra-service.max-connections-total` | No | Max connection pool size for hydra requests. Defaults to 50 |
 | `govsso.hydra-service.login-url` | No | Url for requesting GOVSSO Ory Hydra login request info |
-| `govsso.hydra-service.client-id` | No | GOVSSO service client id |
-
+| `govsso.hydra-service.client-id` | No | TARA client_id that GOVSSO uses |
 
 <a name="tls_conf"></a>
 ### 1.2 TLS configuration for outbound connections
