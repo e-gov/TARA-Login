@@ -29,10 +29,20 @@
     "metadata": {
       "oidc_client": {
         "name": "some test client",
-        "short_name": "shortNameshortNameshortNameshortNameshortNameshortNameshortNameshortNameshortName",
+        "name_translations": {
+          "et": "test client et",
+          "en": "test client en",
+          "ru": "test client ru"
+        },
+        "short_name": "stc",
+        "short_name_translations": {
+          "et": "short test client et",
+          "en": "short test client en",
+          "ru": "short test client ru"
+        },
         "institution": {
           "registry_code": "70006317",
-          "sector": "public"
+          "sector": "private"
         }
       }
     },
@@ -51,6 +61,7 @@
     "response_types": [
       "string"
     ],
+    "scope": "openid mid idcard eidas eidasonly eidas:country:ee eidas:country:lt eidas:country:it",
     "sector_identifier_uri": "string",
     "subject_type": "string",
     "token_endpoint_auth_method": "string",
@@ -61,13 +72,13 @@
   },
   "oidc_context": {
     "acr_values": [
-      "low"
+      "high"
     ],
     "display": "string",
     "id_token_hint_claims": {},
     "login_hint": "string",
     "ui_locales": [
-      "string"
+      "en"
     ]
   },
   "request_url": "https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et",
@@ -75,7 +86,12 @@
     "string"
   ],
   "requested_scope": [
-    "string"
+    "openid",
+    "idcard",
+    "mid",
+    "eidasonly",
+    "eidas:country:DE",
+    "eidas:country:ca"
   ],
   "session_id": "string",
   "skip": true,

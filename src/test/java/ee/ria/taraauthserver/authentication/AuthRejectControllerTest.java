@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.authentication;
 
 import ee.ria.taraauthserver.BaseTest;
+import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.logging.RestTemplateErrorLogger;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
@@ -108,7 +109,7 @@ class AuthRejectControllerTest extends BaseTest {
         assertInfoIsLogged("Session is removed from cache: " + sessionId);
         assertMessageWithMarkerIsLoggedOnce(AuthRejectController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/reject?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"error\":\"user_cancel\",\"error_debug\":\"User canceled the authentication process.\",\"error_description\":\"User canceled the authentication process.\"}");
         assertMessageWithMarkerIsLoggedOnce(AuthRejectController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED", "StatisticsLogger.SessionStatistics(clientId=null, sector=null, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_CANCELED, errorCode=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_CANCELED, errorCode=null)");
     }
 
     @Test
@@ -135,7 +136,7 @@ class AuthRejectControllerTest extends BaseTest {
 
         assertMessageWithMarkerIsLoggedOnce(AuthRejectController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/reject?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"error\":\"user_cancel\",\"error_debug\":\"User canceled the authentication process.\",\"error_description\":\"User canceled the authentication process.\"}");
         assertMessageWithMarkerIsLoggedOnce(RestTemplateErrorLogger.class, ERROR, "TARA_HYDRA response: 400", "http.response.status_code=400, http.response.body.content={}");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=null, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
@@ -163,7 +164,7 @@ class AuthRejectControllerTest extends BaseTest {
         assertErrorIsLogged("Server encountered an unexpected error: Invalid OIDC server response. Redirect URL missing from response.");
         assertMessageWithMarkerIsLoggedOnce(AuthRejectController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/reject?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"error\":\"user_cancel\",\"error_debug\":\"User canceled the authentication process.\",\"error_description\":\"User canceled the authentication process.\"}");
         assertMessageWithMarkerIsLoggedOnce(AuthRejectController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={}");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=null, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @NotNull
@@ -172,6 +173,7 @@ class AuthRejectControllerTest extends BaseTest {
         TaraSession authSession = new TaraSession(session.getId());
         TaraSession.LoginRequestInfo lri = new TaraSession.LoginRequestInfo();
         lri.setChallenge(MOCK_LOGIN_CHALLENGE);
+        lri.getClient().getMetaData().getOidcClient().getInstitution().setSector(SPType.PUBLIC);
         authSession.setLoginRequestInfo(lri);
         session.setAttribute(TARA_SESSION, authSession);
         sessionRepository.save(session);

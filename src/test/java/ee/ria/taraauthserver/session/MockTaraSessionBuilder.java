@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.session;
 
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.config.properties.SPType;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -28,7 +29,7 @@ public class MockTaraSessionBuilder {
     public static final String MOCK_LOGIN_CHALLENGE = "abcdefg098AAdsCC";
     public static final String MOCK_CLIENT_ID = "openIdDemo";
     public static final String MOCK_INSTITUTION_REGISTRY_CODE = "10001234";
-    public static final String MOCK_INSTITUTION_SECTOR = "public";
+    public static final SPType MOCK_INSTITUTION_SECTOR = SPType.PUBLIC;
     public static final String MOCK_REQUESTER_ID = "a:b:c";
     public static final String MOCK_CLIENT_NAME_EN = "institution.name.en";
     public static final String MOCK_CLIENT_LEGACY_URL = "http://legacy.url";
@@ -46,8 +47,13 @@ public class MockTaraSessionBuilder {
 
     @SneakyThrows
     @Builder
-    public static TaraSession buildTaraSession(@NonNull String sessionId, TaraAuthenticationState authenticationState, List<AuthenticationType> authenticationTypes,
-                                               List<String> clientAllowedScopes, List<String> requestedScopes, List<TaraSession.LegalPerson> legalPersonList,
+    public static TaraSession buildTaraSession(@NonNull String sessionId,
+                                               TaraAuthenticationState authenticationState,
+                                               List<AuthenticationType> authenticationTypes,
+                                               List<String> clientAllowedScopes,
+                                               List<String> requestedScopes,
+                                               List<TaraSession.LegalPerson> legalPersonList,
+                                               SPType spType,
                                                TaraSession.AuthenticationResult authenticationResult) {
         TaraSession taraSession = new TaraSession(sessionId);
         TaraSession.LoginRequestInfo lri = new TaraSession.LoginRequestInfo();
@@ -63,7 +69,11 @@ public class MockTaraSessionBuilder {
         }
         client.setClientId(MOCK_CLIENT_ID);
         institution.setRegistryCode(MOCK_INSTITUTION_REGISTRY_CODE);
-        institution.setSector(MOCK_INSTITUTION_SECTOR);
+        if (spType != null) {
+            institution.setSector(spType);
+        } else {
+            institution.setSector(MOCK_INSTITUTION_SECTOR);
+        }
         oidcClient.setInstitution(institution);
         oidcClient.setEidasRequesterId(new URI(MOCK_REQUESTER_ID));
         metaData.setOidcClient(oidcClient);

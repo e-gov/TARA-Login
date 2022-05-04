@@ -4,6 +4,7 @@ package ee.ria.taraauthserver.authentication;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.logging.ClientRequestLogger;
@@ -29,6 +30,7 @@ import javax.validation.Validator;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -97,7 +99,7 @@ public class AuthInitController {
         if (language == null)
             RequestUtils.setLocale(getDefaultOrRequestedLocale(newTaraSession));
         if (eidasOnlyWithCountryRequested(loginRequestInfo)) {
-            model.addAttribute("country", getAllowedEidasCountryCode(loginRequestInfo.getRequestedScopes()));
+            model.addAttribute("country", getAllowedEidasCountryCode(loginRequestInfo));
             return "redirectToEidasInit";
         } else {
             return "loginView";
@@ -162,19 +164,19 @@ public class AuthInitController {
     }
 
     public boolean eidasOnlyWithCountryRequested(TaraSession.LoginRequestInfo loginRequestInfo) {
-        List<String> requestedScopes = loginRequestInfo.getRequestedScopes();
-        return requestedScopes.contains("eidasonly") && getAllowedEidasCountryCode(requestedScopes) != null;
+        return loginRequestInfo.getRequestedScopes().contains("eidasonly") && getAllowedEidasCountryCode(loginRequestInfo) != null;
     }
 
-    private String getAllowedEidasCountryCode(List<String> requestedScopes) {
+    private String getAllowedEidasCountryCode(TaraSession.LoginRequestInfo loginRequestInfo) {
         if (eidasConfigurationProperties == null)
             throw new IllegalStateException("Cannot use eidasonly scope when eidas authentication is not loaded. Is not enabled in configuration?");
 
+        SPType spType = loginRequestInfo.getClient().getMetaData().getOidcClient().getInstitution().getSector();
         String regex = "eidas:country:[a-z]{2}$";
-        return requestedScopes.stream()
+        return loginRequestInfo.getRequestedScopes().stream()
                 .filter(rs -> rs.matches(regex))
                 .map(this::getCountryCodeFromScope)
-                .filter(rs -> eidasConfigurationProperties.getAvailableCountries().contains(rs))
+                .filter(rs -> eidasConfigurationProperties.getAvailableCountries().get(spType).contains(rs))
                 .findFirst()
                 .orElse(null);
     }

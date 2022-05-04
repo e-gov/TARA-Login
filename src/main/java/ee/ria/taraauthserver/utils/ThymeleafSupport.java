@@ -6,6 +6,7 @@ import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.Ale
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 
 import static java.util.Collections.emptyList;
@@ -76,7 +78,13 @@ public class ThymeleafSupport {
     }
 
     public List<String> getListOfCountries() {
-        return eidasConfigurationProperties == null ? emptyList() : eidasConfigurationProperties.getAvailableCountries();
+        TaraSession taraSession = SessionUtils.getAuthSession();
+        if (eidasConfigurationProperties == null || taraSession == null) {
+            return emptyList();
+        }
+        Map<SPType, List<String>> availableCountries = eidasConfigurationProperties.getAvailableCountries();
+        SPType spType = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getInstitution().getSector();
+        return availableCountries.get(spType);
     }
 
     public String getBackUrl() {

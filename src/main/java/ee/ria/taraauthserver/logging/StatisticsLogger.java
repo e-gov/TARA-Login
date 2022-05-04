@@ -63,7 +63,7 @@ public class StatisticsLogger {
                 .legalPerson(selectedLegalPerson != null);
         loginRequestInfo.getInstitution().ifPresent(i -> {
             statisticsBuilder.registryCode(i.getRegistryCode());
-            statisticsBuilder.sector(i.getSector());
+            statisticsBuilder.sector(i.getSector().toString());
         });
     }
 

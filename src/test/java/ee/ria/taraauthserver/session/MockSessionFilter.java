@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.session;
 
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.SPType;
 import io.restassured.filter.Filter;
 import io.restassured.filter.FilterContext;
 import io.restassured.response.Response;
@@ -31,8 +32,9 @@ public class MockSessionFilter implements Filter {
     public static MockSessionFilter buildWithTaraSession(SessionRepository<Session> sessionRepository, TaraAuthenticationState authenticationState,
                                                          List<AuthenticationType> authenticationTypes, List<String> clientAllowedScopes, List<String> requestedScopes,
                                                          List<TaraSession.LegalPerson> legalPersonList,
+                                                         SPType spType,
                                                          TaraSession.AuthenticationResult authenticationResult) {
-        Session session = createTaraSession(sessionRepository, authenticationState, authenticationTypes, clientAllowedScopes, requestedScopes, legalPersonList, authenticationResult);
+        Session session = createTaraSession(sessionRepository, authenticationState, authenticationTypes, clientAllowedScopes, requestedScopes, legalPersonList, spType, authenticationResult);
         sessionRepository.save(session);
         return new MockSessionFilter(session);
     }
@@ -75,6 +77,7 @@ public class MockSessionFilter implements Filter {
                                              List<String> clientAllowedScopes,
                                              List<String> requestedScopes,
                                              List<TaraSession.LegalPerson> legalPersonList,
+                                             SPType spType,
                                              TaraSession.AuthenticationResult authenticationResult) {
         Session session = createSession(sessionRepository);
         TaraSession taraSession = MockTaraSessionBuilder.builder()
@@ -84,6 +87,7 @@ public class MockSessionFilter implements Filter {
                 .clientAllowedScopes(clientAllowedScopes)
                 .requestedScopes(requestedScopes)
                 .legalPersonList(legalPersonList)
+                .spType(spType)
                 .authenticationResult(authenticationResult)
                 .build();
         session.setAttribute(TARA_SESSION, taraSession);

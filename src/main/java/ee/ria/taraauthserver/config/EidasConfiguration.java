@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.config;
 
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import ee.ria.taraauthserver.logging.RestTemplateErrorLogger;
@@ -27,6 +28,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static net.logstash.logback.argument.StructuredArguments.value;
 
@@ -60,17 +62,18 @@ public class EidasConfiguration {
                 url,
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<String>>() {
+                new ParameterizedTypeReference<Map<SPType, List<String>>>() {
                 });
         requestLogger.logResponse(response);
 
-        List<String> countries = response.getBody();
+        Map<SPType, List<String>> countries = response.getBody();
         if (countries == null || countries.isEmpty()) {
             throw new IllegalStateException("EIDAS client responded with empty supported countries list");
         }
-        Collections.sort(countries);
+        Collections.sort(countries.get(SPType.PRIVATE));
+        Collections.sort(countries.get(SPType.PUBLIC));
         eidasConfigurationProperties.setAvailableCountries(countries);
-        log.info("Updated countries list to: {}", value("tara.conf.auth-methods.eidas.available_countries", countries));
+        log.info("Updated countries configuration to: {}", value("tara.conf.auth-methods.eidas.available_countries", countries));
     }
 
     @Bean

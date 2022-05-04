@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.authentication.consent;
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.SneakyThrows;
@@ -162,7 +163,7 @@ class AuthConsentControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [AUTHENTICATION_SUCCESS]");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=null, registryCode=null, legalPerson=true, country=EE, idCode=identifier123, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SESSION_STATE_INVALID)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, legalPerson=true, country=EE, idCode=identifier123, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SESSION_STATE_INVALID)");
     }
 
     @Test
@@ -234,6 +235,7 @@ class AuthConsentControllerTest extends BaseTest {
         TaraSession.MetaData md = new TaraSession.MetaData();
         TaraSession.Client client = new TaraSession.Client();
         md.setDisplayUserConsent(displayUserConsent);
+        md.getOidcClient().getInstitution().setSector(SPType.PUBLIC);
         client.setMetaData(md);
         client.setScope("mid idcard");
         lri.setClient(client);

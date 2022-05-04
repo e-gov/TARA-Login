@@ -126,7 +126,7 @@ class EidasCallbackControllerTest extends BaseTest {
     @Test
     @Tag(value = "EIDAS_AUTH_CALLBACK_RESPONSE_HANDLING")
     void eidasAuthCallback_returnUrl_response_200() {
-        createEidasCountryStub("mock_responses/eidas/eidas-response.json", 200);
+        createEidasCountryStub("mock_responses/eidas/eidas-countries-response.json", 200);
         createEidasReturnUrlStub("mock_responses/eidas/eidas-returnurl-response.json", 200);
         TaraSession.EidasAuthenticationResult eidasAuthenticationResult = new TaraSession.EidasAuthenticationResult();
         eidasAuthenticationResult.setRelayState(UUID.randomUUID().toString());
@@ -165,7 +165,7 @@ class EidasCallbackControllerTest extends BaseTest {
     @Test
     @Tag(value = "EIDAS_AUTH_CALLBACK_RESPONSE_HANDLING")
     void eidasAuthCallback_returnUrl_response_missing_required_field_returns_500() {
-        createEidasCountryStub("mock_responses/eidas/eidas-response.json", 200);
+        createEidasCountryStub("mock_responses/eidas/eidas-countries-response.json", 200);
         createEidasReturnUrlStub("mock_responses/eidas/eidas-returnurl-response-missing-required-field.json", 200);
         TaraSession.EidasAuthenticationResult eidasAuthenticationResult = new TaraSession.EidasAuthenticationResult();
         eidasAuthenticationResult.setRelayState(UUID.randomUUID().toString());
@@ -198,7 +198,7 @@ class EidasCallbackControllerTest extends BaseTest {
     @Test
     @Tag(value = "EIDAS_AUTH_CALLBACK_RESPONSE_HANDLING")
     void eidasAuthCallback_returnUrl_response_401_authentication_failed() {
-        createEidasCountryStub("mock_responses/eidas/eidas-response.json", 200);
+        createEidasCountryStub("mock_responses/eidas/eidas-countries-response.json", 200);
         createEidasReturnUrlStub("mock_responses/eidas/eidas-returnurl-response-401-auth-failed.json", 401);
         TaraSession.EidasAuthenticationResult eidasAuthenticationResult = new TaraSession.EidasAuthenticationResult();
         eidasAuthenticationResult.setRelayState(UUID.randomUUID().toString());
@@ -236,7 +236,7 @@ class EidasCallbackControllerTest extends BaseTest {
     @Test
     @Tag(value = "EIDAS_AUTH_CALLBACK_RESPONSE_HANDLING")
     void eidasAuthCallback_returnUrl_response_401_no_user_consent() {
-        createEidasCountryStub("mock_responses/eidas/eidas-response.json", 200);
+        createEidasCountryStub("mock_responses/eidas/eidas-countries-response.json", 200);
         createEidasReturnUrlStub("mock_responses/eidas/eidas-returnurl-response-401-no-consent.json", 401);
         TaraSession.EidasAuthenticationResult eidasAuthenticationResult = new TaraSession.EidasAuthenticationResult();
         eidasAuthenticationResult.setRelayState(UUID.randomUUID().toString());
@@ -274,7 +274,7 @@ class EidasCallbackControllerTest extends BaseTest {
     @Test
     @Tag(value = "EIDAS_AUTH_CALLBACK_RESPONSE_HANDLING")
     void eidasAuthCallback_returnUrl_response_404() {
-        createEidasCountryStub("mock_responses/eidas/eidas-response.json", 200);
+        createEidasCountryStub("mock_responses/eidas/eidas-countries-response.json", 200);
         createEidasReturnUrlStub(404);
         TaraSession.EidasAuthenticationResult eidasAuthenticationResult = new TaraSession.EidasAuthenticationResult();
         eidasAuthenticationResult.setRelayState(UUID.randomUUID().toString());
@@ -307,7 +307,7 @@ class EidasCallbackControllerTest extends BaseTest {
     @Test
     @Tag(value = "EIDAS_AUTH_CALLBACK_RESPONSE_HANDLING")
     void eidasAuthCallback_returnUrl_doesnt_respond() {
-        createEidasCountryStub("mock_responses/eidas/eidas-response.json", 200);
+        createEidasCountryStub("mock_responses/eidas/eidas-countries-response.json", 200);
         createEidasReturnUrlStub(404, 2000);
         TaraSession.EidasAuthenticationResult eidasAuthenticationResult = new TaraSession.EidasAuthenticationResult();
         eidasAuthenticationResult.setRelayState(UUID.randomUUID().toString());

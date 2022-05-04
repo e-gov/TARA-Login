@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.authentication.eidas;
 
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.logging.ClientRequestLogger;
@@ -27,6 +28,8 @@ import javax.cache.Cache;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -58,9 +61,10 @@ public class EidasController {
         log.info("Initiating EIDAS authentication session with relay state: {}", value("tara.session.eidas.relay_state", relayState));
         validateSession(taraSession);
         eidasRelayStateCache.put(relayState, taraSession.getSessionId()); // TODO AUT-854
+        SPType spType = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getInstitution().getSector();
 
-        if (!eidasConfigurationProperties.getAvailableCountries().contains(country)) {
-            throw new BadRequestException(getAppropriateErrorCode(), "Requested country not supported.");
+        if (!eidasConfigurationProperties.getAvailableCountries().get(spType).contains(country)) {
+            throw new BadRequestException(getAppropriateErrorCode(spType), "Requested country not supported for " + spType + " sector.");
         }
 
         String requestUrl = createRequestUrl(country, taraSession, relayState);
@@ -106,11 +110,11 @@ public class EidasController {
         return builder.toUriString();
     }
 
-    private ErrorCode getAppropriateErrorCode() {
-        List<String> allowedCountries = eidasConfigurationProperties.getAvailableCountries();
+    private ErrorCode getAppropriateErrorCode(SPType spType) {
+        Map<SPType, List<String>> allowedCountries = eidasConfigurationProperties.getAvailableCountries();
         ErrorCode errorCode = ErrorCode.EIDAS_COUNTRY_NOT_SUPPORTED;
         Object[] messageParameters = new Object[1];
-        messageParameters[0] = String.join(", ", allowedCountries);
+        messageParameters[0] = String.join(", ", allowedCountries.get(spType));
         errorCode.setMessageParameters(messageParameters);
         return errorCode;
     }

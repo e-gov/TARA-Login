@@ -5,6 +5,7 @@ import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import io.restassured.RestAssured;
@@ -21,6 +22,8 @@ import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 import static ch.qos.logback.classic.Level.ERROR;
 import static ch.qos.logback.classic.Level.INFO;
@@ -40,6 +43,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class AuthInitControllerTest extends BaseTest {
     private static final String TEST_LOGIN_CHALLENGE = "abcdefg098AAdsCC";
     private static final String TEST_GOVSSO_LOGIN_CHALLENGE = "abcdeff098aadfccabcdeff098aadfcc";
+    private static final Map<SPType, List<String>> AVAILABLE_COUNTRIES = Map.of(
+            SPType.PUBLIC, List.of("CA"),
+            SPType.PRIVATE, List.of("IT")
+    );
 
     @Autowired
     private SessionRepository<Session> sessionRepository;
@@ -866,14 +873,14 @@ class AuthInitControllerTest extends BaseTest {
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("reportable", equalTo(true));
 
-        assertErrorIsLogged("Server encountered an unexpected error: Invalid hydra response: client.metaData.oidcClient.institution.sector: invalid sector value, accepted values are: private, public, client.scope: must not be blank");
+        assertErrorIsLogged("Server encountered an unexpected error: Invalid hydra response: client.scope: must not be blank");
         assertStatisticsIsNotLogged();
     }
 
     @Test
     @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
     void authInit_redirectToAuthEidasInit_and_uppercaseCountryCodeIsIgnored() {
-        eidasConfigurationProperties.setAvailableCountries(List.of("CA"));
+        eidasConfigurationProperties.setAvailableCountries(AVAILABLE_COUNTRIES);
         RestAssured.responseSpecification = null;
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
@@ -901,7 +908,7 @@ class AuthInitControllerTest extends BaseTest {
     @Test
     @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
     void authInit_displayEidasAuthenticationPageWhenRequestedCountryIsInvalid() {
-        eidasConfigurationProperties.setAvailableCountries(List.of("CA"));
+        eidasConfigurationProperties.setAvailableCountries(AVAILABLE_COUNTRIES);
         RestAssured.responseSpecification = null;
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
@@ -919,6 +926,64 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(200)
                 .body(containsString("European Union member state's eID"))
                 .body(containsString("<option value=\"CA\">Test (CA)</option>"))
+                .extract().cookie("SESSION");
+
+        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
+    void authInit_displayEidasAuthenticationPageWithCountriesListForPublicSector() {
+        eidasConfigurationProperties.setAvailableCountries(AVAILABLE_COUNTRIES);
+        RestAssured.responseSpecification = null;
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response_eidasonly_with_invalid_country.json")));
+        String expectedCountriesRegex = ".*<select id=\"country-select\" name=\"country\">\\s*<option value=\"\">Select your country</option>\\s*<option value=\"CA\">Test \\(CA\\)</option>\\s*</select>.*";
+        Pattern expectedCountriesPattern = Pattern.compile(expectedCountriesRegex, Pattern.DOTALL);
+
+        String sessionId = given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
+                .statusCode(200)
+                .body(matchesPattern(expectedCountriesPattern))
+                .extract().cookie("SESSION");
+
+        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
+    void authInit_displayEidasAuthenticationPageWithCountriesListForPrivateSector() {
+        eidasConfigurationProperties.setAvailableCountries(AVAILABLE_COUNTRIES);
+        RestAssured.responseSpecification = null;
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response_eidasonly_with_invalid_country_private_sector.json")));
+        String expectedCountriesRegex = ".*<select id=\"country-select\" name=\"country\">\\s*<option value=\"\">Select your country</option>\\s*<option value=\"IT\">Italy</option>\\s*</select>.*";
+        Pattern expectedCountriesPattern = Pattern.compile(expectedCountriesRegex, Pattern.DOTALL);
+
+        String sessionId = given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
+                .statusCode(200)
+                .body(matchesPattern(expectedCountriesPattern))
                 .extract().cookie("SESSION");
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);

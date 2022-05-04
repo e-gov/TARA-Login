@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.logging;
 
 import ee.ria.taraauthserver.BaseTest;
+import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraSession.AuthenticationResult;
@@ -77,9 +78,9 @@ class StatisticsLoggerTest extends BaseTest {
 
         TaraAuthenticationState expectedState = (state == POLL_MID_STATUS_CANCELED || state == POLL_SID_STATUS_CANCELED) ? AUTHENTICATION_CANCELED : state;
         if(state == AUTHENTICATION_FAILED) {
-            assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(clientId=test_client_id, sector=test_sector, registryCode=test_registry_code, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=%s, errorCode=INTERNAL_ERROR", expectedState.name()));
+            assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(clientId=test_client_id, sector=public, registryCode=test_registry_code, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=%s, errorCode=INTERNAL_ERROR", expectedState.name()));
         } else {
-            assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(clientId=test_client_id, sector=test_sector, registryCode=test_registry_code, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=%s, errorCode=null", expectedState.name()));
+            assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(clientId=test_client_id, sector=public, registryCode=test_registry_code, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=%s, errorCode=null", expectedState.name()));
         }
     }
 
@@ -95,7 +96,7 @@ class StatisticsLoggerTest extends BaseTest {
         statisticsLogger.log(taraSession);
 
         TaraAuthenticationState expectedState = (state == POLL_MID_STATUS_CANCELED || state == POLL_SID_STATUS_CANCELED) ? AUTHENTICATION_CANCELED : state;
-        assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(clientId=test_client_id, sector=test_sector, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=%s, errorCode=null)", expectedState.name()));
+        assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(clientId=test_client_id, sector=public, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=%s, errorCode=null)", expectedState.name()));
     }
 
     @ParameterizedTest
@@ -111,7 +112,7 @@ class StatisticsLoggerTest extends BaseTest {
         statisticsLogger.log(taraSession);
 
         TaraAuthenticationState expectedState = (state == POLL_MID_STATUS_CANCELED || state == POLL_SID_STATUS_CANCELED) ? AUTHENTICATION_CANCELED : state;
-        assertStatisticsIsLoggedOnce(ERROR, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(clientId=test_client_id, sector=test_sector, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=%s, errorCode=INTERNAL_ERROR)", expectedState.name()));
+        assertStatisticsIsLoggedOnce(ERROR, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(clientId=test_client_id, sector=public, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=%s, errorCode=INTERNAL_ERROR)", expectedState.name()));
     }
 
     @Test
@@ -126,7 +127,7 @@ class StatisticsLoggerTest extends BaseTest {
 
         statisticsLogger.log(taraSession);
 
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(clientId=test_client_id, sector=test_sector, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=https://test-ocsp, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(clientId=test_client_id, sector=public, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=https://test-ocsp, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null)");
     }
 
     @Test
@@ -138,7 +139,7 @@ class StatisticsLoggerTest extends BaseTest {
 
         statisticsLogger.log(taraSession);
 
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(clientId=test_client_id, sector=test_sector, registryCode=test_registry_code, legalPerson=true, country=EE, idCode=test_legal_person_id_code, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(clientId=test_client_id, sector=public, registryCode=test_registry_code, legalPerson=true, country=EE, idCode=test_legal_person_id_code, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null)");
     }
 
     private TaraSession buildValidSessionWithoutState() {
@@ -148,7 +149,7 @@ class StatisticsLoggerTest extends BaseTest {
         MetaData metaData = new MetaData();
         OidcClient oidcClient = new OidcClient();
         Institution institution = new Institution();
-        institution.setSector("test_sector");
+        institution.setSector(SPType.PUBLIC);
         institution.setRegistryCode("test_registry_code");
         oidcClient.setInstitution(institution);
         metaData.setOidcClient(oidcClient);

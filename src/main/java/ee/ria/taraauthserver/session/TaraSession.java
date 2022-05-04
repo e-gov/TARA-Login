@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
 import lombok.Data;
@@ -386,10 +387,9 @@ public class TaraSession implements Serializable {
         @JsonProperty("registry_code")
         private String registryCode;
 
-        @NotBlank
-        @Pattern(regexp = "(private|public)", message = "invalid sector value, accepted values are: private, public")
+        @NotNull
         @JsonProperty("sector")
-        private String sector;
+        private SPType sector;
     }
 
     @ToString
