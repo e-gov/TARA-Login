@@ -11,6 +11,7 @@ import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.RequestUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -74,7 +75,7 @@ public class AuthInitController {
         newTaraSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
         newTaraSession.setLoginRequestInfo(loginRequestInfo);
 
-        if (govssoHydraConfigurationProperties.getClientId() != null && govssoHydraConfigurationProperties.getClientId().equals(loginRequestInfo.getClientId())) {
+        if (StringUtils.isNotBlank(govssoHydraConfigurationProperties.getClientId()) && govssoHydraConfigurationProperties.getClientId().equals(loginRequestInfo.getClientId())) {
             if (loginRequestInfo.getGovssoChallenge() != null && loginRequestInfo.getGovssoChallenge().matches("^[a-f0-9]{32}$")) {
                 TaraSession.LoginRequestInfo govssoLoginRequestInfo = fetchGovssoLoginRequestInfo(loginRequestInfo.getGovssoChallenge());
                 newTaraSession.setGovssoLoginRequestInfo(govssoLoginRequestInfo);
