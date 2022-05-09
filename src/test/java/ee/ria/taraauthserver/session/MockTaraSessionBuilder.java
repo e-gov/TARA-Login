@@ -13,6 +13,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.net.URI;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.List;
@@ -64,7 +65,7 @@ public class MockTaraSessionBuilder {
         institution.setRegistryCode(MOCK_INSTITUTION_REGISTRY_CODE);
         institution.setSector(MOCK_INSTITUTION_SECTOR);
         oidcClient.setInstitution(institution);
-        oidcClient.setEidasRequesterId(MOCK_REQUESTER_ID);
+        oidcClient.setEidasRequesterId(new URI(MOCK_REQUESTER_ID));
         metaData.setOidcClient(oidcClient);
         client.setMetaData(metaData);
         client.setScope(clientAllowedScopes == null ? "" : join(" ", clientAllowedScopes));

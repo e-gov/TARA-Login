@@ -24,6 +24,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.time.LocalDate;
@@ -348,9 +349,8 @@ public class TaraSession implements Serializable {
         @Size(max = 1000)
         @JsonProperty("legacy_return_url")
         private String legacyReturnUrl;
-        @Pattern(regexp = "\\w+:(\\/?\\/?)[^\\s]+", message = "invalid eidas_requester_id, must be valid URI")
         @JsonProperty("eidas_requester_id")
-        private String eidasRequesterId;
+        private URI eidasRequesterId;
         @Valid
         @JsonProperty("institution")
         private Institution institution = new Institution();
