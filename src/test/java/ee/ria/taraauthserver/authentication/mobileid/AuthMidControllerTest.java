@@ -649,7 +649,7 @@ class AuthMidControllerTest extends BaseTest {
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
         assertEquals(MID_INTERNAL_ERROR, result.getErrorCode());
-        assertErrorIsLogged("Mobile-ID authentication exception: java.net.SocketTimeoutException: Read timed out");
+        assertErrorIsLogged("Mobile-ID authentication exception: Unknown error when connecting to Host");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 "StatisticsLogger.SessionStatistics(clientId=openIdDemo, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=MID_INTERNAL_ERROR)");
     }
