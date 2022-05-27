@@ -383,7 +383,8 @@ public class OCSPValidator {
     private void validateCertSignedBy(X509Certificate cert, X509Certificate signedBy) {
         try {
             cert.verify(signedBy.getPublicKey(), BouncyCastleProvider.PROVIDER_NAME);
-        } catch (CertificateException | InvalidKeyException | NoSuchAlgorithmException | NoSuchProviderException | SignatureException e) {
+        } catch (CertificateException | InvalidKeyException | NoSuchAlgorithmException | NoSuchProviderException |
+                 SignatureException e) {
             throw new IllegalStateException("Failed to verify user certificate", e);
         }
     }

@@ -30,7 +30,6 @@ import javax.validation.Validator;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -135,7 +134,7 @@ public class AuthInitController {
     }
 
     private TaraSession.LoginRequestInfo fetchGovssoLoginRequestInfo(String ssoChallenge) {
-        String requestUrl = govssoHydraConfigurationProperties.getLoginUrl() + "?login_challenge="+ ssoChallenge;
+        String requestUrl = govssoHydraConfigurationProperties.getLoginUrl() + "?login_challenge=" + ssoChallenge;
         try {
             govssoRequestLogger.logRequest(requestUrl, HttpMethod.GET);
             var response = hydraRestTemplate.exchange(
@@ -145,7 +144,7 @@ public class AuthInitController {
                     TaraSession.LoginRequestInfo.class);
             govssoRequestLogger.logResponse(response);
             return response.getBody();
-        } catch(HttpClientErrorException.NotFound | HttpClientErrorException.Gone e) {
+        } catch (HttpClientErrorException.NotFound | HttpClientErrorException.Gone e) {
             log.error("Unable to fetch SSO login request info!", e);
             throw new BadRequestException(ErrorCode.INVALID_GOVSSO_LOGIN_CHALLENGE, "Login challenge not found.");
         }

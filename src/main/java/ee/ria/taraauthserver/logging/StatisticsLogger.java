@@ -30,6 +30,9 @@ import static net.logstash.logback.marker.Markers.appendFields;
 @Slf4j
 @Component
 public class StatisticsLogger {
+
+    public static final String SERVICE_GOVSSO = "GOVSSO";
+
     public void log(TaraSession taraSession) {
         log(taraSession, null);
     }
@@ -55,16 +58,29 @@ public class StatisticsLogger {
     }
 
     private void processAuthenticationRequest(TaraSession taraSession, TaraAuthenticationState state, SessionStatisticsBuilder statisticsBuilder) {
-        LoginRequestInfo loginRequestInfo = taraSession.getLoginRequestInfo();
-        LegalPerson selectedLegalPerson = taraSession.getSelectedLegalPerson();
+        LoginRequestInfo taraLoginRequestInfo = taraSession.getLoginRequestInfo();
+        LoginRequestInfo govssoLoginRequestInfo = taraSession.getGovssoLoginRequestInfo();
+
         statisticsBuilder
-                .clientId(loginRequestInfo.getClientId())
                 .authenticationState(state)
-                .legalPerson(selectedLegalPerson != null);
-        loginRequestInfo.getInstitution().ifPresent(i -> {
-            statisticsBuilder.registryCode(i.getRegistryCode());
-            statisticsBuilder.sector(i.getSector().toString());
-        });
+                .legalPerson(taraSession.getSelectedLegalPerson() != null);
+
+        if (govssoLoginRequestInfo != null) {
+            statisticsBuilder
+                    .service(SERVICE_GOVSSO)
+                    .clientId(govssoLoginRequestInfo.getClientId());
+            govssoLoginRequestInfo.getInstitution().ifPresent(i -> {
+                statisticsBuilder.registryCode(i.getRegistryCode());
+                statisticsBuilder.sector(i.getSector().toString());
+            });
+        } else {
+            statisticsBuilder
+                    .clientId(taraLoginRequestInfo.getClientId());
+            taraLoginRequestInfo.getInstitution().ifPresent(i -> {
+                statisticsBuilder.registryCode(i.getRegistryCode());
+                statisticsBuilder.sector(i.getSector().toString());
+            });
+        }
     }
 
     private void processAuthenticationResult(TaraSession taraSession, Exception ex, SessionStatisticsBuilder sessionStatisticsBuilder) {
@@ -103,6 +119,7 @@ public class StatisticsLogger {
     @Builder
     @Data
     public static class SessionStatistics {
+
         @JsonProperty("client.id")
         private String clientId;
 
@@ -111,6 +128,9 @@ public class StatisticsLogger {
 
         @JsonProperty("institution.registry_code")
         private String registryCode;
+
+        @JsonProperty("authentication.service")
+        private String service;
 
         @JsonProperty("authentication.legal_person")
         private boolean legalPerson;

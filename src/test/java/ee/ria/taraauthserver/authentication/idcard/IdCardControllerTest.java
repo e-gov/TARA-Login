@@ -102,7 +102,7 @@ class IdCardControllerTest extends BaseTest {
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertErrorIsLogged("User exception: XCLIENTCERTIFICATE can not be null");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, service=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
@@ -127,7 +127,7 @@ class IdCardControllerTest extends BaseTest {
         assertTrue(response.body().htmlPath().getString("**.find { it.@role == 'alert'}.p.a.@href").contains("mailto:"));
         assertTrue(response.body().htmlPath().getString("**.find { it.@role == 'alert'}.p.text()").contains("Palun saatke e-kiri aadressile"));
         assertErrorIsLogged("User exception: XCLIENTCERTIFICATE can not be null");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, service=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
@@ -149,7 +149,7 @@ class IdCardControllerTest extends BaseTest {
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertErrorIsLogged("Server encountered an unexpected error: Failed to decode certificate");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, service=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
@@ -171,7 +171,7 @@ class IdCardControllerTest extends BaseTest {
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertErrorIsLogged("User exception: XCLIENTCERTIFICATE can not be an empty string");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, service=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
@@ -209,7 +209,7 @@ class IdCardControllerTest extends BaseTest {
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [INIT_AUTH_PROCESS]");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=SESSION_STATE_INVALID)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, service=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=SESSION_STATE_INVALID)");
     }
 
     @Test
@@ -390,7 +390,7 @@ class IdCardControllerTest extends BaseTest {
         assertWarningIsLogged("OCSP validation failed: Invalid certificate status <REVOKED> received");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_REVOKED)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, service=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_REVOKED)");
     }
 
     @Test
@@ -431,7 +431,7 @@ class IdCardControllerTest extends BaseTest {
         assertWarningIsLogged("OCSP validation failed: Invalid certificate status <UNKNOWN> received");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_UNKNOWN)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, service=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_UNKNOWN)");
     }
 
     @Test
@@ -499,7 +499,7 @@ class IdCardControllerTest extends BaseTest {
         assertErrorIsLogged("Server encountered an unexpected error: OCSP validation failed: Issuer certificate with CN 'WRONG CN' is not a trusted certificate!");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, service=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
@@ -534,7 +534,7 @@ class IdCardControllerTest extends BaseTest {
         assertErrorIsLogged("Server encountered an unexpected error: OCSP validation failed: In case of AIA OCSP, the OCSP responder certificate must be issued by the authority that issued the user certificate. Expected issuer: 'CN=TEST of ESTEID-SK 2015, OID.2.5.4.97=NTREE-10747013, O=AS Sertifitseerimiskeskus, C=EE', but the OCSP responder signing certificate was issued by 'EMAILADDRESS=pki@sk.ee, CN=TEST of ESTEID-SK 2011, O=AS Sertifitseerimiskeskus, C=EE'");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, service=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
@@ -560,7 +560,7 @@ class IdCardControllerTest extends BaseTest {
         assertErrorIsLogged("Server encountered an unexpected error: OCSP validation failed: malformed response: no response data found");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
-                "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+                "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, service=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
@@ -587,7 +587,7 @@ class IdCardControllerTest extends BaseTest {
 
         assertWarningIsLogged("OCSP validation failed: OCSP service is currently not available");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
-                "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_OCSP_NOT_AVAILABLE)");
+                "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, service=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_OCSP_NOT_AVAILABLE)");
     }
 
     @Test
@@ -616,7 +616,7 @@ class IdCardControllerTest extends BaseTest {
 
         assertWarningIsLogged("OCSP validation failed: User certificate is not yet valid");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
-                "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_CERT_NOT_YET_VALID)");
+                "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, service=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_CERT_NOT_YET_VALID)");
     }
 
     @Test
@@ -647,7 +647,7 @@ class IdCardControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertWarningIsLogged("OCSP validation failed: User certificate is expired");
 
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_CERT_EXPIRED)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(clientId=null, sector=public, registryCode=null, service=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_CERT_EXPIRED)");
     }
 
     private String createSessionWithAuthenticationState(TaraAuthenticationState authenticationState) {

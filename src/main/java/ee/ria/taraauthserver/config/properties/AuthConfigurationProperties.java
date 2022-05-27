@@ -85,6 +85,7 @@ public class AuthConfigurationProperties {
 
         private int maxConnectionsTotal = 50;
     }
+
     @Data
     @Validated
     @ConfigurationProperties(prefix = "govsso.hydra-service")
