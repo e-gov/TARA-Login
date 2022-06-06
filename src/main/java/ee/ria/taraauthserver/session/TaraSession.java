@@ -189,19 +189,22 @@ public class TaraSession implements Serializable {
         }
 
         public String getClientLogo() {
-            return Optional.of(this)
-                    .map(TaraSession.LoginRequestInfo::getClient)
-                    .map(TaraSession.Client::getMetaData)
-                    .map(TaraSession.MetaData::getOidcClient)
+            return getOidcClient()
                     .map(TaraSession.OidcClient::getLogo)
                     .orElse(null);
         }
 
-        public Optional<Institution> getInstitution() {
+        // TODO: Add similar @JsonIgnore annotations to all the get...() methods in this class that don't need to be present in JSON
+        @JsonIgnore
+        public Optional<OidcClient> getOidcClient() {
             return Optional.of(this)
-                    .map(TaraSession.LoginRequestInfo::getClient)
-                    .map(TaraSession.Client::getMetaData)
-                    .map(TaraSession.MetaData::getOidcClient)
+                    .map(LoginRequestInfo::getClient)
+                    .map(Client::getMetaData)
+                    .map(MetaData::getOidcClient);
+        }
+
+        public Optional<Institution> getInstitution() {
+            return getOidcClient()
                     .map(TaraSession.OidcClient::getInstitution);
         }
 

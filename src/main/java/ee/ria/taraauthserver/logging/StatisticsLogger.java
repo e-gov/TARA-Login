@@ -2,6 +2,8 @@ package ee.ria.taraauthserver.logging;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.SPType;
+import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.TaraException;
 import ee.ria.taraauthserver.logging.StatisticsLogger.SessionStatistics.SessionStatisticsBuilder;
@@ -15,6 +17,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import static ee.ria.taraauthserver.error.ErrorCode.INTERNAL_ERROR;
@@ -65,6 +68,13 @@ public class StatisticsLogger {
                 .authenticationState(state)
                 .legalPerson(taraSession.getSelectedLegalPerson() != null);
 
+        if (taraSession.getAuthenticationResult() != null
+                && isEidasAuthentication(taraSession)
+                && isPrivateSectorRequest(taraLoginRequestInfo)
+                && taraLoginRequestInfo.getOidcClient().isPresent()) {
+            statisticsBuilder.eidasRequesterId(Objects.toString(taraLoginRequestInfo.getOidcClient().get().getEidasRequesterId(), null));
+        }
+
         if (govssoLoginRequestInfo != null) {
             statisticsBuilder
                     .service(SERVICE_GOVSSO)
@@ -81,6 +91,16 @@ public class StatisticsLogger {
                 statisticsBuilder.sector(i.getSector().toString());
             });
         }
+    }
+
+    private boolean isEidasAuthentication(TaraSession taraSession) {
+        return taraSession.getAuthenticationResult().getAmr() != null
+                && taraSession.getAuthenticationResult().getAmr().getScope() == TaraScope.EIDAS;
+    }
+
+    private boolean isPrivateSectorRequest(LoginRequestInfo taraLoginRequestInfo) {
+        return taraLoginRequestInfo.getInstitution().isPresent()
+                && taraLoginRequestInfo.getInstitution().get().getSector() == SPType.PRIVATE;
     }
 
     private void processAuthenticationResult(TaraSession taraSession, Exception ex, SessionStatisticsBuilder sessionStatisticsBuilder) {
@@ -122,6 +142,9 @@ public class StatisticsLogger {
 
         @JsonProperty("client.id")
         private String clientId;
+
+        @JsonProperty("client.eidas_requester_id")
+        private String eidasRequesterId;
 
         @JsonProperty("institution.sector")
         private String sector;
