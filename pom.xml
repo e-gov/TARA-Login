@@ -56,12 +56,13 @@
         <dependency>
             <groupId>co.elastic.apm</groupId>
             <artifactId>apm-agent-api</artifactId>
-            <version>1.31.0</version>
+            <!-- TODO Elastic APM Agent 1.30.x and 1.31.0 clear "trace.id" from org.slf4j.MDC before error page is rendered. -->
+            <version>1.29.0</version>
         </dependency>
         <dependency>
             <groupId>co.elastic.apm</groupId>
             <artifactId>elastic-apm-agent</artifactId>
-            <version>1.31.0</version>
+            <version>1.29.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
