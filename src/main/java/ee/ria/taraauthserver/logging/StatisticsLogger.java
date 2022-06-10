@@ -140,6 +140,9 @@ public class StatisticsLogger {
     @Data
     public static class SessionStatistics {
 
+        @JsonProperty("client.service")
+        private String service;
+
         @JsonProperty("client.id")
         private String clientId;
 
@@ -151,9 +154,6 @@ public class StatisticsLogger {
 
         @JsonProperty("institution.registry_code")
         private String registryCode;
-
-        @JsonProperty("authentication.service")
-        private String service;
 
         @JsonProperty("authentication.legal_person")
         private boolean legalPerson;
