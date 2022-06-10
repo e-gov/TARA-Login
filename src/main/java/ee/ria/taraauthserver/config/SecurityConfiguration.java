@@ -42,6 +42,7 @@ public class SecurityConfiguration {
     @ConditionalOnProperty(value = "tara.auth-methods.id-card.basic-auth.enabled")
     @Configuration
     @RequiredArgsConstructor
+    // TODO Replace deprecated WebSecurityConfigurerAdapter with SecurityFilterChain etc.
     public static class IdCardApiWebSecurityConfigurationAdapter extends WebSecurityConfigurerAdapter {
         private final AuthConfigurationProperties authConfigurationProperties;
         @Value("${tara.auth-methods.id-card.basic-auth.username}")

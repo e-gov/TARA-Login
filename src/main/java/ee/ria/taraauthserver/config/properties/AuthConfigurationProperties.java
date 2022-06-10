@@ -119,6 +119,7 @@ public class AuthConfigurationProperties {
     @Data
     public static class AuthMethodProperties {
 
+        // TODO In eIDAS configuration this value is null, but other authentication methods should require non-null value.
         LevelOfAssurance levelOfAssurance;
 
         boolean enabled = false;
@@ -129,9 +130,6 @@ public class AuthConfigurationProperties {
     @EqualsAndHashCode(callSuper = true)
     @ConfigurationProperties(prefix = "tara.auth-methods.mobile-id")
     public static class MidAuthConfigurationProperties extends AuthMethodProperties {
-
-        @NotNull
-        LevelOfAssurance levelOfAssurance;
 
         @NotNull
         private String hostUrl;
@@ -180,9 +178,6 @@ public class AuthConfigurationProperties {
     @EqualsAndHashCode(callSuper = true)
     @ConfigurationProperties(prefix = "tara.auth-methods.id-card")
     public static class IdCardAuthConfigurationProperties extends AuthMethodProperties {
-
-        @NotNull
-        LevelOfAssurance levelOfAssurance;
 
         @NotNull
         private String truststorePath;

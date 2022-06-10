@@ -6,7 +6,6 @@ import ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import ee.ria.taraauthserver.logging.RestTemplateErrorLogger;
 import ee.ria.taraauthserver.utils.ThymeleafSupport;
 import lombok.extern.slf4j.Slf4j;
-import nz.net.ultraq.thymeleaf.LayoutDialect;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -128,11 +127,6 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
         bean.setCookieName("LOGIN_LOCALE");
         bean.setDefaultLocale(new Locale(locale));
         return bean;
-    }
-
-    @Bean
-    public LayoutDialect layoutDialect() {
-        return new LayoutDialect();
     }
 
     @Bean
