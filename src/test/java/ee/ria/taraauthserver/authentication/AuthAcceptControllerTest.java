@@ -40,7 +40,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(403)
                 .body("error", equalTo("Forbidden"))
-                .body("message", equalTo("Keelatud päring. Päring esitati topelt, sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
+                .body("message", equalTo("Keelatud päring. Päring esitati topelt, seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("Access denied: Invalid CSRF token.");
@@ -57,7 +57,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
+                .body("message", equalTo("Teie seanssi ei leitud! Seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("reportable", equalTo(false));
 
         assertStatisticsIsNotLogged();
@@ -77,7 +77,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
+                .body("message", equalTo("Ebakorrektne päring. Vale seansi staatus."))
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [AUTHENTICATION_SUCCESS, NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED]");

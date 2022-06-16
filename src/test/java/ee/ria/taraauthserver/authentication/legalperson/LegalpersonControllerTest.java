@@ -53,7 +53,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
-                .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
+                .body("message", equalTo("Teie seanssi ei leitud! Seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("path", equalTo("/auth/legalperson/init"));
 
         assertErrorIsLogged("User exception: Invalid session");
@@ -76,7 +76,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
-                .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
+                .body("message", equalTo("Ebakorrektne päring. Vale seansi staatus."))
                 .body("path", equalTo("/auth/legalperson/init"));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [NATURAL_PERSON_AUTHENTICATION_COMPLETED]");
@@ -168,7 +168,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
-                .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
+                .body("message", equalTo("Teie seanssi ei leitud! Seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("path", equalTo("/auth/legalperson"));
 
         assertErrorIsLogged("User exception: Invalid session");
@@ -191,7 +191,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
-                .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
+                .body("message", equalTo("Ebakorrektne päring. Vale seansi staatus."))
                 .body("path", equalTo("/auth/legalperson"));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [LEGAL_PERSON_AUTHENTICATION_INIT]");
@@ -401,7 +401,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(403)
                 .body("error", equalTo("Forbidden"))
-                .body("message", equalTo("Keelatud päring. Päring esitati topelt, sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."));
+                .body("message", equalTo("Keelatud päring. Päring esitati topelt, seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."));
 
         assertErrorIsLogged("Access denied: Invalid CSRF token.");
         assertStatisticsIsNotLogged();
@@ -421,7 +421,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
-                .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
+                .body("message", equalTo("Teie seanssi ei leitud! Seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("path", equalTo("/auth/legalperson/confirm"));
 
         assertErrorIsLogged("User exception: Invalid session");
@@ -445,7 +445,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
-                .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
+                .body("message", equalTo("Ebakorrektne päring. Vale seansi staatus."))
                 .body("path", equalTo("/auth/legalperson/confirm"));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'LEGAL_PERSON_AUTHENTICATION_INIT', expected one of: [GET_LEGAL_PERSON_LIST]");
