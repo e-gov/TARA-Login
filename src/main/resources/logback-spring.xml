@@ -137,6 +137,9 @@
                 <logstashMarkers/>
                 <mdc>
                     <includeMdcKeyName>client.ip</includeMdcKeyName>
+                    <includeMdcKeyName>labels.tara_trace_id</includeMdcKeyName>
+                    <includeMdcKeyName>labels.govsso_trace_id</includeMdcKeyName>
+                    <includeMdcKeyName>service.version</includeMdcKeyName>
                 </mdc>
                 <arguments/>
             </providers>
