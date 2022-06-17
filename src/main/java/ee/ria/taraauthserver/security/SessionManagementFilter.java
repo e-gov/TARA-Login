@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.security;
 
 import co.elastic.apm.api.ElasticApm;
 import ee.ria.taraauthserver.session.TaraSession;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.MDC;
@@ -30,6 +31,8 @@ public class SessionManagementFilter extends OncePerRequestFilter {
     private static final RequestMatcher AUTH_REQUEST_MATCHER = new AntPathRequestMatcher("/auth/**");
     public static final String MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID = "labels.tara_trace_id";
     private static final String APM_LABEL_KEY_FLOW_TRACE_ID = "tara_trace_id";
+    public static final String MDC_ATTRIBUTE_KEY_GOVSSO_FLOW_TRACE_ID = "labels.govsso_trace_id";
+    private static final String APM_LABEL_KEY_GOVSSO_FLOW_TRACE_ID = "govsso_trace_id";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -45,8 +48,10 @@ public class SessionManagementFilter extends OncePerRequestFilter {
 
         if (session != null && AUTH_REQUEST_MATCHER.matches(request)) {
             setFlowTraceId(session);
+            setGovssoFlowTraceId(session);
         } else {
             MDC.remove(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID);
+            MDC.remove(MDC_ATTRIBUTE_KEY_GOVSSO_FLOW_TRACE_ID);
         }
 
         filterChain.doFilter(request, response);
@@ -57,6 +62,20 @@ public class SessionManagementFilter extends OncePerRequestFilter {
         String taraTraceId = DigestUtils.sha256Hex(session.getId());
         ElasticApm.currentTransaction().setLabel(APM_LABEL_KEY_FLOW_TRACE_ID, taraTraceId);
         MDC.put(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, taraTraceId);
+    }
+
+    private void setGovssoFlowTraceId(HttpSession session) {
+        TaraSession taraSession = (TaraSession) session.getAttribute(TARA_SESSION);
+        if (taraSession != null && taraSession.getGovssoLoginRequestInfo() != null) {
+            setGovssoFlowTraceId(taraSession.getGovssoLoginRequestInfo().getChallenge());
+        } else {
+            MDC.remove(MDC_ATTRIBUTE_KEY_GOVSSO_FLOW_TRACE_ID);
+        }
+    }
+
+    public static void setGovssoFlowTraceId(@NonNull String govssoLoginChallenge) {
+        ElasticApm.currentTransaction().setLabel(APM_LABEL_KEY_GOVSSO_FLOW_TRACE_ID, govssoLoginChallenge);
+        MDC.put(MDC_ATTRIBUTE_KEY_GOVSSO_FLOW_TRACE_ID, govssoLoginChallenge);
     }
 
     private HttpSession createNewSession(HttpServletRequest request, HttpSession session) {

@@ -62,7 +62,7 @@ public class AcceptConsentRequest {
         idToken.setAmr(of(taraSession.getAuthenticationResult().getAmr().getAmrName()));
         idToken.setState(getStateParameterValue(taraSession));
         if (taraSession.getGovssoLoginRequestInfo() != null)
-            idToken.setGovssoLoginChallenge(taraSession.getLoginRequestInfo().getGovssoChallenge());
+            idToken.setGovssoLoginChallenge(taraSession.getGovssoLoginRequestInfo().getChallenge());
         loginSession.setIdToken(idToken);
         acceptConsentRequest.setSession(loginSession);
 

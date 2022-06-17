@@ -8,6 +8,7 @@ import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.logging.ClientRequestLogger;
+import ee.ria.taraauthserver.security.SessionManagementFilter;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.RequestUtils;
@@ -77,8 +78,10 @@ public class AuthInitController {
         newTaraSession.setLoginRequestInfo(loginRequestInfo);
 
         if (StringUtils.isNotBlank(govssoHydraConfigurationProperties.getClientId()) && govssoHydraConfigurationProperties.getClientId().equals(loginRequestInfo.getClientId())) {
-            if (loginRequestInfo.getGovssoChallenge() != null && loginRequestInfo.getGovssoChallenge().matches("^[a-f0-9]{32}$")) {
-                TaraSession.LoginRequestInfo govssoLoginRequestInfo = fetchGovssoLoginRequestInfo(loginRequestInfo.getGovssoChallenge());
+            String govssoLoginChallenge = loginRequestInfo.getGovssoChallenge();
+            if (govssoLoginChallenge != null && govssoLoginChallenge.matches("^[a-f0-9]{32}$")) {
+                SessionManagementFilter.setGovssoFlowTraceId(govssoLoginChallenge);
+                TaraSession.LoginRequestInfo govssoLoginRequestInfo = fetchGovssoLoginRequestInfo(govssoLoginChallenge);
                 newTaraSession.setGovssoLoginRequestInfo(govssoLoginRequestInfo);
             } else {
                 throw new BadRequestException(ErrorCode.INVALID_GOVSSO_LOGIN_CHALLENGE, "Incorrect GOVSSO login challenge format.");
@@ -143,6 +146,10 @@ public class AuthInitController {
                     null,
                     TaraSession.LoginRequestInfo.class);
             govssoRequestLogger.logResponse(response);
+
+            if (!response.getBody().getChallenge().equals(ssoChallenge))
+                throw new IllegalStateException("Invalid GOVSSO Hydra response: requested login_challenge does not match retrieved login_challenge");
+
             return response.getBody();
         } catch (HttpClientErrorException.NotFound | HttpClientErrorException.Gone e) {
             log.error("Unable to fetch SSO login request info!", e);
