@@ -42,9 +42,13 @@ public class SessionManagementFilter extends OncePerRequestFilter {
         if (AUTH_INIT_REQUEST_MATCHER.matches(request)) {
             session = createNewSession(request, session);
         }
+
         if (session != null && AUTH_REQUEST_MATCHER.matches(request)) {
             setFlowTraceId(session);
+        } else {
+            MDC.remove(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID);
         }
+
         filterChain.doFilter(request, response);
         // TODO: Could clear MDC in finally block, but tests fail while application itself behaves correctly, needs investigation.
     }

@@ -2,7 +2,7 @@ package ee.ria.taraauthserver.security;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.jetbrains.annotations.NotNull;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -12,9 +12,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-
-import static org.apache.commons.lang3.StringUtils.isEmpty;
-import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 @RequiredArgsConstructor
 public class RequestCorrelationFilter extends OncePerRequestFilter {
@@ -27,12 +24,13 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
     private final BuildProperties buildProperties;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
         String requestTraceId = MDC.get(MDC_ATTRIBUTE_KEY_REQUEST_TRACE_ID);
-        if (isEmpty(requestTraceId)) {
-            MDC.put(MDC_ATTRIBUTE_KEY_REQUEST_TRACE_ID, RandomStringUtils.randomAlphanumeric(16).toLowerCase());
+        if (StringUtils.isEmpty(requestTraceId)) {
+            requestTraceId = RandomStringUtils.random(32, "0123456789abcdef");
+            MDC.put(MDC_ATTRIBUTE_KEY_REQUEST_TRACE_ID, requestTraceId);
         }
 
         // NB! Set traceId also as HttpServletRequest attribute to make it accessible for Tomcat's AccessLogValve
@@ -43,10 +41,18 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
         }
 
         String ipAddress = request.getRemoteAddr();
-        if (isNotEmpty(ipAddress)) {
+        if (StringUtils.isNotEmpty(ipAddress)) {
             MDC.put(MDC_ATTRIBUTE_KEY_CLIENT_IP, ipAddress);
+        } else {
+            MDC.remove(MDC_ATTRIBUTE_KEY_CLIENT_IP);
         }
 
         filterChain.doFilter(request, response);
+
+        // TODO Ideally all MDC values that are set here should be cleared after request completes - investigate where
+        //  is the correct place to do that. Doing it here clears trace.id too early so that error page can not access
+        //  it.
+        //  As the second-best solution, we are (re)setting _all_ values above at the start of request. Usually request
+        //  threads and background threads are not cross-used.
     }
 }
