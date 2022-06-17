@@ -51,7 +51,7 @@ import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_CONFIRMATIO
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_DISAPLAYTEXTANDPIN;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_VC_CHOICE;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_WRONG_VC;
-import static ee.ria.taraauthserver.security.RequestCorrelationFilter.MDC_ATTRIBUTE_TRACE_ID;
+import static ee.ria.taraauthserver.security.RequestCorrelationFilter.MDC_ATTRIBUTE_KEY_REQUEST_TRACE_ID;
 import static java.lang.String.format;
 import static java.lang.String.join;
 import static org.springframework.boot.web.error.ErrorAttributeOptions.Include.BINDING_ERRORS;
@@ -112,7 +112,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
         Locale locale = RequestUtils.getLocale();
         attr.put(ERROR_ATTR_LOCALE, locale);
         attr.put(ERROR_ATTR_LOGIN_CHALLENGE, webRequest.getAttribute(ERROR_ATTR_LOGIN_CHALLENGE, SCOPE_REQUEST));
-        attr.put(ERROR_ATTR_INCIDENT_NR, MDC.get(MDC_ATTRIBUTE_TRACE_ID));
+        attr.put(ERROR_ATTR_INCIDENT_NR, MDC.get(MDC_ATTRIBUTE_KEY_REQUEST_TRACE_ID));
         attr.put(ERROR_ATTR_REPORTABLE, isReportable(error, status));
         attr.remove("errors");
         return attr;

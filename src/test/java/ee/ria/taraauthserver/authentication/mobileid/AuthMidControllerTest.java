@@ -32,7 +32,7 @@ import static ee.ria.taraauthserver.config.properties.AuthenticationType.ID_CARD
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
 import static ee.ria.taraauthserver.error.ErrorCode.ERROR_GENERAL;
 import static ee.ria.taraauthserver.error.ErrorCode.MID_INTERNAL_ERROR;
-import static ee.ria.taraauthserver.security.SessionManagementFilter.TARA_TRACE_ID;
+import static ee.ria.taraauthserver.security.SessionManagementFilter.MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
@@ -93,7 +93,7 @@ class AuthMidControllerTest extends BaseTest {
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
         String taraTraceId = DigestUtils.sha256Hex(taraSession.getSessionId());
-        assertMessageIsLogged(e -> e.getMDCPropertyMap().getOrDefault(TARA_TRACE_ID, "missing").equals(taraTraceId),
+        assertMessageIsLogged(e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
                 "Initiating Mobile-ID authentication session",
                 "State: INIT_AUTH_PROCESS -> INIT_MID",
                 "Mobile-ID request",
@@ -129,7 +129,7 @@ class AuthMidControllerTest extends BaseTest {
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         String taraTraceId = DigestUtils.sha256Hex(taraSession.getSessionId());
-        assertMessageIsLogged(e -> e.getMDCPropertyMap().getOrDefault(TARA_TRACE_ID, "missing").equals(taraTraceId),
+        assertMessageIsLogged(e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
                 "Initiating Mobile-ID authentication session",
                 "State: INIT_AUTH_PROCESS -> INIT_MID",
                 "Mobile-ID request",
