@@ -146,6 +146,7 @@
         </encoder>
     </appender>
 
+    <logger name="ee.ria.taraauthserver.alerts.AlertsScheduler" level="WARN"/>
     <logger name="ee.sk.smartid.rest.SmartIdRestConnector" level="ERROR"/>
     <logger name="ee.sk.mid.MidAuthenticationResponseValidator" level="ERROR"/>
 

@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.session;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
@@ -14,6 +15,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import net.logstash.logback.util.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -363,6 +365,14 @@ public class TaraSession implements Serializable {
         private MidSettings midSettings;
         @JsonProperty("logo")
         private String logo;
+
+        @JsonGetter("logo")
+        public String getLogoSummary() {
+            if (StringUtils.isBlank(logo)) {
+                return logo;
+            }
+            return String.format("[%d] chars", logo.length());
+        }
     }
 
     @Data
