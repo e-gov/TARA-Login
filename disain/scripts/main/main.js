@@ -314,14 +314,6 @@ jQuery(function ($) {
 		validateFormFieldValue($(this), function(){return true;});
 	});
 
-	// Bank-link form submit
-	$('#bankForm a.c-logo-list__link').on('click', function(event){
-		event.preventDefault();
-		
-		$('#bankForm input[name="bank"]').val($(this).attr('id'));
-		$('#bankForm').submit();
-	});
-
 	// Smart-ID limit max length
 	$('#smartIdForm input#sid-personal-code.form-control').on('keypress change input', function(event) {
 		if ($(this).val().length >= 11) {
