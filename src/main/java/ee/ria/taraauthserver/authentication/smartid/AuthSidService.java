@@ -68,6 +68,7 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERS
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_STATUS;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static ee.ria.taraauthserver.utils.RequestUtils.withMdc;
+import static ee.ria.taraauthserver.utils.RequestUtils.withMdcAndLocale;
 import static java.time.Instant.now;
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.util.concurrent.CompletableFuture.delayedExecutor;
@@ -121,7 +122,7 @@ public class AuthSidService {
         taraSession.setState(INIT_SID);
 
         CompletableFuture
-                .supplyAsync(withMdc(() -> initAuthentication(idCode, taraSession, authenticationHash, requestBuilder)),
+                .supplyAsync(withMdcAndLocale(() -> initAuthentication(idCode, taraSession, authenticationHash, requestBuilder)),
                         delayedExecutor(smartIdConfigurationProperties.getDelayInitiateSidSessionInMilliseconds(), MILLISECONDS, taskExecutor))
                 .thenAcceptAsync(withMdc((sidSessionId) -> pollAuthenticationResult(sidSessionId, taraSession, requestBuilder)),
                         delayedExecutor(smartIdConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLISECONDS, taskExecutor));

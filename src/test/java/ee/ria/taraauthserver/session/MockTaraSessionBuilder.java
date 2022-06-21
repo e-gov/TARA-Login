@@ -54,6 +54,7 @@ public class MockTaraSessionBuilder {
                                                List<String> requestedScopes,
                                                List<TaraSession.LegalPerson> legalPersonList,
                                                SPType spType,
+                                               Map<String, String> shortNameTranslations,
                                                TaraSession.AuthenticationResult authenticationResult) {
         TaraSession taraSession = new TaraSession(sessionId);
         TaraSession.LoginRequestInfo lri = new TaraSession.LoginRequestInfo();
@@ -76,6 +77,9 @@ public class MockTaraSessionBuilder {
         }
         oidcClient.setInstitution(institution);
         oidcClient.setEidasRequesterId(new URI(MOCK_REQUESTER_ID));
+        if (shortNameTranslations != null) {
+            oidcClient.setShortNameTranslations(shortNameTranslations);
+        }
         metaData.setOidcClient(oidcClient);
         client.setMetaData(metaData);
         client.setScope(clientAllowedScopes == null ? "" : join(" ", clientAllowedScopes));

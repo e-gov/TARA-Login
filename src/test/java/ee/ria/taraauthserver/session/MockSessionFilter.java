@@ -15,6 +15,7 @@ import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static ee.ria.taraauthserver.config.SecurityConfiguration.TARA_SESSION_CSRF_TOKEN;
@@ -33,8 +34,9 @@ public class MockSessionFilter implements Filter {
                                                          List<AuthenticationType> authenticationTypes, List<String> clientAllowedScopes, List<String> requestedScopes,
                                                          List<TaraSession.LegalPerson> legalPersonList,
                                                          SPType spType,
+                                                         Map<String, String> shortNameTranslations,
                                                          TaraSession.AuthenticationResult authenticationResult) {
-        Session session = createTaraSession(sessionRepository, authenticationState, authenticationTypes, clientAllowedScopes, requestedScopes, legalPersonList, spType, authenticationResult);
+        Session session = createTaraSession(sessionRepository, authenticationState, authenticationTypes, clientAllowedScopes, requestedScopes, legalPersonList, spType, shortNameTranslations, authenticationResult);
         sessionRepository.save(session);
         return new MockSessionFilter(session);
     }
@@ -78,6 +80,7 @@ public class MockSessionFilter implements Filter {
                                              List<String> requestedScopes,
                                              List<TaraSession.LegalPerson> legalPersonList,
                                              SPType spType,
+                                             Map<String, String> shortNameTranslations,
                                              TaraSession.AuthenticationResult authenticationResult) {
         Session session = createSession(sessionRepository);
         TaraSession taraSession = MockTaraSessionBuilder.builder()
@@ -88,6 +91,7 @@ public class MockSessionFilter implements Filter {
                 .requestedScopes(requestedScopes)
                 .legalPersonList(legalPersonList)
                 .spType(spType)
+                .shortNameTranslations(shortNameTranslations)
                 .authenticationResult(authenticationResult)
                 .build();
         session.setAttribute(TARA_SESSION, taraSession);

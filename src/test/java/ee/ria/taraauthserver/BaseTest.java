@@ -93,6 +93,10 @@ public abstract class BaseTest {
             .keyManagerPassword("changeit")
             .notifier(new ConsoleNotifier(true))
     );
+    protected static final Map<String, String> SHORT_NAME_TRANSLATIONS = Map.of(
+            "et", "short name et",
+            "en", "short name en"
+    );
     private static ListAppender<ILoggingEvent> mockAppender;
     @Autowired
     protected SessionRepository<Session> sessionRepository;
@@ -122,8 +126,13 @@ public abstract class BaseTest {
     }
 
     protected static void createMidApiAuthenticationStub(String response, int status, int delayInMilliseconds) {
+        createMidApiAuthenticationStub(response, status, delayInMilliseconds, "EST", "default short name");
+    }
+
+    protected static void createMidApiAuthenticationStub(String response, int status, int delayInMilliseconds, String language, String shortName) {
         wireMockServer.stubFor(any(urlPathEqualTo("/mid-api/authentication"))
-                .withRequestBody(matchingJsonPath("$.language", WireMock.equalTo("EST")))
+                .withRequestBody(matchingJsonPath("$.language", WireMock.equalTo(language)))
+                .withRequestBody(matchingJsonPath("$.displayText", WireMock.equalTo(shortName)))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withStatus(status)

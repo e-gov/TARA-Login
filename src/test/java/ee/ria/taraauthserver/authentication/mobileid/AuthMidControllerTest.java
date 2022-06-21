@@ -24,10 +24,6 @@ import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
 import static ch.qos.logback.classic.Level.ERROR;
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.any;
-import static com.github.tomakehurst.wiremock.client.WireMock.matchingJsonPath;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.ID_CARD;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
 import static ee.ria.taraauthserver.error.ErrorCode.ERROR_GENERAL;
@@ -64,6 +60,7 @@ class AuthMidControllerTest extends BaseTest {
     @BeforeEach
     void beforeEach() {
         Mockito.doReturn(MOCK_HASH_TO_SIGN).when(authMidService).getAuthenticationHash();
+        midAuthConfigurationProperties.setDisplayText("default short name");
     }
 
     @AfterEach
@@ -466,12 +463,13 @@ class AuthMidControllerTest extends BaseTest {
 
     @Test
     void midAuthInit_request_language_is_correct() {
-        wireMockServer.stubFor(any(urlPathEqualTo("/mid-api/authentication"))
-                .withRequestBody(matchingJsonPath("$.language", WireMock.equalTo("ENG")))
-                .willReturn(aResponse()
-                        .withBodyFile("mock_responses/mid/mid_authenticate_response.json")
-                        .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withStatus(200)));
+        createMidApiAuthenticationStub(
+                "mock_responses/mid/mid_authenticate_response.json",
+                200,
+                0,
+                "ENG",
+                "default short name"
+        );
         createMidApiPollStub("mock_responses/mid/mid_poll_response.json", 200);
         MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
@@ -483,6 +481,39 @@ class AuthMidControllerTest extends BaseTest {
                 .formParam("telephoneNumber", "00000266")
                 .when()
                 .post("/auth/mid/init?lang=en")
+                .then()
+                .assertThat()
+                .statusCode(200);
+
+        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
+        TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
+        assertAuthenticationResult(result);
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    void midAuthInit_request_non_default_language_is_correct() {
+        createMidApiAuthenticationStub(
+                "mock_responses/mid/mid_authenticate_response.json",
+                200,
+                0,
+                "EST",
+                SHORT_NAME_TRANSLATIONS.get("et")
+        );
+        createMidApiPollStub("mock_responses/mid/mid_poll_response.json", 200);
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(MOBILE_ID))
+                .shortNameTranslations(SHORT_NAME_TRANSLATIONS)
+                .build();
+
+        given()
+                .filter(sessionFilter)
+                .formParam("idCode", "60001019939")
+                .formParam("telephoneNumber", "00000266")
+                .when()
+                .post("/auth/mid/init?lang=et")
                 .then()
                 .assertThat()
                 .statusCode(200);

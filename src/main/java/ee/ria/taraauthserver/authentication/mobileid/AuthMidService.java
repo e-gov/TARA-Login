@@ -68,6 +68,7 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERS
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_MID_STATUS;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static ee.ria.taraauthserver.utils.RequestUtils.withMdc;
+import static ee.ria.taraauthserver.utils.RequestUtils.withMdcAndLocale;
 import static java.time.Instant.now;
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.util.Arrays.stream;
@@ -134,7 +135,7 @@ public class AuthMidService {
         MidLanguage midLanguage = getMidLanguage();
 
         CompletableFuture
-                .supplyAsync(withMdc(() -> initAuthentication(taraSession, idCode, telephoneNumber, authenticationHash, midLanguage)),
+                .supplyAsync(withMdcAndLocale(() -> initAuthentication(taraSession, idCode, telephoneNumber, authenticationHash, midLanguage)),
                         delayedExecutor(midAuthConfigurationProperties.getDelayInitiateMidSessionInMilliseconds(), MILLISECONDS, taskExecutor))
                 .thenAcceptAsync(withMdc((midAuthentication) -> pollAuthenticationResult(taraSession, authenticationHash, midAuthentication, telephoneNumber)),
                         delayedExecutor(midAuthConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLISECONDS, taskExecutor));

@@ -98,7 +98,54 @@ public class AuthMidServiceTest extends BaseTest {
     @Tag(value = "MID_AUTH_POLL_REQUEST")
     @Tag(value = "MID_AUTH_POLL_RESPONSE_COMPLETE")
     void correctAuthenticationSessionStateWhen_successfulAuthentication() {
-        String sessionId = startMidAuthSessionWithPollResponse("mock_responses/mid/mid_poll_response.json", 200);
+        String sessionId = startMidAuthSessionWithPollResponseWithDelay(
+                "mock_responses/mid/mid_poll_response.json",
+                200,
+                0,
+                0,
+                "EST",
+                "short name et");
+
+        assertNotNull(sessionRepository.findById(sessionId));
+        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
+        TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
+        assertNull(result.getErrorCode());
+        assertEquals("60001019906", result.getIdCode());
+        assertEquals("EE", result.getCountry());
+        assertEquals("MARY ÄNN", result.getFirstName());
+        assertEquals("O’CONNEŽ-ŠUSLIK TESTNUMBER", result.getLastName());
+        assertEquals("+37200000766", result.getPhoneNumber());
+        assertEquals("EE60001019906", result.getSubject());
+        assertEquals("2000-01-01", result.getDateOfBirth().toString());
+        assertEquals(MOBILE_ID, result.getAmr());
+        assertEquals(LevelOfAssurance.HIGH, result.getAcr());
+        assertInfoIsLogged("State: NOT_SET -> INIT_AUTH_PROCESS",
+                "State: INIT_AUTH_PROCESS -> INIT_MID",
+                "Mobile-ID request",
+                "Mobile-ID response: 200",
+                "State: INIT_MID -> POLL_MID_STATUS",
+                "Initiated Mobile-ID session with id: de305d54-75b4-431b-adb2-eb6b9e546015",
+                "Starting Mobile-ID session status polling with id: de305d54-75b4-431b-adb2-eb6b9e546015",
+                "Mobile-ID response: 200",
+                "MID session id de305d54-75b4-431b-adb2-eb6b9e546015 authentication result: OK, status: COMPLETE",
+                "State: POLL_MID_STATUS -> NATURAL_PERSON_AUTHENTICATION_COMPLETED");
+        assertStatisticsIsNotLogged();
+        assertMidApiRequests();
+    }
+
+    @Test
+    @Tag(value = "MID_AUTH_POLL_REQUEST")
+    @Tag(value = "MID_AUTH_POLL_RESPONSE_COMPLETE")
+    void correctAuthenticationMessageWhen_successfulAuthenticationWithEnglishLanguage() {
+        LocaleContextHolder.setLocale(forLanguageTag("en"));
+        String sessionId = startMidAuthSessionWithPollResponseWithDelay(
+                "mock_responses/mid/mid_poll_response.json",
+                200,
+                0,
+                0,
+                "ENG",
+                "short name en");
 
         assertNotNull(sessionRepository.findById(sessionId));
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
@@ -381,7 +428,11 @@ public class AuthMidServiceTest extends BaseTest {
     }
 
     private String startMidAuthSessionWithPollResponseWithDelay(String pollResponse, int pollHttpStatus, int midInitResponseDelayInMilliseconds, int midPollResponseDelayInMilliseconds) {
-        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 200, midInitResponseDelayInMilliseconds);
+        return startMidAuthSessionWithPollResponseWithDelay(pollResponse, pollHttpStatus, midInitResponseDelayInMilliseconds, midPollResponseDelayInMilliseconds, "EST", "short name et");
+    }
+
+    private String startMidAuthSessionWithPollResponseWithDelay(String pollResponse, int pollHttpStatus, int midInitResponseDelayInMilliseconds, int midPollResponseDelayInMilliseconds, String language, String shortName) {
+        createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 200, midInitResponseDelayInMilliseconds, language, shortName);
         createMidApiPollStub(pollResponse, pollHttpStatus, midPollResponseDelayInMilliseconds);
         Session session = createNewAuthenticationSession();
         MidAuthenticationHashToSign midAuthenticationHashToSign = authMidService.startMidAuthSession(session.getAttribute(TARA_SESSION), "60001019906", "+37200000766");
@@ -396,6 +447,7 @@ public class AuthMidServiceTest extends BaseTest {
                 .authenticationState(INIT_AUTH_PROCESS)
                 .authenticationTypes(of(MOBILE_ID))
                 .build();
+        testSession.getLoginRequestInfo().getOidcClient().get().setShortNameTranslations(SHORT_NAME_TRANSLATIONS);
         session.setAttribute(TARA_SESSION, testSession);
         sessionRepository.save(session);
         return session;
