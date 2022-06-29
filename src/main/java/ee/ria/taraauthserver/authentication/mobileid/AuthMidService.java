@@ -82,7 +82,7 @@ import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 @Service
 @ConditionalOnProperty(value = "tara.auth-methods.mobile-id.enabled")
 public class AuthMidService {
-    private static final String GSM_7_CHARACTERS = "@£$¥èéùìòÇØøÅåΔ_ΦΓΛΩΠΨΣΘΞ^{}[~]|€ÆæßÉ!\"#¤%&'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà";
+    private static final String GSM_7_CHARACTERS = "@£$¥èéùìòÇØøÅåΔ_ΦΓΛΩΠΨΣΘΞ^{}[~]|€ÆæßÉ!\"#¤%&'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà \r\n\\";
     private static final Map<String, MidLanguage> midLanguages = Map.of(
             "et", MidLanguage.EST,
             "en", MidLanguage.ENG,

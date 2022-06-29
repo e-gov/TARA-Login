@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.authentication.mobileid;
 
+import com.github.tomakehurst.wiremock.client.WireMock;
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.session.MockTaraSessionBuilder;
@@ -13,7 +14,6 @@ import ee.sk.mid.MidHashType;
 import ee.sk.mid.exception.MidInternalErrorException;
 import ee.sk.mid.rest.MidConnector;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -30,9 +30,13 @@ import org.springframework.session.SessionRepository;
 import javax.ws.rs.ProcessingException;
 
 import static ch.qos.logback.classic.Level.ERROR;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.matchingJsonPath;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
 import static ee.ria.taraauthserver.error.ErrorCode.ERROR_GENERAL;
@@ -79,13 +83,9 @@ public class AuthMidServiceTest extends BaseTest {
     @SpyBean
     private MidClient midClient;
 
-    @BeforeAll
-    static void beforeAll() {
-        LocaleContextHolder.setLocale(forLanguageTag("et"));
-    }
-
     @BeforeEach
     void beforeEach() {
+        LocaleContextHolder.setLocale(forLanguageTag("et"));
         Mockito.doReturn(MOCK_HASH_TO_SIGN).when(authMidService).getAuthenticationHash();
     }
 
@@ -132,6 +132,47 @@ public class AuthMidServiceTest extends BaseTest {
                 "State: POLL_MID_STATUS -> NATURAL_PERSON_AUTHENTICATION_COMPLETED");
         assertStatisticsIsNotLogged();
         assertMidApiRequests();
+    }
+
+    @Test
+    @Tag(value = "MID_AUTH_POLL_REQUEST")
+    @Tag(value = "MID_AUTH_POLL_RESPONSE_COMPLETE")
+    void correctDisplayTextFormatWhen_shortnameContainsOnlyGsm7Characters() {
+        wireMockServer.stubFor(any(urlPathEqualTo("/mid-api/authentication"))
+                .withRequestBody(matchingJsonPath("$.language", WireMock.equalTo("EST")))
+                .withRequestBody(matchingJsonPath("$.displayText", WireMock.equalTo("short name et")))
+                .withRequestBody(matchingJsonPath("$.displayTextFormat", WireMock.equalTo("GSM-7")))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withStatus(200)
+                        .withBodyFile("mock_responses/mid/mid_authenticate_response.json")));
+        createMidApiPollStub("mock_responses/mid/mid_poll_response.json", 200, 0);
+        String sessionId = createNewAuthenticationSessionAndReturnId();
+
+        assertNotNull(sessionRepository.findById(sessionId));
+        await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
+    }
+
+    @Test
+    @Tag(value = "MID_AUTH_POLL_REQUEST")
+    @Tag(value = "MID_AUTH_POLL_RESPONSE_COMPLETE")
+    void correctDisplayTextFormatWhen_shortnameContainsNonGsm7Characters() {
+        LocaleContextHolder.setLocale(forLanguageTag("ru"));
+        wireMockServer.stubFor(any(urlPathEqualTo("/mid-api/authentication"))
+                .withRequestBody(matchingJsonPath("$.language", WireMock.equalTo("RUS")))
+                .withRequestBody(matchingJsonPath("$.displayText", WireMock.equalTo("short name with õ")))
+                .withRequestBody(matchingJsonPath("$.displayTextFormat", WireMock.equalTo("UCS-2")))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withStatus(200)
+                        .withBodyFile("mock_responses/mid/mid_authenticate_response.json")));
+        createMidApiPollStub("mock_responses/mid/mid_poll_response.json", 200, 0);
+        String sessionId = createNewAuthenticationSessionAndReturnId();
+
+        assertNotNull(sessionRepository.findById(sessionId));
+        await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
     }
 
     @Test
@@ -434,6 +475,10 @@ public class AuthMidServiceTest extends BaseTest {
     private String startMidAuthSessionWithPollResponseWithDelay(String pollResponse, int pollHttpStatus, int midInitResponseDelayInMilliseconds, int midPollResponseDelayInMilliseconds, String language, String shortName) {
         createMidApiAuthenticationStub("mock_responses/mid/mid_authenticate_response.json", 200, midInitResponseDelayInMilliseconds, language, shortName);
         createMidApiPollStub(pollResponse, pollHttpStatus, midPollResponseDelayInMilliseconds);
+        return createNewAuthenticationSessionAndReturnId();
+    }
+
+    private String createNewAuthenticationSessionAndReturnId() {
         Session session = createNewAuthenticationSession();
         MidAuthenticationHashToSign midAuthenticationHashToSign = authMidService.startMidAuthSession(session.getAttribute(TARA_SESSION), "60001019906", "+37200000766");
         assertNotNull(midAuthenticationHashToSign);

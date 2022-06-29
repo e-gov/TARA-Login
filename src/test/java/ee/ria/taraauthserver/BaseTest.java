@@ -93,9 +93,10 @@ public abstract class BaseTest {
             .keyManagerPassword("changeit")
             .notifier(new ConsoleNotifier(true))
     );
-    protected static final Map<String, String> SHORT_NAME_TRANSLATIONS = Map.of(
+    protected static final  Map<String, String> SHORT_NAME_TRANSLATIONS = Map.of(
             "et", "short name et",
-            "en", "short name en"
+            "en", "short name en",
+            "ru", "short name with õ"
     );
     private static ListAppender<ILoggingEvent> mockAppender;
     @Autowired

@@ -1,6 +1,5 @@
 package ee.ria.taraauthserver.authentication.mobileid;
 
-import com.github.tomakehurst.wiremock.client.WireMock;
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.MidAuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
