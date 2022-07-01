@@ -125,6 +125,10 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
         String locale = configurationProperties.getDefaultLocale();
         log.info("Setting default locale to [{}]", value("tara.conf.default_locale", locale));
         bean.setCookieName("LOGIN_LOCALE");
+        bean.setCookieSecure(true);
+        bean.setCookieMaxAge(365 * 24 * 60 * 60);
+
+        // Setting default locale prevents CookieLocaleResolver from falling back to request.getLocale()
         bean.setDefaultLocale(new Locale(locale));
         return bean;
     }
