@@ -84,7 +84,7 @@ public class AuthInitController {
                 TaraSession.LoginRequestInfo govssoLoginRequestInfo = fetchGovssoLoginRequestInfo(govssoLoginChallenge);
                 newTaraSession.setGovssoLoginRequestInfo(govssoLoginRequestInfo);
             } else {
-                throw new BadRequestException(ErrorCode.INVALID_GOVSSO_LOGIN_CHALLENGE, "Incorrect GOVSSO login challenge format.");
+                throw new BadRequestException(ErrorCode.INVALID_GOVSSO_LOGIN_CHALLENGE, "Incorrect GovSSO login challenge format.");
             }
         }
 
@@ -148,7 +148,7 @@ public class AuthInitController {
             govssoRequestLogger.logResponse(response);
 
             if (!response.getBody().getChallenge().equals(ssoChallenge))
-                throw new IllegalStateException("Invalid GOVSSO Hydra response: requested login_challenge does not match retrieved login_challenge");
+                throw new IllegalStateException("Invalid GovSSO Hydra response: requested login_challenge does not match retrieved login_challenge");
 
             return response.getBody();
         } catch (HttpClientErrorException.NotFound | HttpClientErrorException.Gone e) {

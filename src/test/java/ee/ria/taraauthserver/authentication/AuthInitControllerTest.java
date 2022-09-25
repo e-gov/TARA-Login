@@ -762,7 +762,7 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .body("incident_nr", notNullValue())
-                .body("message", equalTo("Vigane päring. GOVSSO päringu volituskood ei ole korrektne."))
+                .body("message", equalTo("Vigane päring. GovSSO päringu volituskood ei ole korrektne."))
                 .body("reportable", equalTo(false));
 
         assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
@@ -791,7 +791,7 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .body("incident_nr", notNullValue())
-                .body("message", equalTo("Vigane päring. GOVSSO päringu volituskood ei ole korrektne."))
+                .body("message", equalTo("Vigane päring. GovSSO päringu volituskood ei ole korrektne."))
                 .body("reportable", equalTo(false));
 
         assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
@@ -1008,13 +1008,13 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Vigane päring. GOVSSO päringu volituskood ei ole korrektne."))
+                .body("message", equalTo("Vigane päring. GovSSO päringu volituskood ei ole korrektne."))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue())
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User exception: Incorrect GOVSSO login challenge format.");
+        assertErrorIsLogged("User exception: Incorrect GovSSO login challenge format.");
     }
 
     @Test
@@ -1034,13 +1034,13 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Vigane päring. GOVSSO päringu volituskood ei ole korrektne."))
+                .body("message", equalTo("Vigane päring. GovSSO päringu volituskood ei ole korrektne."))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue())
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User exception: Incorrect GOVSSO login challenge format.");
+        assertErrorIsLogged("User exception: Incorrect GovSSO login challenge format.");
     }
 
     @Test
@@ -1060,13 +1060,13 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Vigane päring. GOVSSO päringu volituskood ei ole korrektne."))
+                .body("message", equalTo("Vigane päring. GovSSO päringu volituskood ei ole korrektne."))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue())
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User exception: Incorrect GOVSSO login challenge format.");
+        assertErrorIsLogged("User exception: Incorrect GovSSO login challenge format.");
     }
 
     @Test
@@ -1086,12 +1086,12 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Vigane päring. GOVSSO päringu volituskood ei ole korrektne."))
+                .body("message", equalTo("Vigane päring. GovSSO päringu volituskood ei ole korrektne."))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue())
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User exception: Incorrect GOVSSO login challenge format.");
+        assertErrorIsLogged("User exception: Incorrect GovSSO login challenge format.");
     }
 }
