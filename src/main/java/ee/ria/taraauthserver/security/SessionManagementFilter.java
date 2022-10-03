@@ -48,7 +48,7 @@ public class SessionManagementFilter extends OncePerRequestFilter {
 
         if (session != null && AUTH_REQUEST_MATCHER.matches(request)) {
             setFlowTraceId(session);
-            setGovssoFlowTraceId(session);
+            setGovSsoFlowTraceId(session);
         } else {
             MDC.remove(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID);
             MDC.remove(MDC_ATTRIBUTE_KEY_GOVSSO_FLOW_TRACE_ID);
@@ -64,16 +64,16 @@ public class SessionManagementFilter extends OncePerRequestFilter {
         MDC.put(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, taraTraceId);
     }
 
-    private void setGovssoFlowTraceId(HttpSession session) {
+    private void setGovSsoFlowTraceId(HttpSession session) {
         TaraSession taraSession = (TaraSession) session.getAttribute(TARA_SESSION);
-        if (taraSession != null && taraSession.getGovssoLoginRequestInfo() != null) {
-            setGovssoFlowTraceId(taraSession.getGovssoLoginRequestInfo().getChallenge());
+        if (taraSession != null && taraSession.getGovSsoLoginRequestInfo() != null) {
+            setGovSsoFlowTraceId(taraSession.getGovSsoLoginRequestInfo().getChallenge());
         } else {
             MDC.remove(MDC_ATTRIBUTE_KEY_GOVSSO_FLOW_TRACE_ID);
         }
     }
 
-    public static void setGovssoFlowTraceId(@NonNull String govssoLoginChallenge) {
+    public static void setGovSsoFlowTraceId(@NonNull String govssoLoginChallenge) {
         ElasticApm.currentTransaction().setLabel(APM_LABEL_KEY_GOVSSO_FLOW_TRACE_ID, govssoLoginChallenge);
         MDC.put(MDC_ATTRIBUTE_KEY_GOVSSO_FLOW_TRACE_ID, govssoLoginChallenge);
     }

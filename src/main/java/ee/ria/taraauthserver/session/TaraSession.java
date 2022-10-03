@@ -56,7 +56,7 @@ public class TaraSession implements Serializable {
 
     private TaraAuthenticationState state;
     private LoginRequestInfo loginRequestInfo;
-    private LoginRequestInfo govssoLoginRequestInfo;
+    private LoginRequestInfo govSsoLoginRequestInfo;
     private List<AuthenticationType> allowedAuthMethods;
     private AuthenticationResult authenticationResult;
     private List<LegalPerson> legalPersonList;
@@ -159,7 +159,7 @@ public class TaraSession implements Serializable {
                     .orElse("not set");
         }
 
-        public String getGovssoChallenge() {
+        public String getGovSsoChallenge() {
             return URLEncodedUtils.parse(url.getQuery(), UTF_8)
                     .stream()
                     .filter(p -> p.getName().equals("govsso_login_challenge"))
@@ -438,7 +438,7 @@ public class TaraSession implements Serializable {
     }
 
     public TaraSession.LoginRequestInfo getAppropriateLoginRequestInfo() {
-        TaraSession.LoginRequestInfo loginRequestInfo = getGovssoLoginRequestInfo();
+        TaraSession.LoginRequestInfo loginRequestInfo = getGovSsoLoginRequestInfo();
         if (loginRequestInfo == null) {
             loginRequestInfo = getLoginRequestInfo();
         }

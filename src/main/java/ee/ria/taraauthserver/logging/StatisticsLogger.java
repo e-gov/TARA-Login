@@ -62,7 +62,7 @@ public class StatisticsLogger {
 
     private void processAuthenticationRequest(TaraSession taraSession, TaraAuthenticationState state, SessionStatisticsBuilder statisticsBuilder) {
         LoginRequestInfo taraLoginRequestInfo = taraSession.getLoginRequestInfo();
-        LoginRequestInfo govssoLoginRequestInfo = taraSession.getGovssoLoginRequestInfo();
+        LoginRequestInfo govssoLoginRequestInfo = taraSession.getGovSsoLoginRequestInfo();
 
         statisticsBuilder
                 .authenticationState(state)

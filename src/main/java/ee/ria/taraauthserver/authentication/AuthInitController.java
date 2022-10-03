@@ -53,7 +53,7 @@ public class AuthInitController {
     private AuthConfigurationProperties taraProperties;
 
     @Autowired
-    private AuthConfigurationProperties.GovssoHydraConfigurationProperties govssoHydraConfigurationProperties;
+    private AuthConfigurationProperties.GovSsoHydraConfigurationProperties govssoHydraConfigurationProperties;
 
     @Autowired(required = false)
     private EidasConfigurationProperties eidasConfigurationProperties;
@@ -78,11 +78,11 @@ public class AuthInitController {
         newTaraSession.setLoginRequestInfo(loginRequestInfo);
 
         if (StringUtils.isNotBlank(govssoHydraConfigurationProperties.getClientId()) && govssoHydraConfigurationProperties.getClientId().equals(loginRequestInfo.getClientId())) {
-            String govssoLoginChallenge = loginRequestInfo.getGovssoChallenge();
+            String govssoLoginChallenge = loginRequestInfo.getGovSsoChallenge();
             if (govssoLoginChallenge != null && govssoLoginChallenge.matches("^[a-f0-9]{32}$")) {
-                SessionManagementFilter.setGovssoFlowTraceId(govssoLoginChallenge);
-                TaraSession.LoginRequestInfo govssoLoginRequestInfo = fetchGovssoLoginRequestInfo(govssoLoginChallenge);
-                newTaraSession.setGovssoLoginRequestInfo(govssoLoginRequestInfo);
+                SessionManagementFilter.setGovSsoFlowTraceId(govssoLoginChallenge);
+                TaraSession.LoginRequestInfo govssoLoginRequestInfo = fetchGovSsoLoginRequestInfo(govssoLoginChallenge);
+                newTaraSession.setGovSsoLoginRequestInfo(govssoLoginRequestInfo);
             } else {
                 throw new BadRequestException(ErrorCode.INVALID_GOVSSO_LOGIN_CHALLENGE, "Incorrect GovSSO login challenge format.");
             }
@@ -136,7 +136,7 @@ public class AuthInitController {
         }
     }
 
-    private TaraSession.LoginRequestInfo fetchGovssoLoginRequestInfo(String ssoChallenge) {
+    private TaraSession.LoginRequestInfo fetchGovSsoLoginRequestInfo(String ssoChallenge) {
         String requestUrl = govssoHydraConfigurationProperties.getLoginUrl() + "?login_challenge=" + ssoChallenge;
         try {
             govssoRequestLogger.logRequest(requestUrl, HttpMethod.GET);

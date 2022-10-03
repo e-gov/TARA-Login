@@ -89,7 +89,7 @@ public class AuthConfigurationProperties {
     @Data
     @Validated
     @ConfigurationProperties(prefix = "govsso.hydra-service")
-    public static class GovssoHydraConfigurationProperties {
+    public static class GovSsoHydraConfigurationProperties {
 
         private String loginUrl;
 

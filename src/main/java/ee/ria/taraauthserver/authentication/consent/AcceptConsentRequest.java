@@ -61,8 +61,8 @@ public class AcceptConsentRequest {
         idToken.setAcr(taraSession.getAuthenticationResult().getAcr().getAcrName());
         idToken.setAmr(of(taraSession.getAuthenticationResult().getAmr().getAmrName()));
         idToken.setState(getStateParameterValue(taraSession));
-        if (taraSession.getGovssoLoginRequestInfo() != null)
-            idToken.setGovssoLoginChallenge(taraSession.getGovssoLoginRequestInfo().getChallenge());
+        if (taraSession.getGovSsoLoginRequestInfo() != null)
+            idToken.setGovSsoLoginChallenge(taraSession.getGovSsoLoginRequestInfo().getChallenge());
         loginSession.setIdToken(idToken);
         acceptConsentRequest.setSession(loginSession);
 
@@ -135,7 +135,7 @@ public class AcceptConsentRequest {
         @JsonProperty("phone_number_verified")
         private Boolean phoneNrVerified;
         @JsonProperty("govsso_login_challenge")
-        private String govssoLoginChallenge;
+        private String govSsoLoginChallenge;
     }
 
     @Data

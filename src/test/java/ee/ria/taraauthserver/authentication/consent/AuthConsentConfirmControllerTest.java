@@ -286,7 +286,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     @Test
     @Tag(value = "USER_CONSENT_CONFIRM_ENDPOINT")
     @Tag(value = "USER_CONSENT_POST_ACCEPT")
-    void authConsent_acceptSuccessful_withGovssoLoginChallenge() {
+    void authConsent_acceptSuccessful_withGovSsoLoginChallenge() {
         wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -411,7 +411,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     }
 
     @SneakyThrows
-    private Session createSession(AuthenticationType authenticationType, List<String> requestedScopes, String url, boolean hasGovssoLoginRequestInfo) {
+    private Session createSession(AuthenticationType authenticationType, List<String> requestedScopes, String url, boolean hasGovSsoLoginRequestInfo) {
         Session session = sessionRepository.createSession();
         TaraSession authSession = new TaraSession(session.getId());
         authSession.setState(INIT_CONSENT_PROCESS);
@@ -427,8 +427,8 @@ class AuthConsentConfirmControllerTest extends BaseTest {
         lri.setUrl(new URL(url));
         lri.setChallenge("aabbcc");
         authSession.setLoginRequestInfo(lri);
-        if (hasGovssoLoginRequestInfo)
-            authSession.setGovssoLoginRequestInfo(lri);
+        if (hasGovSsoLoginRequestInfo)
+            authSession.setGovSsoLoginRequestInfo(lri);
         TaraSession.AuthenticationResult ar = new TaraSession.AuthenticationResult();
         ar.setIdCode("abc123idcode");
         ar.setFirstName("firstname");

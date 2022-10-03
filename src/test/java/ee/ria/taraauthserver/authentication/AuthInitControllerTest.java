@@ -224,7 +224,7 @@ class AuthInitControllerTest extends BaseTest {
     @Test
     @Tag(value = "AUTH_INIT_GOVSSO_GET_OIDC_REQUEST")
     @Tag(value = "AUTH_INIT_GOVSSO_VIEW")
-    void authInit_Ok_requestMadeFromGovssoClient() {
+    void authInit_Ok_requestMadeFromGovSsoClient() {
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -261,7 +261,7 @@ class AuthInitControllerTest extends BaseTest {
         assertEquals("idcard", taraSession.getLoginRequestInfo().getRequestedScopes().get(0));
         assertEquals("mid", taraSession.getLoginRequestInfo().getRequestedScopes().get(1));
         assertEquals("test client et", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getNameTranslations().get("et"));
-        assertEquals("govsso test client et", taraSession.getGovssoLoginRequestInfo().getClient().getMetaData().getOidcClient().getNameTranslations().get("et"));
+        assertEquals("govsso test client et", taraSession.getGovSsoLoginRequestInfo().getClient().getMetaData().getOidcClient().getNameTranslations().get("et"));
         assertEquals("testRelyingPartyName", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getRelyingPartyName());
         assertEquals("testRelyingPartyId123", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getRelyingPartyUuid());
         assertEquals(false, taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getShouldUseAdditionalVerificationCodeCheck());
@@ -743,7 +743,7 @@ class AuthInitControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "AUTH_INIT_GOVSSO_GET_OIDC_REQUEST")
-    void authInit_GovssoOidcRespondsWith404() {
+    void authInit_GovSsoOidcRespondsWith404() {
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -772,7 +772,7 @@ class AuthInitControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "AUTH_INIT_GOVSSO_GET_OIDC_REQUEST")
-    void authInit_GovssoOidcRespondsWith410() {
+    void authInit_GovSsoOidcRespondsWith410() {
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -801,7 +801,7 @@ class AuthInitControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "AUTH_INIT_GOVSSO_GET_OIDC_REQUEST")
-    void authInit_GovssoOidcRespondsWith500() {
+    void authInit_GovSsoOidcRespondsWith500() {
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)

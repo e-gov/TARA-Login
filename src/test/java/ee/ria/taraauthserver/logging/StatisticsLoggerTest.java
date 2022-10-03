@@ -206,7 +206,7 @@ class StatisticsLoggerTest extends BaseTest {
             value = TaraAuthenticationState.class,
             names = {"AUTHENTICATION_SUCCESS", "AUTHENTICATION_FAILED", "AUTHENTICATION_CANCELED", "POLL_MID_STATUS_CANCELED", "POLL_SID_STATUS_CANCELED"},
             mode = EnumSource.Mode.INCLUDE)
-    void eventWithServiceNameLoggedWhen_GovssoLoginRequestInfoIsSet(TaraAuthenticationState state) {
+    void eventWithServiceNameLoggedWhen_GovSsoLoginRequestInfoIsSet(TaraAuthenticationState state) {
         TaraSession taraSession = buildValidSessionWithoutState();
         taraSession.setState(state);
         LoginRequestInfo loginRequestInfo = new LoginRequestInfo();
@@ -224,7 +224,7 @@ class StatisticsLoggerTest extends BaseTest {
         metaData.setOidcClient(oidcClient);
         client.setMetaData(metaData);
         loginRequestInfo.setClient(client);
-        taraSession.setGovssoLoginRequestInfo(loginRequestInfo);
+        taraSession.setGovSsoLoginRequestInfo(loginRequestInfo);
 
         statisticsLogger.log(taraSession);
 
