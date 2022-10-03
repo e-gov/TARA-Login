@@ -73,9 +73,9 @@ public class SessionManagementFilter extends OncePerRequestFilter {
         }
     }
 
-    public static void setGovSsoFlowTraceId(@NonNull String govssoLoginChallenge) {
-        ElasticApm.currentTransaction().setLabel(APM_LABEL_KEY_GOVSSO_FLOW_TRACE_ID, govssoLoginChallenge);
-        MDC.put(MDC_ATTRIBUTE_KEY_GOVSSO_FLOW_TRACE_ID, govssoLoginChallenge);
+    public static void setGovSsoFlowTraceId(@NonNull String govSsoLoginChallenge) {
+        ElasticApm.currentTransaction().setLabel(APM_LABEL_KEY_GOVSSO_FLOW_TRACE_ID, govSsoLoginChallenge);
+        MDC.put(MDC_ATTRIBUTE_KEY_GOVSSO_FLOW_TRACE_ID, govSsoLoginChallenge);
     }
 
     private HttpSession createNewSession(HttpServletRequest request, HttpSession session) {

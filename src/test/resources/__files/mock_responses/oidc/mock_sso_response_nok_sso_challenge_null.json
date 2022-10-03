@@ -9,7 +9,7 @@
     ],
     "backchannel_logout_session_required": true,
     "backchannel_logout_uri": "string",
-    "client_id": "govssoClientId",
+    "client_id": "govSsoClientId",
     "client_name": "string",
     "client_secret": "string",
     "client_secret_expires_at": 0,

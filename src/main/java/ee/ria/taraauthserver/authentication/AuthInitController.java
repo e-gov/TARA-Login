@@ -47,13 +47,13 @@ public class AuthInitController {
     public static final String AUTH_INIT_REQUEST_MAPPING = "/auth/init";
     private static final Predicate<String> SUPPORTED_LANGUAGES = java.util.regex.Pattern.compile("(?i)(et|en|ru)").asMatchPredicate();
     private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.TARA_HYDRA, this.getClass());
-    private final ClientRequestLogger govssoRequestLogger = new ClientRequestLogger(Service.GOVSSO_HYDRA, this.getClass());
+    private final ClientRequestLogger govSsoRequestLogger = new ClientRequestLogger(Service.GOVSSO_HYDRA, this.getClass());
 
     @Autowired
     private AuthConfigurationProperties taraProperties;
 
     @Autowired
-    private AuthConfigurationProperties.GovSsoHydraConfigurationProperties govssoHydraConfigurationProperties;
+    private AuthConfigurationProperties.GovSsoHydraConfigurationProperties govSsoHydraConfigurationProperties;
 
     @Autowired(required = false)
     private EidasConfigurationProperties eidasConfigurationProperties;
@@ -77,12 +77,12 @@ public class AuthInitController {
         newTaraSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
         newTaraSession.setLoginRequestInfo(loginRequestInfo);
 
-        if (StringUtils.isNotBlank(govssoHydraConfigurationProperties.getClientId()) && govssoHydraConfigurationProperties.getClientId().equals(loginRequestInfo.getClientId())) {
-            String govssoLoginChallenge = loginRequestInfo.getGovSsoChallenge();
-            if (govssoLoginChallenge != null && govssoLoginChallenge.matches("^[a-f0-9]{32}$")) {
-                SessionManagementFilter.setGovSsoFlowTraceId(govssoLoginChallenge);
-                TaraSession.LoginRequestInfo govssoLoginRequestInfo = fetchGovSsoLoginRequestInfo(govssoLoginChallenge);
-                newTaraSession.setGovSsoLoginRequestInfo(govssoLoginRequestInfo);
+        if (StringUtils.isNotBlank(govSsoHydraConfigurationProperties.getClientId()) && govSsoHydraConfigurationProperties.getClientId().equals(loginRequestInfo.getClientId())) {
+            String govSsoLoginChallenge = loginRequestInfo.getGovSsoChallenge();
+            if (govSsoLoginChallenge != null && govSsoLoginChallenge.matches("^[a-f0-9]{32}$")) {
+                SessionManagementFilter.setGovSsoFlowTraceId(govSsoLoginChallenge);
+                TaraSession.LoginRequestInfo govSsoLoginRequestInfo = fetchGovSsoLoginRequestInfo(govSsoLoginChallenge);
+                newTaraSession.setGovSsoLoginRequestInfo(govSsoLoginRequestInfo);
             } else {
                 throw new BadRequestException(ErrorCode.INVALID_GOVSSO_LOGIN_CHALLENGE, "Incorrect GovSSO login challenge format.");
             }
@@ -137,15 +137,15 @@ public class AuthInitController {
     }
 
     private TaraSession.LoginRequestInfo fetchGovSsoLoginRequestInfo(String ssoChallenge) {
-        String requestUrl = govssoHydraConfigurationProperties.getLoginUrl() + "?login_challenge=" + ssoChallenge;
+        String requestUrl = govSsoHydraConfigurationProperties.getLoginUrl() + "?login_challenge=" + ssoChallenge;
         try {
-            govssoRequestLogger.logRequest(requestUrl, HttpMethod.GET);
+            govSsoRequestLogger.logRequest(requestUrl, HttpMethod.GET);
             var response = hydraRestTemplate.exchange(
                     requestUrl,
                     HttpMethod.GET,
                     null,
                     TaraSession.LoginRequestInfo.class);
-            govssoRequestLogger.logResponse(response);
+            govSsoRequestLogger.logResponse(response);
 
             if (!response.getBody().getChallenge().equals(ssoChallenge))
                 throw new IllegalStateException("Invalid GovSSO Hydra response: requested login_challenge does not match retrieved login_challenge");

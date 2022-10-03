@@ -47,7 +47,7 @@ ignite:
 govsso:
   hydra-service:
     login-url: https://localhost:8877/oauth2/auth/requests/login
-    client-id: govssoClientId
+    client-id: govSsoClientId
 
 tara:
   hydra-service:

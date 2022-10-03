@@ -292,7 +292,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
-        Session session = createSession(MOBILE_ID, List.of("openid"), "https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&govsso_login_challenge=govssoLoginChallenge&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c80393c7-6666-4dd2-b890-0ada47161cfa&nonce=fa97f828-eda3-4975-bca2-4bfbb9b24d28&ui_locales=et", true);
+        Session session = createSession(MOBILE_ID, List.of("openid"), "https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&govsso_login_challenge=govSsoLoginChallenge&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c80393c7-6666-4dd2-b890-0ada47161cfa&nonce=fa97f828-eda3-4975-bca2-4bfbb9b24d28&ui_locales=et", true);
 
         given()
                 .filter(new MockSessionFilter(session))

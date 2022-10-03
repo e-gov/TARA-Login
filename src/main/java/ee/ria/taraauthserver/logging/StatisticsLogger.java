@@ -62,7 +62,7 @@ public class StatisticsLogger {
 
     private void processAuthenticationRequest(TaraSession taraSession, TaraAuthenticationState state, SessionStatisticsBuilder statisticsBuilder) {
         LoginRequestInfo taraLoginRequestInfo = taraSession.getLoginRequestInfo();
-        LoginRequestInfo govssoLoginRequestInfo = taraSession.getGovSsoLoginRequestInfo();
+        LoginRequestInfo govSsoLoginRequestInfo = taraSession.getGovSsoLoginRequestInfo();
 
         statisticsBuilder
                 .authenticationState(state)
@@ -75,11 +75,11 @@ public class StatisticsLogger {
             statisticsBuilder.eidasRequesterId(Objects.toString(taraLoginRequestInfo.getOidcClient().get().getEidasRequesterId(), null));
         }
 
-        if (govssoLoginRequestInfo != null) {
+        if (govSsoLoginRequestInfo != null) {
             statisticsBuilder
                     .service(SERVICE_GOVSSO)
-                    .clientId(govssoLoginRequestInfo.getClientId());
-            govssoLoginRequestInfo.getInstitution().ifPresent(i -> {
+                    .clientId(govSsoLoginRequestInfo.getClientId());
+            govSsoLoginRequestInfo.getInstitution().ifPresent(i -> {
                 statisticsBuilder.registryCode(i.getRegistryCode());
                 statisticsBuilder.sector(i.getSector().toString());
             });
