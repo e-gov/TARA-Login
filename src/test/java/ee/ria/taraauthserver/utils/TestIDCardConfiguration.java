@@ -28,7 +28,7 @@ public class TestIDCardConfiguration {
 
     @Bean
     X509Certificate mockIDCardUserCertificate2015() throws CertificateException, IOException {
-        return loadCertificate("file:src/test/resources/id-card/47101010033(TEST_of_ESTEID-SK_2015).pem");
+        return loadCertificate("file:src/test/resources/id-card/37101010021(TEST_of_ESTEID-SK_2015).pem");
     }
 
     @Bean

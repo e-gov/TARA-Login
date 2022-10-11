@@ -127,9 +127,9 @@ class BasicAuthIdCardControllerTest extends BaseTest {
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         TaraSession.AuthenticationResult result = taraSession.getAuthenticationResult();
-        assertEquals("47101010033", result.getIdCode());
-        assertEquals("MARI-LIIS", result.getFirstName());
-        assertEquals("MÄNNIK", result.getLastName());
+        assertEquals("37101010021", result.getIdCode());
+        assertEquals("IGOR", result.getFirstName());
+        assertEquals("ŽAIKOVSKI", result.getLastName());
         assertEquals("1971-01-01", result.getDateOfBirth().toString());
         assertEquals("EE", result.getCountry());
         assertNull(result.getEmail());

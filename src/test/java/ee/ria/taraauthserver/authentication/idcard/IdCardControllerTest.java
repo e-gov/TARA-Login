@@ -246,9 +246,9 @@ class IdCardControllerTest extends BaseTest {
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         TaraSession.AuthenticationResult result = taraSession.getAuthenticationResult();
-        assertEquals("47101010033", result.getIdCode());
-        assertEquals("MARI-LIIS", result.getFirstName());
-        assertEquals("MÄNNIK", result.getLastName());
+        assertEquals("37101010021", result.getIdCode());
+        assertEquals("IGOR", result.getFirstName());
+        assertEquals("ŽAIKOVSKI", result.getLastName());
         assertEquals("1971-01-01", result.getDateOfBirth().toString());
         assertEquals("EE", result.getCountry());
         assertNull(result.getEmail());
@@ -303,12 +303,12 @@ class IdCardControllerTest extends BaseTest {
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         TaraSession.AuthenticationResult result = taraSession.getAuthenticationResult();
-        assertEquals("47101010033", result.getIdCode());
-        assertEquals("MARI-LIIS", result.getFirstName());
-        assertEquals("MÄNNIK", result.getLastName());
+        assertEquals("37101010021", result.getIdCode());
+        assertEquals("IGOR", result.getFirstName());
+        assertEquals("ŽAIKOVSKI", result.getLastName());
         assertEquals("1971-01-01", result.getDateOfBirth().toString());
         assertEquals("EE", result.getCountry());
-        assertEquals("mari-liis.mannik@eesti.ee", result.getEmail());
+        assertEquals("igor.zaikovski@eesti.ee", result.getEmail());
         assertEquals(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, taraSession.getState());
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
@@ -707,39 +707,39 @@ class IdCardControllerTest extends BaseTest {
     public final static String LINE_SEPARATOR = System.getProperty("line.separator");
 
     public static final String X509_CERT = "-----BEGIN CERTIFICATE-----\n" +
-            "MIIGRDCCBCygAwIBAgIQFRkmAJhm0EFZ3Lplb5xtuzANBgkqhkiG9w0BAQsFADBr\n" +
+            "MIIGMTCCBBmgAwIBAgIQMT02BYRGRjRbIlAEC2AVMjANBgkqhkiG9w0BAQsFADBr\n" +
             "MQswCQYDVQQGEwJFRTEiMCAGA1UECgwZQVMgU2VydGlmaXRzZWVyaW1pc2tlc2t1\n" +
             "czEXMBUGA1UEYQwOTlRSRUUtMTA3NDcwMTMxHzAdBgNVBAMMFlRFU1Qgb2YgRVNU\n" +
-            "RUlELVNLIDIwMTUwHhcNMTcxMDEwMTIxNzQxWhcNMjIxMDA5MjA1OTU5WjCBmzEL\n" +
+            "RUlELVNLIDIwMTUwHhcNMTgwNjE0MTEyMjQ0WhcNMjMwNjEzMjA1OTU5WjCBlzEL\n" +
             "MAkGA1UEBhMCRUUxDzANBgNVBAoMBkVTVEVJRDEXMBUGA1UECwwOYXV0aGVudGlj\n" +
-            "YXRpb24xJjAkBgNVBAMMHU3DhE5OSUssTUFSSS1MSUlTLDQ3MTAxMDEwMDMzMRAw\n" +
-            "DgYDVQQEDAdNw4ROTklLMRIwEAYDVQQqDAlNQVJJLUxJSVMxFDASBgNVBAUTCzQ3\n" +
-            "MTAxMDEwMDMzMHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEVAcrw263vwciSE9i5rP2\n" +
-            "3NJq2YqKo8+fk9kSDIflVJICplDiN9lz5uh69ICfygyxmwgLB3m8opoAfSTOdkGI\n" +
-            "SyLR7E/76AppfdWQe7NO0YV2DZrEA4FU3xNGotfJNOrAo4ICXzCCAlswCQYDVR0T\n" +
-            "BAIwADAOBgNVHQ8BAf8EBAMCA4gwgYkGA1UdIASBgTB/MHMGCSsGAQQBzh8DATBm\n" +
-            "MC8GCCsGAQUFBwIBFiNodHRwczovL3d3dy5zay5lZS9yZXBvc2l0b29yaXVtL0NQ\n" +
-            "UzAzBggrBgEFBQcCAjAnDCVBaW51bHQgdGVzdGltaXNla3MuIE9ubHkgZm9yIHRl\n" +
-            "c3RpbmcuMAgGBgQAj3oBAjAkBgNVHREEHTAbgRltYXJpLWxpaXMubWFubmlrQGVl\n" +
-            "c3RpLmVlMB0GA1UdDgQWBBTk9OenGSkT7fZr6ssshuWFSD17VjBhBggrBgEFBQcB\n" +
-            "AwRVMFMwUQYGBACORgEFMEcwRRY/aHR0cHM6Ly9zay5lZS9lbi9yZXBvc2l0b3J5\n" +
-            "L2NvbmRpdGlvbnMtZm9yLXVzZS1vZi1jZXJ0aWZpY2F0ZXMvEwJFTjAgBgNVHSUB\n" +
-            "Af8EFjAUBggrBgEFBQcDAgYIKwYBBQUHAwQwHwYDVR0jBBgwFoAUScDyRDll1ZtG\n" +
-            "Ow04YIOx1i0ohqYwgYMGCCsGAQUFBwEBBHcwdTAsBggrBgEFBQcwAYYgaHR0cDov\n" +
-            "L2FpYS5kZW1vLnNrLmVlL2VzdGVpZDIwMTUwRQYIKwYBBQUHMAKGOWh0dHBzOi8v\n" +
-            "c2suZWUvdXBsb2FkL2ZpbGVzL1RFU1Rfb2ZfRVNURUlELVNLXzIwMTUuZGVyLmNy\n" +
-            "dDBBBgNVHR8EOjA4MDagNKAyhjBodHRwOi8vd3d3LnNrLmVlL2NybHMvZXN0ZWlk\n" +
-            "L3Rlc3RfZXN0ZWlkMjAxNS5jcmwwDQYJKoZIhvcNAQELBQADggIBALhg4bhXry4H\n" +
-            "376mvyZhMYulobeFAdts9JQYWk5de2+lZZiTcX2yHbAF80DlW1LZe9NczCbF991o\n" +
-            "5ZBYP80Tzc+42urBeUesydVEkB+9Qzv/d3+eCU//jN4seoeIyxfSP32JJefgT3V+\n" +
-            "u2dkvTPx5HLz3gfptQ7L6usNY5hCxxcxtxW/zKj28qKLH3cQlryZbAxLy+C3aIDD\n" +
-            "tlf/OPLWFDZt3bDogehCGYdgwsAz7pur1gKn7UXOnFX+Na5zGQPPgyH+nwgby3Zs\n" +
-            "GC8Hy4K4I98q+wcfykJnbT/jtTZBROOiS8br27oLEYgVY9iaTyL92arvLSQHc2jW\n" +
-            "MwDQFptJtCnMvJbbuo31Mtg0nw1kqCmqPQLyMLRAFpxRxXOrOCArmPET6u4i9VYm\n" +
-            "e5M5uuwS4BmnnZTmDbkLz/1kMqbYc7QRynsh7Af7oVI15qP3iELtMWLWVHafpE+q\n" +
-            "YWOE2nwbnlKjt6HGsGno6gcrnOYhlO6/VXfNLPfvZn0OHGiAT1v6YyFQyeYxqfGF\n" +
-            "0OxAOt06wDLEBd7p9cuPHuu8OxuLO0478YXyWdwWeHbJgthAlbaTKih+jW4Cahsc\n" +
-            "0kpQarrExgPQ00aInw1tVifbEYcRhB25YOiIDlSPORenQ+SdkT6OyU3wJ8rArBs4\n" +
-            "OfEkPnSsNkNa+PeTPPpPZ1LgmhoczuQ3\n" +
+            "YXRpb24xJDAiBgNVBAMMG8W9QUlLT1ZTS0ksSUdPUiwzNzEwMTAxMDAyMTETMBEG\n" +
+            "A1UEBAwKxb1BSUtPVlNLSTENMAsGA1UEKgwESUdPUjEUMBIGA1UEBRMLMzcxMDEw\n" +
+            "MTAwMjEwdjAQBgcqhkjOPQIBBgUrgQQAIgNiAAQR8RuiB1FmB/jiymeBkfrR+tFi\n" +
+            "RW/MjBsAQLdE/NcMXo3vMDTOob7oES+CBsjmuI8in/6duMpU2BXY2uhF3FAvYXnL\n" +
+            "ojy+/oTyYTY4UCAGRPDMaff/GLt8lkXcl767hT6jggJQMIICTDAJBgNVHRMEAjAA\n" +
+            "MA4GA1UdDwEB/wQEAwIDiDCBiQYDVR0gBIGBMH8wcwYJKwYBBAHOHwMBMGYwLwYI\n" +
+            "KwYBBQUHAgEWI2h0dHBzOi8vd3d3LnNrLmVlL3JlcG9zaXRvb3JpdW0vQ1BTMDMG\n" +
+            "CCsGAQUFBwICMCcMJUFpbnVsdCB0ZXN0aW1pc2Vrcy4gT25seSBmb3IgdGVzdGlu\n" +
+            "Zy4wCAYGBACPegECMCIGA1UdEQQbMBmBF2lnb3IuemFpa292c2tpQGVlc3RpLmVl\n" +
+            "MB0GA1UdDgQWBBR7E1DH0bDU59rbqamQ+cYg+IykzjBhBggrBgEFBQcBAwRVMFMw\n" +
+            "UQYGBACORgEFMEcwRRY/aHR0cHM6Ly9zay5lZS9lbi9yZXBvc2l0b3J5L2NvbmRp\n" +
+            "dGlvbnMtZm9yLXVzZS1vZi1jZXJ0aWZpY2F0ZXMvEwJFTjAgBgNVHSUBAf8EFjAU\n" +
+            "BggrBgEFBQcDAgYIKwYBBQUHAwQwHwYDVR0jBBgwFoAUScDyRDll1ZtGOw04YIOx\n" +
+            "1i0ohqYwgYMGCCsGAQUFBwEBBHcwdTAsBggrBgEFBQcwAYYgaHR0cDovL2FpYS5k\n" +
+            "ZW1vLnNrLmVlL2VzdGVpZDIwMTUwRQYIKwYBBQUHMAKGOWh0dHBzOi8vc2suZWUv\n" +
+            "dXBsb2FkL2ZpbGVzL1RFU1Rfb2ZfRVNURUlELVNLXzIwMTUuZGVyLmNydDA0BgNV\n" +
+            "HR8ELTArMCmgJ6AlhiNodHRwczovL2Muc2suZWUvdGVzdF9lc3RlaWQyMDE1LmNy\n" +
+            "bDANBgkqhkiG9w0BAQsFAAOCAgEAI/CzsHiwiIHc7NQTlDeeuWQEJk1t7NhFstdT\n" +
+            "Rd+0j/cPbJxX1ATRhyCe4UAktYIb/PevU2CV2BpUKl15NRpIAQEJPrdQWgEd9ydA\n" +
+            "K2TAA8XnUGqNV/v4l7+LWUYLMWORDWc7UeVZkU44BGz3dqN5a0k09LXmrFLQKZiJ\n" +
+            "2/1PWB/1sZSPDhrdah+UZnSwkmmgmIkiB5CAC59OKw0Jur0aUDIBu5CKB6vzMX02\n" +
+            "TXj2wox0IxtH4YVM/dx5QOCW3f4dapj6yMGJVne2bO+Z7QqO6KD0Ois6gvc/OYZR\n" +
+            "L7OUTz4EueZYqn+Vx0/xUIYkcYFD61wT2rz9I/6cANikgaNYSHoxhumPFc4E/0gA\n" +
+            "BWqadJLHJLmtjmNxi7YVOmFKAhWH7d7hCWI2MDNWWfL3NVOMh2Fpym5d+dUImtv7\n" +
+            "SIxeGK8eDmiPjDDy65gfgrKCD0JNRjoetEZY4RPoxAANdO5KmPGBL41UsEymCcpc\n" +
+            "+BJtYNexUjK2PGP2WoSyotiYLQ00i6lp1H9QDwk2TZrXC+6qsR/1gf2r+J0Dj+jw\n" +
+            "A4uLotDni4Bk/sbgDRgHL71JRLKji0vP34JRO9e6+YLfTvVzC8S0LmWf5Eputoa+\n" +
+            "nZ7dgwsuz8eMFmVhld7tfYxKpNL7z5sC0gLITUsijusU+gKjrdUuo/Ox6yBOSSmE\n" +
+            "/MCBVBQ=\n" +
             "-----END CERTIFICATE-----";
 }

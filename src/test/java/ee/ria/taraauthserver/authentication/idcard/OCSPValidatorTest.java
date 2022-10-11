@@ -123,7 +123,7 @@ public class OCSPValidatorTest {
     private static final String MOCK_ISSUER_CERT_2018_PATH = "file:src/test/resources/ocsp/TEST_of_ESTEID2018.crt";
 
     private static final String MOCK_USER_CERT_2011_PATH = "file:src/test/resources/id-card/48812040138(TEST_of_ESTEID-SK_2011).pem";
-    private static final String MOCK_USER_CERT_2015_PATH = "file:src/test/resources/id-card/47101010033(TEST_of_ESTEID-SK_2015).pem";
+    private static final String MOCK_USER_CERT_2015_PATH = "file:src/test/resources/id-card/37101010021(TEST_of_ESTEID-SK_2015).pem";
     private static final String MOCK_USER_CERT_2018_PATH = "file:src/test/resources/id-card/38001085718(TEST_of_ESTEID2018).pem";
 
     @Autowired
