@@ -706,6 +706,7 @@ class IdCardControllerTest extends BaseTest {
     public static final String END_CERT = "-----END CERTIFICATE-----";
     public final static String LINE_SEPARATOR = System.getProperty("line.separator");
 
+    // TODO Load 37101010021(TEST_of_ESTEID-SK_2015).pem, expires Jun 13 20:59:59 2023 GMT.
     public static final String X509_CERT = "-----BEGIN CERTIFICATE-----\n" +
             "MIIGMTCCBBmgAwIBAgIQMT02BYRGRjRbIlAEC2AVMjANBgkqhkiG9w0BAQsFADBr\n" +
             "MQswCQYDVQQGEwJFRTEiMCAGA1UECgwZQVMgU2VydGlmaXRzZWVyaW1pc2tlc2t1\n" +

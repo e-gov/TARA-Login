@@ -46,6 +46,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Slf4j
 class SmartIdControllerTest extends BaseTest {
 
+    // NB! Certificate in sid_poll_response_ok.json expires Dec 17 23:59:59 2030 GMT.
+
     @SpyBean
     private AuthSidService authSidService;
 

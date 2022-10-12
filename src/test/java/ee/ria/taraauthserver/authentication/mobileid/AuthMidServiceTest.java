@@ -66,6 +66,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class AuthMidServiceTest extends BaseTest {
+
+    // NB! Certificate in mid_poll_response.json expires Dec 11 21:59:59 2022 GMT.
+
     private final MidAuthenticationHashToSign MOCK_HASH_TO_SIGN = new MidAuthenticationHashToSign.MobileIdAuthenticationHashToSignBuilder()
             .withHashType(MidHashType.SHA512)
             .withHashInBase64("bT+0Fuuf0QChq/sYb+Nz8vhLE8n3gLeL/wOXKxxE4ao=").build();
