@@ -67,11 +67,11 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class AuthMidServiceTest extends BaseTest {
 
-    // NB! Certificate in mid_poll_response.json expires Dec 11 21:59:59 2022 GMT.
+    // NB! Certificate in mid_poll_response.json expires Nov 12 21:59:59 2025 GMT.
 
     private final MidAuthenticationHashToSign MOCK_HASH_TO_SIGN = new MidAuthenticationHashToSign.MobileIdAuthenticationHashToSignBuilder()
             .withHashType(MidHashType.SHA512)
-            .withHashInBase64("bT+0Fuuf0QChq/sYb+Nz8vhLE8n3gLeL/wOXKxxE4ao=").build();
+            .withHashInBase64("rbk7bdU+rc5CEbJ4h7I5l6chpMzdBiWkxIENPmcLLmI=").build();
     private final MidConnector midConnectorMock = Mockito.mock(MidConnector.class);
 
     @SpyBean
@@ -114,12 +114,12 @@ public class AuthMidServiceTest extends BaseTest {
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
         TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
         assertNull(result.getErrorCode());
-        assertEquals("60001019906", result.getIdCode());
+        assertEquals("60001017716", result.getIdCode());
         assertEquals("EE", result.getCountry());
-        assertEquals("MARY ÄNN", result.getFirstName());
-        assertEquals("O’CONNEŽ-ŠUSLIK TESTNUMBER", result.getLastName());
-        assertEquals("+37200000766", result.getPhoneNumber());
-        assertEquals("EE60001019906", result.getSubject());
+        assertEquals("ONE", result.getFirstName());
+        assertEquals("TESTNUMBER", result.getLastName());
+        assertEquals("+37259100366", result.getPhoneNumber());
+        assertEquals("EE60001017716", result.getSubject());
         assertEquals("2000-01-01", result.getDateOfBirth().toString());
         assertEquals(MOBILE_ID, result.getAmr());
         assertEquals(LevelOfAssurance.HIGH, result.getAcr());
@@ -196,12 +196,12 @@ public class AuthMidServiceTest extends BaseTest {
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
         TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
         assertNull(result.getErrorCode());
-        assertEquals("60001019906", result.getIdCode());
+        assertEquals("60001017716", result.getIdCode());
         assertEquals("EE", result.getCountry());
-        assertEquals("MARY ÄNN", result.getFirstName());
-        assertEquals("O’CONNEŽ-ŠUSLIK TESTNUMBER", result.getLastName());
-        assertEquals("+37200000766", result.getPhoneNumber());
-        assertEquals("EE60001019906", result.getSubject());
+        assertEquals("ONE", result.getFirstName());
+        assertEquals("TESTNUMBER", result.getLastName());
+        assertEquals("+37259100366", result.getPhoneNumber());
+        assertEquals("EE60001017716", result.getSubject());
         assertEquals("2000-01-01", result.getDateOfBirth().toString());
         assertEquals(MOBILE_ID, result.getAmr());
         assertEquals(LevelOfAssurance.HIGH, result.getAcr());
@@ -483,7 +483,7 @@ public class AuthMidServiceTest extends BaseTest {
 
     private String createNewAuthenticationSessionAndReturnId() {
         Session session = createNewAuthenticationSession();
-        MidAuthenticationHashToSign midAuthenticationHashToSign = authMidService.startMidAuthSession(session.getAttribute(TARA_SESSION), "60001019906", "+37200000766");
+        MidAuthenticationHashToSign midAuthenticationHashToSign = authMidService.startMidAuthSession(session.getAttribute(TARA_SESSION), "60001017716", "+37259100366");
         assertNotNull(midAuthenticationHashToSign);
         return session.getId();
     }

@@ -45,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class AuthMidControllerTest extends BaseTest {
     private final MidAuthenticationHashToSign MOCK_HASH_TO_SIGN = new MidAuthenticationHashToSign.MobileIdAuthenticationHashToSignBuilder()
             .withHashType(MidHashType.SHA512)
-            .withHashInBase64("bT+0Fuuf0QChq/sYb+Nz8vhLE8n3gLeL/wOXKxxE4ao=").build();
+            .withHashInBase64("rbk7bdU+rc5CEbJ4h7I5l6chpMzdBiWkxIENPmcLLmI=").build();
 
     @SpyBean
     private AuthMidService authMidService;
@@ -434,8 +434,8 @@ class AuthMidControllerTest extends BaseTest {
 
         given()
                 .filter(sessionFilter)
-                .formParam("idCode", "60001019939")
-                .formParam("telephoneNumber", "00000266")
+                .formParam("idCode", "60001017716")
+                .formParam("telephoneNumber", "59100366")
                 .when()
                 .post("/auth/mid/init")
                 .then()
@@ -476,8 +476,8 @@ class AuthMidControllerTest extends BaseTest {
 
         given()
                 .filter(sessionFilter)
-                .formParam("idCode", "60001019939")
-                .formParam("telephoneNumber", "00000266")
+                .formParam("idCode", "60001017716")
+                .formParam("telephoneNumber", "59100366")
                 .when()
                 .post("/auth/mid/init?lang=en")
                 .then()
@@ -509,8 +509,8 @@ class AuthMidControllerTest extends BaseTest {
 
         given()
                 .filter(sessionFilter)
-                .formParam("idCode", "60001019939")
-                .formParam("telephoneNumber", "00000266")
+                .formParam("idCode", "60001017716")
+                .formParam("telephoneNumber", "59100366")
                 .when()
                 .post("/auth/mid/init?lang=et")
                 .then()
@@ -708,12 +708,12 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     private void assertAuthenticationResult(TaraSession.MidAuthenticationResult result) {
-        assertEquals("60001019906", result.getIdCode());
+        assertEquals("60001017716", result.getIdCode());
         assertEquals("EE", result.getCountry());
-        assertEquals("MARY ÄNN", result.getFirstName());
-        assertEquals("O’CONNEŽ-ŠUSLIK TESTNUMBER", result.getLastName());
-        assertEquals("+37200000266", result.getPhoneNumber());
-        assertEquals("EE60001019906", result.getSubject());
+        assertEquals("ONE", result.getFirstName());
+        assertEquals("TESTNUMBER", result.getLastName());
+        assertEquals("+37259100366", result.getPhoneNumber());
+        assertEquals("EE60001017716", result.getSubject());
         assertEquals("2000-01-01", result.getDateOfBirth().toString());
         assertEquals(MOBILE_ID, result.getAmr());
         assertEquals(LevelOfAssurance.HIGH, result.getAcr());
