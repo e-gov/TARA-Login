@@ -53,8 +53,7 @@
 
 <div layout:fragment="warning(tab_id, alerts)" xmlns:th="http://www.w3.org/1999/xhtml"
      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
-    <div th:if="${not #lists.isEmpty(alerts)}" class="c-tab-login__warning" th:classappend="${static} ? is-active : ''"
-         th:data-tab="${tab_id}">
+    <div class="c-tab-login__warning" th:classappend="${static} ? is-active : ''" th:data-tab="${tab_id}">
         <div class="alert alert-warning">
             <ul>
                 <li th:each="alert : ${alerts}">
@@ -62,6 +61,10 @@
                             th:utext="${alert.getAlertMessage(#locale.language)}"></strong>
                     <strong th:unless="${alert.isLoadedFromConf()}"
                             th:text="${alert.getAlertMessage(#locale.language)}"></strong>
+                </li>
+                <li th:if="${tab_id == 'id-card'}" id="webeid-warning" class="hidden aria-hidden">
+                    <strong th:utext="#{message.idc.webeid.not.available}" id="webeid-not-available" class="hidden aria-hidden">Web-eID not available.</strong>
+                    <strong th:utext="#{message.idc.webeid.error}" id="webeid-error" class="hidden aria-hidden">Web-eID error, code {0}.</strong>
                 </li>
             </ul>
         </div>

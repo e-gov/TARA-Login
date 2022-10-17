@@ -3,6 +3,7 @@ jQuery(function ($) {
 
 	var defaultErrorReportUrl;
     var defaultErrorReportNotification;
+    var webEidCheckResult = 'NOT_STARTED';
 	
 	// Hide nav bar in desktop mode and display authentication method content in mobile mode if less than 2 auth methods
 	if ($('.c-tab-login__nav-link').length < 2) {
@@ -402,14 +403,62 @@ jQuery(function ($) {
         feedback.removeAttr("role");
         feedback.addClass('is-hidden');
     }
+    
+    function detectWebeid(warning, navItem) {
+		webEidCheckResult = 'IN_PROGRESS';
+		webeid.status()
+			.then(() => {
+				webEidCheckResult = 'SUCCESS';
+				showOrHideWebEidWarning(warning, navItem);
+			})
+			.catch(err => {
+				webEidCheckResult = 'FAIL';
+				if (["ERR_WEBEID_EXTENSION_UNAVAILABLE", "ERR_WEBEID_NATIVE_UNAVAILABLE", "ERR_WEBEID_VERSION_MISMATCH"].indexOf(err.code) !== -1) {
+					warning.find("#webeid-not-available").removeClass("hidden aria-hidden")
+				} else {
+					const warningElement = warning.find("#webeid-error");
+					const warningMessage = warningElement.html().replace("{0}", err.code);
+					warningElement.html(warningMessage);
+					warningElement.removeClass("hidden aria-hidden")
+				}
+				showOrHideWebEidWarning(warning, navItem);
+			});
+	}
+
+	function showOrHideWebEidWarning(warning, navItem) {
+		if (webEidCheckResult === 'SUCCESS') {
+			warning.find("#webeid-warning").addClass("hidden aria-hidden");
+		} else if(webEidCheckResult === 'FAIL') {
+			warning.find("#webeid-warning").removeClass("hidden aria-hidden");
+			// Only enable warning if ID-card tab is still selected
+			if (navItem.attr("aria-selected") === "true") {
+				warning.attr("aria-hidden", false);
+				warning.addClass('is-active');
+			}
+		}
+		// If the result is not clear yet, don't change anything
+	}
 
     function activateTab(link, content, warning) {
-		link.parent().attr("aria-selected", true);
+		let navItem = link.parent();
+		navItem.attr("aria-selected", true);
 		link.addClass('is-active');
+		if (link.attr("data-tab") === "id-card") {
+			if (webEidCheckResult === 'NOT_STARTED') {
+				detectWebeid(warning, navItem);
+			} else {
+				showOrHideWebEidWarning(warning, navItem);
+			}
+		}
         content.attr("aria-hidden", false);
         content.addClass('is-active');
-        warning.attr("aria-hidden", false);
-        warning.addClass('is-active');
+
+		// Show warning div if there are any warnings to display
+		// (not including web-eid warning, which is always there, but usually hidden)
+		if (warning.find("div.alert-warning > ul > li").not("#webeid-warning.hidden").length > 0) {
+			warning.attr("aria-hidden", false);
+			warning.addClass('is-active');
+		}
     }
 
     function deActivateTab(link, content, warning) {
