@@ -76,6 +76,7 @@ public class IdCardController {
 
     @GetMapping(path = {AUTH_ID_REQUEST_MAPPING})
     public ResponseEntity<Map<String, Object>> handleRequest(HttpServletRequest request, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+        logWebEidParameters(request);
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
         initIdCardAuthentication(taraSession);
 
@@ -105,6 +106,16 @@ public class IdCardController {
         }
 
         return ResponseEntity.ok(of("status", "COMPLETED"));
+    }
+
+    private void logWebEidParameters(HttpServletRequest request) {
+        log.info("Web eID check results: code: {}, extensionversion: {}, nativeappversion: {}, errorstack: {}, wait: {}",
+                value("webeid.code", request.getParameter("webeid.code")),
+                value("webeid.extensionversion", request.getParameter("webeid.extensionversion")),
+                value("webeid.nativeappversion", request.getParameter("webeid.nativeappversion")),
+                value("webeid.errorstack", request.getParameter("webeid.errorstack")),
+                value("webeid.wait", request.getParameter("webeid.wait"))
+        );
     }
 
     private void initIdCardAuthentication(TaraSession taraSession) {

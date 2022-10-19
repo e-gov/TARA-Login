@@ -4,6 +4,13 @@ jQuery(function ($) {
 	var defaultErrorReportUrl;
     var defaultErrorReportNotification;
     var webEidCheckResult = 'NOT_STARTED';
+    var webEidInfo = {
+    	code: 'WAIT_NOT_COMPLETED',
+		extensionversion: '',
+		nativeappversion: '',
+		errorstack: '',
+		statuscommandstart: 0
+	};
 	
 	// Hide nav bar in desktop mode and display authentication method content in mobile mode if less than 2 auth methods
 	if ($('.c-tab-login__nav-link').length < 2) {
@@ -161,7 +168,20 @@ jQuery(function ($) {
 			return false;
 		}
 	}
-	
+
+	function getIdCardAuthUrlParameters() {
+		let url = '?webeid.code=' + encodeURIComponent(webEidInfo.code);
+		if (webEidInfo.code === 'WAIT_NOT_COMPLETED') {
+			const currentTime = new Date().getTime();
+			url += '&webeid.wait=' + (currentTime - webEidInfo.statuscommandstart);
+		} else {
+			url += '&webeid.extensionversion=' + encodeURIComponent(webEidInfo.extensionversion)
+				 + '&webeid.nativeappversion=' + encodeURIComponent(webEidInfo.nativeappversion)
+				 + '&webeid.errorstack=' + truncateUrl(encodeURIComponent(webEidInfo.errorstack), 10000);
+		}
+		return url;
+	}
+
 	// ID-card form submit
 	$('#idCardForm button.c-btn--primary').on('click', function(event){
 		event.preventDefault();
@@ -270,7 +290,7 @@ jQuery(function ($) {
                 _this.prop('disabled', false);
 			}
 		};
-		xhttp.open('GET', '/auth/id', true);
+		xhttp.open('GET', '/auth/id' + getIdCardAuthUrlParameters(), true);
 		xhttp.setRequestHeader('Content-type', 'application/json;charset=UTF-8');
 		xhttp.send();
 	});
@@ -403,16 +423,36 @@ jQuery(function ($) {
         feedback.removeAttr("role");
         feedback.addClass('is-hidden');
     }
-    
-    function detectWebeid(warning, navItem) {
+
+	function truncateUrl(urlEncodedString, limit) {
+		// Try to avoid splitting a single URL-encoded character.
+		// TODO: Does not correctly handle URL-encoded multi-byte special characters, like '€' (%E2%82%AC)
+		if (urlEncodedString.charAt(limit - 1) === "%") {
+			return urlEncodedString.substring(0, limit - 1);
+		} else if (urlEncodedString.charAt(limit - 2) === "%") {
+			return urlEncodedString.substring(0, limit - 2);
+		} else {
+			return urlEncodedString.substring(0, limit);
+		}
+	}
+
+	function detectWebeid(warning, navItem) {
+		webEidInfo.statuscommandstart = new Date().getTime();
 		webEidCheckResult = 'IN_PROGRESS';
 		webeid.status()
 			.then(() => {
 				webEidCheckResult = 'SUCCESS';
+				webEidInfo.code = "READY";
+				webEidInfo.extensionversion = err.extension;
+				webEidInfo.nativeappversion = err.nativeApp;
 				showOrHideWebEidWarning(warning, navItem);
 			})
 			.catch(err => {
 				webEidCheckResult = 'FAIL';
+				webEidInfo.code = err.code;
+				webEidInfo.extensionversion = err.extension;
+				webEidInfo.nativeappversion = err.nativeApp;
+				webEidInfo.errorstack = err.stack;
 				if (["ERR_WEBEID_EXTENSION_UNAVAILABLE", "ERR_WEBEID_NATIVE_UNAVAILABLE", "ERR_WEBEID_VERSION_MISMATCH"].indexOf(err.code) !== -1) {
 					warning.find("#webeid-not-available").removeClass("hidden aria-hidden")
 				} else {
