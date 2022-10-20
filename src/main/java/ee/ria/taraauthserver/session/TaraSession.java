@@ -1,10 +1,12 @@
 package ee.ria.taraauthserver.session;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
 import lombok.Data;
@@ -13,6 +15,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import net.logstash.logback.util.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -21,16 +24,15 @@ import org.springframework.util.Assert;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -54,6 +56,7 @@ public class TaraSession implements Serializable {
 
     private TaraAuthenticationState state;
     private LoginRequestInfo loginRequestInfo;
+    private LoginRequestInfo govSsoLoginRequestInfo;
     private List<AuthenticationType> allowedAuthMethods;
     private AuthenticationResult authenticationResult;
     private List<LegalPerson> legalPersonList;
@@ -62,22 +65,11 @@ public class TaraSession implements Serializable {
 
     public void setState(TaraAuthenticationState newState) {
         if (state == null || !state.equals(newState)) {
-            log.info("Tara session state change: {} -> {}",
+            log.info("State: {} -> {}",
                     value("tara.session.old_state", state != null ? state.name() : "NOT_SET"),
                     value("tara.session.state", newState.name()));
         }
         this.state = newState;
-    }
-
-    public String getClientName() {
-        return Optional.of(this)
-                .map(TaraSession::getLoginRequestInfo)
-                .map(TaraSession.LoginRequestInfo::getClient)
-                .map(TaraSession.Client::getMetaData)
-                .map(TaraSession.MetaData::getOidcClient)
-                .map(TaraSession.OidcClient::getNameTranslations)
-                .map(m -> m.get("et"))
-                .orElse(null);
     }
 
     public boolean isEmailScopeRequested() {
@@ -167,6 +159,15 @@ public class TaraSession implements Serializable {
                     .orElse("not set");
         }
 
+        public String getGovSsoChallenge() {
+            return URLEncodedUtils.parse(url.getQuery(), UTF_8)
+                    .stream()
+                    .filter(p -> p.getName().equals("govsso_login_challenge"))
+                    .map(NameValuePair::getValue)
+                    .findFirst()
+                    .orElse(null);
+        }
+
         public String getRedirectUri() {
             return URLEncodedUtils.parse(url.getQuery(), UTF_8)
                     .stream()
@@ -189,11 +190,23 @@ public class TaraSession implements Serializable {
                     .orElse(null);
         }
 
-        public Optional<Institution> getInstitution() {
+        public String getClientLogo() {
+            return getOidcClient()
+                    .map(TaraSession.OidcClient::getLogo)
+                    .orElse(null);
+        }
+
+        // TODO: Add similar @JsonIgnore annotations to all the get...() methods in this class that don't need to be present in JSON
+        @JsonIgnore
+        public Optional<OidcClient> getOidcClient() {
             return Optional.of(this)
-                    .map(TaraSession.LoginRequestInfo::getClient)
-                    .map(TaraSession.Client::getMetaData)
-                    .map(TaraSession.MetaData::getOidcClient)
+                    .map(LoginRequestInfo::getClient)
+                    .map(Client::getMetaData)
+                    .map(MetaData::getOidcClient);
+        }
+
+        public Optional<Institution> getInstitution() {
+            return getOidcClient()
                     .map(TaraSession.OidcClient::getInstitution);
         }
 
@@ -341,6 +354,8 @@ public class TaraSession implements Serializable {
         @Size(max = 1000)
         @JsonProperty("legacy_return_url")
         private String legacyReturnUrl;
+        @JsonProperty("eidas_requester_id")
+        private URI eidasRequesterId;
         @Valid
         @JsonProperty("institution")
         private Institution institution = new Institution();
@@ -348,6 +363,16 @@ public class TaraSession implements Serializable {
         private SmartIdSettings smartIdSettings;
         @JsonProperty("mid_settings")
         private MidSettings midSettings;
+        @JsonProperty("logo")
+        private String logo;
+
+        @JsonGetter("logo")
+        public String getLogoSummary() {
+            if (StringUtils.isBlank(logo)) {
+                return logo;
+            }
+            return String.format("[%d] chars", logo.length());
+        }
     }
 
     @Data
@@ -374,10 +399,9 @@ public class TaraSession implements Serializable {
         @JsonProperty("registry_code")
         private String registryCode;
 
-        @NotBlank
-        @Pattern(regexp = "(private|public)", message = "invalid sector value, accepted values are: private, public")
+        @NotNull
         @JsonProperty("sector")
-        private String sector;
+        private SPType sector;
     }
 
     @ToString
@@ -390,15 +414,35 @@ public class TaraSession implements Serializable {
     }
 
     public String getOidcClientTranslatedShortName() {
-        OidcClient oidcClient = getLoginRequestInfo().getClient().getMetaData().getOidcClient();
+        OidcClient oidcClient = getAppropriateLoginRequestInfo().getClient().getMetaData().getOidcClient();
+        Map<String, String> shortNameTranslations = oidcClient.getShortNameTranslations();
         String translatedShortName = oidcClient.getShortNameTranslations().get("et");
 
-        Map<String, String> shortNameTranslations = oidcClient.getShortNameTranslations();
-        Locale locale = LocaleContextHolder.getLocale();
-        if (shortNameTranslations.containsKey(locale.getLanguage()))
-            translatedShortName = shortNameTranslations.get(locale.getLanguage());
+        String language = LocaleContextHolder.getLocale().getLanguage();
+        if (shortNameTranslations.containsKey(language))
+            translatedShortName = shortNameTranslations.get(language);
 
         return translatedShortName;
+    }
+
+    public String getOidcClientTranslatedName() {
+        OidcClient oidcClient = getAppropriateLoginRequestInfo().getClient().getMetaData().getOidcClient();
+        Map<String, String> nameTranslations = oidcClient.getNameTranslations();
+        String translatedName = oidcClient.getNameTranslations().get("et");
+
+        String language = LocaleContextHolder.getLocale().getLanguage();
+        if (nameTranslations.containsKey(language))
+            translatedName = nameTranslations.get(language);
+
+        return translatedName;
+    }
+
+    public TaraSession.LoginRequestInfo getAppropriateLoginRequestInfo() {
+        TaraSession.LoginRequestInfo loginRequestInfo = getGovSsoLoginRequestInfo();
+        if (loginRequestInfo == null) {
+            loginRequestInfo = getLoginRequestInfo();
+        }
+        return loginRequestInfo;
     }
 
     public Boolean isAdditionalSmartIdVerificationCodeCheckNeeded() {

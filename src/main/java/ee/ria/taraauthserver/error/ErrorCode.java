@@ -8,6 +8,7 @@ import lombok.Setter;
 @RequiredArgsConstructor
 public enum ErrorCode {
     INVALID_LOGIN_CHALLENGE("message.error.invalid-login-challenge"),
+    INVALID_GOVSSO_LOGIN_CHALLENGE("message.error.invalid-govsso-login-challenge"),
     NO_VALID_AUTHMETHODS_AVAILABLE("message.error.no-allowed-authmethods"),
     ESTEID_INVALID_REQUEST("message.idc.error"),
     MID_USER_CANCEL("message.mid-rest.error.user-cancel"),
@@ -33,7 +34,7 @@ public enum ErrorCode {
     SID_USER_REFUSED_CONFIRMATIONMESSAGE("message.smart-id.error.user-refused-confirmation-message"),
     SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE("message.smart-id.error.user-refused-confirmation-message-with-vc-choice"),
     MID_INTEGRATION_ERROR("message.error.general"),
-    MID_VALIDATION_ERROR("message.mid-rest.error.validation-error"),
+    MID_VALIDATION_ERROR("message.error.general"),
     IDC_OCSP_NOT_AVAILABLE("message.idc.error.ocsp.not.available"),
     IDC_CERT_NOT_YET_VALID("message.idc.cert-not-yet-valid"),
     IDC_CERT_EXPIRED("message.idc.cert-expired"),

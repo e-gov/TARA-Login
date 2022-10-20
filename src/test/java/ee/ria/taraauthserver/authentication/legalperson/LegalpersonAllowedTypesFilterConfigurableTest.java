@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.authentication.legalperson;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import ee.ria.taraauthserver.BaseTest;
+import ee.ria.taraauthserver.authentication.legalperson.xroad.BusinessRegistryService;
 import ee.ria.taraauthserver.session.MockSessionFilter;
 import io.restassured.RestAssured;
 import io.restassured.path.json.JsonPath;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestPropertySource;
 
+import static ch.qos.logback.classic.Level.INFO;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.buildMockCredential;
@@ -55,5 +57,8 @@ public class LegalpersonAllowedTypesFilterConfigurableTest extends BaseTest {
 
         assertThat(response.getString("legalPersons[0].legalName")).isEqualTo("Acme INC OÜ 1");
         assertThat(response.getString("legalPersons[0].legalPersonIdentifier")).isEqualTo("11111111");
+        assertMessageWithMarkerIsLoggedOnce(BusinessRegistryService.class, INFO, "X_ROAD request", "http.request.method=POST, url.full=https://localhost:9877/cgi-bin/consumer_proxy, http.request.body.content=\"<soapenv:Envelope xmlns:soapenv=\\\"http://schemas.xmlsoap.org/soap/envelope/\\\"");
+        assertMessageWithMarkerIsLoggedOnce(BusinessRegistryService.class, INFO, "X_ROAD response: 200", "http.response.status_code=200, http.response.body.content=<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+        assertStatisticsIsNotLogged();
     }
 }

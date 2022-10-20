@@ -5,12 +5,12 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.4.1</version>
+        <version>2.7.4</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>ee.ria.tara</groupId>
     <artifactId>tara-login-server</artifactId>
-    <version>1.0.14</version>
+    <version>1.3.2</version>
     <packaging>war</packaging>
     <name>tara-login-server</name>
     <description>TARA login server</description>
@@ -24,12 +24,11 @@
 
     <properties>
         <maven.compiler.release>11</maven.compiler.release>
-
         <!-- Using newer Lombok fixes compilation with JDK 17. Remove when upgrading spring-boot-starter-parent version. -->
         <lombok.version>1.18.20</lombok.version>
         <rest-assured.version>4.2.0</rest-assured.version>
-        <spring-cloud.version>2020.0.0</spring-cloud.version>
         <logback.version>1.2.6</logback.version>
+        <spring-cloud.version>2021.0.4</spring-cloud.version>
     </properties>
 
     <dependencies>
@@ -40,6 +39,10 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -56,12 +59,13 @@
         <dependency>
             <groupId>co.elastic.apm</groupId>
             <artifactId>apm-agent-api</artifactId>
-            <version>1.28.1</version>
+            <!-- TODO Elastic APM Agent 1.30.x and 1.31.0 clear "trace.id" from org.slf4j.MDC before error page is rendered. -->
+            <version>1.29.0</version>
         </dependency>
         <dependency>
             <groupId>co.elastic.apm</groupId>
             <artifactId>elastic-apm-agent</artifactId>
-            <version>1.28.1</version>
+            <version>1.29.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -80,22 +84,23 @@
         <dependency>
             <groupId>nz.net.ultraq.thymeleaf</groupId>
             <artifactId>thymeleaf-layout-dialect</artifactId>
-            <version>2.4.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.ignite</groupId>
             <artifactId>ignite-core</artifactId>
-            <version>2.9.1</version>
+            <!-- TODO Upgrade to >=2.14.0 when the following issue is resolved:
+                  https://www.mail-archive.com/user@ignite.apache.org/msg33644.html -->
+            <version>2.13.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.ignite</groupId>
             <artifactId>ignite-slf4j</artifactId>
-            <version>2.9.1</version>
+            <version>2.13.0</version>
         </dependency>
         <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
-            <version>6.6</version>
+            <version>7.2</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -115,32 +120,24 @@
         <dependency>
             <groupId>org.codehaus.janino</groupId>
             <artifactId>janino</artifactId>
-            <version>3.1.3</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.janino</groupId>
             <artifactId>commons-compiler</artifactId>
-            <version>3.1.3</version>
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15on</artifactId>
-            <version>1.67</version>
+            <version>1.70</version>
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk15on</artifactId>
-            <version>1.67</version>
+            <version>1.70</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.11.3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.hibernate.validator</groupId>
-            <artifactId>hibernate-validator</artifactId>
-            <version>6.0.20.Final</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -150,17 +147,16 @@
         <dependency>
             <groupId>ee.sk.mid</groupId>
             <artifactId>mid-rest-java-client</artifactId>
-            <version>1.3</version>
+            <version>1.4</version>
         </dependency>
         <dependency>
             <groupId>ee.sk.smartid</groupId>
             <artifactId>smart-id-java-client</artifactId>
-            <version>2.0</version>
+            <version>2.1.4</version>
         </dependency>
         <dependency>
             <groupId>org.freemarker</groupId>
             <artifactId>freemarker</artifactId>
-            <version>2.3.29</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -176,31 +172,27 @@
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
-            <version>${rest-assured.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>spring-mock-mvc</artifactId>
-            <version>${rest-assured.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
-            <version>${awaitility.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.github.tomakehurst</groupId>
             <artifactId>wiremock-jre8</artifactId>
-            <version>2.27.2</version>
+            <version>2.34.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -218,7 +210,7 @@
     </dependencyManagement>
 
     <build>
-        <finalName>${artifactId}</finalName>
+        <finalName>${project.artifactId}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -237,8 +229,8 @@
                 <configuration>
                     <excludes>
                         <exclude>
-                            <groupId>org.springframework.boot</groupId>
-                            <artifactId>spring-boot-configuration-processor</artifactId>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
                 </configuration>
@@ -253,7 +245,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
                 <configuration>
                     <runOrder>random</runOrder>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
@@ -262,7 +253,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.6</version>
+                <version>0.8.8</version>
                 <executions>
                     <execution>
                         <goals>

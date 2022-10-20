@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.utils;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -64,6 +65,25 @@ public class RequestUtils {
                 return supplier.get();
             } finally {
                 MDC.clear();
+            }
+        };
+    }
+
+    public static <T> Supplier<T> withMdcAndLocale(Supplier<T> supplier) {
+        Map<String, String> mdc = MDC.getCopyOfContextMap();
+        Locale locale = LocaleContextHolder.getLocale();
+        return () -> {
+            try {
+                LocaleContextHolder.setLocale(locale);
+                if (mdc != null) {
+                    MDC.setContextMap(mdc);
+                } else {
+                    MDC.clear();
+                }
+                return supplier.get();
+            } finally {
+                MDC.clear();
+                LocaleContextHolder.setLocale(null);
             }
         };
     }

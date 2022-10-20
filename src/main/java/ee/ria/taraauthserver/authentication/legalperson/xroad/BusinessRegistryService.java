@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.authentication.legalperson.xroad;
 import ee.ria.taraauthserver.config.properties.LegalPersonProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
+import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.session.TaraSession;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -12,6 +13,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.HttpMethod;
 import org.springframework.util.Assert;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -46,18 +48,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import static java.lang.String.format;
 import static java.util.Arrays.stream;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
-import static net.logstash.logback.argument.StructuredArguments.value;
-import static net.logstash.logback.marker.Markers.append;
 import static org.apache.commons.lang3.StringUtils.join;
 import static org.unbescape.xml.XmlEscape.escapeXml11;
 
 @Slf4j
 public class BusinessRegistryService {
     private static final String SOAP_REQUEST_TEMPLATE = "xtee-arireg.esindus_v2.v1.ftl";
+    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.X_ROAD, this.getClass());
 
     @NonNull
     private final Configuration templateConfiguration;
@@ -137,8 +139,7 @@ public class BusinessRegistryService {
 
     protected NodeList send(String request, String filterExpression) {
         try {
-            log.info(append("http.request.body.content", request), "Sending X-Road Business registry request to URL: {}",
-                    value("url.full", legalPersonProperties.getXRoadServerUrl()));
+            requestLogger.logRequest(legalPersonProperties.getXRoadServerUrl(), HttpMethod.POST, request);
             URL obj = new URL(legalPersonProperties.getXRoadServerUrl());
             HttpURLConnection con = (HttpURLConnection) getHttpURLConnection(obj);
             con.setReadTimeout(legalPersonProperties.getXRoadServerReadTimeoutInMilliseconds());
@@ -153,10 +154,9 @@ public class BusinessRegistryService {
             }
 
             try (InputStream in = (InputStream) con.getContent()) {
-                int responseCode = con.getResponseCode();
+                int responseCode = con.getResponseCode(); // TODO Why is response code not checked first? X-Road returns valid result with status code other than 200?
                 String response = IOUtils.toString(in, StandardCharsets.UTF_8);
-                log.info(append("http.response.body.content", response), "X-Road Business registry response received. Status code: {}",
-                        value("http.response.status_code", responseCode));
+                requestLogger.logResponse(responseCode, response);
 
                 DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
                 builderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -176,7 +176,6 @@ public class BusinessRegistryService {
                             + "', faultstring = '" + faultstring + "'");
                 }
             }
-
         } catch (SocketTimeoutException | ConnectException | UnknownHostException | SSLException e) {
             throw new ServiceNotAvailableException(ErrorCode.LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE, "Could not connect to business registry. Connection failed: " + e.getMessage(), e);
         } catch (XPathExpressionException | IOException | SAXException | ParserConfigurationException e) {

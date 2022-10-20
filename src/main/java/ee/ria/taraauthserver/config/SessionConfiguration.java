@@ -4,6 +4,7 @@ import ee.ria.taraauthserver.security.RequestCorrelationFilter;
 import ee.ria.taraauthserver.security.SessionManagementFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.info.BuildProperties;
+import org.springframework.boot.info.GitProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -58,9 +59,9 @@ public class SessionConfiguration {
     }
 
     @Bean
-    public FilterRegistrationBean<RequestCorrelationFilter> requestCorrelationFilter(@Value("${spring.session.servlet.filter-order}") Integer filterOrder, BuildProperties buildProperties) {
+    public FilterRegistrationBean<RequestCorrelationFilter> requestCorrelationFilter(@Value("${spring.session.servlet.filter-order}") Integer filterOrder, BuildProperties buildProperties, GitProperties gitProperties) {
         FilterRegistrationBean<RequestCorrelationFilter> registrationBean = new FilterRegistrationBean<>();
-        registrationBean.setFilter(new RequestCorrelationFilter(buildProperties));
+        registrationBean.setFilter(new RequestCorrelationFilter(buildProperties, gitProperties));
         registrationBean.setOrder(filterOrder + 2);
         return registrationBean;
     }

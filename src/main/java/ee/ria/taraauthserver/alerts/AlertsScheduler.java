@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.alerts;
 
 import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties;
+import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -9,27 +10,26 @@ import org.apache.ignite.binary.BinaryObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import javax.cache.Cache;
-import java.util.ArrayList;
 import java.util.List;
 
 import static ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.Alert;
-import static java.util.Arrays.asList;
+import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
-import static net.logstash.logback.argument.StructuredArguments.value;
 
 @Slf4j
 @Component
 @ConditionalOnProperty(value = "tara.alerts.enabled")
 public class AlertsScheduler {
     public static final String ALERTS_CACHE_KEY = "alertsCache";
+    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.ALERTS, this.getClass());
 
     @Autowired
     private AlertsConfigurationProperties alertsConfigurationProperties;
@@ -48,11 +48,17 @@ public class AlertsScheduler {
     public void updateAlertsTask() {
         try {
             String url = alertsConfigurationProperties.getHostUrl();
-            log.info("Requesting alerts from: {}", value("url.full", url));
-            ResponseEntity<Alert[]> response = alertsRestTemplate.exchange(url, HttpMethod.GET, null, Alert[].class);
-            List<Alert> alerts = new ArrayList<>();
-            alerts.addAll(asList(response.getBody()));
-            BinaryObject binaryObject = ignite.binary().toBinary(new ApplicationAlerts(alerts));
+
+            requestLogger.logRequest(url, HttpMethod.GET);
+            var response = alertsRestTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<List<Alert>>() {
+                    });
+            requestLogger.logResponse(response);
+
+            BinaryObject binaryObject = ignite.binary().toBinary(new ApplicationAlerts(response.getBody()));
             alertsCache.put(ALERTS_CACHE_KEY, binaryObject);
         } catch (Exception e) {
             log.error("Failed to update alerts: ", e);

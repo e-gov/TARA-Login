@@ -1,3 +1,93 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            36:18:f3:49:f7:76:50:4a:5b:90:ed:78:11:8e:0e:45
+        Signature Algorithm: ecdsa-with-SHA512
+        Issuer: C = EE, O = SK ID Solutions AS, organizationIdentifier = NTREE-10747013, CN = TEST of EE-GovCA2018
+        Validity
+            Not Before: Sep  6 09:03:52 2018 GMT
+            Not After : Aug 30 12:48:28 2033 GMT
+        Subject: C = EE, O = SK ID Solutions AS, organizationIdentifier = NTREE-10747013, CN = TEST of ESTEID2018
+        Subject Public Key Info:
+            Public Key Algorithm: id-ecPublicKey
+                Public-Key: (521 bit)
+                pub:
+                    04:01:c5:8b:a0:e1:c1:2a:c2:62:23:fb:74:d5:69:
+                    49:61:7f:10:95:f4:54:20:7e:e8:25:0b:6f:f4:53:
+                    1d:48:7a:ac:35:d6:60:e3:36:f9:c6:26:19:16:c5:
+                    a2:db:58:98:bb:42:db:61:30:6e:51:d7:4e:25:ec:
+                    da:7b:94:17:af:ac:18:01:0e:d7:e0:8d:af:5e:dc:
+                    c2:d3:42:46:3e:70:54:be:51:0c:63:b7:d6:62:85:
+                    35:09:56:c4:7b:96:8c:18:95:a1:84:8a:aa:ac:19:
+                    b1:21:97:07:ee:db:b5:ec:9b:c6:f6:ae:14:a2:4c:
+                    eb:cd:76:34:ed:1b:9e:cd:9f:05:40:5f:e8
+                ASN1 OID: secp521r1
+                NIST CURVE: P-521
+        X509v3 extensions:
+            X509v3 Authority Key Identifier: 
+                keyid:7F:0C:70:D8:F4:E5:8F:01:77:EE:C7:6D:29:29:B9:F4:C9:FC:6A:C0
+
+            X509v3 Subject Key Identifier: 
+                C0:84:99:29:C4:4E:9F:3B:02:34:F6:99:E1:0A:56:00:08:29:3E:7B
+            X509v3 Key Usage: critical
+                Certificate Sign, CRL Sign
+            X509v3 Basic Constraints: critical
+                CA:TRUE, pathlen:0
+            X509v3 Certificate Policies: 
+                Policy: 0.4.0.2042.1.2
+                Policy: 0.4.0.194112.1.2
+                Policy: 1.3.6.1.4.1.51361.1.2.1
+                  CPS: https://www.sk.ee/CPS
+                Policy: 1.3.6.1.4.1.51361.1.2.2
+                Policy: 1.3.6.1.4.1.51455.1.2.1
+                Policy: 1.3.6.1.4.1.51361.1.2.5
+                Policy: 1.3.6.1.4.1.51361.1.2.6
+                Policy: 1.3.6.1.4.1.51361.1.2.7
+                Policy: 1.3.6.1.4.1.51361.1.2.3
+                Policy: 1.3.6.1.4.1.51361.1.2.4
+                Policy: 1.3.6.1.4.1.51361.1.2.8
+                Policy: 1.3.6.1.4.1.51361.1.2.9
+                Policy: 1.3.6.1.4.1.51361.1.2.10
+                Policy: 1.3.6.1.4.1.51361.1.2.11
+                Policy: 1.3.6.1.4.1.51361.1.2.12
+                Policy: 1.3.6.1.4.1.51361.1.2.13
+                Policy: 1.3.6.1.4.1.51361.1.2.14
+                Policy: 1.3.6.1.4.1.51361.1.2.15
+                Policy: 1.3.6.1.4.1.51361.1.2.16
+                Policy: 1.3.6.1.4.1.51361.1.2.17
+                Policy: 1.3.6.1.4.1.51361.1.2.18
+                Policy: 1.3.6.1.4.1.51361.1.2.19
+                Policy: 1.3.6.1.4.1.51361.1.2.20
+                Policy: 1.3.6.1.4.1.51455.1.2.2
+                Policy: 1.3.6.1.4.1.51455.1.2.3
+                Policy: 1.3.6.1.4.1.51455.1.2.4
+                Policy: 1.3.6.1.4.1.51455.1.2.5
+                Policy: 1.3.6.1.4.1.51455.1.2.6
+
+            X509v3 Extended Key Usage: critical
+                OCSP Signing, TLS Web Client Authentication, E-mail Protection
+            Authority Information Access: 
+                OCSP - URI:http://aia.demo.sk.ee/ee-govca2018
+                CA Issuers - URI:http://c.sk.ee/Test_of_EE-GovCA2018.der.crt
+
+            qcStatements: 
+                0
+0......F..
+            X509v3 CRL Distribution Points: 
+
+                Full Name:
+                  URI:http://c.sk.ee/Test_of_EE-GovCA2018.crl
+
+    Signature Algorithm: ecdsa-with-SHA512
+         30:81:88:02:42:01:20:5f:8b:ab:2b:72:69:5e:28:e7:05:12:
+         9b:7d:15:ca:c0:7c:2d:d5:ad:a0:ea:f3:36:ad:90:84:1e:ad:
+         1a:fe:2c:96:0e:73:f8:24:79:f1:ee:b4:79:11:6a:37:14:fb:
+         79:c7:00:fc:78:28:3d:6b:34:07:56:7e:2f:4e:bb:aa:d5:02:
+         42:00:81:f0:e3:f4:90:7c:7f:8f:5b:7b:86:d3:76:09:78:e9:
+         4a:31:85:67:0e:53:4c:8e:2c:d5:e1:b2:4d:b7:b4:50:94:41:
+         5c:49:14:29:f1:5b:65:59:b3:18:f1:4f:a6:bc:14:75:23:e2:
+         f0:fa:4e:ef:ec:46:05:89:45:1c:0e:33:f9
 -----BEGIN CERTIFICATE-----
 MIIFfDCCBN2gAwIBAgIQNhjzSfd2UEpbkO14EY4ORTAKBggqhkjOPQQDBDBiMQsw
 CQYDVQQGEwJFRTEbMBkGA1UECgwSU0sgSUQgU29sdXRpb25zIEFTMRcwFQYDVQRh

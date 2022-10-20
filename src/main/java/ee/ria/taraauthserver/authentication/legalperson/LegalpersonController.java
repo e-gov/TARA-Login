@@ -95,7 +95,7 @@ public class LegalpersonController {
             @RequestParam(name = "legal_person_identifier")
             @Size(max = 50)
             @Pattern(regexp = "[a-zA-Z0-9-_]{1,}", message = "invalid legal person identifier")
-                    String legalPersonIdentifier, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+            String legalPersonIdentifier, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, GET_LEGAL_PERSON_LIST);
         List<TaraSession.LegalPerson> legalPersons = taraSession.getLegalPersonList();
         notNull(legalPersons, "Invalid state. Legal person list was not found!");

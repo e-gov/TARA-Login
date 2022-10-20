@@ -42,6 +42,7 @@ public class SecurityConfiguration {
     @ConditionalOnProperty(value = "tara.auth-methods.id-card.basic-auth.enabled")
     @Configuration
     @RequiredArgsConstructor
+    // TODO Replace deprecated WebSecurityConfigurerAdapter with SecurityFilterChain etc.
     public static class IdCardApiWebSecurityConfigurationAdapter extends WebSecurityConfigurerAdapter {
         private final AuthConfigurationProperties authConfigurationProperties;
         @Value("${tara.auth-methods.id-card.basic-auth.username}")
@@ -67,6 +68,8 @@ public class SecurityConfiguration {
                     .httpBasic()
                     .and()
                     .headers()
+                    .xssProtection().xssProtectionEnabled(false)
+                    .and()
                     .frameOptions().deny()
                     .contentSecurityPolicy(authConfigurationProperties.getContentSecurityPolicy())
                     .and()
@@ -111,6 +114,8 @@ public class SecurityConfiguration {
                     .sessionManagement().disable()
                     .csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository()))
                     .headers()
+                    .xssProtection().xssProtectionEnabled(false)
+                    .and()
                     .frameOptions().deny()
                     .contentSecurityPolicy(authConfigurationProperties.getContentSecurityPolicy())
                     .and()

@@ -6,11 +6,11 @@ import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.Ale
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.util.Assert;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponents;
@@ -60,13 +60,16 @@ public class ThymeleafSupport {
         if (taraSession == null || taraSession.getLoginRequestInfo() == null)
             return null;
 
-        String defaultServicename = taraSession.getClientName();
-        if (defaultServicename == null)
+        return taraSession.getOidcClientTranslatedName();
+    }
+
+    public String getServiceLogo() {
+        TaraSession taraSession = SessionUtils.getAuthSession();
+        if (taraSession == null || taraSession.getLoginRequestInfo() == null)
             return null;
 
-        Map<String, String> serviceNameTranslations = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getNameTranslations();
-        Locale locale = LocaleContextHolder.getLocale();
-        return serviceNameTranslations.getOrDefault(locale.getLanguage(), defaultServicename);
+        TaraSession.LoginRequestInfo loginRequestInfo = taraSession.getAppropriateLoginRequestInfo();
+        return loginRequestInfo.getClientLogo();
     }
 
     public String getLocaleUrl(String locale) {
@@ -75,7 +78,13 @@ public class ThymeleafSupport {
     }
 
     public List<String> getListOfCountries() {
-        return eidasConfigurationProperties == null ? emptyList() : eidasConfigurationProperties.getAvailableCountries();
+        TaraSession taraSession = SessionUtils.getAuthSession();
+        if (eidasConfigurationProperties == null || taraSession == null) {
+            return emptyList();
+        }
+        Map<SPType, List<String>> availableCountries = eidasConfigurationProperties.getAvailableCountries();
+        SPType spType = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getInstitution().getSector();
+        return availableCountries.get(spType);
     }
 
     public String getBackUrl() {

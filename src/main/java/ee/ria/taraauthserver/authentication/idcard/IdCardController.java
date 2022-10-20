@@ -42,7 +42,7 @@ import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_NOT_YET_VALID;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_OCSP_NOT_AVAILABLE;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_REVOKED;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_UNKNOWN;
-import static ee.ria.taraauthserver.security.RequestCorrelationFilter.MDC_ATTRIBUTE_TRACE_ID;
+import static ee.ria.taraauthserver.security.RequestCorrelationFilter.MDC_ATTRIBUTE_KEY_REQUEST_TRACE_ID;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT;
@@ -114,13 +114,13 @@ public class IdCardController {
     }
 
     @NotNull
-    private ResponseEntity<Map<String, Object>> createErrorResponse(TaraSession taraSession, ErrorCode errorCode, String logMessage, HttpStatus httpStatus) {
+    private ResponseEntity<Map<String, Object>> createErrorResponse(TaraSession taraSession, ErrorCode errorCode, String logMessage, HttpStatus httpStatus) { // TODO AUT-855
         log.warn(append("error.code", errorCode.name()), "OCSP validation failed: {}", value("error.message", logMessage));
         taraSession.setState(AUTHENTICATION_FAILED);
         taraSession.getAuthenticationResult().setErrorCode(errorCode);
         String errorMessage = messageSource.getMessage(errorCode.getMessage(), null, getLocale());
         Boolean reportable = !notReportableErrors.contains(errorCode);
-        return ResponseEntity.status(httpStatus).body(of("status", "ERROR", "message", errorMessage, ERROR_ATTR_INCIDENT_NR, MDC.get(MDC_ATTRIBUTE_TRACE_ID), ERROR_ATTR_REPORTABLE, reportable));
+        return ResponseEntity.status(httpStatus).body(of("status", "ERROR", "message", errorMessage, ERROR_ATTR_INCIDENT_NR, MDC.get(MDC_ATTRIBUTE_KEY_REQUEST_TRACE_ID), ERROR_ATTR_REPORTABLE, reportable));
     }
 
     private X509Certificate getCertificateFromRequest(TaraSession taraSession, HttpServletRequest request) {

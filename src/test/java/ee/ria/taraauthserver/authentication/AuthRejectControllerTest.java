@@ -1,10 +1,10 @@
 package ee.ria.taraauthserver.authentication;
 
 import ee.ria.taraauthserver.BaseTest;
-import ee.ria.taraauthserver.logging.StatisticsLogger;
+import ee.ria.taraauthserver.config.properties.SPType;
+import ee.ria.taraauthserver.logging.RestTemplateErrorLogger;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
-import net.logstash.logback.marker.ObjectFieldsAppendingMarker;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Tag;
@@ -15,13 +15,15 @@ import org.springframework.http.MediaType;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
+import static ch.qos.logback.classic.Level.ERROR;
 import static ch.qos.logback.classic.Level.INFO;
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.put;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.MOCK_LOGIN_CHALLENGE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 @Slf4j
@@ -39,8 +41,10 @@ class AuthRejectControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
+                .body("message", equalTo("Teie seanssi ei leitud! Seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("reportable", equalTo(false));
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -57,6 +61,7 @@ class AuthRejectControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: authReject.errorCode: the only supported value is: 'user_cancel'");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -75,6 +80,7 @@ class AuthRejectControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("Duplicate parameters not allowed in request. Found multiple parameters with name: error_code");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -85,7 +91,6 @@ class AuthRejectControllerTest extends BaseTest {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
-
         String sessionId = createSession();
 
         given()
@@ -99,15 +104,12 @@ class AuthRejectControllerTest extends BaseTest {
                 .header("Location", Matchers.endsWith("some/test/url"));
 
         assertNull(sessionRepository.findById(sessionId));
-        assertInfoIsLogged("OIDC login reject request: https://localhost:9877/oauth2/auth/requests/login/reject?login_challenge=abcdefg098AAdsCC");
-        assertInfoIsLogged("Tara session state change: NOT_SET -> AUTHENTICATION_CANCELED");
+        assertInfoIsLogged("State: NOT_SET -> AUTHENTICATION_CANCELED");
         assertWarningIsLogged("Session has been invalidated: " + sessionId);
         assertInfoIsLogged("Session is removed from cache: " + sessionId);
-
-        ObjectFieldsAppendingMarker statisticsMarker = assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, INFO, "Authentication result: AUTHENTICATION_CANCELED");
-        assertEquals("StatisticsLogger.SessionStatistics(clientId=null, sector=null, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, " +
-                        "authenticationType=null, authenticationState=AUTHENTICATION_CANCELED, errorCode=null)",
-                statisticsMarker.toStringSelf());
+        assertMessageWithMarkerIsLoggedOnce(AuthRejectController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/reject?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"error\":\"user_cancel\",\"error_debug\":\"User canceled the authentication process.\",\"error_description\":\"User canceled the authentication process.\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthRejectController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_CANCELED, errorCode=null)");
     }
 
     @Test
@@ -132,7 +134,9 @@ class AuthRejectControllerTest extends BaseTest {
                 .body("reportable", equalTo(true))
                 .statusCode(500);
 
-        assertErrorIsLogged("HTTP client exception: 400 Bad Request: [{}]");
+        assertMessageWithMarkerIsLoggedOnce(AuthRejectController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/reject?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"error\":\"user_cancel\",\"error_debug\":\"User canceled the authentication process.\",\"error_description\":\"User canceled the authentication process.\"}");
+        assertMessageWithMarkerIsLoggedOnce(RestTemplateErrorLogger.class, ERROR, "TARA_HYDRA response: 400", "http.response.status_code=400, http.response.body.content={}");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
@@ -158,6 +162,9 @@ class AuthRejectControllerTest extends BaseTest {
                 .statusCode(500);
 
         assertErrorIsLogged("Server encountered an unexpected error: Invalid OIDC server response. Redirect URL missing from response.");
+        assertMessageWithMarkerIsLoggedOnce(AuthRejectController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/reject?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"error\":\"user_cancel\",\"error_debug\":\"User canceled the authentication process.\",\"error_description\":\"User canceled the authentication process.\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthRejectController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={}");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @NotNull
@@ -166,6 +173,7 @@ class AuthRejectControllerTest extends BaseTest {
         TaraSession authSession = new TaraSession(session.getId());
         TaraSession.LoginRequestInfo lri = new TaraSession.LoginRequestInfo();
         lri.setChallenge(MOCK_LOGIN_CHALLENGE);
+        lri.getClient().getMetaData().getOidcClient().getInstitution().setSector(SPType.PUBLIC);
         authSession.setLoginRequestInfo(lri);
         session.setAttribute(TARA_SESSION, authSession);
         sessionRepository.save(session);

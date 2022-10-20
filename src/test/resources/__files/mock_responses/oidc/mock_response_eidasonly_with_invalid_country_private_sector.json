@@ -1,0 +1,99 @@
+{
+  "challenge": "abcdefg098AAdsCC",
+  "client": {
+    "allowed_cors_origins": [
+      "string"
+    ],
+    "audience": [
+      "string"
+    ],
+    "backchannel_logout_session_required": true,
+    "backchannel_logout_uri": "string",
+    "client_id": "openIdDemo",
+    "client_name": "string",
+    "client_secret": "string",
+    "client_secret_expires_at": 0,
+    "client_uri": "string",
+    "contacts": [
+      "string"
+    ],
+    "created_at": "2019-08-24T14:15:22Z",
+    "frontchannel_logout_session_required": true,
+    "frontchannel_logout_uri": "string",
+    "grant_types": [
+      "string"
+    ],
+    "jwks": {},
+    "jwks_uri": "string",
+    "logo_uri": "string",
+    "metadata": {
+      "oidc_client": {
+        "name": "some test client",
+        "name_translations": {
+          "et": "test client et",
+          "en": "test client en",
+          "ru": "test client ru"
+        },
+        "short_name": "stc",
+        "short_name_translations": {
+          "et": "short test client et",
+          "en": "short test client en",
+          "ru": "short test client ru"
+        },
+        "institution": {
+          "registry_code": "70006317",
+          "sector": "private"
+        }
+      }
+    },
+    "owner": "string",
+    "policy_uri": "string",
+    "post_logout_redirect_uris": [
+      "string"
+    ],
+    "redirect_uris": [
+      "string"
+    ],
+    "request_object_signing_alg": "string",
+    "request_uris": [
+      "string"
+    ],
+    "response_types": [
+      "string"
+    ],
+    "scope": "openid mid idcard eidas eidasonly eidas:country:ee eidas:country:lt eidas:country:it",
+    "sector_identifier_uri": "string",
+    "subject_type": "string",
+    "token_endpoint_auth_method": "string",
+    "token_endpoint_auth_signing_alg": "string",
+    "tos_uri": "string",
+    "updated_at": "2019-08-24T14:15:22Z",
+    "userinfo_signed_response_alg": "string"
+  },
+  "oidc_context": {
+    "acr_values": [
+      "high"
+    ],
+    "display": "string",
+    "id_token_hint_claims": {},
+    "login_hint": "string",
+    "ui_locales": [
+      "en"
+    ]
+  },
+  "request_url": "https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et",
+  "requested_access_token_audience": [
+    "string"
+  ],
+  "requested_scope": [
+    "openid",
+    "idcard",
+    "mid",
+    "eidasonly",
+    "eidas:country:DE",
+    "eidas:country:ca"
+  ],
+  "session_id": "string",
+  "skip": true,
+  "subject": "string"
+}

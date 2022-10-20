@@ -1,17 +1,16 @@
 package ee.ria.taraauthserver.authentication.eidas;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
+import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import net.logstash.logback.argument.StructuredArguments;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
@@ -27,19 +26,23 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.cache.Cache;
+import javax.validation.ConstraintViolation;
 import javax.validation.Valid;
+import javax.validation.Validator;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static ee.ria.taraauthserver.error.ErrorCode.EIDAS_AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.error.ErrorCode.EIDAS_INTERNAL_ERROR;
@@ -47,11 +50,11 @@ import static ee.ria.taraauthserver.error.ErrorCode.EIDAS_USER_CONSENT_NOT_GIVEN
 import static ee.ria.taraauthserver.error.ErrorCode.ERROR_GENERAL;
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
+import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.WAITING_EIDAS_RESPONSE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
-import static net.logstash.logback.marker.Markers.append;
+import static net.logstash.logback.argument.StructuredArguments.value;
 
 @Slf4j
 @Controller
@@ -61,6 +64,7 @@ public class EidasCallbackController {
     public static final Pattern VALID_PERSON_IDENTIFIER_PATTERN = Pattern.compile("^([A-Z]{2,2})\\/([A-Z]{2,2})\\/(.*)$");
     public static final String REQUEST_DENIED = "urn:oasis:names:tc:SAML:2.0:status:RequestDenied";
     public static final String AUTHN_FAILED = "urn:oasis:names:tc:SAML:2.0:status:AuthnFailed";
+    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.EIDAS, this.getClass());
 
     @Autowired
     private RestTemplate eidasRestTemplate;
@@ -75,59 +79,42 @@ public class EidasCallbackController {
     private Cache<String, String> eidasRelayStateCache;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private Validator validator;
 
     @PostMapping(value = EIDAS_CALLBACK_REQUEST_MAPPING)
     public ModelAndView eidasCallback(@RequestParam(name = "SAMLResponse") String samlResponse, @RequestParam(name = "RelayState") String relayState) {
-        log.info("Handling EIDAS authentication callback for relay state: {}", StructuredArguments.value("tara.session.eidas.relay_state", relayState));
+        log.info("Handling EIDAS authentication callback for relay state: {}", value("tara.session.eidas.relay_state", relayState));
         if (!eidasRelayStateCache.containsKey(relayState))
             throw new BadRequestException(INVALID_REQUEST, "relayState not found in relayState map");
 
-        Session session = sessionRepository.findById(eidasRelayStateCache.getAndRemove(relayState));
+        Session session = sessionRepository.findById(eidasRelayStateCache.getAndRemove(relayState)); // TODO AUT-854
         validateSession(session);
 
         try {
-            HttpEntity<MultiValueMap<String, String>> requestEntity = createRequestEntity(samlResponse);
             String requestUrl = eidasConfigurationProperties.getClientUrl() + "/returnUrl";
 
-            log.info(append("http.request.method", HttpMethod.POST.name())
-                            .and(append("http.request.body.content", "SAMLResponse=" + samlResponse))
-                            .and(append("url.full", requestUrl)),
-                    "EIDAS-Client request");
-            EidasClientResponse response = eidasRestTemplate.exchange(requestUrl, HttpMethod.POST, requestEntity, EidasClientResponse.class).getBody();
-            if (response != null) {
-                log.info(append("http.request.method", HttpMethod.POST.name())
-                                .and(append("http.response.body.content", objectMapper.writeValueAsString(response)))
-                                .and(append("url.full", requestUrl)),
-                        "EIDAS-Client response");
-                updateSession(session, response);
-            } else {
-                throw new IllegalStateException("Response body from eidas client is null.");
-            }
+            requestLogger.logRequest(requestUrl, HttpMethod.POST, Map.of("SAMLResponse", samlResponse));
+            var response = eidasRestTemplate.exchange(
+                    requestUrl,
+                    HttpMethod.POST,
+                    createRequestEntity(samlResponse),
+                    EidasClientResponse.class);
+            requestLogger.logResponse(response);
+
+            EidasClientResponse eidasClientResponse = response.getBody();
+            validateResponse(eidasClientResponse);
+            updateSession(session, eidasClientResponse);
         } catch (HttpClientErrorException.Unauthorized e) {
-            handle401Exception(session, e);
-        } catch (ResourceAccessException e) {
-            handleIOException(session, e);
-        } catch (Exception e) {
-            handleOtherExceptions(session, e);
+            handle401Exception(e);
+        } catch (RestClientException e) {
+            throw new ServiceNotAvailableException(EIDAS_INTERNAL_ERROR, "EIDAS service error: " + e.getMessage(), e);
         }
 
         CsrfToken csrf = session.getAttribute("tara.csrf");
         return new ModelAndView("eidas", Map.of("token", csrf.getToken()));
     }
 
-    private void handleIOException(Session session, Exception e) {
-        updateSession(session);
-        throw new ServiceNotAvailableException(EIDAS_INTERNAL_ERROR, "Eidas service did not respond: " + e.getMessage(), e);
-    }
-
-    private void handleOtherExceptions(Session session, Exception e) {
-        updateSession(session);
-        throw new IllegalStateException("Unexpected error from eidas client: " + e.getMessage(), e);
-    }
-
-    private void handle401Exception(Session session, HttpClientErrorException.Unauthorized e) {
-        updateSession(session);
+    private void handle401Exception(HttpClientErrorException.Unauthorized e) {
         if (e.getMessage() != null && e.getMessage().contains(AUTHN_FAILED))
             throw new BadRequestException(EIDAS_AUTHENTICATION_FAILED, e.getMessage(), e);
         else if (e.getMessage() != null && e.getMessage().contains(REQUEST_DENIED))
@@ -136,14 +123,11 @@ public class EidasCallbackController {
             throw new BadRequestException(ERROR_GENERAL, e.getMessage(), e);
     }
 
-    private void updateSession(Session session) {
-        TaraSession taraSession = session.getAttribute(TARA_SESSION);
-        taraSession.setState(AUTHENTICATION_FAILED);
-        session.setAttribute(TARA_SESSION, taraSession);
-        sessionRepository.save(session);
-    }
-
     private void updateSession(Session session, EidasClientResponse response) {
+        if (response == null) {
+            throw new IllegalStateException("Response body from EIDAS client is null.");
+        }
+
         String personIdentifier = response.getAttributes().getPersonIdentifier();
         Matcher personIdentifierMatcher = validatePersonIdentifier(personIdentifier);
 
@@ -163,6 +147,19 @@ public class EidasCallbackController {
         sessionRepository.save(session);
     }
 
+    private void validateResponse(EidasClientResponse response) {
+        Set<ConstraintViolation<EidasClientResponse>> constraintViolations = validator.validate(response);
+        if (!constraintViolations.isEmpty()) {
+            throw new IllegalStateException(getConstraintViolationsAsString(constraintViolations));
+        }
+    }
+
+    private static String getConstraintViolationsAsString(Set<? extends ConstraintViolation<?>> constraintViolations) {
+        return constraintViolations.stream()
+                .map(cv -> cv == null ? "null" : cv.getPropertyPath() + ": " + cv.getMessage())
+                .sorted().collect(Collectors.joining(", "));
+    }
+
     private Matcher validatePersonIdentifier(String personIdentifier) {
         Matcher matcher = VALID_PERSON_IDENTIFIER_PATTERN.matcher(personIdentifier);
         if (matcher.matches())
@@ -179,7 +176,6 @@ public class EidasCallbackController {
         return personIdentifierMatcher.group(1);
     }
 
-    @org.jetbrains.annotations.NotNull
     private HttpEntity<MultiValueMap<String, String>> createRequestEntity(String samlResponse) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);

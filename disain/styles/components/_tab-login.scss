@@ -75,22 +75,6 @@
         width: 50px;
       }
     }
-    .icon-id-card,
-    .icon-bank-link {
-      font-size: 24px;
-    }
-    .icon-mobile-id {
-      font-size: 36px;
-    }
-    .icon-smart-id {
-      font-size: 28px;
-    }
-    .icon-eu-citizen {
-      img {
-        height: 40px;
-        width: auto;
-      }
-    }
     &.is-active,
     &:hover {
       text-decoration: none;
@@ -182,18 +166,8 @@
     padding: 30px 0;
     text-align: center;
     .icon {
-      color: #344255;
-    }
-    .icon-eu-citizen,
-    .icon-bank-link,
-    .icon-id-card {
-      font-size: 60px;
-    }
-    .icon-smart-id {
-      font-size: 65px;
-    }
-    .icon-mobile-id {
-      font-size: 100px;
+      width: 160px;
+      height: 100px;
     }
     @media (max-width: $breakpoint-mobile) {
       display: none;

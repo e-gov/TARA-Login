@@ -1,7 +1,6 @@
 package ee.ria.taraauthserver.authentication.mobileid;
 
 import ee.ria.taraauthserver.BaseTest;
-import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.MockSessionFilter;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
@@ -15,8 +14,6 @@ import org.springframework.session.SessionRepository;
 
 import static ch.qos.logback.classic.Level.INFO;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
-import static ee.ria.taraauthserver.config.properties.AuthenticationType.SMART_ID;
-import static ee.ria.taraauthserver.session.MockSessionFilter.*;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.COMPLETE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
@@ -35,43 +32,43 @@ class AuthMidPollCancelControllerTest extends BaseTest {
     @Tag("CSRF_PROTCTION")
     void authMidPoll_NoCsrf() {
         given()
-                .filter(withoutCsrf().sessionRepository(sessionRepository).build())
+                .filter(MockSessionFilter.withoutCsrf().sessionRepository(sessionRepository).build())
                 .when()
                 .post("/auth/mid/poll/cancel")
                 .then()
                 .assertThat()
                 .statusCode(403)
                 .body("error", equalTo("Forbidden"))
-                .body("message", equalTo("Keelatud päring. Päring esitati topelt, sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
+                .body("message", equalTo("Keelatud päring. Päring esitati topelt, seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("Access denied: Invalid CSRF token.");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
     @Tag(value = "MID_AUTH_STATUS_CHECK_VALID_SESSION")
     void authMidPoll_sessionMissing() {
-
         given()
-                .filter(withoutTaraSession().sessionRepository(sessionRepository).build())
+                .filter(MockSessionFilter.withoutTaraSession().sessionRepository(sessionRepository).build())
                 .when()
                 .post("/auth/mid/poll/cancel")
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
+                .body("message", equalTo("Teie seanssi ei leitud! Seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("User exception: Invalid session");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
     @Tag(value = "MID_AUTH_STATUS_CHECK_VALID_SESSION")
     void authMidPoll_sessionIncorrectState() {
-
         given()
-                .filter(withTaraSession()
+                .filter(MockSessionFilter.withTaraSession()
                         .sessionRepository(sessionRepository)
                         .authenticationTypes(of(MOBILE_ID))
                         .authenticationState(COMPLETE).build())
@@ -80,7 +77,7 @@ class AuthMidPollCancelControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
+                .body("message", equalTo("Ebakorrektne päring. Vale seansi staatus."))
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false));
 
@@ -95,10 +92,11 @@ class AuthMidPollCancelControllerTest extends BaseTest {
     @Tag(value = "MID_AUTH_CANCELED")
     @Tag(value = "LOG_EVENT_UNIQUE_STATUS")
     void authMidPollCancel_redirectToAuthInit(TaraAuthenticationState state) {
-        MockSessionFilter sessionFilter = withTaraSession()
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(MOBILE_ID))
                 .authenticationState(state).build();
+
         given()
                 .filter(sessionFilter)
                 .when()
@@ -111,16 +109,17 @@ class AuthMidPollCancelControllerTest extends BaseTest {
         TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.POLL_MID_STATUS_CANCELED, taraSession.getState());
         assertWarningIsLogged("Mobile-ID authentication process has been canceled");
-        assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, INFO, "Authentication result: AUTHENTICATION_CANCELED");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_CANCELED, errorCode=null)");
     }
 
     @Test
     @Tag(value = "SID_AUTH_CANCELED")
     void authMidPollCancel_redirectToClientWhenAuthenticationStateIsSuccess() {
-        MockSessionFilter sessionFilter = withTaraSession()
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(MOBILE_ID))
                 .authenticationState(AUTHENTICATION_SUCCESS).build();
+
         given()
                 .filter(sessionFilter)
                 .when()
