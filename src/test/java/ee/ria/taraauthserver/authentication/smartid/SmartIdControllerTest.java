@@ -171,10 +171,7 @@ class SmartIdControllerTest extends BaseTest {
                 .authenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS).build();
         given()
                 .filter(sessionFilter)
-<<<<<<< HEAD
                 .formParam(COUNTRY_CODE, COUNTRY_CODE_VALUE)
-=======
->>>>>>> 195699b (Upgrade from last release)
                 .when()
                 .post("/auth/sid/init")
                 .then()
@@ -528,11 +525,7 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_VALIDATION_ERROR, taraSession.getAuthenticationResult().getErrorCode());
         assertErrorIsLogged("Smart-ID authentication exception: Failed to verify validity of signature returned by Smart-ID");
-<<<<<<< HEAD
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=10101010005, firstName=DEMO, lastName=SMART-ID, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=SID_VALIDATION_ERROR)", taraSession.getSessionId()));
-=======
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=ERROR_GENERAL)", taraSession.getSessionId()));
->>>>>>> 195699b (Upgrade from last release)
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=10101010005, subject=EE10101010005, firstName=DEMO, lastName=SMART-ID, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=SID_VALIDATION_ERROR)", taraSession.getSessionId()));
     }
 
     @Test
