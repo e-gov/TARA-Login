@@ -65,7 +65,9 @@ public class IgniteSessionRepository implements SessionRepository<Session> {
         TaraSession taraSession = session.getAttribute(TARA_SESSION);
         if (taraSession != null) {
             logStateChangeToStatisticsLog(igniteSession, taraSession);
-            log.info(append(TARA_SESSION, taraSession), "Saving session with state: {}", defaultIfNull(taraSession.getState(), "NOT_SET"));
+            if (log.isDebugEnabled()) {
+                log.debug(append(TARA_SESSION, taraSession), "Saving session with state: {}", defaultIfNull(taraSession.getState(), "NOT_SET"));
+            }
         }
     }
 

@@ -34,7 +34,7 @@ import static net.logstash.logback.marker.Markers.append;
 @ConfigurationProperties(prefix = "tara")
 public class AuthConfigurationProperties {
     public static final Set<String> MASKED_FIELD_NAMES = new HashSet<>();
-    public static final String DEFAULT_CONTENT_SECURITY_POLICY = "connect-src 'self'; default-src 'none'; font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; block-all-mixed-content";
+    public static final String DEFAULT_CONTENT_SECURITY_POLICY = "connect-src 'self'; default-src 'none'; font-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; block-all-mixed-content";
 
     @Pattern(regexp = "(et|en|ru|ET|EN|RU)", message = "invalid default locale value, accepted values are: et, en, ru, ET, EN, RU")
     private String defaultLocale = "et";
@@ -88,6 +88,16 @@ public class AuthConfigurationProperties {
 
     @Data
     @Validated
+    @ConfigurationProperties(prefix = "govsso.hydra-service")
+    public static class GovSsoHydraConfigurationProperties {
+
+        private String loginUrl;
+
+        private String clientId;
+    }
+
+    @Data
+    @Validated
     @ConfigurationProperties(prefix = "tara.tls")
     public static class TlsConfigurationProperties {
 
@@ -109,6 +119,7 @@ public class AuthConfigurationProperties {
     @Data
     public static class AuthMethodProperties {
 
+        // TODO In eIDAS configuration this value is null, but other authentication methods should require non-null value.
         LevelOfAssurance levelOfAssurance;
 
         boolean enabled = false;
@@ -119,9 +130,6 @@ public class AuthConfigurationProperties {
     @EqualsAndHashCode(callSuper = true)
     @ConfigurationProperties(prefix = "tara.auth-methods.mobile-id")
     public static class MidAuthConfigurationProperties extends AuthMethodProperties {
-
-        @NotNull
-        LevelOfAssurance levelOfAssurance;
 
         @NotNull
         private String hostUrl;
@@ -170,9 +178,6 @@ public class AuthConfigurationProperties {
     @EqualsAndHashCode(callSuper = true)
     @ConfigurationProperties(prefix = "tara.auth-methods.id-card")
     public static class IdCardAuthConfigurationProperties extends AuthMethodProperties {
-
-        @NotNull
-        LevelOfAssurance levelOfAssurance;
 
         @NotNull
         private String truststorePath;

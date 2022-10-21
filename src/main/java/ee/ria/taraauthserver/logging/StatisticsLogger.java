@@ -2,7 +2,10 @@ package ee.ria.taraauthserver.logging;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.SPType;
+import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
+import ee.ria.taraauthserver.error.exceptions.TaraException;
 import ee.ria.taraauthserver.logging.StatisticsLogger.SessionStatistics.SessionStatisticsBuilder;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
@@ -14,8 +17,10 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
 import java.util.Optional;
 
+import static ee.ria.taraauthserver.error.ErrorCode.INTERNAL_ERROR;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
@@ -28,6 +33,9 @@ import static net.logstash.logback.marker.Markers.appendFields;
 @Slf4j
 @Component
 public class StatisticsLogger {
+
+    public static final String SERVICE_GOVSSO = "GOVSSO";
+
     public void log(TaraSession taraSession) {
         log(taraSession, null);
     }
@@ -38,31 +46,68 @@ public class StatisticsLogger {
                     .ifPresent(state -> {
                         SessionStatisticsBuilder statisticsBuilder = SessionStatistics.builder();
                         processAuthenticationRequest(taraSession, state, statisticsBuilder);
-                        processAuthenticationResult(taraSession, statisticsBuilder);
+                        processAuthenticationResult(taraSession, ex, statisticsBuilder);
                         SessionStatistics sessionStatistics = statisticsBuilder.build();
-                        if (ex == null) {
-                            log.info(appendFields(sessionStatistics), "Authentication result: {}", state);
-                        } else {
+                        if (ex != null) {
                             log.error(appendFields(sessionStatistics), "Authentication result: " + state, ex);
+                        } else if (taraSession.getAuthenticationResult() != null
+                                && taraSession.getAuthenticationResult().getErrorCode() != null) {
+                            log.error(appendFields(sessionStatistics), "Authentication result: {}", state);
+                        } else {
+                            log.info(appendFields(sessionStatistics), "Authentication result: {}", state);
                         }
                     });
         }
     }
 
     private void processAuthenticationRequest(TaraSession taraSession, TaraAuthenticationState state, SessionStatisticsBuilder statisticsBuilder) {
-        LoginRequestInfo loginRequestInfo = taraSession.getLoginRequestInfo();
-        LegalPerson selectedLegalPerson = taraSession.getSelectedLegalPerson();
+        LoginRequestInfo taraLoginRequestInfo = taraSession.getLoginRequestInfo();
+        LoginRequestInfo govSsoLoginRequestInfo = taraSession.getGovSsoLoginRequestInfo();
+
         statisticsBuilder
-                .clientId(loginRequestInfo.getClientId())
                 .authenticationState(state)
-                .legalPerson(selectedLegalPerson != null);
-        loginRequestInfo.getInstitution().ifPresent(i -> {
-            statisticsBuilder.registryCode(i.getRegistryCode());
-            statisticsBuilder.sector(i.getSector());
-        });
+                .legalPerson(taraSession.getSelectedLegalPerson() != null);
+
+        if (taraSession.getAuthenticationResult() != null
+                && isEidasAuthentication(taraSession)
+                && isPrivateSectorRequest(taraLoginRequestInfo)
+                && taraLoginRequestInfo.getOidcClient().isPresent()) {
+            statisticsBuilder.eidasRequesterId(Objects.toString(taraLoginRequestInfo.getOidcClient().get().getEidasRequesterId(), null));
+        }
+
+        if (taraSession.getAuthenticationResult() != null && taraLoginRequestInfo.getOidcClient().isPresent()) {
+            statisticsBuilder.clientNotifyUrl(Objects.toString(taraLoginRequestInfo.getOidcClient().get().getNotifyUrl(), null));
+        }
+
+        if (govSsoLoginRequestInfo != null) {
+            statisticsBuilder
+                    .service(SERVICE_GOVSSO)
+                    .clientId(govSsoLoginRequestInfo.getClientId());
+            govSsoLoginRequestInfo.getInstitution().ifPresent(i -> {
+                statisticsBuilder.registryCode(i.getRegistryCode());
+                statisticsBuilder.sector(i.getSector().toString());
+            });
+        } else {
+            statisticsBuilder
+                    .clientId(taraLoginRequestInfo.getClientId());
+            taraLoginRequestInfo.getInstitution().ifPresent(i -> {
+                statisticsBuilder.registryCode(i.getRegistryCode());
+                statisticsBuilder.sector(i.getSector().toString());
+            });
+        }
     }
 
-    private void processAuthenticationResult(TaraSession taraSession, SessionStatisticsBuilder sessionStatisticsBuilder) {
+    private boolean isEidasAuthentication(TaraSession taraSession) {
+        return taraSession.getAuthenticationResult().getAmr() != null
+                && taraSession.getAuthenticationResult().getAmr().getScope() == TaraScope.EIDAS;
+    }
+
+    private boolean isPrivateSectorRequest(LoginRequestInfo taraLoginRequestInfo) {
+        return taraLoginRequestInfo.getInstitution().isPresent()
+                && taraLoginRequestInfo.getInstitution().get().getSector() == SPType.PRIVATE;
+    }
+
+    private void processAuthenticationResult(TaraSession taraSession, Exception ex, SessionStatisticsBuilder sessionStatisticsBuilder) {
         AuthenticationResult authenticationResult = taraSession.getAuthenticationResult();
         LegalPerson selectedLegalPerson = taraSession.getSelectedLegalPerson();
         if (authenticationResult != null) {
@@ -71,9 +116,18 @@ public class StatisticsLogger {
                     .country(authenticationResult.getCountry())
                     .idCode(idCode)
                     .authenticationType(authenticationResult.getAmr())
+                    .authenticationSessionId(taraSession.getSessionId())
+                    .firstName(authenticationResult.getFirstName())
+                    .lastName(authenticationResult.getLastName())
                     .errorCode(authenticationResult.getErrorCode());
             if (authenticationResult.getAmr() == AuthenticationType.ID_CARD) {
                 sessionStatisticsBuilder.ocspUrl(((TaraSession.IdCardAuthenticationResult) authenticationResult).getOcspUrl());
+            }
+        } else if (taraSession.getState() == AUTHENTICATION_FAILED) {
+            if (ex instanceof TaraException) {
+                sessionStatisticsBuilder.errorCode(((TaraException) ex).getErrorCode());
+            } else {
+                sessionStatisticsBuilder.errorCode(INTERNAL_ERROR);
             }
         }
     }
@@ -92,8 +146,18 @@ public class StatisticsLogger {
     @Builder
     @Data
     public static class SessionStatistics {
+
+        @JsonProperty("client.service")
+        private String service;
+
         @JsonProperty("client.id")
         private String clientId;
+
+        @JsonProperty("client.notify_url")
+        private String clientNotifyUrl;
+
+        @JsonProperty("client.eidas_requester_id")
+        private String eidasRequesterId;
 
         @JsonProperty("institution.sector")
         private String sector;
@@ -110,6 +174,12 @@ public class StatisticsLogger {
         @JsonProperty("authentication.id_code")
         private String idCode;
 
+        @JsonProperty("authentication.first_name")
+        private String firstName;
+
+        @JsonProperty("authentication.last_name")
+        private String lastName;
+
         @JsonProperty("authentication.ocsp_url")
         private String ocspUrl;
 
@@ -118,6 +188,9 @@ public class StatisticsLogger {
 
         @JsonProperty("authentication.state")
         private TaraAuthenticationState authenticationState;
+
+        @JsonProperty("authentication.session_id")
+        private String authenticationSessionId;
 
         @JsonProperty("authentication.error_code")
         private ErrorCode errorCode;

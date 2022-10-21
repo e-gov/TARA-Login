@@ -13,6 +13,10 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.UnknownContentTypeException;
+import org.springframework.web.client.UnknownHttpStatusCodeException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -84,12 +88,11 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler({HttpClientErrorException.class})
-    public void handleHttpClientErrorException(HttpClientErrorException ex, HttpServletRequest request, HttpServletResponse response) throws IOException {
-        log.error("HTTP client exception: {}", ex.getMessage(), ex);
+    public void handleRestClientResponseException(HttpClientErrorException ex, HttpServletRequest request, HttpServletResponse response) throws IOException {
         invalidateSessionAndSendError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ex);
     }
 
-    @ExceptionHandler({ServiceNotAvailableException.class})
+    @ExceptionHandler({ServiceNotAvailableException.class, HttpServerErrorException.class, UnknownHttpStatusCodeException.class, UnknownContentTypeException.class, ResourceAccessException.class})
     public void handleDownstreamServiceErrors(Exception ex, HttpServletRequest request, HttpServletResponse response) throws IOException {
         log.error("Service not available: {}", ex.getMessage(), ex);
         invalidateSessionAndSendError(request, response, HttpServletResponse.SC_BAD_GATEWAY, ex);

@@ -1,6 +1,5 @@
 HELP.md
 target/
-!.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
@@ -32,13 +31,16 @@ build/
 ### VS Code ###
 .vscode/
 
+### Maven ###
+.mvn/wrapper/maven-wrapper.jar
+
 .env
 src/main/resources/rebel.xml
 src/main/resources/rebel-remote.xml
 src/main/resources/application.yml
-src/main/resources/logback-spring.xml
 src/main/resources/idcard-truststore-test.p12
 src/main/resources/mobileid-truststore-test.p12
 src/main/resources/sid-truststore-test.p12
 src/main/resources/tls-keystore.jks
 src/main/resources/tls-truststore.jks
+src/main/resources/ocsp

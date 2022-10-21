@@ -30,6 +30,7 @@ import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.Date;
 
+import static ch.qos.logback.classic.Level.INFO;
 import static ee.ria.taraauthserver.authentication.idcard.IdCardController.HEADER_SSL_CLIENT_CERT;
 import static ee.ria.taraauthserver.authentication.idcard.IdCardControllerTest.X509_CERT;
 import static ee.ria.taraauthserver.authentication.idcard.IdCardControllerTest.setUpMockOcspResponse;
@@ -100,6 +101,8 @@ class BasicAuthIdCardControllerTest extends BaseTest {
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
                 .body("error", equalTo("Unauthorized"));
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -124,13 +127,16 @@ class BasicAuthIdCardControllerTest extends BaseTest {
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         TaraSession.AuthenticationResult result = taraSession.getAuthenticationResult();
-        assertEquals("47101010033", result.getIdCode());
-        assertEquals("MARI-LIIS", result.getFirstName());
-        assertEquals("MÄNNIK", result.getLastName());
+        assertEquals("37101010021", result.getIdCode());
+        assertEquals("IGOR", result.getFirstName());
+        assertEquals("ŽAIKOVSKI", result.getLastName());
         assertEquals("1971-01-01", result.getDateOfBirth().toString());
         assertEquals("EE", result.getCountry());
         assertNull(result.getEmail());
         assertEquals(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, taraSession.getState());
+        assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
+        assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
+        assertStatisticsIsNotLogged();
     }
 
     private String createSessionWithAuthenticationState(TaraAuthenticationState authenticationState) {
@@ -141,6 +147,4 @@ class BasicAuthIdCardControllerTest extends BaseTest {
         sessionRepository.save(session);
         return session.getId();
     }
-
-
 }

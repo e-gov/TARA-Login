@@ -1,11 +1,11 @@
 package ee.ria.taraauthserver.authentication;
 
 import ee.ria.taraauthserver.BaseTest;
-import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import io.restassured.RestAssured;
@@ -22,7 +22,11 @@ import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
+import static ch.qos.logback.classic.Level.ERROR;
+import static ch.qos.logback.classic.Level.INFO;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
@@ -38,6 +42,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Slf4j
 class AuthInitControllerTest extends BaseTest {
     private static final String TEST_LOGIN_CHALLENGE = "abcdefg098AAdsCC";
+    private static final String TEST_GOVSSO_LOGIN_CHALLENGE = "abcdeff098aadfccabcdeff098aadfcc";
+    private static final Map<SPType, List<String>> AVAILABLE_COUNTRIES = Map.of(
+            SPType.PUBLIC, List.of("CA"),
+            SPType.PRIVATE, List.of("IT")
+    );
 
     @Autowired
     private SessionRepository<Session> sessionRepository;
@@ -47,9 +56,6 @@ class AuthInitControllerTest extends BaseTest {
 
     @Autowired
     private EidasConfigurationProperties eidasConfigurationProperties;
-
-    @Autowired
-    private AlertsConfigurationProperties alertsConfigurationProperties;
 
     @Test
     @Tag(value = "AUTH_INIT_ENDPOINT")
@@ -66,6 +72,8 @@ class AuthInitControllerTest extends BaseTest {
                 .body("incident_nr", notNullValue())
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -77,13 +85,14 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Required String parameter 'login_challenge' is not present"))
+                .body("message", equalTo("Required request parameter 'login_challenge' for method parameter type String is not present"))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", notNullValue())
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertErrorIsLogged("User input exception: Required String parameter 'login_challenge' is not present");
+        assertErrorIsLogged("User input exception: Required request parameter 'login_challenge' for method parameter type String is not present");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -103,6 +112,7 @@ class AuthInitControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: authInit.loginChallenge: only characters and numbers allowed");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -122,6 +132,7 @@ class AuthInitControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: authInit.loginChallenge: size must be between 0 and 50");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -140,6 +151,8 @@ class AuthInitControllerTest extends BaseTest {
                 .body("incident_nr", notNullValue())
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -158,13 +171,14 @@ class AuthInitControllerTest extends BaseTest {
                 .body("incident_nr", notNullValue())
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
+
+        assertStatisticsIsNotLogged();
     }
 
     @SneakyThrows
     @Test
     @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
     void authInit_Ok() {
-
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -181,6 +195,7 @@ class AuthInitControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
                 .header(HttpHeaders.CONTENT_LANGUAGE, "et")
                 .body(containsString("Sisestage ID-kaart kaardilugejasse ja vajutage \"Jätka\""))
+                .body(not(containsString("src=\"data:image/svg+xml;base64")))
                 .cookie("SESSION", matchesPattern("[A-Za-z0-9,-]{36,36}"))
                 .extract().cookie("SESSION");
 
@@ -196,12 +211,71 @@ class AuthInitControllerTest extends BaseTest {
         assertEquals("testRelyingPartyName", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getRelyingPartyName());
         assertEquals("testRelyingPartyId123", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getRelyingPartyUuid());
         assertEquals(false, taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getShouldUseAdditionalVerificationCodeCheck());
+        assertInfoIsLogged("New authentication session",
+                "TARA_HYDRA request",
+                "TARA_HYDRA response: 200",
+                "State: NOT_SET -> INIT_AUTH_PROCESS");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"openIdDemo\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"},\"smartid_settings\":{\"relying_party_UUID\":\"testRelyingPartyId123\",\"relying_party_name\":\"testRelyingPartyName\",\"should_use_additional_verification_code_check\":false}}},\"scope\":\"idcard mid\"},\"client_id\":\"openIdDemo\",\"institution\":{\"empty\":false,\"present\":true},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"low\"],\"ui_locales\":[]},\"oidc_state\":\"c46b216b-e73d-4cd2-907b-6c809b44cec1\",\"redirect_uri\":\"https://oidc-client-mock:8451/oauth/response\",\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"idcard\",\"mid\"],\"user_cancel_uri\":\"https://oidc-client-mock:8451/oauth/response?error=user_cancel&error_description=User+canceled+the+authentication+process.&state=c46b216b-e73d-4cd2-907b-6c809b44cec1\"}");
+        assertStatisticsIsNotLogged();
+    }
 
-        assertInfoIsLogged("New authentication session");
-        assertInfoIsLogged("OIDC login request for challenge: " + TEST_LOGIN_CHALLENGE);
-        assertInfoIsLogged("OIDC login response for challenge: abcdefg098AAdsCC, Status code: 200");
-        assertInfoIsLogged("Tara session state change: NOT_SET -> INIT_AUTH_PROCESS");
-        assertInfoIsLogged("Saving session with state: INIT_AUTH_PROCESS");
+    @SneakyThrows
+    @Test
+    @Tag(value = "AUTH_INIT_GOVSSO_GET_OIDC_REQUEST")
+    @Tag(value = "AUTH_INIT_GOVSSO_VIEW")
+    void authInit_Ok_requestMadeFromGovSsoClient() {
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_with_govsso_hydra_parameters.json")));
+
+        govSsoWireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_GOVSSO_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/govsso_mock_response.json")));
+
+        String sessionId = given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
+                .header(HttpHeaders.CONTENT_LANGUAGE, "et")
+                .body(containsString("Sisestage ID-kaart kaardilugejasse ja vajutage \"Jätka\""))
+                .body(containsString("src=\"data:image/svg+xml;base64,testLogo\""))
+                .body(containsString("govsso test client et"))
+                .cookie("SESSION", matchesPattern("[A-Za-z0-9,-]{36,36}"))
+                .extract().cookie("SESSION");
+
+        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
+        assertEquals(TEST_LOGIN_CHALLENGE, taraSession.getLoginRequestInfo().getChallenge());
+        assertEquals(new URL("https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&govsso_login_challenge=abcdeff098aadfccabcdeff098aadfcc&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et"), taraSession.getLoginRequestInfo().getUrl());
+        assertEquals("govSsoClientId", taraSession.getLoginRequestInfo().getClient().getClientId());
+        assertEquals("idcard mid", taraSession.getLoginRequestInfo().getClient().getScope());
+        assertEquals("idcard", taraSession.getLoginRequestInfo().getRequestedScopes().get(0));
+        assertEquals("mid", taraSession.getLoginRequestInfo().getRequestedScopes().get(1));
+        assertEquals("test client et", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getNameTranslations().get("et"));
+        assertEquals("govsso test client et", taraSession.getGovSsoLoginRequestInfo().getClient().getMetaData().getOidcClient().getNameTranslations().get("et"));
+        assertEquals("testRelyingPartyName", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getRelyingPartyName());
+        assertEquals("testRelyingPartyId123", taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getRelyingPartyUuid());
+        assertEquals(false, taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getSmartIdSettings().getShouldUseAdditionalVerificationCodeCheck());
+        assertInfoIsLogged("New authentication session",
+                "TARA_HYDRA request",
+                "TARA_HYDRA response: 200",
+                "State: NOT_SET -> INIT_AUTH_PROCESS",
+                "GOVSSO_HYDRA request",
+                "GOVSSO_HYDRA response: 200");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "GOVSSO_HYDRA request", "http.request.method=GET, url.full=https://localhost:8877/oauth2/auth/requests/login?login_challenge=abcdeff098aadfccabcdeff098aadfcc");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"govSsoClientId\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"},\"smartid_settings\":{\"relying_party_UUID\":\"testRelyingPartyId123\",\"relying_party_name\":\"testRelyingPartyName\",\"should_use_additional_verification_code_check\":false}}},\"scope\":\"idcard mid\"},\"client_id\":\"govSsoClientId\",\"gov_sso_challenge\":\"abcdeff098aadfccabcdeff098aadfcc\",\"institution\":{\"empty\":false,\"present\":true},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"low\"],\"ui_locales\":[]},\"oidc_state\":\"c46b216b-e73d-4cd2-907b-6c809b44cec1\",\"redirect_uri\":\"https://oidc-client-mock:8451/oauth/response\",\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&govsso_login_challenge=abcdeff098aadfccabcdeff098aadfcc&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"idcard\",\"mid\"],\"user_cancel_uri\":\"https://oidc-client-mock:8451/oauth/response?error=user_cancel&error_description=User+canceled+the+authentication+process.&state=c46b216b-e73d-4cd2-907b-6c809b44cec1\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "GOVSSO_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdeff098aadfccabcdeff098aadfcc\",\"client\":{\"client_id\":\"govSsoDemo\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"logo\":\"[8] chars\",\"name_translations\":{\"en\":\"govsso test client en\",\"et\":\"govsso test client et\",\"ru\":\"govsso test client ru\"},\"short_name_translations\":{\"en\":\"govsso short test client en\",\"et\":\"govsso short test client et\",\"ru\":\"govsso short test client ru\"}}},\"scope\":\"mid idcard eidas\"},\"client_id\":\"govSsoDemo\",\"client_logo\":\"testLogo\",\"institution\":{\"empty\":false,\"present\":true},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"high\"],\"ui_locales\":[\"zu\",\"fi\",\"Ru\",\"ET\",\"en\"]},\"oidc_state\":\"c46b216b-e73d-4cd2-907b-6c809b44cec1\",\"redirect_uri\":\"https://oidc-client-mock:8451/oauth/response\",\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"openid\",\"mid\",\"idcard\",\"eidas\"],\"user_cancel_uri\":\"https://oidc-client-mock:8451/oauth/response?error=user_cancel&error_description=User+canceled+the+authentication+process.&state=c46b216b-e73d-4cd2-907b-6c809b44cec1\"}");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -210,8 +284,7 @@ class AuthInitControllerTest extends BaseTest {
     void authInit_configuredTimeoutFails() {
         AuthConfigurationProperties.HydraConfigurationProperties test = new AuthConfigurationProperties.HydraConfigurationProperties();
         test.setRequestTimeoutInSeconds(1);
-        authConfigurationProperties.setHydraService(test);
-
+        authConfigurationProperties.setHydraService(test); // TODO AUT-857
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -225,7 +298,7 @@ class AuthInitControllerTest extends BaseTest {
                 .get("/auth/init")
                 .then()
                 .assertThat()
-                .statusCode(500)
+                .statusCode(502)
                 .body("incident_nr", notNullValue())
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("reportable", equalTo(true));
@@ -283,7 +356,6 @@ class AuthInitControllerTest extends BaseTest {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response.json")));
-
         String cookie = given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
                 .when()
@@ -303,6 +375,7 @@ class AuthInitControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200)
                 .cookie("SESSION", not(equalTo(cookie)));
+
     }
 
     @Test
@@ -362,6 +435,8 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(200)
                 .header(HttpHeaders.CONTENT_LANGUAGE, "en")
                 .body(containsString("Insert your ID-card into the card reader and click \"Continue\""));
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -383,6 +458,8 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(200)
                 .header(HttpHeaders.CONTENT_LANGUAGE, "et")
                 .body(containsString("Sisestage oma isikukood ja telefoninumber ning vajutage \"Jätka\""));
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -393,8 +470,7 @@ class AuthInitControllerTest extends BaseTest {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response-ok_ui_locales-not-set.json")));
-
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setEnabled(false);
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setEnabled(false); // TODO AUT-857
 
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
@@ -407,6 +483,8 @@ class AuthInitControllerTest extends BaseTest {
                         ";charset=UTF-8")
                 .body(not(containsString("idCardForm")))
                 .body(containsString("mobileIdForm"));
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -429,6 +507,8 @@ class AuthInitControllerTest extends BaseTest {
                         ";charset=UTF-8")
                 .body((containsString("mobileIdForm")))
                 .body((containsString("idCardForm")));
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -439,8 +519,7 @@ class AuthInitControllerTest extends BaseTest {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response-ok_scope-unknown.json")));
-
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.HIGH);
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.HIGH); // TODO AUT-857
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.HIGH);
 
         given()
@@ -457,6 +536,7 @@ class AuthInitControllerTest extends BaseTest {
 
         assertWarningIsLogged("Requested scope value 'ldap' is not allowed, entry ignored!");
         assertWarningIsLogged("Unsupported scope value 'banklink', entry ignored!");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -467,8 +547,7 @@ class AuthInitControllerTest extends BaseTest {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response.json")));
-
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.HIGH);
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.HIGH); // TODO AUT-857
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.LOW);
 
         given()
@@ -482,6 +561,8 @@ class AuthInitControllerTest extends BaseTest {
                         ";charset=UTF-8")
                 .body((containsString("idCardForm")))
                 .body(not(containsString("mobileIdForm")));
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -492,8 +573,7 @@ class AuthInitControllerTest extends BaseTest {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response.json")));
-
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.HIGH);
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.HIGH); // TODO AUT-857
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(null);
 
         given()
@@ -506,7 +586,10 @@ class AuthInitControllerTest extends BaseTest {
                 .body("reportable", equalTo(true));
 
         assertErrorIsLogged("Server encountered an unexpected error: Level of assurance must be configured for authentication method: mobile-id. Please check the application configuration.");
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.LOW);
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"openIdDemo\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"}}},\"scope\":\"mid idcard eidas\"},\"client_id\":\"openIdDemo\",\"institution\":{\"empty\":false,\"present\":true},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"high\"],\"ui_locales\":[\"zu\",\"fi\",\"Ru\",\"ET\",\"en\"]},\"oidc_state\":\"c46b216b-e73d-4cd2-907b-6c809b44cec1\",\"redirect_uri\":\"https://oidc-client-mock:8451/oauth/response\",\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"openid\",\"mid\",\"idcard\",\"eidas\"],\"user_cancel_uri\":\"https://oidc-client-mock:8451/oauth/response?error=user_cancel&error_description=User+canceled+the+authentication+process.&state=c46b216b-e73d-4cd2-907b-6c809b44cec1\"}");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=70006317, legalPerson=false, country=null, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=null, errorCode=INTERNAL_ERROR)");
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.LOW);  // TODO AUT-857
     }
 
     @Test
@@ -517,8 +600,7 @@ class AuthInitControllerTest extends BaseTest {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response-ok_acr-not-set.json")));
-
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.LOW);
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.LOW); // TODO AUT-857
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.HIGH);
 
         given()
@@ -533,6 +615,7 @@ class AuthInitControllerTest extends BaseTest {
                 .body(containsString("idCardForm"))
                 .body(containsString("mobileIdForm"));
 
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -544,8 +627,7 @@ class AuthInitControllerTest extends BaseTest {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response-ok_scope-unknown.json")));
-
-        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.LOW);
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.LOW);  // TODO AUT-857
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.LOW);
 
         given()
@@ -561,6 +643,9 @@ class AuthInitControllerTest extends BaseTest {
                 .body("incident_nr", notNullValue())
                 .body("reportable", equalTo(true));
 
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"openIdDemo\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"}}},\"scope\":\"idcard mid banklink\"},\"client_id\":\"openIdDemo\",\"institution\":{\"empty\":false,\"present\":true},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"high\"],\"ui_locales\":[]},\"oidc_state\":\"c46b216b-e73d-4cd2-907b-6c809b44cec1\",\"redirect_uri\":\"https://oidc-client-mock:8451/oauth/response\",\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"idcard\",\"ldap\",\"banklink\"],\"user_cancel_uri\":\"https://oidc-client-mock:8451/oauth/response?error=user_cancel&error_description=User+canceled+the+authentication+process.&state=c46b216b-e73d-4cd2-907b-6c809b44cec1\"}");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=70006317, legalPerson=false, country=null, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=null, errorCode=NO_VALID_AUTHMETHODS_AVAILABLE)");
     }
 
     @Test
@@ -584,6 +669,9 @@ class AuthInitControllerTest extends BaseTest {
                 .body("reportable", equalTo(true));
 
         assertErrorIsLogged("Server encountered an unexpected error: Unsupported acr value requested by client: 'wrongvalue'");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"openIdDemo\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"}}},\"scope\":\"idcard mid\"},\"client_id\":\"openIdDemo\",\"institution\":{\"empty\":false,\"present\":true},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"wrongvalue\"],\"ui_locales\":[]},\"oidc_state\":\"c46b216b-e73d-4cd2-907b-6c809b44cec1\",\"redirect_uri\":\"https://oidc-client-mock:8451/oauth/response\",\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"idcard\",\"mid\"],\"user_cancel_uri\":\"https://oidc-client-mock:8451/oauth/response?error=user_cancel&error_description=User+canceled+the+authentication+process.&state=c46b216b-e73d-4cd2-907b-6c809b44cec1\"}");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=70006317, legalPerson=false, country=null, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=null, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
@@ -605,6 +693,29 @@ class AuthInitControllerTest extends BaseTest {
                 .body("incident_nr", notNullValue())
                 .body("message", equalTo("Vigane päring. Päringu volituskood ei ole korrektne."))
                 .body("reportable", equalTo(false));
+
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
+    void authInit_OidcRespondsWith410() {
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(410)));
+
+        given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("incident_nr", notNullValue())
+                .body("message", equalTo("Vigane päring. Päringu volituskood ei ole korrektne."))
+                .body("reportable", equalTo(false));
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -622,10 +733,99 @@ class AuthInitControllerTest extends BaseTest {
                 .get("/auth/init")
                 .then()
                 .assertThat()
-                .statusCode(500)
+                .statusCode(502)
                 .body("incident_nr", notNullValue())
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("reportable", equalTo(true));
+
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_GOVSSO_GET_OIDC_REQUEST")
+    void authInit_GovSsoOidcRespondsWith404() {
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_with_govsso_hydra_parameters.json")));
+
+        govSsoWireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_GOVSSO_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(404)));
+
+        given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("incident_nr", notNullValue())
+                .body("message", equalTo("Vigane päring. GovSSO päringu volituskood ei ole korrektne."))
+                .body("reportable", equalTo(false));
+
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"govSsoClientId\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"},\"smartid_settings\":{\"relying_party_UUID\":\"testRelyingPartyId123\",\"relying_party_name\":\"testRelyingPartyName\",\"should_use_additional_verification_code_check\":false}}},\"scope\":\"idcard mid\"},\"client_id\":\"govSsoClientId\",\"gov_sso_challenge\":\"abcdeff098aadfccabcdeff098aadfcc\",\"institution\":{\"empty\":false,\"present\":true},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"low\"],\"ui_locales\":[]},\"oidc_state\":\"c46b216b-e73d-4cd2-907b-6c809b44cec1\",\"redirect_uri\":\"https://oidc-client-mock:8451/oauth/response\",\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&govsso_login_challenge=abcdeff098aadfccabcdeff098aadfcc&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"idcard\",\"mid\"],\"user_cancel_uri\":\"https://oidc-client-mock:8451/oauth/response?error=user_cancel&error_description=User+canceled+the+authentication+process.&state=c46b216b-e73d-4cd2-907b-6c809b44cec1\"}");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=govSsoClientId, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=70006317, legalPerson=false, country=null, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=null, errorCode=INVALID_GOVSSO_LOGIN_CHALLENGE)");
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_GOVSSO_GET_OIDC_REQUEST")
+    void authInit_GovSsoOidcRespondsWith410() {
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_with_govsso_hydra_parameters.json")));
+
+        govSsoWireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_GOVSSO_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(410)));
+
+        given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("incident_nr", notNullValue())
+                .body("message", equalTo("Vigane päring. GovSSO päringu volituskood ei ole korrektne."))
+                .body("reportable", equalTo(false));
+
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"govSsoClientId\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"},\"smartid_settings\":{\"relying_party_UUID\":\"testRelyingPartyId123\",\"relying_party_name\":\"testRelyingPartyName\",\"should_use_additional_verification_code_check\":false}}},\"scope\":\"idcard mid\"},\"client_id\":\"govSsoClientId\",\"gov_sso_challenge\":\"abcdeff098aadfccabcdeff098aadfcc\",\"institution\":{\"empty\":false,\"present\":true},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"low\"],\"ui_locales\":[]},\"oidc_state\":\"c46b216b-e73d-4cd2-907b-6c809b44cec1\",\"redirect_uri\":\"https://oidc-client-mock:8451/oauth/response\",\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&govsso_login_challenge=abcdeff098aadfccabcdeff098aadfcc&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"idcard\",\"mid\"],\"user_cancel_uri\":\"https://oidc-client-mock:8451/oauth/response?error=user_cancel&error_description=User+canceled+the+authentication+process.&state=c46b216b-e73d-4cd2-907b-6c809b44cec1\"}");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=govSsoClientId, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=70006317, legalPerson=false, country=null, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=null, errorCode=INVALID_GOVSSO_LOGIN_CHALLENGE)");
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_GOVSSO_GET_OIDC_REQUEST")
+    void authInit_GovSsoOidcRespondsWith500() {
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_with_govsso_hydra_parameters.json")));
+
+        govSsoWireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_GOVSSO_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(500)));
+
+        given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .statusCode(502)
+                .body("incident_nr", notNullValue())
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
+                .body("reportable", equalTo(true));
+
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"govSsoClientId\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"},\"smartid_settings\":{\"relying_party_UUID\":\"testRelyingPartyId123\",\"relying_party_name\":\"testRelyingPartyName\",\"should_use_additional_verification_code_check\":false}}},\"scope\":\"idcard mid\"},\"client_id\":\"govSsoClientId\",\"gov_sso_challenge\":\"abcdeff098aadfccabcdeff098aadfcc\",\"institution\":{\"empty\":false,\"present\":true},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"low\"],\"ui_locales\":[]},\"oidc_state\":\"c46b216b-e73d-4cd2-907b-6c809b44cec1\",\"redirect_uri\":\"https://oidc-client-mock:8451/oauth/response\",\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&govsso_login_challenge=abcdeff098aadfccabcdeff098aadfcc&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"idcard\",\"mid\"],\"user_cancel_uri\":\"https://oidc-client-mock:8451/oauth/response?error=user_cancel&error_description=User+canceled+the+authentication+process.&state=c46b216b-e73d-4cd2-907b-6c809b44cec1\"}");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=govSsoClientId, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=70006317, legalPerson=false, country=null, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=null, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
@@ -647,6 +847,10 @@ class AuthInitControllerTest extends BaseTest {
                 .body("incident_nr", notNullValue())
                 .body("message", equalTo("Päringus puudub scope parameeter."))
                 .body("reportable", equalTo(true));
+
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
+        assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"openIdDemo\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"}}},\"scope\":\"mid idcard\"},\"client_id\":\"openIdDemo\",\"institution\":{\"empty\":false,\"present\":true},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"high\"],\"ui_locales\":[\"zu\",\"fi\",\"Et\",\"RU\",\"en\"]},\"oidc_state\":\"c46b216b-e73d-4cd2-907b-6c809b44cec1\",\"redirect_uri\":\"https://oidc-client-mock:8451/oauth/response\",\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[],\"user_cancel_uri\":\"https://oidc-client-mock:8451/oauth/response?error=user_cancel&error_description=User+canceled+the+authentication+process.&state=c46b216b-e73d-4cd2-907b-6c809b44cec1\"}");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=70006317, legalPerson=false, country=null, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=null, errorCode=MISSING_SCOPE)");
     }
 
     @Test
@@ -669,13 +873,14 @@ class AuthInitControllerTest extends BaseTest {
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("reportable", equalTo(true));
 
-        assertErrorIsLogged("Server encountered an unexpected error: Invalid hydra response: client.metaData.oidcClient.institution.sector: invalid sector value, accepted values are: private, public, client.scope: must not be blank");
+        assertErrorIsLogged("Server encountered an unexpected error: Invalid hydra response: client.scope: must not be blank");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
     @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
     void authInit_redirectToAuthEidasInit_and_uppercaseCountryCodeIsIgnored() {
-        eidasConfigurationProperties.setAvailableCountries(List.of("CA"));
+        eidasConfigurationProperties.setAvailableCountries(AVAILABLE_COUNTRIES);
         RestAssured.responseSpecification = null;
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
@@ -697,12 +902,13 @@ class AuthInitControllerTest extends BaseTest {
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
+        assertStatisticsIsNotLogged();
     }
 
     @Test
     @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
     void authInit_displayEidasAuthenticationPageWhenRequestedCountryIsInvalid() {
-        eidasConfigurationProperties.setAvailableCountries(List.of("CA"));
+        eidasConfigurationProperties.setAvailableCountries(AVAILABLE_COUNTRIES);
         RestAssured.responseSpecification = null;
         wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
@@ -724,5 +930,168 @@ class AuthInitControllerTest extends BaseTest {
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
+    void authInit_displayEidasAuthenticationPageWithCountriesListForPublicSector() {
+        eidasConfigurationProperties.setAvailableCountries(AVAILABLE_COUNTRIES);
+        RestAssured.responseSpecification = null;
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response_eidasonly_with_invalid_country.json")));
+        String expectedCountriesRegex = ".*<select id=\"country-select\" name=\"country\">\\s*<option value=\"\">Select your country</option>\\s*<option value=\"CA\">Test \\(CA\\)</option>\\s*</select>.*";
+        Pattern expectedCountriesPattern = Pattern.compile(expectedCountriesRegex, Pattern.DOTALL);
+
+        String sessionId = given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
+                .statusCode(200)
+                .body(matchesPattern(expectedCountriesPattern))
+                .extract().cookie("SESSION");
+
+        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
+    void authInit_displayEidasAuthenticationPageWithCountriesListForPrivateSector() {
+        eidasConfigurationProperties.setAvailableCountries(AVAILABLE_COUNTRIES);
+        RestAssured.responseSpecification = null;
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response_eidasonly_with_invalid_country_private_sector.json")));
+        String expectedCountriesRegex = ".*<select id=\"country-select\" name=\"country\">\\s*<option value=\"\">Select your country</option>\\s*<option value=\"IT\">Italy</option>\\s*</select>.*";
+        Pattern expectedCountriesPattern = Pattern.compile(expectedCountriesRegex, Pattern.DOTALL);
+
+        String sessionId = given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
+                .statusCode(200)
+                .body(matchesPattern(expectedCountriesPattern))
+                .extract().cookie("SESSION");
+
+        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_GOVSSO_GET_OIDC_REQUEST")
+    void authInit_govSsoLoginChallengeIsEmpty() {
+
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_sso_response_nok_sso_challenge_empty.json")));
+
+        given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Vigane päring. GovSSO päringu volituskood ei ole korrektne."))
+                .body("error", equalTo("Bad Request"))
+                .body("incident_nr", notNullValue())
+                .body("reportable", equalTo(false))
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
+
+        assertErrorIsLogged("User exception: Incorrect GovSSO login challenge format.");
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_GOVSSO_GET_OIDC_REQUEST")
+    void authInit_govSsoLoginChallengeIsInvalid() {
+
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_sso_response_nok_sso_challenge_invalid.json")));
+
+        given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Vigane päring. GovSSO päringu volituskood ei ole korrektne."))
+                .body("error", equalTo("Bad Request"))
+                .body("incident_nr", notNullValue())
+                .body("reportable", equalTo(false))
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
+
+        assertErrorIsLogged("User exception: Incorrect GovSSO login challenge format.");
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_GOVSSO_GET_OIDC_REQUEST")
+    void authInit_govSsoLoginChallengeIsTooLong() {
+
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_sso_response_nok_sso_challenge_too_long.json")));
+
+        given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Vigane päring. GovSSO päringu volituskood ei ole korrektne."))
+                .body("error", equalTo("Bad Request"))
+                .body("incident_nr", notNullValue())
+                .body("reportable", equalTo(false))
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
+
+        assertErrorIsLogged("User exception: Incorrect GovSSO login challenge format.");
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_GOVSSO_GET_OIDC_REQUEST")
+    void authInit_govSsoLoginChallengeIsNull() {
+
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_sso_response_nok_sso_challenge_null.json")));
+
+        given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Vigane päring. GovSSO päringu volituskood ei ole korrektne."))
+                .body("error", equalTo("Bad Request"))
+                .body("incident_nr", notNullValue())
+                .body("reportable", equalTo(false))
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
+
+        assertErrorIsLogged("User exception: Incorrect GovSSO login challenge format.");
     }
 }

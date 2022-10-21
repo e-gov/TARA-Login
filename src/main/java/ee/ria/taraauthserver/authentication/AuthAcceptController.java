@@ -5,15 +5,15 @@ import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
@@ -25,6 +25,7 @@ import org.springframework.web.servlet.view.RedirectView;
 import java.util.EnumSet;
 
 import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
+import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
@@ -33,22 +34,19 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_STA
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.lang.String.format;
 import static java.util.EnumSet.of;
-import static net.logstash.logback.argument.StructuredArguments.value;
-import static net.logstash.logback.marker.Markers.append;
-import static org.springframework.http.HttpMethod.PUT;
 
-@Slf4j
 @Validated
 @Controller
 class AuthAcceptController {
     private static final EnumSet<TaraAuthenticationState> ALLOWED_STATES = of(AUTHENTICATION_SUCCESS, NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED);
     private static final EnumSet<TaraAuthenticationState> OIDC_AUTH_ACCEPT_STATES = of(NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED);
+    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.TARA_HYDRA, this.getClass());
 
     @Autowired
     private AuthConfigurationProperties authConfigurationProperties;
 
     @Autowired
-    private RestTemplate hydraService;
+    private RestTemplate hydraRestTemplate;
 
     @PostMapping("/auth/accept")
     public RedirectView authAccept(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
@@ -75,8 +73,15 @@ class AuthAcceptController {
     private RedirectView acceptLoginRequest(TaraSession taraSession) {
         TaraSession.LoginRequestInfo loginRequestInfo = taraSession.getLoginRequestInfo();
         String url = authConfigurationProperties.getHydraService().getAcceptLoginUrl() + "?login_challenge=" + loginRequestInfo.getChallenge();
-        log.info(append("url.full", url), "OIDC login accept request for challenge: {}", value("tara.session.login_request_info.challenge", loginRequestInfo.getChallenge()));
-        ResponseEntity<LoginAcceptResponseBody> response = hydraService.exchange(url, PUT, createRequestBody(taraSession), LoginAcceptResponseBody.class);
+        LoginAcceptRequestBody requestBody = createRequestBody(taraSession);
+
+        requestLogger.logRequest(url, HttpMethod.PUT, requestBody);
+        var response = hydraRestTemplate.exchange(
+                url,
+                HttpMethod.PUT,
+                new HttpEntity<>(requestBody),
+                LoginAcceptResponseBody.class);
+        requestLogger.logResponse(response);
 
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && response.getBody().getRedirectUrl() != null) {
             taraSession.setState(AUTHENTICATION_SUCCESS);
@@ -89,14 +94,14 @@ class AuthAcceptController {
         }
     }
 
-    private HttpEntity<LoginAcceptRequestBody> createRequestBody(TaraSession taraSession) {
+    private LoginAcceptRequestBody createRequestBody(TaraSession taraSession) {
         TaraSession.AuthenticationResult authenticationResult = taraSession.getAuthenticationResult();
         Assert.notNull(authenticationResult.getAcr(), "Mandatory 'acr' value is missing from authentication!");
         Assert.notNull(authenticationResult.getSubject(), "Mandatory 'subject' value is missing from authentication!");
-        return new HttpEntity<>(new LoginAcceptRequestBody(
+        return new LoginAcceptRequestBody(
                 false,
                 authenticationResult.getAcr().getAcrName(),
-                authenticationResult.getSubject()));
+                authenticationResult.getSubject());
     }
 
     private boolean isLegalPersonAttributesRequested(TaraSession taraSession) {

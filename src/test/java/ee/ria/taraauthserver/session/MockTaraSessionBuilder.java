@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.session;
 
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.config.properties.SPType;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -13,7 +14,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.List;
@@ -28,6 +29,8 @@ public class MockTaraSessionBuilder {
     public static final String MOCK_LOGIN_CHALLENGE = "abcdefg098AAdsCC";
     public static final String MOCK_CLIENT_ID = "openIdDemo";
     public static final String MOCK_INSTITUTION_REGISTRY_CODE = "10001234";
+    public static final SPType MOCK_INSTITUTION_SECTOR = SPType.PUBLIC;
+    public static final String MOCK_REQUESTER_ID = "a:b:c";
     public static final String MOCK_CLIENT_NAME_EN = "institution.name.en";
     public static final String MOCK_CLIENT_LEGACY_URL = "http://legacy.url";
     public static final String MOCK_CLIENT_NAME_ET = "institution.name.et";
@@ -44,8 +47,14 @@ public class MockTaraSessionBuilder {
 
     @SneakyThrows
     @Builder
-    public static TaraSession buildTaraSession(@NonNull String sessionId, TaraAuthenticationState authenticationState, List<AuthenticationType> authenticationTypes,
-                                               List<String> clientAllowedScopes, List<String> requestedScopes, List<TaraSession.LegalPerson> legalPersonList,
+    public static TaraSession buildTaraSession(@NonNull String sessionId,
+                                               TaraAuthenticationState authenticationState,
+                                               List<AuthenticationType> authenticationTypes,
+                                               List<String> clientAllowedScopes,
+                                               List<String> requestedScopes,
+                                               List<TaraSession.LegalPerson> legalPersonList,
+                                               SPType spType,
+                                               Map<String, String> shortNameTranslations,
                                                TaraSession.AuthenticationResult authenticationResult) {
         TaraSession taraSession = new TaraSession(sessionId);
         TaraSession.LoginRequestInfo lri = new TaraSession.LoginRequestInfo();
@@ -61,8 +70,16 @@ public class MockTaraSessionBuilder {
         }
         client.setClientId(MOCK_CLIENT_ID);
         institution.setRegistryCode(MOCK_INSTITUTION_REGISTRY_CODE);
-        institution.setSector("public");
+        if (spType != null) {
+            institution.setSector(spType);
+        } else {
+            institution.setSector(MOCK_INSTITUTION_SECTOR);
+        }
         oidcClient.setInstitution(institution);
+        oidcClient.setEidasRequesterId(new URI(MOCK_REQUESTER_ID));
+        if (shortNameTranslations != null) {
+            oidcClient.setShortNameTranslations(shortNameTranslations);
+        }
         metaData.setOidcClient(oidcClient);
         client.setMetaData(metaData);
         client.setScope(clientAllowedScopes == null ? "" : join(" ", clientAllowedScopes));

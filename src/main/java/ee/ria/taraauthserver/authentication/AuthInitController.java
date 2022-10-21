@@ -4,16 +4,19 @@ package ee.ria.taraauthserver.authentication;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import ee.ria.taraauthserver.logging.ClientRequestLogger;
+import ee.ria.taraauthserver.security.SessionManagementFilter;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.RequestUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
@@ -32,10 +35,9 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
-import static net.logstash.logback.argument.StructuredArguments.value;
 import static net.logstash.logback.marker.Markers.append;
-import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 @Slf4j
@@ -44,15 +46,20 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 public class AuthInitController {
     public static final String AUTH_INIT_REQUEST_MAPPING = "/auth/init";
     private static final Predicate<String> SUPPORTED_LANGUAGES = java.util.regex.Pattern.compile("(?i)(et|en|ru)").asMatchPredicate();
+    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.TARA_HYDRA, this.getClass());
+    private final ClientRequestLogger govSsoRequestLogger = new ClientRequestLogger(Service.GOVSSO_HYDRA, this.getClass());
 
     @Autowired
     private AuthConfigurationProperties taraProperties;
+
+    @Autowired
+    private AuthConfigurationProperties.GovSsoHydraConfigurationProperties govSsoHydraConfigurationProperties;
 
     @Autowired(required = false)
     private EidasConfigurationProperties eidasConfigurationProperties;
 
     @Autowired
-    private RestTemplate hydraService;
+    private RestTemplate hydraRestTemplate;
 
     @Autowired
     private Validator validator;
@@ -70,6 +77,17 @@ public class AuthInitController {
         newTaraSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
         newTaraSession.setLoginRequestInfo(loginRequestInfo);
 
+        if (StringUtils.isNotBlank(govSsoHydraConfigurationProperties.getClientId()) && govSsoHydraConfigurationProperties.getClientId().equals(loginRequestInfo.getClientId())) {
+            String govSsoLoginChallenge = loginRequestInfo.getGovSsoChallenge();
+            if (govSsoLoginChallenge != null && govSsoLoginChallenge.matches("^[a-f0-9]{32}$")) {
+                SessionManagementFilter.setGovSsoFlowTraceId(govSsoLoginChallenge);
+                TaraSession.LoginRequestInfo govSsoLoginRequestInfo = fetchGovSsoLoginRequestInfo(govSsoLoginChallenge);
+                newTaraSession.setGovSsoLoginRequestInfo(govSsoLoginRequestInfo);
+            } else {
+                throw new BadRequestException(ErrorCode.INVALID_GOVSSO_LOGIN_CHALLENGE, "Incorrect GovSSO login challenge format.");
+            }
+        }
+
         if (loginRequestInfo.getRequestedScopes().isEmpty())
             throw new BadRequestException(ErrorCode.MISSING_SCOPE, "No scope is requested");
 
@@ -83,15 +101,11 @@ public class AuthInitController {
         if (language == null)
             RequestUtils.setLocale(getDefaultOrRequestedLocale(newTaraSession));
         if (eidasOnlyWithCountryRequested(loginRequestInfo)) {
-            model.addAttribute("country", getAllowedEidasCountryCode(loginRequestInfo.getRequestedScopes()));
+            model.addAttribute("country", getAllowedEidasCountryCode(loginRequestInfo));
             return "redirectToEidasInit";
         } else {
             return "loginView";
         }
-    }
-
-    private String getUiLanguage(String language, TaraSession taraSession) {
-        return isNotEmpty(language) ? language : getDefaultOrRequestedLocale(taraSession);
     }
 
     private String getDefaultOrRequestedLocale(TaraSession taraSession) {
@@ -104,17 +118,42 @@ public class AuthInitController {
 
     private TaraSession.LoginRequestInfo fetchLoginRequestInfo(String loginChallenge) {
         String url = taraProperties.getHydraService().getLoginUrl() + "?login_challenge=" + loginChallenge;
-        log.info(append("url.full", url), "OIDC login request for challenge: {}", value("tara.session.login_request_info.challenge", loginChallenge));
         try {
-            ResponseEntity<TaraSession.LoginRequestInfo> response = hydraService.exchange(url, HttpMethod.GET, null, TaraSession.LoginRequestInfo.class);
-            log.info(append("tara.session.login_request_info", response.getBody()), "OIDC login response for challenge: {}, Status code: {}",
-                    loginChallenge,
-                    response.getStatusCodeValue());
+
+            requestLogger.logRequest(url, HttpMethod.GET);
+            var response = hydraRestTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    TaraSession.LoginRequestInfo.class);
+            requestLogger.logResponse(response);
+
             validateResponse(response.getBody(), loginChallenge);
             return response.getBody();
-        } catch (HttpClientErrorException.NotFound e) {
+        } catch (HttpClientErrorException.NotFound | HttpClientErrorException.Gone e) {
             log.error("Unable to fetch login request info!", e);
             throw new BadRequestException(ErrorCode.INVALID_LOGIN_CHALLENGE, "Login challenge not found.");
+        }
+    }
+
+    private TaraSession.LoginRequestInfo fetchGovSsoLoginRequestInfo(String ssoChallenge) {
+        String requestUrl = govSsoHydraConfigurationProperties.getLoginUrl() + "?login_challenge=" + ssoChallenge;
+        try {
+            govSsoRequestLogger.logRequest(requestUrl, HttpMethod.GET);
+            var response = hydraRestTemplate.exchange(
+                    requestUrl,
+                    HttpMethod.GET,
+                    null,
+                    TaraSession.LoginRequestInfo.class);
+            govSsoRequestLogger.logResponse(response);
+
+            if (!response.getBody().getChallenge().equals(ssoChallenge))
+                throw new IllegalStateException("Invalid GovSSO Hydra response: requested login_challenge does not match retrieved login_challenge");
+
+            return response.getBody();
+        } catch (HttpClientErrorException.NotFound | HttpClientErrorException.Gone e) {
+            log.error("Unable to fetch SSO login request info!", e);
+            throw new BadRequestException(ErrorCode.INVALID_GOVSSO_LOGIN_CHALLENGE, "Login challenge not found.");
         }
     }
 
@@ -131,19 +170,19 @@ public class AuthInitController {
     }
 
     public boolean eidasOnlyWithCountryRequested(TaraSession.LoginRequestInfo loginRequestInfo) {
-        List<String> requestedScopes = loginRequestInfo.getRequestedScopes();
-        return requestedScopes.contains("eidasonly") && getAllowedEidasCountryCode(requestedScopes) != null;
+        return loginRequestInfo.getRequestedScopes().contains("eidasonly") && getAllowedEidasCountryCode(loginRequestInfo) != null;
     }
 
-    private String getAllowedEidasCountryCode(List<String> requestedScopes) {
+    private String getAllowedEidasCountryCode(TaraSession.LoginRequestInfo loginRequestInfo) {
         if (eidasConfigurationProperties == null)
             throw new IllegalStateException("Cannot use eidasonly scope when eidas authentication is not loaded. Is not enabled in configuration?");
 
+        SPType spType = loginRequestInfo.getClient().getMetaData().getOidcClient().getInstitution().getSector();
         String regex = "eidas:country:[a-z]{2}$";
-        return requestedScopes.stream()
+        return loginRequestInfo.getRequestedScopes().stream()
                 .filter(rs -> rs.matches(regex))
                 .map(this::getCountryCodeFromScope)
-                .filter(rs -> eidasConfigurationProperties.getAvailableCountries().contains(rs))
+                .filter(rs -> eidasConfigurationProperties.getAvailableCountries().get(spType).contains(rs))
                 .findFirst()
                 .orElse(null);
     }

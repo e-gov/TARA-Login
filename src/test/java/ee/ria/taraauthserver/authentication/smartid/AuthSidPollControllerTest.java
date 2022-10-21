@@ -14,14 +14,19 @@ import org.springframework.http.MediaType;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
+import static ch.qos.logback.classic.Level.ERROR;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.SMART_ID;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_STATUS;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static java.util.List.of;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static java.lang.String.format;
 
 class AuthSidPollControllerTest extends BaseTest {
 
@@ -43,32 +48,35 @@ class AuthSidPollControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .headers(EXPECTED_RESPONSE_HEADERS)
-                .body("message", equalTo("Teie sessiooni ei leitud! Sessioon aegus või on küpsiste kasutamine Teie brauseris piiratud."))
+                .body("message", equalTo("Teie seanssi ei leitud! Seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("User exception: Invalid session");
+        assertStatisticsIsNotLogged();
     }
 
     @Test
     @Tag(value = "SID_AUTH_STATUS_CHECK_VALID_SESSION")
     void sidAuth_session_status_incorrect() {
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(SMART_ID))
+                .authenticationState(INIT_AUTH_PROCESS).build();
         given()
-                .filter(MockSessionFilter.withTaraSession()
-                        .sessionRepository(sessionRepository)
-                        .authenticationTypes(of(SMART_ID))
-                        .authenticationState(INIT_AUTH_PROCESS).build())
+                .filter(sessionFilter)
                 .when()
                 .get("/auth/sid/poll")
                 .then()
                 .assertThat()
                 .statusCode(400)
                 .headers(EXPECTED_RESPONSE_HEADERS)
-                .body("message", equalTo("Ebakorrektne päring. Vale sessiooni staatus."))
+                .body("message", equalTo("Ebakorrektne päring. Vale seansi staatus."))
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [AUTHENTICATION_FAILED, INIT_SID, POLL_SID_STATUS, NATURAL_PERSON_AUTHENTICATION_COMPLETED]");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=SESSION_STATE_INVALID)", sessionFilter.getSession().getId()));
     }
 
     @Test
@@ -86,6 +94,8 @@ class AuthSidPollControllerTest extends BaseTest {
                 .statusCode(200)
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("PENDING"));
+
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -96,6 +106,7 @@ class AuthSidPollControllerTest extends BaseTest {
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(SMART_ID))
                 .authenticationState(NATURAL_PERSON_AUTHENTICATION_COMPLETED).build();
+
         given()
                 .filter(sessionFilter)
                 .when()
@@ -109,6 +120,7 @@ class AuthSidPollControllerTest extends BaseTest {
 
         TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
         assertEquals(NATURAL_PERSON_AUTHENTICATION_COMPLETED, taraSession.getState());
+        assertStatisticsIsNotLogged();
     }
 
     @Test
@@ -116,7 +128,6 @@ class AuthSidPollControllerTest extends BaseTest {
     void sidAuth_session_status_authentication_failed() {
         TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
         authenticationResult.setErrorCode(ErrorCode.SID_USER_REFUSED_CERT_CHOICE);
-
         MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(SMART_ID))
@@ -139,6 +150,7 @@ class AuthSidPollControllerTest extends BaseTest {
         assertNull(sessionRepository.findById(sessionFilter.getSession().getId()));
         assertWarningIsLogged("Session has been invalidated: " + sessionId);
         assertInfoIsLogged("Session is removed from cache: " + sessionId);
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=SID_USER_REFUSED_CERT_CHOICE)", sessionId));
     }
 
     @Test
@@ -146,7 +158,6 @@ class AuthSidPollControllerTest extends BaseTest {
     void sidAuth_session_status_authentication_general_error() {
         TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
         authenticationResult.setErrorCode(ErrorCode.ERROR_GENERAL);
-
         MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(SMART_ID))
@@ -165,13 +176,12 @@ class AuthSidPollControllerTest extends BaseTest {
                 .body("reportable", equalTo(true))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
 
-
         String sessionId = sessionFilter.getSession().getId();
         assertNull(sessionRepository.findById(sessionFilter.getSession().getId()));
-        assertInfoIsLogged("Tara session state change: NOT_SET -> AUTHENTICATION_FAILED");
+        assertInfoIsLogged("State: NOT_SET -> AUTHENTICATION_FAILED");
         assertWarningIsLogged("Session has been invalidated: " + sessionId);
         assertInfoIsLogged("Session is removed from cache: " + sessionId);
-
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=ERROR_GENERAL)", sessionId));
     }
 
     @Test
@@ -179,7 +189,6 @@ class AuthSidPollControllerTest extends BaseTest {
     void sidAuth_session_status_authentication_sid_internal_error() {
         TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
         authenticationResult.setErrorCode(ErrorCode.SID_INTERNAL_ERROR);
-
         MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(SMART_ID))
@@ -200,10 +209,10 @@ class AuthSidPollControllerTest extends BaseTest {
 
         String sessionId = sessionFilter.getSession().getId();
         assertNull(sessionRepository.findById(sessionFilter.getSession().getId()));
-        assertInfoIsLogged("Tara session state change: NOT_SET -> AUTHENTICATION_FAILED");
+        assertInfoIsLogged("State: NOT_SET -> AUTHENTICATION_FAILED");
         assertErrorIsLogged("Service not available: Sid poll failed");
         assertWarningIsLogged("Session has been invalidated: " + sessionId);
         assertInfoIsLogged("Session is removed from cache: " + sessionId);
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=SID_INTERNAL_ERROR)", sessionId));
     }
-
 }

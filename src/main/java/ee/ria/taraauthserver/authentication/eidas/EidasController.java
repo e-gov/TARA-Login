@@ -2,11 +2,13 @@ package ee.ria.taraauthserver.authentication.eidas;
 
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
-import ee.ria.taraauthserver.error.exceptions.EidasInternalException;
+import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
+import ee.ria.taraauthserver.session.TaraSession.OidcClient;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,20 +28,22 @@ import javax.cache.Cache;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
+import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.WAITING_EIDAS_RESPONSE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static net.logstash.logback.argument.StructuredArguments.value;
-import static net.logstash.logback.marker.Markers.append;
 
 @Slf4j
 @RestController
 @ConditionalOnProperty(value = "tara.auth-methods.eidas.enabled")
 public class EidasController {
+    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.EIDAS, this.getClass());
 
     @Autowired
     private EidasConfigurationProperties eidasConfigurationProperties;
@@ -55,29 +59,25 @@ public class EidasController {
         String relayState = UUID.randomUUID().toString();
         log.info("Initiating EIDAS authentication session with relay state: {}", value("tara.session.eidas.relay_state", relayState));
         validateSession(taraSession);
-        eidasRelayStateCache.put(relayState, taraSession.getSessionId());
+        eidasRelayStateCache.put(relayState, taraSession.getSessionId()); // TODO AUT-854
+        SPType spType = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getInstitution().getSector();
 
-        if (!eidasConfigurationProperties.getAvailableCountries().contains(country))
-            throw new BadRequestException(getAppropriateErrorCode(), "Requested country not supported.");
-
-        try {
-            String requestUrl = createRequestUrl(country, taraSession, relayState);
-            log.info(append("http.request.method", HttpMethod.GET.name())
-                            .and(append("url.full", requestUrl))
-                            .and(append("tara.session.eidas.relay_state", relayState)),
-                    "EIDAS request");
-            ResponseEntity<String> response = eidasRestTemplate.exchange(requestUrl, HttpMethod.GET, null, String.class);
-            log.info(append("url.full", requestUrl)
-                            .and(append("http.request.method", HttpMethod.GET.name()))
-                            .and(append("http.response.status_code", response.getStatusCodeValue()))
-                            .and(append("http.response.body.content", response.getBody()))
-                            .and(append("tara.session.eidas.relay_state", relayState)),
-                    "EIDAS response");
-            updateSession(country, taraSession, relayState);
-            return getHtmlRedirectPageFromResponse(servletResponse, response);
-        } catch (Exception e) {
-            throw new EidasInternalException(ErrorCode.ERROR_GENERAL, e.getMessage());
+        if (!eidasConfigurationProperties.getAvailableCountries().get(spType).contains(country)) {
+            throw new BadRequestException(getAppropriateErrorCode(spType), "Requested country not supported for " + spType + " sector.");
         }
+
+        String requestUrl = createRequestUrl(country, taraSession, relayState);
+
+        requestLogger.logRequest(requestUrl, HttpMethod.GET);
+        var response = eidasRestTemplate.exchange(
+                requestUrl,
+                HttpMethod.GET,
+                null,
+                String.class);
+        requestLogger.logResponse(response);
+
+        updateSession(country, taraSession, relayState);
+        return getHtmlRedirectPageFromResponse(servletResponse, response);
     }
 
     @Nullable
@@ -97,8 +97,11 @@ public class EidasController {
 
     private String createRequestUrl(String country, TaraSession taraSession, String relayState) {
         String url = eidasConfigurationProperties.getClientUrl() + "/login";
+        OidcClient oidcClient = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient();
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
                 .queryParam("Country", country)
+                .queryParam("RequesterID", oidcClient.getEidasRequesterId())
+                .queryParam("SPType", oidcClient.getInstitution().getSector())
                 .queryParam("RelayState", relayState);
         List<String> acr = getAcrFromSessionOidcContext(taraSession);
         if (acr != null)
@@ -106,11 +109,11 @@ public class EidasController {
         return builder.toUriString();
     }
 
-    private ErrorCode getAppropriateErrorCode() {
-        List<String> allowedCountries = eidasConfigurationProperties.getAvailableCountries();
+    private ErrorCode getAppropriateErrorCode(SPType spType) {
+        Map<SPType, List<String>> allowedCountries = eidasConfigurationProperties.getAvailableCountries();
         ErrorCode errorCode = ErrorCode.EIDAS_COUNTRY_NOT_SUPPORTED;
         Object[] messageParameters = new Object[1];
-        messageParameters[0] = String.join(", ", allowedCountries);
+        messageParameters[0] = String.join(", ", allowedCountries.get(spType));
         errorCode.setMessageParameters(messageParameters);
         return errorCode;
     }

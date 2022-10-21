@@ -2,9 +2,11 @@ package ee.ria.taraauthserver.authentication.idcard;
 
 import ee.ria.taraauthserver.error.exceptions.OCSPServiceNotAvailableException;
 import ee.ria.taraauthserver.error.exceptions.OCSPValidationException;
+import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.utils.X509Utils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.Conversion;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.asn1.DEROctetString;
@@ -29,12 +31,14 @@ import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.DataOutputStream;
@@ -47,6 +51,7 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -67,6 +72,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp;
+import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
+import static java.util.Map.of;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static net.logstash.logback.marker.Markers.append;
 
@@ -76,6 +83,7 @@ import static net.logstash.logback.marker.Markers.append;
 @ConditionalOnProperty(value = "tara.auth-methods.id-card.enabled")
 public class OCSPValidator {
     private final Map<String, X509Certificate> trustedCertificates;
+    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.OCSP, this.getClass());
 
     static {
         Security.addProvider(new BouncyCastleProvider());
@@ -108,7 +116,6 @@ public class OCSPValidator {
                 checkCert(userCert, ocspConf);
                 return ocspConf;
             } catch (OCSPServiceNotAvailableException e) {
-                log.error("OCSP request has failed: {}", e.getMessage(), e);
                 if (++count == maxTries) throw e;
             }
         }
@@ -124,7 +131,7 @@ public class OCSPValidator {
 
             validateOCSPResponse(response);
 
-            BasicOCSPResp ocspResponse = getResponse(response, ocspConf);
+            BasicOCSPResp ocspResponse = getResponse(response);
             validateResponseNonce(request, ocspResponse, ocspConf);
             validateResponseSignature(ocspResponse, issuerCert, ocspConf);
 
@@ -133,7 +140,7 @@ public class OCSPValidator {
             validateCertStatus(singleResponse);
         } catch (OCSPValidationException | OCSPServiceNotAvailableException e) {
             throw e;
-        } catch (SocketTimeoutException | SocketException | UnknownHostException e) {
+        } catch (SocketTimeoutException | SocketException | UnknownHostException | SSLException e) {
             throw new OCSPServiceNotAvailableException("OCSP not available: " + ocspConf.getUrl(), e);
         } catch (Exception e) {
             throw new IllegalStateException("OCSP validation failed: " + e.getMessage(), e);
@@ -152,10 +159,7 @@ public class OCSPValidator {
         }
     }
 
-    private BasicOCSPResp getResponse(OCSPResp response, Ocsp ocspConf) throws OCSPException, IOException {
-        log.info(append("http.response.body.content", Base64.getEncoder().encodeToString(response.getEncoded()))
-                .and(append("509.issuer.common_name", ocspConf.getIssuerCn()))
-                .and(append("url.full", ocspConf.getUrl())), "OCSP response");
+    private BasicOCSPResp getResponse(OCSPResp response) throws OCSPException {
         BasicOCSPResp basicOCSPResponse = (BasicOCSPResp) response.getResponseObject();
         Assert.notNull(basicOCSPResponse, "Invalid OCSP response! OCSP response object bytes could not be read!");
         Assert.notNull(basicOCSPResponse.getCerts(), "Invalid OCSP response! OCSP response is missing mandatory element - the signing certificate");
@@ -192,10 +196,8 @@ public class OCSPValidator {
 
     private OCSPResp sendOCSPReq(OCSPReq request, Ocsp conf) throws IOException {
         byte[] bytes = request.getEncoded();
-        log.info(append("url.full", conf.getUrl())
-                .and(append("http.request.body.content", Base64.getEncoder().encodeToString(bytes)))
-                .and(append("ocsp.conf", conf)), "OCSP request");
-
+        requestLogger.logRequest(conf.getUrl(), HttpMethod.GET, of("http.request.body.content",
+                Base64.getEncoder().encodeToString(bytes), "ocsp.conf", conf));
         HttpURLConnection connection = (HttpURLConnection) getHttpURLConnection(new URL(conf.getUrl()));
         connection.setRequestProperty("Content-Type", "application/ocsp-request");
         connection.setRequestProperty("Accept", "application/ocsp-response");
@@ -215,12 +217,19 @@ public class OCSPValidator {
             }
 
             try (InputStream in = (InputStream) connection.getContent()) {
-                return new OCSPResp(in);
+                OCSPResp ocspResp = new OCSPResp(in);
+                requestLogger.logResponse(connection.getResponseCode(), Base64.getEncoder().encodeToString(ocspResp.getEncoded()));
+                return ocspResp;
             }
         } else {
-            log.error(append("url.full", conf.getUrl()), "OCSP request has failed: {}, Status code: {}",
-                    value("http.response.body.content", connection.getResponseMessage()),
-                    value("http.response.status_code", connection.getResponseCode()));
+            try (InputStream in = connection.getErrorStream()) {
+                if (in != null && in.available() != 0) {
+                    String response = IOUtils.toString(in, StandardCharsets.UTF_8);
+                    requestLogger.logResponse(connection.getResponseCode(), response);
+                } else {
+                    requestLogger.logResponse(connection.getResponseCode());
+                }
+            }
             throw new OCSPServiceNotAvailableException(String.format("Service returned HTTP status code %d",
                     connection.getResponseCode()));
         }
@@ -374,7 +383,8 @@ public class OCSPValidator {
     private void validateCertSignedBy(X509Certificate cert, X509Certificate signedBy) {
         try {
             cert.verify(signedBy.getPublicKey(), BouncyCastleProvider.PROVIDER_NAME);
-        } catch (CertificateException | InvalidKeyException | NoSuchAlgorithmException | NoSuchProviderException | SignatureException e) {
+        } catch (CertificateException | InvalidKeyException | NoSuchAlgorithmException | NoSuchProviderException |
+                 SignatureException e) {
             throw new IllegalStateException("Failed to verify user certificate", e);
         }
     }

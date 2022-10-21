@@ -17,9 +17,17 @@ import java.util.List;
 
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp;
-import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp.*;
+import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp.DEFAULT_ACCEPTED_CLOCK_SKEW_IN_SECONDS;
+import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp.DEFAULT_CONNECT_TIMEOUT_IN_MILLISECONDS;
+import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp.DEFAULT_READ_TIMEOUT_IN_MILLISECONDS;
+import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp.DEFAULT_RESPONSE_LIFETIME_IN_SECONDS;
 import static java.util.List.of;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {TestIDCardConfiguration.class})
@@ -50,9 +58,11 @@ public class OCSPConfigurationResolverTest {
     @Tag(value = "OCSP_CA_WHITELIST")
     public void resolveShouldFailWhenNoUserCertProvided() {
         assertNotNull(idCardConfigurationProperties);
+
         Exception expectedEx = assertThrows(IllegalArgumentException.class, () -> {
             new OCSPConfigurationResolver(idCardConfigurationProperties).resolve(null);
         });
+
         assertEquals("User certificate is missing!", expectedEx.getMessage());
     }
 
@@ -61,9 +71,11 @@ public class OCSPConfigurationResolverTest {
     @Tag(value = "OCSP_CA_WHITELIST")
     public void resolveShouldFailWithNoExplicitlyDefinedConfigurationAndNoAiaOcspExtension() {
         Mockito.when(idCardConfigurationProperties.getOcsp()).thenReturn(of());
+
         Exception expectedEx = assertThrows(IllegalArgumentException.class, () -> {
             new OCSPConfigurationResolver(idCardConfigurationProperties).resolve(mockUserCertificate2011);
         });
+
         assertEquals("OCSP configuration invalid! This user certificate's issuer, " +
                 "issued by 'TEST of ESTEID-SK 2011', has no explicitly configured OCSP " +
                 "nor can it be configured automatically since this certificate does not contain " +
@@ -74,7 +86,6 @@ public class OCSPConfigurationResolverTest {
     @Tag(value = "OCSP_URL_CONF")
     @Tag(value = "OCSP_CA_WHITELIST")
     public void resolveShouldSucceedWithEsteid2018CertWithoutExplicitConfiguration() {
-
         Mockito.when(idCardConfigurationProperties.getOcsp()).thenReturn(of());
 
         List<Ocsp> conf = new OCSPConfigurationResolver(idCardConfigurationProperties)
@@ -95,7 +106,6 @@ public class OCSPConfigurationResolverTest {
     @Tag(value = "OCSP_URL_CONF")
     @Tag(value = "OCSP_CA_WHITELIST")
     public void resolveShouldSucceedWithEsteid2015CertWithAiaExtensionAndWithoutExplicitConfiguration() {
-
         Mockito.when(idCardConfigurationProperties.getOcsp()).thenReturn(of());
 
         List<Ocsp> conf = new OCSPConfigurationResolver(idCardConfigurationProperties)
@@ -116,7 +126,6 @@ public class OCSPConfigurationResolverTest {
     @Tag(value = "OCSP_URL_CONF")
     @Tag(value = "OCSP_CA_WHITELIST")
     public void resolveShouldSucceedithEsteid2015CertWithoutAiaExtensionAndWithExplicitConfiguration() {
-
         Mockito.when(idCardConfigurationProperties.getOcsp()).thenReturn(of(getMockOcspConfiguration(
                 of("TEST of ESTEID-SK 2015", "ESTEID-SK 2015"),
                 "http://localhost:1234/ocsp",
@@ -142,10 +151,12 @@ public class OCSPConfigurationResolverTest {
     @Tag(value = "OCSP_CA_WHITELIST")
     public void resolveShouldFailWithEsteid2015CertWithoutAiaExtensionAndWithoutExplicitConfiguration() {
         Mockito.when(idCardConfigurationProperties.getOcsp()).thenReturn(of());
+
         Exception expectedEx = assertThrows(IllegalArgumentException.class, () -> {
             new OCSPConfigurationResolver(idCardConfigurationProperties)
                     .resolve(mockIDCardUserCertificate2015withoutAiaExtension);
         });
+
         assertEquals("OCSP configuration invalid! This user certificate's issuer, issued by 'TEST of ESTEID-SK 2015', has no explicitly configured OCSP nor can it be configured automatically since this certificate does not contain the OCSP url in the AIA extension! Please check your configuration", expectedEx.getMessage());
     }
 
@@ -191,7 +202,6 @@ public class OCSPConfigurationResolverTest {
                 .resolve(mockUserCertificate2018);
 
         assertEquals(2, conf.size());
-
         assertEquals("http://aia.demo.sk.ee/esteid2018", conf.get(0).getUrl());
         assertEquals(of("TEST of ESTEID2018"), conf.get(0).getIssuerCn());
         assertFalse(conf.get(0).isNonceDisabled());
@@ -200,7 +210,6 @@ public class OCSPConfigurationResolverTest {
         assertEquals(DEFAULT_RESPONSE_LIFETIME_IN_SECONDS, conf.get(0).getResponseLifetimeInSeconds());
         assertEquals(DEFAULT_CONNECT_TIMEOUT_IN_MILLISECONDS, conf.get(0).getConnectTimeoutInMilliseconds());
         assertEquals(DEFAULT_READ_TIMEOUT_IN_MILLISECONDS, conf.get(0).getReadTimeoutInMilliseconds());
-
         assertEquals("http://localhost:1234/ocsp", conf.get(1).getUrl());
         assertEquals(of("TEST of ESTEID-SK 2011", "TEST of ESTEID-SK 2015", "TEST of ESTEID2018"), conf.get(1).getIssuerCn());
         assertFalse(conf.get(1).isNonceDisabled());
@@ -233,12 +242,10 @@ public class OCSPConfigurationResolverTest {
                         "TEST_of_SK_OCSP_RESPONDER_2011.pem")
         ));
 
-
         List<Ocsp> conf = new OCSPConfigurationResolver(idCardConfigurationProperties)
                 .resolve(mockUserCertificate2018);
 
         assertEquals(2, conf.size());
-
         assertEquals("http://aia.demo.sk.ee/esteid2018", conf.get(0).getUrl());
         assertEquals(of("TEST of ESTEID2018"), conf.get(0).getIssuerCn());
         assertFalse(conf.get(0).isNonceDisabled());
@@ -247,7 +254,6 @@ public class OCSPConfigurationResolverTest {
         assertEquals(DEFAULT_RESPONSE_LIFETIME_IN_SECONDS, conf.get(0).getResponseLifetimeInSeconds());
         assertEquals(DEFAULT_CONNECT_TIMEOUT_IN_MILLISECONDS, conf.get(0).getConnectTimeoutInMilliseconds());
         assertEquals(DEFAULT_READ_TIMEOUT_IN_MILLISECONDS, conf.get(0).getReadTimeoutInMilliseconds());
-
         assertEquals("http://localhost:1234/ocsp", conf.get(1).getUrl());
         assertEquals(of("TEST of ESTEID2018"), conf.get(1).getIssuerCn());
         assertFalse(conf.get(1).isNonceDisabled());
@@ -275,12 +281,10 @@ public class OCSPConfigurationResolverTest {
                         "TEST_RESPONDER2.pem")
         ));
 
-
         List<Ocsp> conf = new OCSPConfigurationResolver(idCardConfigurationProperties)
                 .resolve(mockUserCertificate2018);
 
         assertEquals(3, conf.size());
-
         assertEquals("http://aia.demo.sk.ee/esteid2018", conf.get(0).getUrl());
         assertEquals(of("TEST of ESTEID2018"), conf.get(0).getIssuerCn());
         assertFalse(conf.get(0).isNonceDisabled());
@@ -289,12 +293,10 @@ public class OCSPConfigurationResolverTest {
         assertEquals(DEFAULT_RESPONSE_LIFETIME_IN_SECONDS, conf.get(0).getResponseLifetimeInSeconds());
         assertEquals(DEFAULT_CONNECT_TIMEOUT_IN_MILLISECONDS, conf.get(0).getConnectTimeoutInMilliseconds());
         assertEquals(DEFAULT_READ_TIMEOUT_IN_MILLISECONDS, conf.get(0).getReadTimeoutInMilliseconds());
-
         assertEquals("http://localhost:1234/ocsp1", conf.get(1).getUrl());
         assertEquals(of("TEST of ESTEID2018"), conf.get(1).getIssuerCn());
         assertFalse(conf.get(1).isNonceDisabled());
         assertEquals("TEST_RESPONDER1.pem", conf.get(1).getResponderCertificateCn());
-
         assertEquals("http://localhost:1234/ocsp2", conf.get(2).getUrl());
         assertEquals(of("TEST of ESTEID2018"), conf.get(2).getIssuerCn());
         assertTrue(conf.get(2).isNonceDisabled());

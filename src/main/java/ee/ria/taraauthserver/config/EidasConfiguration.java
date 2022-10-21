@@ -1,18 +1,21 @@
 package ee.ria.taraauthserver.config;
 
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.SPType;
+import ee.ria.taraauthserver.logging.ClientRequestLogger;
+import ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
+import ee.ria.taraauthserver.logging.RestTemplateErrorLogger;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -23,9 +26,9 @@ import org.springframework.web.client.RestTemplate;
 import javax.net.ssl.SSLContext;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static net.logstash.logback.argument.StructuredArguments.value;
 
@@ -34,13 +37,13 @@ import static net.logstash.logback.argument.StructuredArguments.value;
 @EnableScheduling
 @ConditionalOnProperty(value = "tara.auth-methods.eidas.enabled")
 public class EidasConfiguration {
+    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.TARA_HYDRA, this.getClass());
 
     @Autowired
     private EidasConfigurationProperties eidasConfigurationProperties;
 
     @Autowired
-    @Qualifier("restTemplate")
-    private RestTemplate restTemplate;
+    private RestTemplate hydraRestTemplate;
 
     @Scheduled(fixedRateString = "${tara.auth-methods.eidas.refresh-countries-interval-in-milliseconds:300000}")
     public void scheduleFixedDelayTask() {
@@ -53,18 +56,27 @@ public class EidasConfiguration {
 
     private void refreshCountriesList() {
         String url = eidasConfigurationProperties.getClientUrl() + "/supportedCountries";
-        log.info("Refreshing countries list from: {}", value("url.full", url));
-        ResponseEntity<String[]> response = restTemplate.exchange(url, HttpMethod.GET, null, String[].class);
-        if (response.getBody() == null || response.getBody().length == 0) {
-            throw new IllegalStateException("Eidas client responded with empty supported countries list");
+
+        requestLogger.logRequest(url, HttpMethod.GET);
+        var response = hydraRestTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<Map<SPType, List<String>>>() {
+                });
+        requestLogger.logResponse(response);
+
+        Map<SPType, List<String>> countries = response.getBody();
+        if (countries == null || countries.isEmpty()) {
+            throw new IllegalStateException("EIDAS client responded with empty supported countries list");
         }
-        List<String> countries = Arrays.asList(response.getBody());
-        Collections.sort(countries);
+        Collections.sort(countries.get(SPType.PRIVATE));
+        Collections.sort(countries.get(SPType.PUBLIC));
         eidasConfigurationProperties.setAvailableCountries(countries);
-        log.info("Updated countries list to: {}", value("tara.conf.auth-methods.eidas.available_countries", countries));
+        log.info("Updated countries configuration to: {}", value("tara.conf.auth-methods.eidas.available_countries", countries));
     }
 
-    @Bean(value = "eidasRestTemplate")
+    @Bean
     public RestTemplate eidasRestTemplate(RestTemplateBuilder builder, SSLContext sslContext, EidasConfigurationProperties eidasConfigurationProperties) {
         HttpClient client = HttpClients.custom()
                 .setSSLContext(sslContext)
@@ -72,7 +84,7 @@ public class EidasConfiguration {
                 .setMaxConnTotal(eidasConfigurationProperties.getMaxConnectionsTotal())
                 .build();
 
-        List<HttpMessageConverter<?>> converters = new ArrayList<HttpMessageConverter<?>>();
+        List<HttpMessageConverter<?>> converters = new ArrayList<>();
         MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
         converter.setSupportedMediaTypes(Collections.singletonList(MediaType.TEXT_HTML));
         converters.add(converter);
@@ -82,6 +94,7 @@ public class EidasConfiguration {
                 .setConnectTimeout(Duration.ofSeconds(eidasConfigurationProperties.getRequestTimeoutInSeconds()))
                 .setReadTimeout(Duration.ofSeconds(eidasConfigurationProperties.getReadTimeoutInSeconds()))
                 .requestFactory(() -> new HttpComponentsClientHttpRequestFactory(client))
+                .errorHandler(new RestTemplateErrorLogger(Service.EIDAS))
                 .build();
     }
 }

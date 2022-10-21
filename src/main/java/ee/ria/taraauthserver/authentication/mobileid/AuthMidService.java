@@ -6,7 +6,7 @@ import co.elastic.apm.api.Span;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.MidAuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.error.ErrorCode;
-import ee.ria.taraauthserver.logging.ClientRequestLoggingFilter;
+import ee.ria.taraauthserver.logging.JaxRsClientRequestLogger;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.sk.mid.MidAuthentication;
 import ee.sk.mid.MidAuthenticationHashToSign;
@@ -68,13 +68,11 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERS
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_MID_STATUS;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static ee.ria.taraauthserver.utils.RequestUtils.withMdc;
+import static ee.ria.taraauthserver.utils.RequestUtils.withMdcAndLocale;
 import static java.time.Instant.now;
 import static java.time.temporal.ChronoUnit.MILLIS;
-import static java.util.Arrays.stream;
 import static java.util.concurrent.CompletableFuture.delayedExecutor;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.regex.Pattern.CASE_INSENSITIVE;
-import static java.util.regex.Pattern.compile;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static net.logstash.logback.marker.Markers.append;
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
@@ -84,8 +82,7 @@ import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 @Service
 @ConditionalOnProperty(value = "tara.auth-methods.mobile-id.enabled")
 public class AuthMidService {
-    private static final String[] SPECIAL_CHARS = {"Õ", "Š", "Ž", "š", "ž", "õ", "Ą", "Č", "Ę", "Ė", "Į", "Š", "Ų", "Ū", "Ž", "ą", "č", "ę", "ė", "į", "š", "ų", "ū", "ž"};
-    private static final java.util.regex.Pattern serviceNameRegex = compile("[а-яА-ЯЁё]", CASE_INSENSITIVE);
+    private static final String GSM_7_CHARACTERS = "@£$¥èéùìòÇØøÅåΔ_ΦΓΛΩΠΨΣΘΞ^{}[~]|€ÆæßÉ!\"#¤%&'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà \r\n\\";
     private static final Map<String, MidLanguage> midLanguages = Map.of(
             "et", MidLanguage.EST,
             "en", MidLanguage.ENG,
@@ -134,7 +131,7 @@ public class AuthMidService {
         MidLanguage midLanguage = getMidLanguage();
 
         CompletableFuture
-                .supplyAsync(withMdc(() -> initAuthentication(taraSession, idCode, telephoneNumber, authenticationHash, midLanguage)),
+                .supplyAsync(withMdcAndLocale(() -> initAuthentication(taraSession, idCode, telephoneNumber, authenticationHash, midLanguage)),
                         delayedExecutor(midAuthConfigurationProperties.getDelayInitiateMidSessionInMilliseconds(), MILLISECONDS, taskExecutor))
                 .thenAcceptAsync(withMdc((midAuthentication) -> pollAuthenticationResult(taraSession, authenticationHash, midAuthentication, telephoneNumber)),
                         delayedExecutor(midAuthConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLISECONDS, taskExecutor));
@@ -177,7 +174,7 @@ public class AuthMidService {
                 .withHashToSign(authenticationHash)
                 .withLanguage(midLanguage)
                 .withDisplayText(translatedShortName)
-                .withDisplayTextFormat(isServiceNameUsingSpecialCharacters(translatedShortName) ? MidDisplayTextFormat.UCS2 : MidDisplayTextFormat.GSM7)
+                .withDisplayTextFormat(containsNonGsm7Characters(translatedShortName) ? MidDisplayTextFormat.UCS2 : MidDisplayTextFormat.GSM7)
                 .withRelyingPartyUUID(midClient.getRelyingPartyUUID())
                 .withRelyingPartyName(midClient.getRelyingPartyName())
                 .build();
@@ -200,9 +197,13 @@ public class AuthMidService {
         }
     }
 
-    private static boolean isServiceNameUsingSpecialCharacters(String serviceName) {
-        boolean isSpecialCharacterIncluded = serviceNameRegex.matcher(serviceName).find();
-        return stream(SPECIAL_CHARS).anyMatch(serviceName::contains) || isSpecialCharacterIncluded;
+    private static boolean containsNonGsm7Characters(String serviceName) {
+        for (int i = 0; i < serviceName.length(); i++) {
+            if (GSM_7_CHARACTERS.indexOf(serviceName.charAt(i)) == -1) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void pollAuthenticationResult(TaraSession taraSession, MidAuthenticationHashToSign authenticationHash, MidAuthenticationResponse response, String telephoneNumber) {
@@ -311,7 +312,7 @@ public class AuthMidService {
         ClientConfig clientConfig = new ClientConfig();
         clientConfig.property(ClientProperties.CONNECT_TIMEOUT, midAuthConfigurationProperties.getConnectionTimeoutMilliseconds());
         clientConfig.property(ClientProperties.READ_TIMEOUT, midAuthConfigurationProperties.getReadTimeoutMilliseconds());
-        clientConfig.register(new ClientRequestLoggingFilter("Mobile-ID"));
+        clientConfig.register(new JaxRsClientRequestLogger("Mobile-ID"));
         return clientConfig;
     }
 
