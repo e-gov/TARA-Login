@@ -26,6 +26,7 @@ import static java.util.List.of;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static java.lang.String.format;
 
 class EidasCallbackControllerTest extends BaseTest {
 
@@ -77,18 +78,19 @@ class EidasCallbackControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [WAITING_EIDAS_RESPONSE]");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=SESSION_STATE_INVALID)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=SESSION_STATE_INVALID)", sessionFilter.getSession().getId()));
     }
 
     @Test
     @Tag(value = "EIDAS_AUTH_CALLBACK_REQUEST_CHECKS")
     void eidasAuthCallback_session_status_missing_relayState() {
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(EIDAS))
+                .authenticationResult(new TaraSession.EidasAuthenticationResult())
+                .authenticationState(TaraAuthenticationState.WAITING_EIDAS_RESPONSE).build();
         given()
-                .filter(MockSessionFilter.withTaraSession()
-                        .sessionRepository(sessionRepository)
-                        .authenticationTypes(of(EIDAS))
-                        .authenticationResult(new TaraSession.EidasAuthenticationResult())
-                        .authenticationState(TaraAuthenticationState.WAITING_EIDAS_RESPONSE).build())
+                .filter(sessionFilter)
                 .formParam("SAMLResponse", "123test")
                 .when()
                 .post("/auth/eidas/callback")
@@ -99,18 +101,19 @@ class EidasCallbackControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"));
 
         assertErrorIsLogged("User input exception: Required request parameter 'RelayState' for method parameter type String is not present");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=INTERNAL_ERROR)", sessionFilter.getSession().getId()));
     }
 
     @Test
     @Tag(value = "EIDAS_AUTH_CALLBACK_REQUEST_CHECKS")
     void eidasAuthCallback_session_status_missing_samlResponse() {
+      MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(EIDAS))
+                .authenticationResult(new TaraSession.EidasAuthenticationResult())
+                .authenticationState(TaraAuthenticationState.WAITING_EIDAS_RESPONSE).build();
         given()
-                .filter(MockSessionFilter.withTaraSession()
-                        .sessionRepository(sessionRepository)
-                        .authenticationTypes(of(EIDAS))
-                        .authenticationResult(new TaraSession.EidasAuthenticationResult())
-                        .authenticationState(TaraAuthenticationState.WAITING_EIDAS_RESPONSE).build())
+                .filter(sessionFilter)
                 .when()
                 .post("/auth/eidas/callback")
                 .then()
@@ -120,7 +123,7 @@ class EidasCallbackControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"));
 
         assertErrorIsLogged("User input exception: Required request parameter 'SAMLResponse' for method parameter type String is not present");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=INTERNAL_ERROR)", sessionFilter.getSession().getId()));
     }
 
     @Test
@@ -192,7 +195,7 @@ class EidasCallbackControllerTest extends BaseTest {
         assertErrorIsLogged("Server encountered an unexpected error: attributes.FamilyName: must not be blank");
         assertMessageWithMarkerIsLoggedOnce(EidasCallbackController.class, INFO, "EIDAS request", "http.request.method=POST, url.full=https://localhost:9877/returnUrl, http.request.body.content={\"SAMLResponse\":\"123test\"}");
         assertMessageWithMarkerIsLoggedOnce(EidasCallbackController.class, INFO, "EIDAS response: 200", "http.response.status_code=200, http.response.body.content={\"attributes\":{\"DateOfBirth\":\"1965-01-01\",\"FirstName\":\"Javier\",\"PersonIdentifier\":\"CA/EE/12345\"},\"levelOfAssurance\":\"http://eidas.europa.eu/LoA/high\"}");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=INTERNAL_ERROR)", sessionFilter.getSession().getId()));
     }
 
     @Test
@@ -230,7 +233,7 @@ class EidasCallbackControllerTest extends BaseTest {
                 "  \"status\": \"urn:oasis:names:tc:SAML:2.0:status:Responder\",\n" +
                 "  \"subStatus\": \"urn:oasis:names:tc:SAML:2.0:status:AuthnFailed\"\n" +
                 "}");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=EIDAS_AUTHENTICATION_FAILED)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=EIDAS_AUTHENTICATION_FAILED)", sessionFilter.getSession().getId()));
     }
 
     @Test
@@ -268,7 +271,7 @@ class EidasCallbackControllerTest extends BaseTest {
                 "  \"status\": \"urn:oasis:names:tc:SAML:2.0:status:Responder\",\n" +
                 "  \"subStatus\": \"urn:oasis:names:tc:SAML:2.0:status:RequestDenied\"\n" +
                 "}");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=EIDAS_USER_CONSENT_NOT_GIVEN)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=EIDAS_USER_CONSENT_NOT_GIVEN)", sessionFilter.getSession().getId()));
     }
 
     @Test
@@ -301,7 +304,7 @@ class EidasCallbackControllerTest extends BaseTest {
         assertWarningIsLogged("Session has been invalidated: " + sessionFilter.getSession().getId());
         assertMessageWithMarkerIsLoggedOnce(EidasCallbackController.class, INFO, "EIDAS request", "http.request.method=POST, url.full=https://localhost:9877/returnUrl, http.request.body.content={\"SAMLResponse\":\"123test\"}");
         assertMessageWithMarkerIsLoggedOnce(RestTemplateErrorLogger.class, ERROR, "EIDAS response: 404", "http.response.status_code=404");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=EIDAS_INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=EIDAS_INTERNAL_ERROR)", sessionFilter.getSession().getId()));
     }
 
     @Test
@@ -333,7 +336,7 @@ class EidasCallbackControllerTest extends BaseTest {
         assertWarningIsLogged("Session has been invalidated: " + sessionFilter.getSession().getId());
         assertErrorIsLogged("Service not available: EIDAS service error: I/O error on POST request for \"https://localhost:9877/returnUrl\": Read timed out; nested exception is java.net.SocketTimeoutException: Read timed out");
         assertMessageWithMarkerIsLoggedOnce(EidasCallbackController.class, INFO, "EIDAS request", "http.request.method=POST, url.full=https://localhost:9877/returnUrl, http.request.body.content={\"SAMLResponse\":\"123test\"}");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=EIDAS_INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=EIDAS_INTERNAL_ERROR)", sessionFilter.getSession().getId()));
     }
 
     protected static void createEidasCountryStub(String response, int status) {
