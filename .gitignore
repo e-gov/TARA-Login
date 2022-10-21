@@ -39,16 +39,24 @@ src/main/resources/rebel.xml
 src/main/resources/rebel-remote.xml
 src/main/resources/application.yml
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 src/main/resources/logback-spring.xml
 >>>>>>> a90c390 (Modified gitignore)
+=======
+>>>>>>> 195699b (Upgrade from last release)
 src/main/resources/idcard-truststore-test.p12
 src/main/resources/mobileid-truststore-test.p12
 src/main/resources/sid-truststore-test.p12
 src/main/resources/tls-keystore.jks
+<<<<<<< HEAD
 <<<<<<< HEAD
 src/main/resources/tls-truststore.jks
 src/main/resources/ocsp
 =======
 src/main/resources/tls-truststore.jks
 >>>>>>> a90c390 (Modified gitignore)
+=======
+src/main/resources/tls-truststore.jks
+src/main/resources/ocsp
+>>>>>>> 195699b (Upgrade from last release)
