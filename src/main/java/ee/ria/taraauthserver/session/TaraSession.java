@@ -363,6 +363,8 @@ public class TaraSession implements Serializable {
         @Size(max = 1000)
         @JsonProperty("legacy_return_url")
         private String legacyReturnUrl;
+        @JsonProperty("notify_url")
+        private String notifyUrl;
         @JsonProperty("eidas_requester_id")
         private URI eidasRequesterId;
         @Valid

@@ -236,7 +236,7 @@ public class AuthMidServiceTest extends BaseTest {
         assertEquals(MID_VALIDATION_ERROR, taraSession.getAuthenticationResult().getErrorCode());
         assertErrorIsLogged(format("Authentication result validation failed: [%s]", error.getMessage()));
         assertMidApiRequests();
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=MID_VALIDATION_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=MID_VALIDATION_ERROR)", taraSession.getSessionId()));
     }
 
     @Test
@@ -253,7 +253,7 @@ public class AuthMidServiceTest extends BaseTest {
         TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertErrorIsLogged("Mobile-ID authentication exception: MidInternalErrorException");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=MID_INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=MID_INTERNAL_ERROR)", taraSession.getSessionId()));
     }
 
     @Test
@@ -270,7 +270,7 @@ public class AuthMidServiceTest extends BaseTest {
         TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertErrorIsLogged("Mobile-ID authentication exception: ProcessingException");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=MID_INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=MID_INTERNAL_ERROR)", taraSession.getSessionId()));
     }
 
     @Test
@@ -287,7 +287,7 @@ public class AuthMidServiceTest extends BaseTest {
         TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertErrorIsLogged("Mobile-ID authentication exception: RuntimeException");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=ERROR_GENERAL)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=ERROR_GENERAL)", taraSession.getSessionId()));
     }
 
     @Test
@@ -301,7 +301,7 @@ public class AuthMidServiceTest extends BaseTest {
         assertEquals(MID_DELIVERY_ERROR, taraSession.getAuthenticationResult().getErrorCode());
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=MID_DELIVERY_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=MID_DELIVERY_ERROR)", taraSession.getSessionId()));
     }
 
     @Test
@@ -315,7 +315,7 @@ public class AuthMidServiceTest extends BaseTest {
         assertEquals(MID_DELIVERY_ERROR, taraSession.getAuthenticationResult().getErrorCode());
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=MID_DELIVERY_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=MID_DELIVERY_ERROR)", taraSession.getSessionId()));
     }
 
     @Test
@@ -329,7 +329,7 @@ public class AuthMidServiceTest extends BaseTest {
         assertEquals(ERROR_GENERAL, taraSession.getAuthenticationResult().getErrorCode());
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=ERROR_GENERAL)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=ERROR_GENERAL)", taraSession.getSessionId()));
     }
 
     @Test
@@ -343,7 +343,7 @@ public class AuthMidServiceTest extends BaseTest {
         assertEquals(ERROR_GENERAL, taraSession.getAuthenticationResult().getErrorCode());
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=ERROR_GENERAL)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=ERROR_GENERAL)", taraSession.getSessionId()));
     }
 
     @Test
@@ -357,7 +357,7 @@ public class AuthMidServiceTest extends BaseTest {
         assertEquals(MID_INTEGRATION_ERROR, taraSession.getAuthenticationResult().getErrorCode());
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=MID_INTEGRATION_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=MID_INTEGRATION_ERROR)", taraSession.getSessionId()));
     }
 
     @Test
@@ -371,7 +371,7 @@ public class AuthMidServiceTest extends BaseTest {
         assertEquals(ERROR_GENERAL, taraSession.getAuthenticationResult().getErrorCode());
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=ERROR_GENERAL)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=ERROR_GENERAL)", taraSession.getSessionId()));
     }
 
     @Test
@@ -385,7 +385,7 @@ public class AuthMidServiceTest extends BaseTest {
         assertEquals(MID_INTERNAL_ERROR, taraSession.getAuthenticationResult().getErrorCode());
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=MID_INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=MID_INTERNAL_ERROR)", taraSession.getSessionId()));
     }
 
     @Test
@@ -399,7 +399,7 @@ public class AuthMidServiceTest extends BaseTest {
         assertEquals(MID_INTERNAL_ERROR, taraSession.getAuthenticationResult().getErrorCode());
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertMidApiRequests();
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=MID_INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=MID_INTERNAL_ERROR)", taraSession.getSessionId()));
     }
 
     @Test
@@ -412,7 +412,7 @@ public class AuthMidServiceTest extends BaseTest {
         assertWarningIsLogged("Mobile-ID authentication failed: User cancelled the operation.");
         assertEquals(MID_USER_CANCEL, taraSession.getAuthenticationResult().getErrorCode());
         assertMidApiRequests();
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=MID_USER_CANCEL)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=MID_USER_CANCEL)", taraSession.getSessionId()));
     }
 
     @Test
@@ -425,7 +425,7 @@ public class AuthMidServiceTest extends BaseTest {
         assertWarningIsLogged("Mobile-ID authentication failed: User has no active certificates, and thus is not Mobile-ID client");
         assertEquals(NOT_MID_CLIENT, taraSession.getAuthenticationResult().getErrorCode());
         assertMidApiRequests();
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=NOT_MID_CLIENT)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=NOT_MID_CLIENT)", taraSession.getSessionId()));
     }
 
     @Test
@@ -438,7 +438,7 @@ public class AuthMidServiceTest extends BaseTest {
         assertWarningIsLogged("Mobile-ID authentication failed: User didn't enter PIN code or communication error.");
         assertEquals(MID_TRANSACTION_EXPIRED, taraSession.getAuthenticationResult().getErrorCode());
         assertMidApiRequests();
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=MID_TRANSACTION_EXPIRED)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=MID_TRANSACTION_EXPIRED)", taraSession.getSessionId()));
     }
 
     @Test
@@ -451,7 +451,7 @@ public class AuthMidServiceTest extends BaseTest {
         assertWarningIsLogged("Mobile-ID authentication failed: Mobile-ID configuration on user's SIM card differs from what is configured on service provider side. User needs to contact his/her mobile operator.");
         assertEquals(MID_HASH_MISMATCH, taraSession.getAuthenticationResult().getErrorCode());
         assertMidApiRequests();
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=MID_HASH_MISMATCH)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=MID_HASH_MISMATCH)", taraSession.getSessionId()));
     }
 
     @Test
@@ -464,7 +464,7 @@ public class AuthMidServiceTest extends BaseTest {
         assertWarningIsLogged("Mobile-ID authentication failed: Unable to reach phone or SIM card");
         assertEquals(MID_PHONE_ABSENT, taraSession.getAuthenticationResult().getErrorCode());
         assertMidApiRequests();
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=MID_PHONE_ABSENT)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=MID_PHONE_ABSENT)", taraSession.getSessionId()));
     }
 
     private String startMidAuthSessionWithPollResponse(String pollResponse, int pollHttpStatus) {
