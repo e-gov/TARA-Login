@@ -440,11 +440,11 @@ jQuery(function ($) {
 		webEidInfo.statuscommandstart = new Date().getTime();
 		webEidCheckResult = 'IN_PROGRESS';
 		webeid.status()
-			.then(() => {
+			.then(response => {
 				webEidCheckResult = 'SUCCESS';
 				webEidInfo.code = "READY";
-				webEidInfo.extensionversion = err.extension;
-				webEidInfo.nativeappversion = err.nativeApp;
+				webEidInfo.extensionversion = response.extension;
+				webEidInfo.nativeappversion = response.nativeApp;
 				showOrHideWebEidWarning(warning, navItem);
 			})
 			.catch(err => {
