@@ -11,6 +11,9 @@
     padding: 12px 35px;
     font-size: 18px;
   }
+  &.hidden {
+    display: none;
+  }
   &--primary {
     color: #fff;
     background-color: #008936;
@@ -21,11 +24,11 @@
     }
   }
   &--primary:disabled, &--primary[disabled] {
-      cursor: default;
-      background-color: #cccccc;
-      color: #666666;
-      border: 2px solid #cccccc;
-    }
+    cursor: default;
+    background-color: #cccccc;
+    color: #666666;
+    border: 2px solid #cccccc;
+  }
   &--cancel {
     color: #344255;
     background-color: #ffffff;
@@ -34,6 +37,12 @@
       color: #fff;
       background-color: #344255;
     }
+  }
+  &--cancel:disabled, &--cancel[disabled] {
+    cursor: default;
+    color: #aaaaaa;
+    background-color: #ffffff;
+    border: 2px solid #aaaaaa;
   }
   &--from-link {
 	text-decoration: none;

@@ -77,29 +77,6 @@
                     <button role="button" type="button" class="c-btn c-btn--primary" th:text="#{label.common.login}">
                         Login
                     </button>
-                    <div class="alert alert-error alert-popup" aria-hidden="true">
-                        <div>
-                            <strong>
-                                <span id="error-message-title" th:text="#{message.idc.certificate-failed}"/>
-                            </strong>
-                        </div>
-                        <span id="error-message" th:text="#{message.idc.does-id-card-exist}"/>
-                        <div id="error-incident-number-wrapper">
-                            <label th:text="#{label.error.incident-number('')}" for="error-incident-number"></label>
-                            <span id="error-incident-number"></span>
-                        </div>
-                        <div>
-                            <a id="error-report-url"
-                               th:href="#{label.error.error-report-content(${@thymeleafSupport.getErrorReportEmail()})}"
-                               th:text="#{label.error.error-report-link}">Edasta veakirjeldus</a>
-                        </div>
-                        <div>
-                            <span id="error-report-notification" class="hidden"
-                                  th:utext="#{label.error.error-report-notification(${@thymeleafSupport.getErrorReportEmail()})}"/>
-                        </div>
-                        <button role="button" class="close" th:aria-label="#{label.alert.close}" data-dismiss="alert">
-                            <span aria-hidden="true">&times;</span></button>
-                    </div>
                 </form>
             </div>
 

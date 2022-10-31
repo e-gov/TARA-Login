@@ -71,7 +71,7 @@ class SmartIdControllerTest extends BaseTest {
     }
 
     @Test
-    @Tag("CSRF_PROTCTION")
+    @Tag("CSRF_PROTECTION")
     void sidAuthInit_NoCsrf() {
         given()
                 .filter(MockSessionFilter.withoutCsrf().sessionRepository(sessionRepository).build())
@@ -91,7 +91,7 @@ class SmartIdControllerTest extends BaseTest {
 
     @Test
     @Tag("SID_AUTH_CHECKS_SESSION")
-    @Tag("CSRF_PROTCTION")
+    @Tag("CSRF_PROTECTION")
     void sidAuthInit_session_missing() {
         given()
                 .formParam(ID_CODE, ID_CODE_VALUE)

@@ -55,7 +55,7 @@ public class EidasControllerTest extends BaseTest {
     private Cache<String, String> eidasRelayStateCache;
 
     @Test
-    @Tag("CSRF_PROTCTION")
+    @Tag("CSRF_PROTECTION")
     void eidasAuthInit_NoCsrf() {
         given()
                 .formParam("country", "CA")
@@ -75,7 +75,7 @@ public class EidasControllerTest extends BaseTest {
 
     @Test
     @Tag("EIDAS_AUTH_INIT_REQUEST_CHECKS")
-    @Tag("CSRF_PROTCTION")
+    @Tag("CSRF_PROTECTION")
     void eidasAuthInit_session_missing() {
         given()
                 .formParam("country", "CA")

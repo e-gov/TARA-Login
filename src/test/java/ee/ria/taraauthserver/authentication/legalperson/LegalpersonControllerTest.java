@@ -391,7 +391,7 @@ public class LegalpersonControllerTest extends BaseTest {
     }
 
     @Test
-    @Tag("CSRF_PROTCTION")
+    @Tag("CSRF_PROTECTION")
     void postAuthLegalPersonConfirm_NoCsrf() {
         given()
                 .filter(MockSessionFilter.withoutCsrf().sessionRepository(sessionRepository).build())
@@ -410,7 +410,7 @@ public class LegalpersonControllerTest extends BaseTest {
     }
     @Test
     @Tag(value = "LEGAL_PERSON_SELECTION_CONFIRMED")
-    @Tag("CSRF_PROTCTION")
+    @Tag("CSRF_PROTECTION")
     void postAuthLegalPersonConfirm_session_missing() {
         given()
                 .param("legal_person_identifier", "1234")

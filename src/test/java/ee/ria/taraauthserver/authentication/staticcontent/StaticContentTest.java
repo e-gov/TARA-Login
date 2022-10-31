@@ -10,7 +10,7 @@ import static org.hamcrest.Matchers.nullValue;
 public class StaticContentTest extends BaseTest {
 
     @Test
-    @Tag(value = "CSRF_PROTCTION")
+    @Tag(value = "CSRF_PROTECTION")
     void staticContent_SessionIsNotCreated() {
         given()
                 .when()

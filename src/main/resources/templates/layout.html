@@ -1,11 +1,13 @@
 <!DOCTYPE HTML>
-<html xmlns:th="http://www.w3.org/1999/xhtml" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<html xmlns:th="http://www.w3.org/1999/xhtml" th:lang="${#locale.language}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
 <head>
 </head>
 <body>
 <div class="c-layout">
     <div class="c-layout--full">
         <div th:replace="fragments/taraheader">Header</div>
+        <div id="id-card-error" th:insert="~{fragments/error}" th:class="hidden" />
+        <div id="id-card-wait" th:insert="~{fragments/wait}" th:class="hidden" />
         <div id="pagecontent" class="container" layout:fragment="content">content should be here</div>
     </div>
     <footer th:replace="~{fragments/tarafooter}">Footer</footer>
