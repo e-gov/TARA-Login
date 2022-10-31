@@ -26,9 +26,15 @@
         <maven.compiler.release>11</maven.compiler.release>
 
         <spring-cloud.version>2021.0.5</spring-cloud.version>
+        <webeid.version>2.1.1</webeid.version>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.webeid.security</groupId>
+            <artifactId>authtoken-validation</artifactId>
+            <version>${webeid.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -190,6 +196,13 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <repositories>
+        <repository>
+            <id>gitlab</id>
+            <url>https://gitlab.com/api/v4/projects/19948337/packages/maven</url>
+        </repository>
+    </repositories>
 
     <build>
         <finalName>${project.artifactId}</finalName>
