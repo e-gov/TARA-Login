@@ -17,18 +17,24 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.util.HtmlUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static ee.ria.taraauthserver.error.ErrorCode.EIDAS_USER_CONSENT_NOT_GIVEN;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_EXPIRED;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_REVOKED;
+import static ee.ria.taraauthserver.error.ErrorCode.IDC_WEBEID_NOT_AVAILABLE;
+import static ee.ria.taraauthserver.error.ErrorCode.IDC_WEBEID_USER_TIMEOUT;
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_CSRF_TOKEN;
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_GOVSSO_LOGIN_CHALLENGE;
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_LOGIN_CHALLENGE;
@@ -87,6 +93,8 @@ public class ErrorAttributes extends DefaultErrorAttributes {
             SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE,
             IDC_CERT_EXPIRED,
             IDC_REVOKED,
+            IDC_WEBEID_NOT_AVAILABLE,
+            IDC_WEBEID_USER_TIMEOUT,
             EIDAS_USER_CONSENT_NOT_GIVEN,
             SID_DOCUMENT_UNUSABLE,
             SESSION_NOT_FOUND,
@@ -131,7 +139,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
 
     private void handle4xxClientError(Throwable error, Map<String, Object> attr) {
         if (isTaraErrorWithErrorCode(error)) {
-            attr.replace(ERROR_ATTR_MESSAGE, translateErrorCode(((TaraException) error).getErrorCode()));
+            attr.replace(ERROR_ATTR_MESSAGE, translateTaraErrorMessage((TaraException) error));
         } else if (isBindingError(error)) {
             attr.replace(ERROR_ATTR_MESSAGE, formatBindingErrors((BindException) error));
         }
@@ -140,9 +148,9 @@ public class ErrorAttributes extends DefaultErrorAttributes {
     private void handle5xxError(Throwable error, Map<String, Object> attr) {
         int status = (int) attr.get("status");
         if (status == 502 && isTaraErrorWithErrorCode(error)) {
-            attr.replace(ERROR_ATTR_MESSAGE, translateErrorCode(((TaraException) error).getErrorCode()));
+            attr.replace(ERROR_ATTR_MESSAGE, translateTaraErrorMessage((TaraException) error));
         } else {
-            attr.replace(ERROR_ATTR_MESSAGE, translateErrorCode(ErrorCode.INTERNAL_ERROR));
+            attr.replace(ERROR_ATTR_MESSAGE, translateErrorCode(ErrorCode.INTERNAL_ERROR, null));
         }
     }
 
@@ -150,11 +158,22 @@ public class ErrorAttributes extends DefaultErrorAttributes {
         return error instanceof TaraException && ((TaraException) error).getErrorCode() != null;
     }
 
+    private String translateTaraErrorMessage(TaraException taraException) {
+        return translateErrorCode(taraException.getErrorCode(), taraException.getErrorCodeMessageParameters());
+    }
+
     @NotNull
-    private String translateErrorCode(ErrorCode errorCode) {
+    private String translateErrorCode(ErrorCode errorCode, String[] messageParameters) {
+        String[] safeParameters = null;
         Locale locale = RequestUtils.getLocale();
+        if (messageParameters != null) {
+            safeParameters = Arrays.stream(messageParameters)
+                    .map(parameter -> HtmlUtils.htmlEscape(parameter, StandardCharsets.UTF_8.name()))
+                    .collect(Collectors.toList())
+                    .toArray(String[]::new);
+        }
         try {
-            return messageSource.getMessage(errorCode.getMessage(), errorCode.getMessageParameters(), locale);
+            return messageSource.getMessage(errorCode.getMessage(), safeParameters, locale);
         } catch (NoSuchMessageException ex) {
             return "???" + errorCode + "???";
         }

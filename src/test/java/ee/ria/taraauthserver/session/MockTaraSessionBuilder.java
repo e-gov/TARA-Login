@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.session;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.config.properties.SPType;
+import eu.webeid.security.challenge.ChallengeNonce;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -55,6 +56,7 @@ public class MockTaraSessionBuilder {
                                                List<TaraSession.LegalPerson> legalPersonList,
                                                SPType spType,
                                                Map<String, String> shortNameTranslations,
+                                               ChallengeNonce webEidChallengeNonce,
                                                TaraSession.AuthenticationResult authenticationResult) {
         TaraSession taraSession = new TaraSession(sessionId);
         TaraSession.LoginRequestInfo lri = new TaraSession.LoginRequestInfo();
@@ -63,6 +65,7 @@ public class MockTaraSessionBuilder {
         TaraSession.OidcClient oidcClient = new TaraSession.OidcClient();
         TaraSession.Institution institution = new TaraSession.Institution();
         taraSession.setLegalPersonList(legalPersonList);
+        taraSession.setWebEidChallengeNonce(webEidChallengeNonce);
 
         lri.setChallenge(MOCK_LOGIN_CHALLENGE);
         if (requestedScopes != null) {

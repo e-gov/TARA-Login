@@ -1,17 +1,5 @@
 jQuery(function ($) {
-	"use strict";
-
-	var defaultErrorReportUrl;
-    var defaultErrorReportNotification;
-    var webEidCheckResult = 'NOT_STARTED';
-    var webEidInfo = {
-    	code: 'WAIT_NOT_COMPLETED',
-		extensionversion: '',
-		nativeappversion: '',
-		errorstack: '',
-		statuscommandstart: 0,
-		wait: 0
-	};
+	'use strict';
 	
 	// Hide nav bar in desktop mode and display authentication method content in mobile mode if less than 2 auth methods
 	if ($('.c-tab-login__nav-link').length < 2) {
@@ -65,7 +53,7 @@ jQuery(function ($) {
 			$(this).parent().addClass('is-active');
 		}
 
-		$('.c-tab-login__content[data-tab="' + active + '"]').find(".c-tab-login__content-wrap").first().attr("tabindex",-1).focus();
+		$('.c-tab-login__content[data-tab="' + active + '"]').find('.c-tab-login__content-wrap').first().attr('tabindex',-1).focus();
 	});
 
 	$(document).on('click', '#error-report-url', function(event){
@@ -73,10 +61,10 @@ jQuery(function ($) {
 	    var errorReportNotification = $('#error-report-notification');
 	    var processedErrorReportUrl = errorReportUrl.attr('href');
 	    var processedErrorReportNotification = errorReportNotification.text();
-        processedErrorReportUrl = processedErrorReportUrl.replace("{3}", getCurrentOperatingSystem())
-        processedErrorReportUrl = processedErrorReportUrl.replace("{4}", getCurrentBrowser())
-        processedErrorReportUrl = processedErrorReportUrl.replace("{5}", window.location.host)
-        processedErrorReportNotification = processedErrorReportNotification.replace("{2}", window.location.host)
+        processedErrorReportUrl = processedErrorReportUrl.replace('{3}', getCurrentOperatingSystem())
+        processedErrorReportUrl = processedErrorReportUrl.replace('{4}', getCurrentBrowser())
+        processedErrorReportUrl = processedErrorReportUrl.replace('{5}', window.location.host)
+        processedErrorReportNotification = processedErrorReportNotification.replace('{2}', window.location.host)
         errorReportUrl.attr('href', processedErrorReportUrl);
         errorReportNotification.text(processedErrorReportNotification);
         $('#error-report-notification').removeClass('hidden');
@@ -90,31 +78,25 @@ jQuery(function ($) {
 		$('.c-tab-login__nav-item').removeClass('is-active');
 
 	});
-	
-	// Close alert
-	$(document).on('click', '.alert-popup .close', function(event){
-		event.preventDefault();
-		hideAlert($(this).closest('.alert'));
-	});
 
 	// Country select
 	if ($('#country-select').length){
 		// Note that when updating tom-select, you have to convert tom-select.base.js from ecmascript-6 to ecmascript-5 for gulp compatibility and comment out the preventDefault(e) method under KEY_TAB settings to use regular tab behaviour.
-        new TomSelect("#country-select",{
+        new TomSelect('#country-select',{
             selectOnTab: true,
             onChange:function(){
                 // Removes the placeholder text when a country has been selected and a placeholder exists. Also sets the input width to 0 so it wouldn't create a new line on narrow screens.
-                if ($('#country-select-tomselected').is("[placeholder]")) {
+                if ($('#country-select-tomselected').is('[placeholder]')) {
                     $('#country-select-tomselected').removeAttr('placeholder');
-                    $('#country-select-tomselected').css({"width":0, "min-width":0});
+                    $('#country-select-tomselected').css({'width':0, 'min-width':0});
                 }
             },
             sortField: {
-                field: "text",
-                direction: "asc"
+                field: 'text',
+                direction: 'asc'
             },
             render:{
-                // Removes the "no results found" default message when using the search function.
+                // Removes the 'no results found' default message when using the search function.
                 no_results:function(data,escape){
                     return '';
                 }
@@ -170,132 +152,150 @@ jQuery(function ($) {
 		}
 	}
 
-	function getIdCardAuthUrlParameters() {
-		let url = '?webeid.code=' + encodeURIComponent(webEidInfo.code);
-		if (webEidInfo.code === 'WAIT_NOT_COMPLETED') {
-			const currentTime = new Date().getTime();
-			url += '&webeid.wait=' + (currentTime - webEidInfo.statuscommandstart);
-		} else {
-			url += '&webeid.extensionversion=' + encodeURIComponent(webEidInfo.extensionversion)
-				 + '&webeid.nativeappversion=' + encodeURIComponent(webEidInfo.nativeappversion)
-			     + '&webeid.wait=' + webEidInfo.wait;
-				 + '&webeid.errorstack=' + truncateUrl(encodeURIComponent(webEidInfo.errorstack), 10000);
+	// ID-card form submit
+	$('#idCardForm button.c-btn--primary').on('click', async function(event){
+		event.preventDefault();
+		const csrfToken = document.querySelector("input[name='_csrf']").getAttribute('value');
+
+		activateIdCardView('waitPopup');
+
+		const webEidStatusPromise = detectWebEid();
+		const nonceResponse = await fetchJson('/auth/id/init', {
+			method: 'POST',
+			headers: {
+				'Accept': 'application/json',
+				'X-CSRF-TOKEN': csrfToken
+			}
+		});
+		if (!nonceResponse) {
+			return;
 		}
-		return url;
+		// We are checking Web eID status in parallel with /auth/id/init request to reduce the total time the user
+		// has to wait in a successful case. It might make the failure case of Web eID status check a bit slower,
+		// though, as we will wait for both results before checking them, for the ease of error handling.
+		const webEidInfo = await webEidStatusPromise;
+		if (webEidInfo.code !== 'SUCCESS') {
+			await handleWebEidJsError(csrfToken, webEidInfo);
+			return;
+		}
+		const lang = document.documentElement.lang;
+		let authToken;
+		try {
+			authToken = await webeid.authenticate(nonceResponse.nonce, {lang});
+		} catch (error) {
+			if (error.code === 'ERR_WEBEID_USER_CANCELLED') {
+				activateIdCardView('form')
+			} else {
+				webEidInfo.code = error.code;
+				await handleWebEidJsError(csrfToken, webEidInfo);
+			}
+			return;
+		}
+
+		activateIdCardView('waitLogin');
+		const authTokenResponse = await fetchJson('/auth/id/login', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Accept': 'application/json',
+				'X-CSRF-TOKEN': csrfToken
+			},
+			body: JSON.stringify({
+				authToken: authToken,
+				statusDurationMs: webEidInfo.statusDurationMs,
+				extensionVersion: webEidInfo.extensionVersion,
+				nativeAppVersion: webEidInfo.nativeAppVersion
+			})
+		});
+		if (authTokenResponse) {
+			$('#idCardForm').submit();
+		}
+	});
+
+	async function fetchJson(resource, options = {}) {
+		const { timeoutMs = 20000 } = options;
+		const abortController = new AbortController();
+		const timerId = setTimeout(() => abortController.abort(), timeoutMs);
+		try {
+			const response = await fetch(resource, {
+				...options,
+				signal: abortController.signal
+			});
+			const responseJson = await response.json();
+			if (!response.ok) {
+				// If the response is not OK, but JSON body was successfully retrieved and parsed, then show the error
+				// page using the contents from the parsed response. The server has probably set the status to
+				// AUTHENTICATION_FAILED already, so we need to start a new authentication after that.
+				handleIdCardBackendError(responseJson);
+				return null;
+			}
+			return responseJson;
+		} catch (error) {
+			// If the JSON body cannot be retrieved, show the general AJAX error page.
+			activateIdCardView('ajaxError');
+			return null;
+		} finally {
+			clearTimeout(timerId);
+		}
 	}
 
-	// ID-card form submit
-	$('#idCardForm button.c-btn--primary').on('click', function(event){
-		event.preventDefault();
+	async function handleWebEidJsError(csrfToken, webEidInfo) {
+		// Response from /auth/id/error endpoint is never 200 OK,
+		// but an HTTP error code with error details in the following format:
+		// {
+		// 	 'timestamp': '2022-12-01T10:26:14.599+00:00',
+		// 	 'status': 400,
+		// 	 'error': 'Bad Request',
+		// 	 'message': 'Error message in HTML<br/>format',
+		// 	 'path': '/auth/id/error',
+		// 	 'locale': 'et',
+		// 	 'login_challenge': 'c8422a5671614fadae13fc244b0d4aab',
+		// 	 'incident_nr': 'a2ae9f4e7fa1f237b5b402c3c96c5f70',
+		// 	 'reportable': true
+		// }
+		await fetchJson('/auth/id/error', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Accept': 'application/json',
+				'X-CSRF-TOKEN': csrfToken
+			},
+			body: JSON.stringify({
+				code: webEidInfo.code,
+				extensionVersion: webEidInfo.extensionVersion,
+				nativeAppVersion: webEidInfo.nativeAppVersion,
+				errorStack: webEidInfo.errorStack,
+				statusDurationMs: webEidInfo.statusDurationMs
+			})
+		});
+	}
 
-        hideAlert($('#idCardForm .alert-popup'));
-		if ($(this).prop('disabled')) return;
-		$(this).prop('disabled', true);
-		var _this = $(this);
-		
-		var xhttp = new XMLHttpRequest();
-		xhttp.onreadystatechange = function() {
-			if (this.readyState !== 4) return;
-			if (this.status == 200 || this.responseText == '{"status":"COMPLETED"}') {
-			    $('#idCardForm').submit();
-			} else if (this.status == 400 || this.status == 502) {
-			    var jsonResponse = JSON.parse(this.responseText);
+	function handleIdCardBackendError(responseJson) {
+		$('#error-message').html(responseJson.message);
 
-			    showAlert($('#idCardForm .alert-popup'));
-                var errorMessageTitle = $('#idCardForm .alert-popup #error-message-title');
-                var errorMessage = $('#idCardForm .alert-popup #error-message');
-                var incidentNumber = $('#idCardForm .alert-popup #error-incident-number');
-                var errorReportUrl = $('#idCardForm .alert-popup #error-report-url');
-                var errorReportNotification = $('#idCardForm .alert-popup #error-report-notification');
+		if (responseJson.reportable === true) {
+			$('#error-incident-number').text(responseJson.incident_nr);
+			const plainTextMessage = $('#error-message').text();
+			const os = navigator.platform;
+			const browserInfo = navigator.appCodeName + '/' + navigator.appVersion;
+			const hostName = location.hostname;
+			const errorReportUrl = $('#error-report-url').attr('href')
+				.replace('{1}', plainTextMessage)
+				.replace('{2}', responseJson.incident_nr)
+				.replace('{3}', os)
+				.replace('{4}', browserInfo)
+				.replace('{5}', hostName);
+			$('#error-report-url').attr('href', errorReportUrl);
 
-                errorMessageTitle.text(errorMessageTitle.text());
-                errorMessage.text(jsonResponse.message);
-                incidentNumber.text(jsonResponse.incident_nr);
-
-                if (defaultErrorReportUrl == null) {
-                    defaultErrorReportUrl = errorReportUrl.attr('href');
-                }
-
-                var processedErrorReportUrl = defaultErrorReportUrl;
-                processedErrorReportUrl = processedErrorReportUrl.replace("{1}", jsonResponse.message)
-                processedErrorReportUrl = processedErrorReportUrl.replace("{2}", jsonResponse.incident_nr)
-                errorReportUrl.attr('href', processedErrorReportUrl);
-
-                if (defaultErrorReportNotification == null) {
-                    defaultErrorReportNotification = errorReportNotification.text();
-                }
-
-                var proccessedErrorReportNotification = defaultErrorReportNotification;
-                proccessedErrorReportNotification = proccessedErrorReportNotification.replace("{1}", jsonResponse.incident_nr);
-                errorReportNotification.text(proccessedErrorReportNotification);
-
-                console.log(jsonResponse.reportable);
-
-                if (jsonResponse.reportable === "true") {
-                    $('#idCardForm .alert-popup #error-incident-number-wrapper').show();
-                    $('#idCardForm .alert-popup #error-report-url').show();
-                } else {
-                    $('#idCardForm .alert-popup #error-incident-number-wrapper').hide();
-                    $('#idCardForm .alert-popup #error-report-url').hide();
-                }
-
-                $('#error-report-notification').addClass('hidden');
-                _this.prop('disabled', false);
-			} else {
-			    var errorMessageTitle = $('#idCardForm .alert-popup #error-message-title');
-                var errorMessage = $('#idCardForm .alert-popup #error-message');
-                var incidentNumber = $('#idCardForm .alert-popup #error-incident-number');
-                var errorReportUrl = $('#idCardForm .alert-popup #error-report-url');
-                var errorReportNotification = $('#idCardForm .alert-popup #error-report-notification');
-
-			    showAlert($('#idCardForm .alert-popup'));
-			    if (this.responseText) {
-			        var jsonResponse = JSON.parse(this.responseText);
-                    errorMessageTitle.text(errorMessageTitle.text());
-                    errorMessage.text(jsonResponse.message);
-                    incidentNumber.text(jsonResponse.incident_nr);
-
-                    if (defaultErrorReportUrl == null) {
-                        defaultErrorReportUrl = errorReportUrl.attr('href');
-                    }
-
-                    var processedErrorReportUrl = defaultErrorReportUrl;
-                    processedErrorReportUrl = processedErrorReportUrl.replace("{1}", jsonResponse.message)
-                    processedErrorReportUrl = processedErrorReportUrl.replace("{2}", jsonResponse.incident_nr)
-                    errorReportUrl.attr('href', processedErrorReportUrl);
-
-                    if (defaultErrorReportNotification == null) {
-                        defaultErrorReportNotification = errorReportNotification.text();
-                    }
-
-                    var proccessedErrorReportNotification = defaultErrorReportNotification;
-                    proccessedErrorReportNotification = proccessedErrorReportNotification.replace("{1}", jsonResponse.incident_nr);
-                    errorReportNotification.text(proccessedErrorReportNotification);
-
-                    if (jsonResponse.reportable) {
-                        $('#idCardForm .alert-popup #error-incident-number-wrapper').show();
-                        $('#idCardForm .alert-popup #error-report-url').show();
-                    } else {
-                        $('#idCardForm .alert-popup #error-incident-number-wrapper').hide();
-                        $('#idCardForm .alert-popup #error-report-url').hide();
-                    }
-
-                    $('#error-report-notification').addClass('hidden');
-			    } else {
-                    errorMessageTitle.text(errorMessageTitle.text());
-                    errorMessage.text(errorMessage.text());
-                    $('#idCardForm .alert-popup #error-incident-number-wrapper').hide();
-                    $('#idCardForm .alert-popup #error-report-url').hide();
-                    $('#error-report-notification').addClass('hidden');
-			    }
-
-                _this.prop('disabled', false);
-			}
-		};
-		xhttp.open('GET', '/auth/id' + getIdCardAuthUrlParameters(), true);
-		xhttp.setRequestHeader('Content-type', 'application/json;charset=UTF-8');
-		xhttp.send();
-	});
+			const errorReportNotificationMessage = $('#error-report-notification').text()
+				.replace('{1}', responseJson.incident_nr)
+				.replace('{2}', hostName);
+			$('#error-report-notification').text(errorReportNotificationMessage);
+			activateIdCardView('reportableError');
+		} else {
+			activateIdCardView('notReportableError');
+		}
+	}
 
 	// Mobile-ID limit max length
 	$('#mobileIdForm input#mid-personal-code.form-control').on('keypress change input', function(event) {
@@ -404,117 +404,118 @@ jQuery(function ($) {
 		validateSelectizeValue($(this), function(){return true;});
 	});
 
-	function showAlert(alert) {
-        alert.attr("role", "alert");
-	    alert.removeAttr("aria-hidden");
-	    alert.addClass('show');
-	}
-
     function hideAlert(alert) {
-        alert.removeAttr("role");
-	    alert.attr("aria-hidden", "true");
+        alert.removeAttr('role');
+	    alert.attr('aria-hidden', 'true');
         alert.removeClass('show');
     }
 
     function showFeedback(feedback) {
-        feedback.attr("role", "alert");
+        feedback.attr('role', 'alert');
         feedback.removeClass('is-hidden');
     }
 
     function hideFeedback(feedback) {
-        feedback.removeAttr("role");
+        feedback.removeAttr('role');
         feedback.addClass('is-hidden');
     }
 
-	function truncateUrl(urlEncodedString, limit) {
-		// Try to avoid splitting a single URL-encoded character.
-		// TODO: Does not correctly handle URL-encoded multi-byte special characters, like '€' (%E2%82%AC)
-		if (urlEncodedString.charAt(limit - 1) === "%") {
-			return urlEncodedString.substring(0, limit - 1);
-		} else if (urlEncodedString.charAt(limit - 2) === "%") {
-			return urlEncodedString.substring(0, limit - 2);
-		} else {
-			return urlEncodedString.substring(0, limit);
-		}
-	}
-
-	function detectWebeid(warning, navItem) {
-		webEidInfo.statuscommandstart = new Date().getTime();
-		webEidCheckResult = 'IN_PROGRESS';
-		webeid.status()
+	async function detectWebEid() {
+		let webEidInfo = {
+			code: '',
+			extensionVersion: '',
+			nativeAppVersion: '',
+			errorStack: '',
+			statusDurationMs: ''
+		};
+		const statusCheckStart = new Date().getTime();
+		await webeid.status()
 			.then(response => {
-				webEidCheckResult = 'SUCCESS';
-				webEidInfo.code = "SUCCESS";
-				webEidInfo.extensionversion = response.extension;
-				webEidInfo.nativeappversion = response.nativeApp;
-    			const currentTime = new Date().getTime();
-				webEidInfo.wait = currentTime - webEidInfo.statuscommandstart;
-				showOrHideWebEidWarning(warning, navItem);
+				webEidInfo.code = 'SUCCESS';
+				webEidInfo.extensionVersion = response.extension;
+				webEidInfo.nativeAppVersion = response.nativeApp;
 			})
 			.catch(err => {
-				webEidCheckResult = 'FAIL';
 				webEidInfo.code = err.code;
-				webEidInfo.extensionversion = err.extension;
-				webEidInfo.nativeappversion = err.nativeApp;
-    			const currentTime = new Date().getTime();
-				webEidInfo.wait = currentTime - webEidInfo.statuscommandstart;
-				webEidInfo.errorstack = err.stack;
-				if (["ERR_WEBEID_EXTENSION_UNAVAILABLE", "ERR_WEBEID_NATIVE_UNAVAILABLE", "ERR_WEBEID_VERSION_MISMATCH"].indexOf(err.code) !== -1) {
-					warning.find("#webeid-not-available").removeClass("hidden aria-hidden")
-				} else {
-					const warningElement = warning.find("#webeid-error");
-					const warningMessage = warningElement.html().replace("{0}", err.code);
-					warningElement.html(warningMessage);
-					warningElement.removeClass("hidden aria-hidden")
-				}
-				showOrHideWebEidWarning(warning, navItem);
+				webEidInfo.extensionVersion = err.extension;
+				webEidInfo.nativeAppVersion = err.nativeApp;
+				webEidInfo.errorStack = err.stack;
+			})
+			.finally(() => {
+				webEidInfo.statusDurationMs = new Date().getTime() - statusCheckStart;
 			});
+		return webEidInfo;
 	}
 
-	function showOrHideWebEidWarning(warning, navItem) {
-		if (webEidCheckResult === 'SUCCESS') {
-			warning.find("#webeid-warning").addClass("hidden aria-hidden");
-		} else if(webEidCheckResult === 'FAIL') {
-			warning.find("#webeid-warning").removeClass("hidden aria-hidden");
-			// Only enable warning if ID-card tab is still selected
-			if (navItem.attr("aria-selected") === "true") {
-				warning.attr("aria-hidden", false);
-				warning.addClass('is-active');
+    function activateIdCardView(viewName) {
+		const formSelector = '.c-layout--full > .container';
+		const waitMessageSelector = '#id-card-wait';
+		const waitPopupMessageSelector = '#id-card-wait-popup';
+		const waitLoginMessageSelector = '#id-card-wait-login';
+		const errorContainerSelector = '#id-card-error';
+		const errorMessageSelector = '#error-message';
+		const ajaxErrorSelector = '#idc-ajax-error-message';
+		const errorReportUrlSelector = '#error-report-url';
+		const errorIncidentNumberWrapperSelector = '#error-incident-number-wrapper';
+		const languageSelectionSelector = '.c-header-bar nav[role=navigation]';
+    	const visibleElementsInViews = {
+    		form: [formSelector, languageSelectionSelector].join(','),
+			waitPopup: [waitMessageSelector, waitPopupMessageSelector].join(','),
+			waitLogin: [waitMessageSelector, waitLoginMessageSelector].join(','),
+			reportableError: [errorContainerSelector, errorMessageSelector, errorReportUrlSelector, errorIncidentNumberWrapperSelector].join(','),
+			notReportableError: [errorContainerSelector, errorMessageSelector].join(','),
+			ajaxError: [errorContainerSelector, ajaxErrorSelector].join(',')
+		}
+
+    	if (! (viewName in visibleElementsInViews)) {
+    		console.error('Invalid name for view: ' + viewName);
+    		return;
+		}
+
+    	const hideList = [];
+    	const unhideList = [];
+		for (const [view, selector] of Object.entries(visibleElementsInViews)) {
+			if (view === viewName) {
+				unhideList.push($(selector));
+			} else {
+				hideList.push($(selector));
 			}
 		}
-		// If the result is not clear yet, don't change anything
-	}
+		hideElements(hideList);
+		unhideElements(unhideList);
+    }
 
     function activateTab(link, content, warning) {
-		let navItem = link.parent();
-		navItem.attr("aria-selected", true);
+		link.parent().attr('aria-selected', true);
 		link.addClass('is-active');
-		if (link.attr("data-tab") === "id-card") {
-			if (webEidCheckResult === 'NOT_STARTED') {
-				detectWebeid(warning, navItem);
-			} else {
-				showOrHideWebEidWarning(warning, navItem);
-			}
-		}
-        content.attr("aria-hidden", false);
+        content.attr('aria-hidden', false);
         content.addClass('is-active');
-
-		// Show warning div if there are any warnings to display
-		// (not including web-eid warning, which is always there, but usually hidden)
-		if (warning.find("div.alert-warning > ul > li").not("#webeid-warning.hidden").length > 0) {
-			warning.attr("aria-hidden", false);
-			warning.addClass('is-active');
-		}
+        warning.attr('aria-hidden', false);
+        warning.addClass('is-active');
     }
 
     function deActivateTab(link, content, warning) {
-        link.parent().attr("aria-selected", false);
+        link.parent().attr('aria-selected', false);
         link.removeClass('is-active');
-        content.attr("aria-hidden", true);
+        content.attr('aria-hidden', true);
         content.removeClass('is-active');
-        warning.attr("aria-hidden", true);
+        warning.attr('aria-hidden', true);
         warning.removeClass('is-active');
     }
+
+    function hideElements(elements) {
+    	for (const element of elements) {
+			element.attr('aria-hidden', 'true');
+			element.addClass('hidden');
+		}
+	}
+
+    function unhideElements(elements) {
+    	for (const element of elements) {
+			element.attr('aria-hidden', 'false');
+			element.removeClass('hidden');
+		}
+	}
 
     function getCurrentBrowser() {
         return navigator.userAgent;

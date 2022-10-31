@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.config;
 
-import ee.ria.taraauthserver.authentication.idcard.IdCardController;
+import ee.ria.taraauthserver.authentication.idcard.IdCardInitController;
+import ee.ria.taraauthserver.authentication.idcard.IdCardLoginController;
 import ee.ria.taraauthserver.authentication.idcard.OCSPConfigurationResolver;
 import ee.ria.taraauthserver.authentication.idcard.OCSPValidator;
 import org.junit.jupiter.api.Tag;
@@ -18,7 +19,8 @@ public class IdcardConfigurationDisabledTest extends DisabledConfigurationTest {
     @Test
     @Tag(value = "ESTEID_AUTH_ENABLED")
     public void whenLegalPersonDisabledThenBeansNotLoaded() {
-        assertBeanNotInitiated(IdCardController.class);
+        assertBeanNotInitiated(IdCardInitController.class);
+        assertBeanNotInitiated(IdCardLoginController.class);
         assertBeanNotInitiated(OCSPValidator.class);
         assertBeanNotInitiated(OCSPConfigurationResolver.class);
     }

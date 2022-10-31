@@ -179,7 +179,7 @@
       display: none;
     }
   }
-  &__content-text {
+  &__content-text, &__content-wait {
     flex: 1 1 auto;
     max-width: 100%;
     padding: 40px 40px 40px 0;

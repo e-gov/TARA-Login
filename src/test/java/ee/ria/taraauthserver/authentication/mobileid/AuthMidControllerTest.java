@@ -141,7 +141,7 @@ class AuthMidControllerTest extends BaseTest {
     }
 
     @Test
-    @Tag("CSRF_PROTCTION")
+    @Tag("CSRF_PROTECTION")
     void midAuthInit_NoCsrf() {
         given()
                 .filter(MockSessionFilter.withoutCsrf().sessionRepository(sessionRepository).build())
@@ -162,7 +162,7 @@ class AuthMidControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "MID_AUTH_INIT")
-    @Tag("CSRF_PROTCTION")
+    @Tag("CSRF_PROTECTION")
     void midAuthInit_session_missing() {
         given()
                 .formParam("idCode", "60001019906")

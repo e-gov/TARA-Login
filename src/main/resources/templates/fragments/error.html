@@ -2,8 +2,8 @@
     <div class="alert alert-error" role="alert">
         <p><strong><span th:class="error-title" th:text="#{message.error.auth.title}" th:remove="tag"></span></strong>
         </p>
-        <p id="error-message">
-        </p>
+        <p id="error-message"></p>
+        <p id="idc-ajax-error-message" class="hidden aria-hidden" th:text="#{message.idc.ajax-error}"></p>
         <p id="error-incident-number-wrapper">
             <label th:text="#{label.error.incident-number('')}" for="error-incident-number"></label>
             <span id="error-incident-number"></span>
