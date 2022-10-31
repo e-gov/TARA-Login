@@ -58,8 +58,6 @@ public class AcceptConsentRequest {
         }
 
         idToken.setProfileAttributes(profileAttributes);
-        idToken.setAcr(taraSession.getAuthenticationResult().getAcr().getAcrName());
-        idToken.setAmr(of(taraSession.getAuthenticationResult().getAmr().getAmrName()));
         idToken.setState(getStateParameterValue(taraSession));
         if (taraSession.getGovSsoLoginRequestInfo() != null)
             idToken.setGovSsoLoginChallenge(taraSession.getGovSsoLoginRequestInfo().getChallenge());
@@ -120,10 +118,6 @@ public class AcceptConsentRequest {
     public static class IdToken {
         @JsonProperty("profile_attributes")
         private AcceptConsentRequest.ProfileAttributes profileAttributes;
-        @JsonProperty("acr")
-        private String acr;
-        @JsonProperty("amr")
-        private List<String> amr;
         @JsonProperty("state")
         private String state;
         @JsonProperty("email")

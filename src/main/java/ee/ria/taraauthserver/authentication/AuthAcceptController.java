@@ -23,6 +23,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.view.RedirectView;
 
 import java.util.EnumSet;
+import java.util.List;
 
 import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
 import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
@@ -101,6 +102,7 @@ class AuthAcceptController {
         return new LoginAcceptRequestBody(
                 false,
                 authenticationResult.getAcr().getAcrName(),
+                List.of(authenticationResult.getAmr().getAmrName()),
                 authenticationResult.getSubject());
     }
 
@@ -114,6 +116,8 @@ class AuthAcceptController {
         private final boolean remember;
         @JsonProperty("acr")
         private final String acr;
+        @JsonProperty("amr")
+        private final List<String> amr;
         @JsonProperty("subject")
         private final String subject;
     }

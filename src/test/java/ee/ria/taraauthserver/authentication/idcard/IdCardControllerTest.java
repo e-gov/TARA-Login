@@ -262,6 +262,57 @@ class IdCardControllerTest extends BaseTest {
     @Test
     @Tag(value = "OCSP_RESPONSE_STATUS_HANDLING")
     @Tag(value = "IDCARD_AUTH_SUCCESSFUL")
+    void idAuth_ok_with_webeid_parameters() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
+        KeyPairGenerator rsa = KeyPairGenerator.getInstance("RSA");
+        rsa.initialize(2048);
+        KeyPair certKeyPair = rsa.generateKeyPair();
+        X509Certificate ocspResponderCert = generateOcspResponderCertificate("CN=MOCK OCSP RESPONDER, C=EE", certKeyPair, responderKeys, "CN=TEST of ESTEID-SK 2015").getCertificate();
+        ocspResponseTransformer.setSignerKey(certKeyPair.getPrivate());
+        setUpMockOcspResponse(MockOcspResponseParams.builder()
+                .ocspServer(wireMockServer)
+                .responseStatus(OCSPResp.SUCCESSFUL)
+                .certificateStatus(CertificateStatus.GOOD)
+                .responseId("CN=MOCK OCSP RESPONDER")
+                .ocspConf(ocspConfiguration)
+                .responderCertificate(
+                        ocspResponderCert
+                ).build(), "/esteid2015");
+        String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+
+        given()
+                .when()
+                .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
+                .sessionId("SESSION", sessionId)
+                .get("/auth/id" +
+                        "?webeid.code=ERR_WEBEID_EXTENSION_UNAVAILABLE" +
+                        "&webeid.extensionversion=undefined" +
+                        "&webeid.nativeappversion=undefined" +
+                        "&webeid.errorstack=multi\nline\nstacktrace")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .headers(EXPECTED_RESPONSE_HEADERS)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
+                .body("status", equalTo("COMPLETED"));
+
+        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        TaraSession.AuthenticationResult result = taraSession.getAuthenticationResult();
+        assertEquals("37101010021", result.getIdCode());
+        assertEquals("IGOR", result.getFirstName());
+        assertEquals("ŽAIKOVSKI", result.getLastName());
+        assertEquals("1971-01-01", result.getDateOfBirth().toString());
+        assertEquals("EE", result.getCountry());
+        assertNull(result.getEmail());
+        assertEquals(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, taraSession.getState());
+        assertInfoIsLogged("Web eID check results: code: ERR_WEBEID_EXTENSION_UNAVAILABLE, extensionversion: undefined, nativeappversion: undefined, errorstack: multi\nline\nstacktrace, wait: null");
+        assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
+        assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    @Tag(value = "OCSP_RESPONSE_STATUS_HANDLING")
+    @Tag(value = "IDCARD_AUTH_SUCCESSFUL")
     void idAuth_ok_with_email() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
         KeyPairGenerator rsa = KeyPairGenerator.getInstance("RSA");
         rsa.initialize(2048);

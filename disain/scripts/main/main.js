@@ -3,6 +3,14 @@ jQuery(function ($) {
 
 	var defaultErrorReportUrl;
     var defaultErrorReportNotification;
+    var webEidCheckResult = 'NOT_STARTED';
+    var webEidInfo = {
+    	code: 'WAIT_NOT_COMPLETED',
+		extensionversion: '',
+		nativeappversion: '',
+		errorstack: '',
+		statuscommandstart: 0
+	};
 	
 	// Hide nav bar in desktop mode and display authentication method content in mobile mode if less than 2 auth methods
 	if ($('.c-tab-login__nav-link').length < 2) {
@@ -160,7 +168,20 @@ jQuery(function ($) {
 			return false;
 		}
 	}
-	
+
+	function getIdCardAuthUrlParameters() {
+		let url = '?webeid.code=' + encodeURIComponent(webEidInfo.code);
+		if (webEidInfo.code === 'WAIT_NOT_COMPLETED') {
+			const currentTime = new Date().getTime();
+			url += '&webeid.wait=' + (currentTime - webEidInfo.statuscommandstart);
+		} else {
+			url += '&webeid.extensionversion=' + encodeURIComponent(webEidInfo.extensionversion)
+				 + '&webeid.nativeappversion=' + encodeURIComponent(webEidInfo.nativeappversion)
+				 + '&webeid.errorstack=' + truncateUrl(encodeURIComponent(webEidInfo.errorstack), 10000);
+		}
+		return url;
+	}
+
 	// ID-card form submit
 	$('#idCardForm button.c-btn--primary').on('click', function(event){
 		event.preventDefault();
@@ -269,7 +290,7 @@ jQuery(function ($) {
                 _this.prop('disabled', false);
 			}
 		};
-		xhttp.open('GET', '/auth/id', true);
+		xhttp.open('GET', '/auth/id' + getIdCardAuthUrlParameters(), true);
 		xhttp.setRequestHeader('Content-type', 'application/json;charset=UTF-8');
 		xhttp.send();
 	});
@@ -403,13 +424,81 @@ jQuery(function ($) {
         feedback.addClass('is-hidden');
     }
 
+	function truncateUrl(urlEncodedString, limit) {
+		// Try to avoid splitting a single URL-encoded character.
+		// TODO: Does not correctly handle URL-encoded multi-byte special characters, like '€' (%E2%82%AC)
+		if (urlEncodedString.charAt(limit - 1) === "%") {
+			return urlEncodedString.substring(0, limit - 1);
+		} else if (urlEncodedString.charAt(limit - 2) === "%") {
+			return urlEncodedString.substring(0, limit - 2);
+		} else {
+			return urlEncodedString.substring(0, limit);
+		}
+	}
+
+	function detectWebeid(warning, navItem) {
+		webEidInfo.statuscommandstart = new Date().getTime();
+		webEidCheckResult = 'IN_PROGRESS';
+		webeid.status()
+			.then(response => {
+				webEidCheckResult = 'SUCCESS';
+				webEidInfo.code = "READY";
+				webEidInfo.extensionversion = response.extension;
+				webEidInfo.nativeappversion = response.nativeApp;
+				showOrHideWebEidWarning(warning, navItem);
+			})
+			.catch(err => {
+				webEidCheckResult = 'FAIL';
+				webEidInfo.code = err.code;
+				webEidInfo.extensionversion = err.extension;
+				webEidInfo.nativeappversion = err.nativeApp;
+				webEidInfo.errorstack = err.stack;
+				if (["ERR_WEBEID_EXTENSION_UNAVAILABLE", "ERR_WEBEID_NATIVE_UNAVAILABLE", "ERR_WEBEID_VERSION_MISMATCH"].indexOf(err.code) !== -1) {
+					warning.find("#webeid-not-available").removeClass("hidden aria-hidden")
+				} else {
+					const warningElement = warning.find("#webeid-error");
+					const warningMessage = warningElement.html().replace("{0}", err.code);
+					warningElement.html(warningMessage);
+					warningElement.removeClass("hidden aria-hidden")
+				}
+				showOrHideWebEidWarning(warning, navItem);
+			});
+	}
+
+	function showOrHideWebEidWarning(warning, navItem) {
+		if (webEidCheckResult === 'SUCCESS') {
+			warning.find("#webeid-warning").addClass("hidden aria-hidden");
+		} else if(webEidCheckResult === 'FAIL') {
+			warning.find("#webeid-warning").removeClass("hidden aria-hidden");
+			// Only enable warning if ID-card tab is still selected
+			if (navItem.attr("aria-selected") === "true") {
+				warning.attr("aria-hidden", false);
+				warning.addClass('is-active');
+			}
+		}
+		// If the result is not clear yet, don't change anything
+	}
+
     function activateTab(link, content, warning) {
-		link.parent().attr("aria-selected", true);
+		let navItem = link.parent();
+		navItem.attr("aria-selected", true);
 		link.addClass('is-active');
+		if (link.attr("data-tab") === "id-card") {
+			if (webEidCheckResult === 'NOT_STARTED') {
+				detectWebeid(warning, navItem);
+			} else {
+				showOrHideWebEidWarning(warning, navItem);
+			}
+		}
         content.attr("aria-hidden", false);
         content.addClass('is-active');
-        warning.attr("aria-hidden", false);
-        warning.addClass('is-active');
+
+		// Show warning div if there are any warnings to display
+		// (not including web-eid warning, which is always there, but usually hidden)
+		if (warning.find("div.alert-warning > ul > li").not("#webeid-warning.hidden").length > 0) {
+			warning.attr("aria-hidden", false);
+			warning.addClass('is-active');
+		}
     }
 
     function deActivateTab(link, content, warning) {
