@@ -137,19 +137,16 @@
                 <logstashMarkers/>
                 <mdc>
                     <includeMdcKeyName>client.ip</includeMdcKeyName>
+                    <includeMdcKeyName>labels.tara_trace_id</includeMdcKeyName>
+                    <includeMdcKeyName>labels.govsso_trace_id</includeMdcKeyName>
+                    <includeMdcKeyName>service.version</includeMdcKeyName>
                 </mdc>
                 <arguments/>
             </providers>
         </encoder>
     </appender>
-    <appender name="stash" class="net.logstash.logback.appender.LogstashUdpSocketAppender">
-        <host>bridge</host>
-        <!-- port is optional (default value shown) -->
-        <port>1337</port>
-        <!-- layout is required -->
-        <layout class="net.logstash.logback.layout.LogstashLayout" />
-    </appender>
 
+    <logger name="ee.ria.taraauthserver.alerts.AlertsScheduler" level="WARN"/>
     <logger name="ee.sk.smartid.rest.SmartIdRestConnector" level="ERROR"/>
     <logger name="ee.sk.mid.MidAuthenticationResponseValidator" level="ERROR"/>
 
@@ -157,6 +154,5 @@
         <appender-ref ref="FILE"/>
         <appender-ref ref="FILE_STATISTICS"/>
         <appender-ref ref="STDOUT"/>
-        <appender-ref ref="stash" />
     </root>
 </configuration>

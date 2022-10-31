@@ -75,6 +75,10 @@ public class StatisticsLogger {
             statisticsBuilder.eidasRequesterId(Objects.toString(taraLoginRequestInfo.getOidcClient().get().getEidasRequesterId(), null));
         }
 
+        if (taraSession.getAuthenticationResult() != null && taraLoginRequestInfo.getOidcClient().isPresent()) {
+            statisticsBuilder.clientNotifyUrl(Objects.toString(taraLoginRequestInfo.getOidcClient().get().getNotifyUrl(), null));
+        }
+
         if (govSsoLoginRequestInfo != null) {
             statisticsBuilder
                     .service(SERVICE_GOVSSO)
@@ -112,6 +116,9 @@ public class StatisticsLogger {
                     .country(authenticationResult.getCountry())
                     .idCode(idCode)
                     .authenticationType(authenticationResult.getAmr())
+                    .authenticationSessionId(taraSession.getSessionId())
+                    .firstName(authenticationResult.getFirstName())
+                    .lastName(authenticationResult.getLastName())
                     .errorCode(authenticationResult.getErrorCode());
             if (authenticationResult.getAmr() == AuthenticationType.ID_CARD) {
                 sessionStatisticsBuilder.ocspUrl(((TaraSession.IdCardAuthenticationResult) authenticationResult).getOcspUrl());
@@ -146,6 +153,9 @@ public class StatisticsLogger {
         @JsonProperty("client.id")
         private String clientId;
 
+        @JsonProperty("client.notify_url")
+        private String clientNotifyUrl;
+
         @JsonProperty("client.eidas_requester_id")
         private String eidasRequesterId;
 
@@ -164,6 +174,12 @@ public class StatisticsLogger {
         @JsonProperty("authentication.id_code")
         private String idCode;
 
+        @JsonProperty("authentication.first_name")
+        private String firstName;
+
+        @JsonProperty("authentication.last_name")
+        private String lastName;
+
         @JsonProperty("authentication.ocsp_url")
         private String ocspUrl;
 
@@ -172,6 +188,9 @@ public class StatisticsLogger {
 
         @JsonProperty("authentication.state")
         private TaraAuthenticationState authenticationState;
+
+        @JsonProperty("authentication.session_id")
+        private String authenticationSessionId;
 
         @JsonProperty("authentication.error_code")
         private ErrorCode errorCode;

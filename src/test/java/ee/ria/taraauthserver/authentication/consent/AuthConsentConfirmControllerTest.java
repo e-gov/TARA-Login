@@ -38,6 +38,7 @@ import static io.restassured.RestAssured.given;
 import static java.util.List.of;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static java.lang.String.format;
 
 class AuthConsentConfirmControllerTest extends BaseTest {
     public static final String MOCK_CONSENT_CHALLENGE = "abcdefg098AAdsCC";
@@ -64,8 +65,9 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     @Test
     @Tag(value = "USER_CONSENT_CONFIRM_ENDPOINT")
     void authConsent_consentGiven_ParamMissing() {
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession().sessionRepository(sessionRepository).build();
         given()
-                .filter(MockSessionFilter.withTaraSession().sessionRepository(sessionRepository).build())
+                .filter(sessionFilter)
                 .when()
                 .post("/auth/consent/confirm")
                 .then()
@@ -76,14 +78,15 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: Required request parameter 'consent_given' for method parameter type String is not present");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=INTERNAL_ERROR)", sessionFilter.getSession().getId()));
     }
 
     @Test
     @Tag(value = "USER_CONSENT_CONFIRM_ENDPOINT")
     void authConsent_consentGiven_InvalidValue() {
+        MockSessionFilter sessionFilter  = MockSessionFilter.withTaraSession().sessionRepository(sessionRepository).build();
         given()
-                .filter(MockSessionFilter.withTaraSession().sessionRepository(sessionRepository).build())
+                .filter(sessionFilter)
                 .param("consent_given", "invalidvalue")
                 .when()
                 .post("/auth/consent/confirm")
@@ -95,7 +98,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: authConsentConfirm.consentGiven: supported values are: 'true', 'false'");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=INTERNAL_ERROR)", sessionFilter.getSession().getId()));
     }
 
     @Test
@@ -119,11 +122,12 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     @Test
     @Tag(value = "USER_CONSENT_CONFIRM_ENDPOINT")
     void authConsent_wrong_authentication_state() {
+      MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(MOBILE_ID))
+                .authenticationState(INIT_MID).build();
         given()
-                .filter(MockSessionFilter.withTaraSession()
-                        .sessionRepository(sessionRepository)
-                        .authenticationTypes(of(MOBILE_ID))
-                        .authenticationState(INIT_MID).build())
+                .filter(sessionFilter)
                 .queryParam("consent_given", "true")
                 .when()
                 .post("/auth/consent/confirm")
@@ -134,7 +138,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [INIT_CONSENT_PROCESS]");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=SESSION_STATE_INVALID)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=SESSION_STATE_INVALID)", sessionFilter.getSession().getId()));
     }
 
     @Test
@@ -341,7 +345,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
         assertNull(sessionRepository.findById(session.getId()));
         assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"grant_scope\":[\"openid\"],\"remember\":false,\"session\":{\"id_token\":{\"phone_number\":\"112233\",\"phone_number_verified\":true,\"profile_attributes\":{\"date_of_birth\":\"1992-12-17\",\"family_name\":\"lastname\",\"given_name\":\"firstname\"},\"state\":\"c80393c7-6666-4dd2-b890-0ada47161cfa\"}}}");
         assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={}");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=abc123idcode, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=null, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=abc123idcode, firstName=firstname, lastName=lastname, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=INTERNAL_ERROR)", session.getId()));
     }
 
     @Test
@@ -402,7 +406,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
         assertInfoIsLogged("Session is removed from cache: " + session.getId());
         assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/consent/reject?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"error\":\"user_cancel\",\"error_debug\":\"Consent not given. User canceled the authentication process.\",\"error_description\":\"Consent not given. User canceled the authentication process.\"}");
         assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={}");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=abc123idcode, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=null, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=abc123idcode, firstName=firstname, lastName=lastname, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=INTERNAL_ERROR)", session.getId()));
     }
 
     @SneakyThrows
