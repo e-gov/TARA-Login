@@ -72,6 +72,8 @@ tara:
       enabled: true
       ocsp-enabled: true
       level-of-assurance: HIGH
+      # TODO: AUT-1054
+      #site-origin: https://TODO
       truststore-path: file:src/test/resources/idcard-truststore-test.p12
       truststore-type: PKCS12
       truststore-password: changeit
