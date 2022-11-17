@@ -1,11 +1,9 @@
 jQuery(function ($) {
 	"use strict";
 
-	var defaultErrorReportUrl;
-    var defaultErrorReportNotification;
     var webEidCheckResult = 'NOT_STARTED';
     var webEidInfo = {
-    	code: 'WAIT_NOT_COMPLETED',
+    	code: '',
 		extensionversion: '',
 		nativeappversion: '',
 		errorstack: ''
@@ -168,16 +166,6 @@ jQuery(function ($) {
 		}
 	}
 
-	function getWebEidStatus() {
-		const webEidStatusParams = {
-			code: webEidInfo.code,
-			extensionversion: webEidInfo.extensionversion,
-			nativeappversion: webEidInfo.nativeappversion,
-			errorstack: webEidInfo.errorstack
-		}
-		return webEidStatusParams;
-	}
-
 	// ID-card form submit
 	$('#idCardForm button.c-btn--primary').on('click', async function(event){
 		event.preventDefault();
@@ -191,7 +179,10 @@ jQuery(function ($) {
 		}
 		loginButtonElement.prop('disabled', true);
 
+		const webeidStatusCheckStart = new Date().getTime();
 		await detectWebeid(idCardErrorElement);
+		const webeidStatusDurationMs = webeidStatusCheckStart - new Date().getTime();
+
 		if (webEidCheckResult !== "SUCCESS") {
 			// TODO: Handle errors in AUT-1056
 			updateAlert(idCardErrorElement, "TODO", "TODO");
@@ -205,8 +196,7 @@ jQuery(function ($) {
 				headers: {
 					"Content-Type": "application/json",
                     "X-CSRF-TOKEN": csrfToken
-				},
-				body: JSON.stringify(getWebEidStatus())
+				}
 			});
 			if (!nonceResponse.ok) {
 				// TODO: Handle errors in AUT-1056
@@ -222,7 +212,12 @@ jQuery(function ($) {
 					"Content-Type": "application/json",
 					"X-CSRF-TOKEN": csrfToken
 				},
-				body: JSON.stringify(authToken)
+				body: JSON.stringify({
+					authToken: authToken,
+					statusDurationMs: webeidStatusDurationMs,
+					extensionVersion: webEidInfo.extensionversion,
+					nativeAppVersion: webEidInfo.nativeappversion
+				})
 			});
 			if (!authTokenResponse.ok) {
 				// TODO: Handle errors in AUT-1056
@@ -375,6 +370,7 @@ jQuery(function ($) {
 		return webeid.status()
 			.then(response => {
 				webEidCheckResult = 'SUCCESS';
+				// TODO AUT-1056: SUCCESS code is not used. Remove?
 				webEidInfo.code = "SUCCESS";
 				webEidInfo.extensionversion = response.extension;
 				webEidInfo.nativeappversion = response.nativeApp;

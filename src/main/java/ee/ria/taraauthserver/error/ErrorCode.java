@@ -40,6 +40,8 @@ public enum ErrorCode {
     IDC_CERT_EXPIRED("message.idc.cert-expired"),
     IDC_REVOKED("message.idc.revoked"),
     IDC_UNKNOWN("message.idc.unknown"),
+    IDC_WEBEID_NOT_AVAILABLE("message.idc.webeid.not.available"),
+    IDC_WEBEID_ERROR("message.idc.webeid.error"),
     ERROR_GENERAL("message.error.general"),
     SESSION_NOT_FOUND("message.error.session-not-found"),
     SESSION_STATE_INVALID("message.error.session-state-invalid"),
