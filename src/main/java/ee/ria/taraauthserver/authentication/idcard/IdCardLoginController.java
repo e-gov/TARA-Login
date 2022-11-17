@@ -16,9 +16,11 @@ import eu.webeid.security.exceptions.AuthTokenException;
 import eu.webeid.security.exceptions.CertificateExpiredException;
 import eu.webeid.security.exceptions.CertificateNotYetValidException;
 import eu.webeid.security.validator.AuthTokenValidator;
+import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.logstash.logback.marker.LogstashMarker;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.MDC;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -83,8 +85,9 @@ public class IdCardLoginController {
     private final ChallengeNonceStore nonceStore;
 
     @PostMapping(path = "/auth/id/login", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String, Object>> handleRequest(@RequestBody WebEidAuthToken authToken, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+    public ResponseEntity<Map<String, Object>> handleRequest(@RequestBody WebEidData data, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, NONCE_SENT);
+        logWebEidData(data);
         X509Certificate certificate;
         String nonce;
         try {
@@ -93,7 +96,7 @@ public class IdCardLoginController {
             return createErrorResponse(taraSession, INVALID_REQUEST, e.getMessage(), BAD_REQUEST);
         }
         try {
-            certificate = authTokenValidator.validate(authToken, nonce);
+            certificate = authTokenValidator.validate(data.getAuthToken(), nonce);
         } catch (CertificateExpiredException e) {
             return createErrorResponse(taraSession, IDC_CERT_EXPIRED, "User certificate is expired", BAD_REQUEST);
         } catch (CertificateNotYetValidException e) {
@@ -123,6 +126,19 @@ public class IdCardLoginController {
         return ResponseEntity.ok(of("status", "COMPLETED"));
     }
 
+    private void logWebEidData(WebEidData data) {
+        WebEidAuthToken authToken = data.authToken;
+        LogstashMarker marker = append("tara.webeid.extension_version", data.extensionVersion)
+                .and(append("tara.webeid.native_app_version", data.nativeAppVersion))
+                .and(append("tara.webeid.status_duration_ms", data.statusDurationMs))
+                .and(append("tara.webeid.code", "SUCCESS"))
+                .and(append("tara.webeid.auth_token.unverified_certificate", authToken.getUnverifiedCertificate()))
+                .and(append("tara.webeid.auth_token.signature", authToken.getSignature()))
+                .and(append("tara.webeid.auth_token.algorithm", authToken.getAlgorithm()))
+                .and(append("tara.webeid.auth_token.format", authToken.getFormat()));
+        log.info(marker, "Client-side Web eID operation successful");
+    }
+
     @NotNull
     private ResponseEntity<Map<String, Object>> createErrorResponse(TaraSession taraSession, ErrorCode errorCode, String logMessage, HttpStatus httpStatus) { // TODO AUT-855
         log.warn(append("error.code", errorCode.name()), "Validation failed: {}", value("error.message", logMessage));
@@ -130,7 +146,11 @@ public class IdCardLoginController {
         taraSession.getAuthenticationResult().setErrorCode(errorCode);
         String errorMessage = messageSource.getMessage(errorCode.getMessage(), null, getLocale());
         Boolean reportable = !notReportableErrors.contains(errorCode);
-        return ResponseEntity.status(httpStatus).body(of("status", "ERROR", "message", errorMessage, ERROR_ATTR_INCIDENT_NR, MDC.get(MDC_ATTRIBUTE_KEY_REQUEST_TRACE_ID), ERROR_ATTR_REPORTABLE, reportable));
+        return ResponseEntity.status(httpStatus).body(of(
+                "status", "ERROR",
+                "message", errorMessage,
+                ERROR_ATTR_INCIDENT_NR, MDC.get(MDC_ATTRIBUTE_KEY_REQUEST_TRACE_ID),
+                ERROR_ATTR_REPORTABLE, reportable));
     }
 
     private void updateAuthenticationResult(TaraSession taraSession, X509Certificate certificate, Ocsp validatingOcspConf) {
@@ -154,5 +174,13 @@ public class IdCardLoginController {
         authenticationResult.setAcr(configurationProperties.getLevelOfAssurance());
         authenticationResult.setSubject(authenticationResult.getCountry() + authenticationResult.getIdCode());
         taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
+    }
+
+    @Data
+    private static class WebEidData {
+        private WebEidAuthToken authToken;
+        private String extensionVersion;
+        private String nativeAppVersion;
+        private String statusDurationMs;
     }
 }

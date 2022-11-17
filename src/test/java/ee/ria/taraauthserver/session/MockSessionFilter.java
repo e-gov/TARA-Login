@@ -18,29 +18,49 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static ee.ria.taraauthserver.security.NoSessionCreatingHttpSessionCsrfTokenRepository.CSRF_HEADER_NAME;
-import static ee.ria.taraauthserver.security.NoSessionCreatingHttpSessionCsrfTokenRepository.CSRF_PARAMETER_NAME;
-import static ee.ria.taraauthserver.security.NoSessionCreatingHttpSessionCsrfTokenRepository.CSRF_TOKEN_ATTR_NAME;
+import static ee.ria.taraauthserver.config.SecurityConfiguration.TARA_SESSION_CSRF_TOKEN;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 
 public class MockSessionFilter implements Filter {
+    private final CsrfMode csrfMode;
+
     @Getter
     private final Session session;
 
     public MockSessionFilter(Session session) {
+        this(session, CsrfMode.FORM_PARAMETER);
+    }
+
+    public MockSessionFilter(Session session, CsrfMode csrfMode) {
         this.session = session;
+        if (csrfMode == null) {
+            this.csrfMode = CsrfMode.FORM_PARAMETER;
+        } else {
+            this.csrfMode = csrfMode;
+        }
     }
 
     @Builder(builderMethodName = "withTaraSession", builderClassName = "WithTaraSessionBuilder")
-    public static MockSessionFilter buildWithTaraSession(SessionRepository<Session> sessionRepository, TaraAuthenticationState authenticationState,
-                                                         List<AuthenticationType> authenticationTypes, List<String> clientAllowedScopes, List<String> requestedScopes,
+    public static MockSessionFilter buildWithTaraSession(SessionRepository<Session> sessionRepository,
+                                                         TaraAuthenticationState authenticationState,
+                                                         List<AuthenticationType> authenticationTypes,
+                                                         List<String> clientAllowedScopes,
+                                                         List<String> requestedScopes,
                                                          List<TaraSession.LegalPerson> legalPersonList,
                                                          SPType spType,
                                                          Map<String, String> shortNameTranslations,
+                                                         CsrfMode csrfMode,
                                                          TaraSession.AuthenticationResult authenticationResult) {
         Session session = createTaraSession(sessionRepository, authenticationState, authenticationTypes, clientAllowedScopes, requestedScopes, legalPersonList, spType, shortNameTranslations, authenticationResult);
         sessionRepository.save(session);
-        return new MockSessionFilter(session);
+        return new MockSessionFilter(session, csrfMode);
+    }
+
+    @Builder(builderMethodName = "withoutTaraSession", builderClassName = "WithoutTaraSessionBuilder")
+    public static MockSessionFilter buildWithoutTaraSession(SessionRepository<Session> sessionRepository, CsrfMode csrfMode) {
+        Session session = createSession(sessionRepository);
+        sessionRepository.save(session);
+        return new MockSessionFilter(session, csrfMode);
     }
 
     @Builder(builderMethodName = "withoutCsrf", builderClassName = "WithoutCsrfBuilder")
@@ -54,17 +74,19 @@ public class MockSessionFilter implements Filter {
 
     @Override
     public Response filter(FilterableRequestSpecification requestSpec, FilterableResponseSpecification responseSpec, FilterContext ctx) {
-        CsrfToken csrfToken = session.getAttribute(CSRF_TOKEN_ATTR_NAME);
+        CsrfToken csrfToken = session.getAttribute(TARA_SESSION_CSRF_TOKEN);
         requestSpec.sessionId(session.getId());
-        if (csrfToken != null) {
-            requestSpec.formParam(CSRF_PARAMETER_NAME, csrfToken.getToken());
+        if (csrfToken != null && csrfMode == CsrfMode.FORM_PARAMETER) {
+            requestSpec.formParam("_csrf", csrfToken.getToken());
+        } else if (csrfToken != null && csrfMode == CsrfMode.HEADER) {
+            requestSpec.header("X-CSRF-TOKEN", csrfToken.getToken());
         }
         return ctx.next(requestSpec, responseSpec);
     }
 
     private static Session createSession(SessionRepository<Session> sessionRepository) {
         Session session = sessionRepository.createSession();
-        session.setAttribute(CSRF_TOKEN_ATTR_NAME, new DefaultCsrfToken(CSRF_HEADER_NAME, CSRF_PARAMETER_NAME, UUID.randomUUID().toString()));
+        session.setAttribute(TARA_SESSION_CSRF_TOKEN, new DefaultCsrfToken("X-CSRF-TOKEN", "_csrf", UUID.randomUUID().toString()));
         return session;
     }
 
@@ -91,5 +113,10 @@ public class MockSessionFilter implements Filter {
                 .build();
         session.setAttribute(TARA_SESSION, taraSession);
         return session;
+    }
+
+    public enum CsrfMode {
+        HEADER,
+        FORM_PARAMETER
     }
 }

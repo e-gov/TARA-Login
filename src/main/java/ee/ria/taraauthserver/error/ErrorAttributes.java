@@ -29,6 +29,7 @@ import java.util.Set;
 import static ee.ria.taraauthserver.error.ErrorCode.EIDAS_USER_CONSENT_NOT_GIVEN;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_EXPIRED;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_REVOKED;
+import static ee.ria.taraauthserver.error.ErrorCode.IDC_WEBEID_NOT_AVAILABLE;
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_CSRF_TOKEN;
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_GOVSSO_LOGIN_CHALLENGE;
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_LOGIN_CHALLENGE;
@@ -87,6 +88,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
             SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE,
             IDC_CERT_EXPIRED,
             IDC_REVOKED,
+            IDC_WEBEID_NOT_AVAILABLE,
             EIDAS_USER_CONSENT_NOT_GIVEN,
             SID_DOCUMENT_UNUSABLE,
             SESSION_NOT_FOUND,
