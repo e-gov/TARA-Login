@@ -261,6 +261,7 @@ class IdCardControllerTest extends BaseTest {
     @Test
     @Tag(value = "OCSP_RESPONSE_STATUS_HANDLING")
     @Tag(value = "IDCARD_AUTH_SUCCESSFUL")
+    @Tag(value = "IDCARD_LOGGING_WEBEID")
     void idAuth_ok_with_webeid_parameters() throws NoSuchAlgorithmException, CertificateException, IOException, OperatorCreationException {
         KeyPairGenerator rsa = KeyPairGenerator.getInstance("RSA");
         rsa.initialize(2048);
@@ -303,7 +304,7 @@ class IdCardControllerTest extends BaseTest {
         assertEquals("EE", result.getCountry());
         assertNull(result.getEmail());
         assertEquals(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, taraSession.getState());
-        assertInfoIsLogged("Web eID check results: code: ERR_WEBEID_EXTENSION_UNAVAILABLE, extensionversion: undefined, nativeappversion: undefined, errorstack: multi\nline\nstacktrace, wait: null");
+        assertInfoIsLogged("Web eID check results: code: ERR_WEBEID_EXTENSION_UNAVAILABLE, extension_version: undefined, native_app_version: undefined, error_stack: multi\nline\nstacktrace, status_duration_ms: null");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
         assertStatisticsIsNotLogged();

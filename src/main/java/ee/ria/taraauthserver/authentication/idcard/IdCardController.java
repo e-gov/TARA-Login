@@ -109,12 +109,12 @@ public class IdCardController {
     }
 
     private void logWebEidParameters(HttpServletRequest request) {
-        log.info("Web eID check results: code: {}, extensionversion: {}, nativeappversion: {}, errorstack: {}, wait: {}",
+        log.info("Web eID check results: code: {}, extension_version: {}, native_app_version: {}, error_stack: {}, status_duration_ms: {}",
                 value("webeid.code", request.getParameter("webeid.code")),
-                value("webeid.extensionversion", request.getParameter("webeid.extensionversion")),
-                value("webeid.nativeappversion", request.getParameter("webeid.nativeappversion")),
-                value("webeid.errorstack", request.getParameter("webeid.errorstack")),
-                value("webeid.wait", request.getParameter("webeid.wait"))
+                value("webeid.extension_version", request.getParameter("webeid.extensionversion")),
+                value("webeid.native_app_version", request.getParameter("webeid.nativeappversion")),
+                value("webeid.error_stack", request.getParameter("webeid.errorstack")),
+                value("webeid.status_duration_ms", request.getParameter("webeid.wait"))
         );
     }
 

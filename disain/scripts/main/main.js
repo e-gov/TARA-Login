@@ -444,7 +444,7 @@ jQuery(function ($) {
 		webeid.status()
 			.then(response => {
 				webEidCheckResult = 'SUCCESS';
-				webEidInfo.code = "READY";
+				webEidInfo.code = "SUCCESS";
 				webEidInfo.extensionversion = response.extension;
 				webEidInfo.nativeappversion = response.nativeApp;
     			const currentTime = new Date().getTime();
