@@ -12,8 +12,9 @@
                 <div th:if="${@thymeleafSupport.hasStaticAlert()}" class="alert alert-warning">
                     <ul>
                         <li th:each="alert : ${activeAlerts}">
-                            <strong th:if="${alert.isLoadedFromConf()}"
-                                    th:utext="${alert.getAlertMessage(#locale.language)}"></strong>
+                            <span th:if="${alert.isLoadedFromConf()}"
+                                  th:utext="${alert.getAlertMessage(#locale.language)}"
+                                  class="c-tab-login__warning-item"></span>
                         </li>
                     </ul>
                 </div>

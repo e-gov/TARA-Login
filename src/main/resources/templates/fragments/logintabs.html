@@ -57,14 +57,16 @@
         <div class="alert alert-warning">
             <ul>
                 <li th:each="alert : ${alerts}">
-                    <strong th:if="${alert.isLoadedFromConf()}"
-                            th:utext="${alert.getAlertMessage(#locale.language)}"></strong>
-                    <strong th:unless="${alert.isLoadedFromConf()}"
-                            th:text="${alert.getAlertMessage(#locale.language)}"></strong>
+                    <span th:if="${alert.isLoadedFromConf()}"
+                          th:utext="${alert.getAlertMessage(#locale.language)}"
+                          class="c-tab-login__warning-item"></span>
+                    <span th:unless="${alert.isLoadedFromConf()}"
+                          th:text="${alert.getAlertMessage(#locale.language)}"
+                          class="c-tab-login__warning-item"></span>
                 </li>
                 <li th:if="${tab_id == 'id-card'}" id="webeid-warning" class="hidden aria-hidden">
-                    <strong th:utext="#{message.idc.webeid.not.available}" id="webeid-not-available" class="hidden aria-hidden">Web-eID not available.</strong>
-                    <strong th:utext="#{message.idc.webeid.error}" id="webeid-error" class="hidden aria-hidden">Web-eID error, code {0}.</strong>
+                    <span th:utext="#{message.idc.webeid.not.available}" id="webeid-not-available" class="hidden aria-hidden c-tab-login__warning-item">Web-eID not available.</span>
+                    <span th:utext="#{message.idc.webeid.error}" id="webeid-error" class="hidden aria-hidden c-tab-login__warning-item">Web-eID error, code {0}.</span>
                 </li>
             </ul>
         </div>
