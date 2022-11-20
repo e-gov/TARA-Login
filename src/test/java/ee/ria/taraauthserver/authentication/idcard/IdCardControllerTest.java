@@ -304,7 +304,7 @@ class IdCardControllerTest extends BaseTest {
         assertEquals("EE", result.getCountry());
         assertNull(result.getEmail());
         assertEquals(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, taraSession.getState());
-        assertInfoIsLogged("Web eID check results: code: ERR_WEBEID_EXTENSION_UNAVAILABLE, extension_version: undefined, native_app_version: undefined, error_stack: multi\nline\nstacktrace, status_duration_ms: null");
+        assertInfoIsLogged("Client-side Web eID check: ERR_WEBEID_EXTENSION_UNAVAILABLE");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
         assertStatisticsIsNotLogged();
