@@ -103,7 +103,7 @@ class IdCardErrorControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .body("message", equalTo("Saadaval on ID-tarkvara uuendus, mille saad paigaldada veebilehelt <a href=\"https://www.id.ee/artikkel/paigalda-id-tarkvara/\">id.ee</a>. Kui pärast uue ID-tarkvara paigaldamist käesolev teade ei kao, on vajalik ka <a href=\"https://www.id.ee/artikkel/veebibrauserite-seadistamine-id-kaardi-kasutamiseks/\">brauseris laiendus aktiveerida</a>."))
+                .body("message", equalTo("Palun uuendage ID-tarkvara <a href=\"https://www.id.ee/artikkel/paigalda-id-tarkvara/\">id.ee veebilehelt</a> ja järgige seal kirjeldatud veebibrauseri seadistamise juhiseid.<br/>Uuendamata ID-tarkvaraga ei ole võimalik ID-kaardiga sisse logida autentimisteenuse kaudu."))
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36}"))
                 .body("reportable", equalTo(false));
 
@@ -135,7 +135,7 @@ class IdCardErrorControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .body("message", equalTo("ID-tarkvara uuendus (Web eID komponent) ei ole Teie arvutis töökorras. Palun proovige paigaldada uusim ID-tarkvara veebilehelt <a href=\"https://www.id.ee/artikkel/paigalda-id-tarkvara/\">id.ee</a>. Vea kood ERR_WEBEID_UNKNOWN_ERROR"))
+                .body("message", equalTo("ID-kaardiga veebis sisse logimiseks ja allkirjastamiseks vajalik Web eID laiendus ei ole Teie arvutis töökorras.<br/>Palun kontrollige vastavalt <a href=\"https://www.id.ee/artikkel/id-kaardiga-sisenemine-voi-allkirjastamine-e-teenustes-ebaonnestub-2/\">id.ee juhendile</a>, kas ID-tarkvara on ajakohane ja veebilehitseja õigesti seadistatud.<br/>Uuendamata ID-tarkvaraga ja valesti seadistatud veebilehitsejaga ei ole võimalik ID-kaardiga sisse logida autentimisteenuse kaudu.<br/>Vea kood ERR_WEBEID_UNKNOWN_ERROR"))
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36}"))
                 .body("reportable", equalTo(true));
 
