@@ -38,7 +38,7 @@ public class SessionManagementFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
         if (EIDAS_CALLBACK_REQUEST_MATCHER.matches(request)) {
-            request.setAttribute("SHOULD_NOT_FILTER" + CsrfFilter.class.getName(), Boolean.TRUE);
+            CsrfFilter.skipRequest(request);
         }
 
         HttpSession session = request.getSession(false);
