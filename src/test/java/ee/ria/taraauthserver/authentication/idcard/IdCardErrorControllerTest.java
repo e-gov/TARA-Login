@@ -24,8 +24,10 @@ import static ch.qos.logback.classic.Level.INFO;
 import static ee.ria.taraauthserver.config.SecurityConfiguration.TARA_SESSION_CSRF_TOKEN;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.matchesPattern;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -103,7 +105,7 @@ class IdCardErrorControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .body("message", equalTo("Palun uuendage ID-tarkvara <a href=\"https://www.id.ee/artikkel/paigalda-id-tarkvara/\">id.ee veebilehelt</a> ja järgige seal kirjeldatud veebibrauseri seadistamise juhiseid.<br/>Uuendamata ID-tarkvaraga ei ole võimalik ID-kaardiga sisse logida autentimisteenuse kaudu."))
+                .body("message", startsWith("Palun uuendage ID-tarkvara <a href=\"https://www.id.ee/artikkel/paigalda-id-tarkvara/\">id.ee veebilehelt</a> ja järgige seal kirjeldatud veebibrauseri seadistamise juhiseid.<br/>Uuendamata ID-tarkvaraga ei ole võimalik ID-kaardiga sisse logida "))
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36}"))
                 .body("reportable", equalTo(false));
 
@@ -135,7 +137,8 @@ class IdCardErrorControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .body("message", equalTo("ID-kaardiga veebis sisse logimiseks ja allkirjastamiseks vajalik Web eID laiendus ei ole Teie arvutis töökorras.<br/>Palun kontrollige vastavalt <a href=\"https://www.id.ee/artikkel/id-kaardiga-sisenemine-voi-allkirjastamine-e-teenustes-ebaonnestub-2/\">id.ee juhendile</a>, kas ID-tarkvara on ajakohane ja veebilehitseja õigesti seadistatud.<br/>Uuendamata ID-tarkvaraga ja valesti seadistatud veebilehitsejaga ei ole võimalik ID-kaardiga sisse logida autentimisteenuse kaudu.<br/>Vea kood ERR_WEBEID_UNKNOWN_ERROR"))
+                .body("message", startsWith("ID-kaardiga veebis sisse logimiseks ja allkirjastamiseks vajalik Web eID laiendus ei ole Teie arvutis töökorras.<br/>Palun kontrollige vastavalt <a href=\"https://www.id.ee/artikkel/id-kaardiga-sisenemine-voi-allkirjastamine-e-teenustes-ebaonnestub-2/\">id.ee juhendile</a>, kas ID-tarkvara on ajakohane ja veebilehitseja õigesti seadistatud.<br/>Uuendamata ID-tarkvaraga ja valesti seadistatud veebilehitsejaga ei ole võimalik ID-kaardiga sisse logida "))
+                .body("message", endsWith(" autentimisteenuse kaudu.<br/>Vea kood ERR_WEBEID_UNKNOWN_ERROR"))
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36}"))
                 .body("reportable", equalTo(true));
 
