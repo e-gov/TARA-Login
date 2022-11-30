@@ -194,7 +194,6 @@ jQuery(function ($) {
 			const nonceResponse = await fetch("/auth/id/init", {
 				method: "POST",
 				headers: {
-					"Content-Type": "application/json",
                     "X-CSRF-TOKEN": csrfToken
 				}
 			});

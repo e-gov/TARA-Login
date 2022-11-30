@@ -9,7 +9,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,7 +30,7 @@ public class IdCardInitController {
     @NonNull
     private ChallengeNonceGenerator nonceGenerator;
 
-    @PostMapping(value = "/auth/id/init", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/auth/id/init")
     public ResponseEntity<Map<String, String>> handleRequest(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
         initIdCardAuthentication(taraSession);
