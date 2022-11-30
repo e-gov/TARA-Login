@@ -20,7 +20,6 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @Slf4j
 class IdCardInitControllerTest extends BaseTest {
@@ -37,7 +36,6 @@ class IdCardInitControllerTest extends BaseTest {
     void handleRequest_NoCsrf_Fails() {
         given()
                 .filter(MockSessionFilter.withoutCsrf().sessionRepository(sessionRepository).build())
-                .header("Content-Type", APPLICATION_JSON_VALUE)
                 .when()
                 .post("/auth/id/init")
                 .then()
@@ -62,7 +60,6 @@ class IdCardInitControllerTest extends BaseTest {
                 .build();
         given()
                 .filter(mockSessionFilter)
-                .header("Content-Type", APPLICATION_JSON_VALUE)
                 .when()
                 .post("/auth/id/init")
                 .then()
@@ -90,7 +87,6 @@ class IdCardInitControllerTest extends BaseTest {
 
         given()
                 .filter(mockSessionFilter)
-                .header("Content-Type", APPLICATION_JSON_VALUE)
                 .when()
                 .post("/auth/id/init")
                 .then()
@@ -119,7 +115,6 @@ class IdCardInitControllerTest extends BaseTest {
 
         given()
                 .filter(mockSessionFilter)
-                .header("Content-Type", APPLICATION_JSON_VALUE)
                 .when()
                 .post("/auth/id/init")
                 .then()
