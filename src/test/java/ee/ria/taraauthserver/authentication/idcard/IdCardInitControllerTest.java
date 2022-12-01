@@ -95,7 +95,7 @@ class IdCardInitControllerTest extends BaseTest {
                 .body("nonce", equalTo(getNonceFromSession(sessionId)));
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
-        assertEquals(TaraAuthenticationState.NONCE_SENT, taraSession.getState());
+        assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
         TaraSession.AuthenticationResult result = taraSession.getAuthenticationResult();
         assertEquals(AuthenticationType.ID_CARD, result.getAmr());
         assertInfoIsLogged("Generated nonce: " + getNonceFromSession(sessionId));

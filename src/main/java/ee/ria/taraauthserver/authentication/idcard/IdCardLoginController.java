@@ -49,9 +49,9 @@ import static ee.ria.taraauthserver.error.ErrorCode.IDC_UNKNOWN;
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.security.RequestCorrelationFilter.MDC_ATTRIBUTE_KEY_REQUEST_TRACE_ID;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.NONCE_SENT;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.util.Map.of;
 import static net.logstash.logback.argument.StructuredArguments.value;
@@ -86,7 +86,7 @@ public class IdCardLoginController {
 
     @PostMapping(path = "/auth/id/login", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, Object>> handleRequest(@RequestBody WebEidData data, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
-        SessionUtils.assertSessionInState(taraSession, NONCE_SENT);
+        SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
         logWebEidData(data);
         X509Certificate certificate;
         String nonce;

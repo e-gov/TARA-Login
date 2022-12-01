@@ -133,7 +133,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
 
     private void handle4xxClientError(Throwable error, Map<String, Object> attr) {
         if (isTaraErrorWithErrorCode(error)) {
-            attr.replace(ERROR_ATTR_MESSAGE, translateErrorCode(((TaraException) error).getErrorCode()));
+            attr.replace(ERROR_ATTR_MESSAGE, translateTaraErrorMessage((TaraException) error));
         } else if (isBindingError(error)) {
             attr.replace(ERROR_ATTR_MESSAGE, formatBindingErrors((BindException) error));
         }
@@ -142,9 +142,9 @@ public class ErrorAttributes extends DefaultErrorAttributes {
     private void handle5xxError(Throwable error, Map<String, Object> attr) {
         int status = (int) attr.get("status");
         if (status == 502 && isTaraErrorWithErrorCode(error)) {
-            attr.replace(ERROR_ATTR_MESSAGE, translateErrorCode(((TaraException) error).getErrorCode()));
+            attr.replace(ERROR_ATTR_MESSAGE, translateTaraErrorMessage((TaraException) error));
         } else {
-            attr.replace(ERROR_ATTR_MESSAGE, translateErrorCode(ErrorCode.INTERNAL_ERROR));
+            attr.replace(ERROR_ATTR_MESSAGE, translateErrorCode(ErrorCode.INTERNAL_ERROR, null));
         }
     }
 
@@ -152,11 +152,15 @@ public class ErrorAttributes extends DefaultErrorAttributes {
         return error instanceof TaraException && ((TaraException) error).getErrorCode() != null;
     }
 
+    private String translateTaraErrorMessage(TaraException taraException) {
+        return translateErrorCode(taraException.getErrorCode(), taraException.getErrorCodeMessageParameters());
+    }
+
     @NotNull
-    private String translateErrorCode(ErrorCode errorCode) {
+    private String translateErrorCode(ErrorCode errorCode, String[] messageParameters) {
         Locale locale = RequestUtils.getLocale();
         try {
-            return messageSource.getMessage(errorCode.getMessage(), errorCode.getMessageParameters(), locale);
+            return messageSource.getMessage(errorCode.getMessage(), messageParameters, locale);
         } catch (NoSuchMessageException ex) {
             return "???" + errorCode + "???";
         }

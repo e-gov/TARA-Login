@@ -63,7 +63,8 @@ public class EidasController {
         SPType spType = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getInstitution().getSector();
 
         if (!eidasConfigurationProperties.getAvailableCountries().get(spType).contains(country)) {
-            throw new BadRequestException(getAppropriateErrorCode(spType), "Requested country not supported for " + spType + " sector.");
+            BadRequestException exception = getAppropriateException(spType);
+            throw exception;
         }
 
         String requestUrl = createRequestUrl(country, taraSession, relayState);
@@ -109,13 +110,14 @@ public class EidasController {
         return builder.toUriString();
     }
 
-    private ErrorCode getAppropriateErrorCode(SPType spType) {
+    private BadRequestException getAppropriateException(SPType spType) {
         Map<SPType, List<String>> allowedCountries = eidasConfigurationProperties.getAvailableCountries();
-        ErrorCode errorCode = ErrorCode.EIDAS_COUNTRY_NOT_SUPPORTED;
-        Object[] messageParameters = new Object[1];
+        String[] messageParameters = new String[1];
         messageParameters[0] = String.join(", ", allowedCountries.get(spType));
-        errorCode.setMessageParameters(messageParameters);
-        return errorCode;
+        return new BadRequestException(
+                ErrorCode.EIDAS_COUNTRY_NOT_SUPPORTED,
+                "Requested country not supported for " + spType + " sector.",
+                messageParameters);
     }
 
     private List<String> getAcrFromSessionOidcContext(TaraSession taraSession) {

@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.SessionAttribute;
 import java.util.Map;
 
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.NONCE_SENT;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.util.Map.of;
 
@@ -36,7 +35,6 @@ public class IdCardInitController {
         initIdCardAuthentication(taraSession);
         String nonce = nonceGenerator.generateAndStoreNonce().getBase64EncodedNonce();
         log.info("Generated nonce: {}", nonce);
-        taraSession.setState(NONCE_SENT);
         return ResponseEntity.ok(of("nonce", nonce));
     }
 
