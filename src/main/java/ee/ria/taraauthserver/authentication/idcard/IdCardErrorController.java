@@ -1,17 +1,12 @@
 package ee.ria.taraauthserver.authentication.idcard;
 
-import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.Data;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.marker.LogstashMarker;
-import org.slf4j.MDC;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,19 +14,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.SessionAttribute;
 
-import java.util.List;
 import java.util.Map;
 
-import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_INCIDENT_NR;
-import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_REPORTABLE;
-import static ee.ria.taraauthserver.error.ErrorAttributes.notReportableErrors;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_WEBEID_ERROR;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_WEBEID_NOT_AVAILABLE;
+import static ee.ria.taraauthserver.error.ErrorCode.IDC_WEBEID_USER_TIMEOUT;
 import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
-import static ee.ria.taraauthserver.security.RequestCorrelationFilter.MDC_ATTRIBUTE_KEY_REQUEST_TRACE_ID;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
-import static java.util.Map.of;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static net.logstash.logback.marker.Markers.append;
 
@@ -40,13 +30,6 @@ import static net.logstash.logback.marker.Markers.append;
 @ConditionalOnProperty(value = "tara.auth-methods.id-card.enabled")
 @RequiredArgsConstructor
 public class IdCardErrorController {
-
-    @NonNull
-    private final MessageSource messageSource;
-    private final List<String> WEB_EID_NOT_AVAILABLE_ERRORS = List.of(
-            "ERR_WEBEID_EXTENSION_UNAVAILABLE",
-            "ERR_WEBEID_NATIVE_UNAVAILABLE",
-            "ERR_WEBEID_VERSION_MISMATCH");
 
     @PostMapping(value = "/auth/id/error", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, Object>> handleRequest(@RequestBody WebEidErrorParameters webEidErrorParameters,
@@ -57,17 +40,16 @@ public class IdCardErrorController {
         logWebEidError(webEidErrorParameters);
         taraSession.setState(AUTHENTICATION_FAILED);
 
-        ErrorCode error;
-        if (WEB_EID_NOT_AVAILABLE_ERRORS.contains(webEidErrorParameters.code)) {
-            error = IDC_WEBEID_NOT_AVAILABLE;
-        } else {
-            error = IDC_WEBEID_ERROR;
+        switch (webEidErrorParameters.code) {
+            case "ERR_WEBEID_EXTENSION_UNAVAILABLE":
+            case "ERR_WEBEID_NATIVE_UNAVAILABLE":
+            case "ERR_WEBEID_VERSION_MISMATCH":
+                throw new BadRequestException(IDC_WEBEID_NOT_AVAILABLE, webEidErrorParameters.code);
+            case "ERR_WEBEID_USER_TIMEOUT":
+                throw new BadRequestException(IDC_WEBEID_USER_TIMEOUT, webEidErrorParameters.code);
+            default:
+                throw new BadRequestException(IDC_WEBEID_ERROR, webEidErrorParameters.code, new String[]{webEidErrorParameters.code});
         }
-        String errorMessage = messageSource.getMessage(error.getMessage(), new String[]{webEidErrorParameters.code}, LocaleContextHolder.getLocale());
-        return ResponseEntity.ok(of(
-                "message", errorMessage,
-                ERROR_ATTR_INCIDENT_NR, MDC.get(MDC_ATTRIBUTE_KEY_REQUEST_TRACE_ID),
-                ERROR_ATTR_REPORTABLE, !notReportableErrors.contains(error)));
     }
 
     private void logWebEidError(WebEidErrorParameters params) {

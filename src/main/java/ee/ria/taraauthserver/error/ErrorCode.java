@@ -2,7 +2,6 @@ package ee.ria.taraauthserver.error;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 
 @Getter
 @RequiredArgsConstructor
@@ -35,12 +34,13 @@ public enum ErrorCode {
     SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE("message.smart-id.error.user-refused-confirmation-message-with-vc-choice"),
     MID_INTEGRATION_ERROR("message.error.general"),
     MID_VALIDATION_ERROR("message.error.general"),
-    IDC_OCSP_NOT_AVAILABLE("message.idc.error.ocsp.not.available"),
+    IDC_OCSP_NOT_AVAILABLE("message.idc.error.ocsp-not-available"),
     IDC_CERT_NOT_YET_VALID("message.idc.cert-not-yet-valid"),
     IDC_CERT_EXPIRED("message.idc.cert-expired"),
     IDC_REVOKED("message.idc.revoked"),
     IDC_UNKNOWN("message.idc.unknown"),
-    IDC_WEBEID_NOT_AVAILABLE("message.idc.webeid.not.available"),
+    IDC_WEBEID_NOT_AVAILABLE("message.idc.webeid.not-available"),
+    IDC_WEBEID_USER_TIMEOUT("message.idc.webeid.user-timeout"),
     IDC_WEBEID_ERROR("message.idc.webeid.error"),
     ERROR_GENERAL("message.error.general"),
     SESSION_NOT_FOUND("message.error.session-not-found"),
@@ -58,6 +58,4 @@ public enum ErrorCode {
     MISSING_SCOPE("message.error.missing-scope");
 
     private final String message;
-    @Setter
-    private Object[] messageParameters;
 }
