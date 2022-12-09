@@ -2,28 +2,20 @@ package ee.ria.taraauthserver.authentication.idcard;
 
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.authentication.idcard.IdCardErrorController.WebEidErrorParameters;
-import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.error.ErrorHandler;
 import ee.ria.taraauthserver.session.MockSessionFilter;
 import ee.ria.taraauthserver.session.MockSessionFilter.CsrfMode;
-import ee.ria.taraauthserver.session.TaraAuthenticationState;
-import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.web.csrf.DefaultCsrfToken;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
-import java.util.UUID;
-
 import static ch.qos.logback.classic.Level.ERROR;
 import static ch.qos.logback.classic.Level.WARN;
-import static ee.ria.taraauthserver.config.SecurityConfiguration.TARA_SESSION_CSRF_TOKEN;
-import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
@@ -163,18 +155,5 @@ class IdCardErrorControllerTest extends BaseTest {
         body.setErrorStack("error\nstack");
         body.setStatusDurationMs("999");
         return body;
-    }
-
-    private Session createSessionWithAuthenticationState(TaraAuthenticationState authenticationState) {
-        Session session = sessionRepository.createSession();
-        TaraSession authSession = new TaraSession(session.getId());
-        authSession.setState(authenticationState);
-        TaraSession.LoginRequestInfo loginRequestInfo = new TaraSession.LoginRequestInfo();
-        loginRequestInfo.getClient().getMetaData().getOidcClient().getInstitution().setSector(SPType.PUBLIC);
-        authSession.setLoginRequestInfo(loginRequestInfo);
-        session.setAttribute(TARA_SESSION, authSession);
-        session.setAttribute(TARA_SESSION_CSRF_TOKEN, new DefaultCsrfToken("X-CSRF-TOKEN", "_csrf", UUID.randomUUID().toString()));
-        sessionRepository.save(session);
-        return session;
     }
 }

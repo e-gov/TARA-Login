@@ -177,7 +177,7 @@ public class IdCardLoginController {
     }
 
     @Data
-    private static class WebEidData {
+    static class WebEidData {
         private WebEidAuthToken authToken;
         private String extensionVersion;
         private String nativeAppVersion;
