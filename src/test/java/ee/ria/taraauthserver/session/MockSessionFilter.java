@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.session;
 
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.SPType;
+import eu.webeid.security.challenge.ChallengeNonce;
 import io.restassured.filter.Filter;
 import io.restassured.filter.FilterContext;
 import io.restassured.response.Response;
@@ -22,6 +23,8 @@ import static ee.ria.taraauthserver.config.SecurityConfiguration.TARA_SESSION_CS
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 
 public class MockSessionFilter implements Filter {
+
+    private static final String CHALLENGE_NONCE_KEY = "nonce";
     private final CsrfMode csrfMode;
 
     @Getter
@@ -50,8 +53,9 @@ public class MockSessionFilter implements Filter {
                                                          SPType spType,
                                                          Map<String, String> shortNameTranslations,
                                                          CsrfMode csrfMode,
+                                                         ChallengeNonce nonce,
                                                          TaraSession.AuthenticationResult authenticationResult) {
-        Session session = createTaraSession(sessionRepository, authenticationState, authenticationTypes, clientAllowedScopes, requestedScopes, legalPersonList, spType, shortNameTranslations, authenticationResult);
+        Session session = createTaraSession(sessionRepository, authenticationState, authenticationTypes, clientAllowedScopes, requestedScopes, legalPersonList, spType, shortNameTranslations, nonce, authenticationResult);
         sessionRepository.save(session);
         return new MockSessionFilter(session, csrfMode);
     }
@@ -98,6 +102,7 @@ public class MockSessionFilter implements Filter {
                                              List<TaraSession.LegalPerson> legalPersonList,
                                              SPType spType,
                                              Map<String, String> shortNameTranslations,
+                                             ChallengeNonce nonce,
                                              TaraSession.AuthenticationResult authenticationResult) {
         Session session = createSession(sessionRepository);
         TaraSession taraSession = MockTaraSessionBuilder.builder()
@@ -112,6 +117,9 @@ public class MockSessionFilter implements Filter {
                 .authenticationResult(authenticationResult)
                 .build();
         session.setAttribute(TARA_SESSION, taraSession);
+        if (nonce != null) {
+            session.setAttribute(CHALLENGE_NONCE_KEY, nonce);
+        }
         return session;
     }
 
