@@ -28,15 +28,18 @@ import static com.github.tomakehurst.wiremock.client.WireMock.containing;
 import static com.github.tomakehurst.wiremock.client.WireMock.put;
 import static com.github.tomakehurst.wiremock.client.WireMock.putRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static ee.ria.taraauthserver.config.SecurityConfiguration.TARA_SESSION_CSRF_TOKEN;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.ID_CARD;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
+import static ee.ria.taraauthserver.security.NoSessionCreatingHttpSessionCsrfTokenRepository.CSRF_HEADER_NAME;
+import static ee.ria.taraauthserver.security.NoSessionCreatingHttpSessionCsrfTokenRepository.CSRF_PARAMETER_NAME;
+import static ee.ria.taraauthserver.security.NoSessionCreatingHttpSessionCsrfTokenRepository.CSRF_TOKEN_ATTR_NAME;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_CONSENT_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_MID;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static java.util.List.of;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 class AuthConsentConfirmControllerTest extends BaseTest {
@@ -54,6 +57,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(403)
+                .header("Set-Cookie", nullValue())
                 .body("error", equalTo("Forbidden"))
                 .body("message", equalTo("Keelatud päring. Päring esitati topelt, seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."));
 
@@ -99,20 +103,21 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     }
 
     @Test
-    @Tag(value = "USER_CONSENT_CONFIRM_ENDPOINT")
+    @Tag("USER_CONSENT_CONFIRM_ENDPOINT")
+    @Tag("CSRF_PROTCTION")
     void authConsent_session_missing() {
         given()
-                .filter(MockSessionFilter.withoutTaraSession().sessionRepository(sessionRepository).build())
                 .queryParam("consent_given", "true")
                 .when()
                 .post("/auth/consent/confirm")
                 .then()
                 .assertThat()
-                .statusCode(400)
-                .body("message", equalTo("Teie seanssi ei leitud! Seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
-                .body("error", equalTo("Bad Request"));
+                .statusCode(403)
+                .header("Set-Cookie", nullValue())
+                .body("error", equalTo("Forbidden"))
+                .body("message", equalTo("Keelatud päring. Päring esitati topelt, seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."));
 
-        assertErrorIsLogged("User exception: Invalid session");
+        assertErrorIsLogged("Access denied: Invalid CSRF token.");
         assertStatisticsIsNotLogged();
     }
 
@@ -444,7 +449,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
         allowedMethods.add(authenticationType);
         authSession.setAllowedAuthMethods(allowedMethods);
         session.setAttribute(TARA_SESSION, authSession);
-        session.setAttribute(TARA_SESSION_CSRF_TOKEN, new DefaultCsrfToken("X-CSRF-TOKEN", "_csrf", UUID.randomUUID().toString()));
+        session.setAttribute(CSRF_TOKEN_ATTR_NAME, new DefaultCsrfToken(CSRF_HEADER_NAME, CSRF_PARAMETER_NAME, UUID.randomUUID().toString()));
         sessionRepository.save(session);
         return session;
     }

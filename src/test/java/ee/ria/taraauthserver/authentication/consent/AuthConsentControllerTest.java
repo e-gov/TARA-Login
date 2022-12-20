@@ -31,6 +31,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -52,6 +53,7 @@ class AuthConsentControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
+                .header("Set-Cookie", nullValue())
                 .body("message", equalTo("authConsent.consentChallenge: only characters and numbers allowed"))
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);

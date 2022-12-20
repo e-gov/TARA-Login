@@ -24,6 +24,7 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static java.util.List.of;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -40,7 +41,6 @@ class EidasCallbackControllerTest extends BaseTest {
         eidasRelayStateCache.put(MOCK_RELAY_STATE_VALUE, "testSessionId123");
 
         given()
-                .filter(MockSessionFilter.withoutTaraSession().sessionRepository(sessionRepository).build())
                 .formParam("SAMLResponse", "123test")
                 .when()
                 .formParam("RelayState", MOCK_RELAY_STATE_VALUE)
@@ -48,6 +48,7 @@ class EidasCallbackControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
+                .header("Set-Cookie", nullValue())
                 .body("message", equalTo("Teie seanssi ei leitud! Seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("error", equalTo("Bad Request"));
 

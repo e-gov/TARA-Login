@@ -14,7 +14,7 @@ public class StaticContentTest extends BaseTest {
     void staticContent_SessionIsNotCreated() {
         given()
                 .when()
-                .get("/content/dummy.txt")
+                .get("/content/favicon.ico")
                 .then()
                 .assertThat()
                 .statusCode(200)

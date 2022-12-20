@@ -28,6 +28,7 @@ import static io.restassured.RestAssured.given;
 import static java.util.List.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 
 @Slf4j
 public class LegalpersonControllerTest extends BaseTest {
@@ -44,7 +45,6 @@ public class LegalpersonControllerTest extends BaseTest {
     @Tag(value = "LEGAL_PERSON_AUTH_START")
     void getAuthLegalPersonInit_noSession() {
         given()
-                .filter(MockSessionFilter.withoutTaraSession().sessionRepository(sessionRepository).build())
                 .when()
                 .get("/auth/legalperson/init")
                 .then()
@@ -159,14 +159,15 @@ public class LegalpersonControllerTest extends BaseTest {
     @Tag(value = "LEGAL_PERSON_AUTH_START")
     void getAuthLegalPerson_noSession() {
         given()
-                .filter(MockSessionFilter.withoutTaraSession().sessionRepository(sessionRepository).build())
                 .when()
                 .get("/auth/legalperson")
                 .then()
                 .assertThat()
                 .statusCode(400)
                 .headers(EXPECTED_RESPONSE_HEADERS)
+                .header("Set-Cookie", nullValue())
                 .body("status", equalTo(400))
+                .header("Set-Cookie", nullValue())
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Teie seanssi ei leitud! Seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("path", equalTo("/auth/legalperson"));
@@ -400,31 +401,29 @@ public class LegalpersonControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(403)
+                .header("Set-Cookie", nullValue())
                 .body("error", equalTo("Forbidden"))
                 .body("message", equalTo("Keelatud päring. Päring esitati topelt, seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."));
 
         assertErrorIsLogged("Access denied: Invalid CSRF token.");
         assertStatisticsIsNotLogged();
     }
-
     @Test
     @Tag(value = "LEGAL_PERSON_SELECTION_CONFIRMED")
-    void postAuthLegalPersonConfirm_NoSession() {
+    @Tag("CSRF_PROTCTION")
+    void postAuthLegalPersonConfirm_session_missing() {
         given()
-                .filter(MockSessionFilter.withoutTaraSession().sessionRepository(sessionRepository).build())
                 .param("legal_person_identifier", "1234")
                 .when()
                 .post("/auth/legalperson/confirm")
                 .then()
                 .assertThat()
-                .statusCode(400)
-                .headers(EXPECTED_RESPONSE_HEADERS)
-                .body("status", equalTo(400))
-                .body("error", equalTo("Bad Request"))
-                .body("message", equalTo("Teie seanssi ei leitud! Seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
-                .body("path", equalTo("/auth/legalperson/confirm"));
+                .statusCode(403)
+                .header("Set-Cookie", nullValue())
+                .body("error", equalTo("Forbidden"))
+                .body("message", equalTo("Keelatud päring. Päring esitati topelt, seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."));
 
-        assertErrorIsLogged("User exception: Invalid session");
+        assertErrorIsLogged("Access denied: Invalid CSRF token.");
         assertStatisticsIsNotLogged();
     }
 

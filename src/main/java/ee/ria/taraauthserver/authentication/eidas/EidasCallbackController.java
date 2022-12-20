@@ -51,9 +51,11 @@ import static ee.ria.taraauthserver.error.ErrorCode.ERROR_GENERAL;
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
 import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
+import static ee.ria.taraauthserver.security.NoSessionCreatingHttpSessionCsrfTokenRepository.CSRF_TOKEN_ATTR_NAME;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.WAITING_EIDAS_RESPONSE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static java.util.Objects.requireNonNull;
 import static net.logstash.logback.argument.StructuredArguments.value;
 
 @Slf4j
@@ -110,7 +112,7 @@ public class EidasCallbackController {
             throw new ServiceNotAvailableException(EIDAS_INTERNAL_ERROR, "EIDAS service error: " + e.getMessage(), e);
         }
 
-        CsrfToken csrf = session.getAttribute("tara.csrf");
+        CsrfToken csrf = session.getAttribute(CSRF_TOKEN_ATTR_NAME);
         return new ModelAndView("eidas", Map.of("token", csrf.getToken()));
     }
 
@@ -131,7 +133,7 @@ public class EidasCallbackController {
         String personIdentifier = response.getAttributes().getPersonIdentifier();
         Matcher personIdentifierMatcher = validatePersonIdentifier(personIdentifier);
 
-        TaraSession taraSession = session.getAttribute(TARA_SESSION);
+        TaraSession taraSession = requireNonNull(session.getAttribute(TARA_SESSION));
         taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
         TaraSession.AuthenticationResult authenticationResult = taraSession.getAuthenticationResult();
         authenticationResult.setFirstName(response.getAttributes().getFirstName());
@@ -185,9 +187,10 @@ public class EidasCallbackController {
     }
 
     public void validateSession(Session session) {
-        if (session == null)
+        if (session == null) {
             throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
-        TaraSession taraSession = session.getAttribute(TARA_SESSION);
+        }
+        TaraSession taraSession = requireNonNull(session.getAttribute(TARA_SESSION));
         SessionUtils.assertSessionInState(taraSession, WAITING_EIDAS_RESPONSE);
         if (((TaraSession.EidasAuthenticationResult) taraSession.getAuthenticationResult()).getRelayState() == null) {
             throw new BadRequestException(ERROR_GENERAL, "Relay state is missing from session.");

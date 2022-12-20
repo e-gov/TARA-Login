@@ -38,6 +38,7 @@ import static org.awaitility.Awaitility.await;
 import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
@@ -54,20 +55,41 @@ public class EidasControllerTest extends BaseTest {
     private Cache<String, String> eidasRelayStateCache;
 
     @Test
-    @Tag(value = "EIDAS_AUTH_INIT_REQUEST_CHECKS")
-    void eidasAuthInit_session_missing() {
+    @Tag("CSRF_PROTCTION")
+    void eidasAuthInit_NoCsrf() {
         given()
-                .filter(MockSessionFilter.withoutTaraSession().sessionRepository(sessionRepository).build())
                 .formParam("country", "CA")
                 .when()
                 .post("/auth/eidas/init")
                 .then()
                 .assertThat()
-                .statusCode(400)
-                .body("message", equalTo("Teie seanssi ei leitud! Seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
-                .body("error", equalTo("Bad Request"));
+                .statusCode(403)
+                .header("Set-Cookie", nullValue())
+                .body("error", equalTo("Forbidden"))
+                .body("message", equalTo("Keelatud päring. Päring esitati topelt, seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
+                .body("reportable", equalTo(false));
 
-        assertErrorIsLogged("User exception: Invalid session");
+        assertErrorIsLogged("Access denied: Invalid CSRF token.");
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    @Tag("EIDAS_AUTH_INIT_REQUEST_CHECKS")
+    @Tag("CSRF_PROTCTION")
+    void eidasAuthInit_session_missing() {
+        given()
+                .formParam("country", "CA")
+                .when()
+                .post("/auth/eidas/init")
+                .then()
+                .assertThat()
+                .statusCode(403)
+                .header("Set-Cookie", nullValue())
+                .body("error", equalTo("Forbidden"))
+                .body("message", equalTo("Keelatud päring. Päring esitati topelt, seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
+                .body("reportable", equalTo(false));
+
+        assertErrorIsLogged("Access denied: Invalid CSRF token.");
         assertStatisticsIsNotLogged();
     }
 

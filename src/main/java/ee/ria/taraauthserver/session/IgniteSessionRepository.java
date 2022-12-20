@@ -20,6 +20,7 @@ import java.io.Serializable;
 import java.time.Duration;
 
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static java.util.Objects.requireNonNull;
 import static net.logstash.logback.marker.Markers.append;
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 
@@ -62,12 +63,10 @@ public class IgniteSessionRepository implements SessionRepository<Session> {
     }
 
     private void logStateChange(Session session, IgniteSession igniteSession) {
-        TaraSession taraSession = session.getAttribute(TARA_SESSION);
-        if (taraSession != null) {
-            logStateChangeToStatisticsLog(igniteSession, taraSession);
-            if (log.isDebugEnabled()) {
-                log.debug(append(TARA_SESSION, taraSession), "Saving session with state: {}", defaultIfNull(taraSession.getState(), "NOT_SET"));
-            }
+        TaraSession taraSession = requireNonNull(session.getAttribute(TARA_SESSION));
+        logStateChangeToStatisticsLog(igniteSession, taraSession);
+        if (log.isDebugEnabled()) {
+            log.debug(append(TARA_SESSION, taraSession), "Saving session with state: {}", defaultIfNull(taraSession.getState(), "NOT_SET"));
         }
     }
 
