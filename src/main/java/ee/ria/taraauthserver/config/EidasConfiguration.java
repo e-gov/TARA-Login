@@ -22,6 +22,9 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpEntity;
+import java.net.InetAddress;
 
 import javax.net.ssl.SSLContext;
 import java.time.Duration;
@@ -56,12 +59,14 @@ public class EidasConfiguration {
 
     private void refreshCountriesList() {
         String url = eidasConfigurationProperties.getClientUrl() + "/supportedCountries";
-
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("ENVIRONMENT", eidasConfigurationProperties.getEnvironment());
+        HttpEntity<String> entity = new HttpEntity<String>("parameters", headers);
         requestLogger.logRequest(url, HttpMethod.GET);
         var response = hydraRestTemplate.exchange(
                 url,
                 HttpMethod.GET,
-                null,
+                entity,
                 new ParameterizedTypeReference<Map<SPType, List<String>>>() {
                 });
         requestLogger.logResponse(response);
