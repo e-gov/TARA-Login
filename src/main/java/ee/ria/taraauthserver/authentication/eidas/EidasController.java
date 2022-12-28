@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.servlet.view.RedirectView;
 
 import javax.cache.Cache;
 import javax.servlet.http.HttpServletResponse;
@@ -55,7 +56,7 @@ public class EidasController {
     private Cache<String, String> eidasRelayStateCache;
 
     @PostMapping(value = "/auth/eidas/init", produces = MediaType.TEXT_HTML_VALUE)
-    public String EidasInit(@RequestParam("country") String country, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession, HttpServletResponse servletResponse) {
+    public RedirectView EidasInit(@RequestParam("country") String country, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession, HttpServletResponse servletResponse) {
         String relayState = UUID.randomUUID().toString();
         log.info("Initiating EIDAS authentication session with relay state: {}", value("tara.session.eidas.relay_state", relayState));
         validateSession(taraSession);
@@ -78,7 +79,8 @@ public class EidasController {
         requestLogger.logResponse(response);
 
         updateSession(country, taraSession, relayState);
-        return getHtmlRedirectPageFromResponse(servletResponse, response);
+        // return getHtmlRedirectPageFromResponse(servletResponse, response);
+        return new RedirectView(getHtmlRedirectPageFromResponse(servletResponse, response));
     }
 
     @Nullable
@@ -101,9 +103,10 @@ public class EidasController {
         OidcClient oidcClient = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient();
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
                 .queryParam("Country", country)
-                .queryParam("RequesterID", oidcClient.getEidasRequesterId())
+                .queryParam("RequesterID", taraSession.getLoginRequestInfo().getClientId())
                 .queryParam("SPType", oidcClient.getInstitution().getSector())
-                .queryParam("RelayState", relayState);
+                .queryParam("State", taraSession.getLoginRequestInfo().getOidcState())
+                .queryParam("SessionID", taraSession.getSessionId());
         List<String> acr = getAcrFromSessionOidcContext(taraSession);
         if (acr != null)
             builder.queryParam("LoA", acr.get(0).toUpperCase());
