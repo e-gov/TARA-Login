@@ -32,4 +32,5 @@ public class EidasConfigurationProperties extends AuthConfigurationProperties.Au
 
     @NotNull
     private String clientUrl;
+    private String environment;
 }
