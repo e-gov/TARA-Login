@@ -5,7 +5,7 @@ jQuery(function ($) {
     if (clientLogoSrc) {
         $('#client-logo-wait').attr('src', clientLogoSrc);
     }
-
+	
 	// Hide nav bar in desktop mode and display authentication method content in mobile mode if less than 2 auth methods
 	if ($('.c-tab-login__nav-link').length < 2) {
 		$('.c-tab-login__header').addClass('hide-in-desktop');
