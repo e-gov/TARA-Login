@@ -178,11 +178,7 @@ jQuery(function ($) {
 		} else {
 			url += '&webeid.extensionversion=' + encodeURIComponent(webEidInfo.extensionversion)
 				 + '&webeid.nativeappversion=' + encodeURIComponent(webEidInfo.nativeappversion)
-<<<<<<< HEAD
-			     + '&webeid.wait=' + webEidInfo.wait;
-=======
          + '&webeid.wait=' + webEidInfo.wait
->>>>>>> 316a5f0 (Updated from e-gov to version 1.4.2)
 				 + '&webeid.errorstack=' + truncateUrl(encodeURIComponent(webEidInfo.errorstack), 10000);
 		}
 		return url;
@@ -451,11 +447,7 @@ jQuery(function ($) {
 				webEidInfo.code = "SUCCESS";
 				webEidInfo.extensionversion = response.extension;
 				webEidInfo.nativeappversion = response.nativeApp;
-<<<<<<< HEAD
-    			const currentTime = new Date().getTime();
-=======
         const currentTime = new Date().getTime();
->>>>>>> 316a5f0 (Updated from e-gov to version 1.4.2)
 				webEidInfo.wait = currentTime - webEidInfo.statuscommandstart;
 				showOrHideWebEidWarning(warning, navItem);
 			})
@@ -464,11 +456,7 @@ jQuery(function ($) {
 				webEidInfo.code = err.code;
 				webEidInfo.extensionversion = err.extension;
 				webEidInfo.nativeappversion = err.nativeApp;
-<<<<<<< HEAD
-    			const currentTime = new Date().getTime();
-=======
         const currentTime = new Date().getTime();
->>>>>>> 316a5f0 (Updated from e-gov to version 1.4.2)
 				webEidInfo.wait = currentTime - webEidInfo.statuscommandstart;
 				webEidInfo.errorstack = err.stack;
 				if (["ERR_WEBEID_EXTENSION_UNAVAILABLE", "ERR_WEBEID_NATIVE_UNAVAILABLE", "ERR_WEBEID_VERSION_MISMATCH"].indexOf(err.code) !== -1) {
