@@ -305,17 +305,18 @@ jQuery(function ($) {
   }
 
 	function getIdCardAuthUrlParameters() {
-		let url = '?webeid.code=' + encodeURIComponent(webEidInfo.code);
-		if (webEidInfo.code === 'WAIT_NOT_COMPLETED') {
-			const currentTime = new Date().getTime();
-			url += '&webeid.wait=' + (currentTime - webEidInfo.statuscommandstart);
-		} else {
-			url += '&webeid.extensionversion=' + encodeURIComponent(webEidInfo.extensionversion)
-				 + '&webeid.nativeappversion=' + encodeURIComponent(webEidInfo.nativeappversion)
-         + '&webeid.wait=' + webEidInfo.wait
-				 + '&webeid.errorstack=' + truncateUrl(encodeURIComponent(webEidInfo.errorstack), 10000);
-		}
-	}
+    let url = '?webeid.code=' + encodeURIComponent(webEidInfo.code);
+    if (webEidInfo.code === 'WAIT_NOT_COMPLETED') {
+      const currentTime = new Date().getTime();
+      url += '&webeid.wait=' + (currentTime - webEidInfo.statuscommandstart);
+    } else {
+      url += '&webeid.extensionversion=' + encodeURIComponent(webEidInfo.extensionversion)
+        + '&webeid.nativeappversion=' + encodeURIComponent(webEidInfo.nativeappversion)
+        + '&webeid.wait=' + webEidInfo.wait
+        + '&webeid.errorstack=' + truncateUrl(encodeURIComponent(webEidInfo.errorstack), 10000);
+    }
+    return url;
+  }
 
 	async function handleWebEidJsError(csrfToken, webEidInfo) {
 		// Response from /auth/id/error endpoint is never 200 OK,
@@ -669,42 +670,42 @@ jQuery(function ($) {
     }
 
     function activateIdCardView(viewName) {
-		const formSelector = '.c-layout--full > .container';
-		const waitMessageSelector = '#id-card-wait';
-		const waitPopupMessageSelector = '#id-card-wait-popup';
-		const waitLoginMessageSelector = '#id-card-wait-login';
-		const errorContainerSelector = '#id-card-error';
-		const errorMessageSelector = '#error-message';
-		const ajaxErrorSelector = '#idc-ajax-error-message';
-		const errorReportUrlSelector = '#error-report-url';
-		const errorIncidentNumberWrapperSelector = '#error-incident-number-wrapper';
-		const languageSelectionSelector = '.c-header-bar nav[role=navigation]';
-    	const visibleElementsInViews = {
-    		form: [formSelector, languageSelectionSelector].join(','),
-			waitPopup: [waitMessageSelector, waitPopupMessageSelector].join(','),
-			waitLogin: [waitMessageSelector, waitLoginMessageSelector].join(','),
-			reportableError: [errorContainerSelector, errorMessageSelector, errorReportUrlSelector, errorIncidentNumberWrapperSelector].join(','),
-			notReportableError: [errorContainerSelector, errorMessageSelector].join(','),
-			ajaxError: [errorContainerSelector, ajaxErrorSelector].join(',')
-		}
-
-    	if (! (viewName in visibleElementsInViews)) {
-    		console.error('Invalid name for view: ' + viewName);
-    		return;
-		}
-
-    	const hideList = [];
-    	const unhideList = [];
-		for (const [view, selector] of Object.entries(visibleElementsInViews)) {
-			if (view === viewName) {
-				unhideList.push($(selector));
-			} else {
-				hideList.push($(selector));
-			}
-		}
-		hideElements(hideList);
-		unhideElements(unhideList);
-    }
+      const formSelector = '.c-layout--full > .container';
+      const waitMessageSelector = '#id-card-wait';
+      const waitPopupMessageSelector = '#id-card-wait-popup';
+      const waitLoginMessageSelector = '#id-card-wait-login';
+      const errorContainerSelector = '#id-card-error';
+      const errorMessageSelector = '#error-message';
+      const ajaxErrorSelector = '#idc-ajax-error-message';
+      const errorReportUrlSelector = '#error-report-url';
+      const errorIncidentNumberWrapperSelector = '#error-incident-number-wrapper';
+      const languageSelectionSelector = '.c-header-bar nav[role=navigation]';
+        const visibleElementsInViews = {
+          form: [formSelector, languageSelectionSelector].join(','),
+        waitPopup: [waitMessageSelector, waitPopupMessageSelector].join(','),
+        waitLogin: [waitMessageSelector, waitLoginMessageSelector].join(','),
+        reportableError: [errorContainerSelector, errorMessageSelector, errorReportUrlSelector, errorIncidentNumberWrapperSelector].join(','),
+        notReportableError: [errorContainerSelector, errorMessageSelector].join(','),
+        ajaxError: [errorContainerSelector, ajaxErrorSelector].join(',')
+      }
+  
+        if (! (viewName in visibleElementsInViews)) {
+          console.error('Invalid name for view: ' + viewName);
+          return;
+      }
+  
+        const hideList = [];
+        const unhideList = [];
+      for (const [view, selector] of Object.entries(visibleElementsInViews)) {
+        if (view === viewName) {
+          unhideList.push($(selector));
+        } else {
+          hideList.push($(selector));
+        }
+      }
+      hideElements(hideList);
+      unhideElements(unhideList);
+      }
 
   function activateTab(link, content, warning) {
 		let navItem = link.parent();
