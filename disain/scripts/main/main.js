@@ -10,7 +10,7 @@ jQuery(function ($) {
 		nativeappversion: '',
 		errorstack: '',
 		statuscommandstart: 0,
-		wait: 0
+    wait: 0
 	};
 	
 	// Hide nav bar in desktop mode and display authentication method content in mobile mode if less than 2 auth methods
@@ -257,6 +257,17 @@ jQuery(function ($) {
 			return null;
 		} finally {
 			clearTimeout(timerId);
+
+	function getIdCardAuthUrlParameters() {
+		let url = '?webeid.code=' + encodeURIComponent(webEidInfo.code);
+		if (webEidInfo.code === 'WAIT_NOT_COMPLETED') {
+			const currentTime = new Date().getTime();
+			url += '&webeid.wait=' + (currentTime - webEidInfo.statuscommandstart);
+		} else {
+			url += '&webeid.extensionversion=' + encodeURIComponent(webEidInfo.extensionversion)
+				 + '&webeid.nativeappversion=' + encodeURIComponent(webEidInfo.nativeappversion)
+         + '&webeid.wait=' + webEidInfo.wait
+				 + '&webeid.errorstack=' + truncateUrl(encodeURIComponent(webEidInfo.errorstack), 10000);
 		}
 	}
 
@@ -458,32 +469,32 @@ jQuery(function ($) {
         feedback.addClass('is-hidden');
     }
 
-	async function detectWebEid() {
-		let webEidInfo = {
-			code: '',
-			extensionVersion: '',
-			nativeAppVersion: '',
-			errorStack: '',
-			statusDurationMs: ''
-		};
-		const statusCheckStart = new Date().getTime();
-		await webeid.status()
-			.then(response => {
-				webEidInfo.code = 'SUCCESS';
-				webEidInfo.extensionVersion = response.extension;
-				webEidInfo.nativeAppVersion = response.nativeApp;
-			})
-			.catch(err => {
-				webEidInfo.code = err.code;
-				webEidInfo.extensionVersion = err.extension;
-				webEidInfo.nativeAppVersion = err.nativeApp;
-				webEidInfo.errorStack = err.stack;
-			})
-			.finally(() => {
-				webEidInfo.statusDurationMs = new Date().getTime() - statusCheckStart;
-			});
-		return webEidInfo;
-	}
+    async function detectWebEid() {
+      let webEidInfo = {
+        code: '',
+        extensionVersion: '',
+        nativeAppVersion: '',
+        errorStack: '',
+        statusDurationMs: ''
+      };
+      const statusCheckStart = new Date().getTime();
+      await webeid.status()
+        .then(response => {
+          webEidInfo.code = 'SUCCESS';
+          webEidInfo.extensionVersion = response.extension;
+          webEidInfo.nativeAppVersion = response.nativeApp;
+        })
+        .catch(err => {
+          webEidInfo.code = err.code;
+          webEidInfo.extensionVersion = err.extension;
+          webEidInfo.nativeAppVersion = err.nativeApp;
+          webEidInfo.errorStack = err.stack;
+        })
+        .finally(() => {
+          webEidInfo.statusDurationMs = new Date().getTime() - statusCheckStart;
+        });
+      return webEidInfo;
+    }
 
     function activateIdCardView(viewName) {
 		const formSelector = '.c-layout--full > .container';
