@@ -149,6 +149,9 @@
   &[data-value="CA"] {
     background-image: url('../assets/flags/eu.svg');
   }
+  &[data-value="UA"] {
+    background-image: url('../assets/flags/ua.svg');
+  }
 }
 .ts-dropdown .option {
   padding-left: 66px;
