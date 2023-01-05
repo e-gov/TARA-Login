@@ -13,6 +13,7 @@ import ee.ria.taraauthserver.utils.EstonianIdCodeUtil;
 import ee.ria.taraauthserver.utils.X509Utils;
 import ee.sk.mid.MidNationalIdentificationCodeValidator;
 import lombok.extern.slf4j.Slf4j;
+import net.logstash.logback.marker.LogstashMarker;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -109,13 +110,11 @@ public class IdCardController {
     }
 
     private void logWebEidParameters(HttpServletRequest request) {
-        log.info("Web eID check results: code: {}, extensionversion: {}, nativeappversion: {}, errorstack: {}, wait: {}",
-                value("webeid.code", request.getParameter("webeid.code")),
-                value("webeid.extensionversion", request.getParameter("webeid.extensionversion")),
-                value("webeid.nativeappversion", request.getParameter("webeid.nativeappversion")),
-                value("webeid.errorstack", request.getParameter("webeid.errorstack")),
-                value("webeid.wait", request.getParameter("webeid.wait"))
-        );
+        LogstashMarker marker = append("tara.webeid.extension_version", request.getParameter("webeid.extensionversion"))
+                .and(append("tara.webeid.native_app_version", request.getParameter("webeid.nativeappversion")))
+                .and(append("tara.webeid.error_stack", request.getParameter("webeid.errorstack")))
+                .and(append("tara.webeid.status_duration_ms", request.getParameter("webeid.wait")));
+        log.info(marker, "Client-side Web eID check: {}", value("tara.webeid.code", request.getParameter("webeid.code")));
     }
 
     private void initIdCardAuthentication(TaraSession taraSession) {
