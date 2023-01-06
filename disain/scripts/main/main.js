@@ -10,15 +10,7 @@ jQuery(function ($) {
 		nativeappversion: '',
 		errorstack: '',
 		statuscommandstart: 0,
-<<<<<<< HEAD
     wait: 0
-=======
-<<<<<<< HEAD
-		wait: 0
-=======
-    wait: 0
->>>>>>> 316a5f0 (Updated from e-gov to version 1.4.2)
->>>>>>> 7d02316 (Updated from e-gov to version 1.4.2)
 	};
 	
 	// Hide nav bar in desktop mode and display authentication method content in mobile mode if less than 2 auth methods
