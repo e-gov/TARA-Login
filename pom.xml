@@ -24,18 +24,8 @@
 
     <properties>
         <maven.compiler.release>11</maven.compiler.release>
-<<<<<<< HEAD
-        <!-- Using newer Lombok fixes compilation with JDK 17. Remove when upgrading spring-boot-starter-parent version. -->
-        <lombok.version>1.18.20</lombok.version>
-        <rest-assured.version>4.2.0</rest-assured.version>
-        <spring-cloud.version>2021.0.5</spring-cloud.version>
-=======
->>>>>>> 5531a88 (Corrected pom.xml file)
         <logback.version>1.2.6</logback.version>
-<<<<<<< HEAD
-=======
         <spring-cloud.version>2021.0.5</spring-cloud.version>
->>>>>>> 316a5f0 (Updated from e-gov to version 1.4.2)
     </properties>
 
     <dependencies>
