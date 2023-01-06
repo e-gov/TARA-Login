@@ -26,6 +26,7 @@
         <maven.compiler.release>11</maven.compiler.release>
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         <logback.version>1.2.6</logback.version>
 =======
 =======
@@ -37,11 +38,10 @@
         <spring-cloud.version>2021.0.5</spring-cloud.version>
 =======
 >>>>>>> 5531a88 (Corrected pom.xml file)
-        <logback.version>1.2.6</logback.version>
-<<<<<<< HEAD
 =======
+>>>>>>> a78ff21 (Fixes after rebasing e-gov)
+        <logback.version>1.2.6</logback.version>
         <spring-cloud.version>2021.0.5</spring-cloud.version>
->>>>>>> 316a5f0 (Updated from e-gov to version 1.4.2)
     </properties>
 
     <dependencies>
