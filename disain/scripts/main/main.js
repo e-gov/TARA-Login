@@ -174,7 +174,6 @@ jQuery(function ($) {
 		}
 	}
 
-<<<<<<< HEAD
 	// ID-card form submit
 	$('#idCardForm button.c-btn--primary').on('click', async function(event){
 		const csrfToken = document.querySelector("input[name='_csrf']").getAttribute('value');
@@ -258,22 +257,6 @@ jQuery(function ($) {
 			return null;
 		} finally {
 			clearTimeout(timerId);
-=======
-	function getIdCardAuthUrlParameters() {
-		let url = '?webeid.code=' + encodeURIComponent(webEidInfo.code);
-		if (webEidInfo.code === 'WAIT_NOT_COMPLETED') {
-			const currentTime = new Date().getTime();
-			url += '&webeid.wait=' + (currentTime - webEidInfo.statuscommandstart);
-		} else {
-			url += '&webeid.extensionversion=' + encodeURIComponent(webEidInfo.extensionversion)
-				 + '&webeid.nativeappversion=' + encodeURIComponent(webEidInfo.nativeappversion)
-<<<<<<< HEAD
-			     + '&webeid.wait=' + webEidInfo.wait;
-=======
-         + '&webeid.wait=' + webEidInfo.wait
->>>>>>> 316a5f0 (Updated from e-gov to version 1.4.2)
-				 + '&webeid.errorstack=' + truncateUrl(encodeURIComponent(webEidInfo.errorstack), 10000);
->>>>>>> 7d02316 (Updated from e-gov to version 1.4.2)
 		}
 	}
 
@@ -463,53 +446,18 @@ jQuery(function ($) {
 		const statusCheckStart = new Date().getTime();
 		await webeid.status()
 			.then(response => {
-<<<<<<< HEAD
 				webEidInfo.code = 'SUCCESS';
 				webEidInfo.extensionVersion = response.extension;
 				webEidInfo.nativeAppVersion = response.nativeApp;
-=======
-				webEidCheckResult = 'SUCCESS';
-				webEidInfo.code = "SUCCESS";
-				webEidInfo.extensionversion = response.extension;
-				webEidInfo.nativeappversion = response.nativeApp;
-<<<<<<< HEAD
-    			const currentTime = new Date().getTime();
-=======
-        const currentTime = new Date().getTime();
->>>>>>> 316a5f0 (Updated from e-gov to version 1.4.2)
-				webEidInfo.wait = currentTime - webEidInfo.statuscommandstart;
-				showOrHideWebEidWarning(warning, navItem);
->>>>>>> 7d02316 (Updated from e-gov to version 1.4.2)
 			})
 			.catch(err => {
 				webEidInfo.code = err.code;
-<<<<<<< HEAD
 				webEidInfo.extensionVersion = err.extension;
 				webEidInfo.nativeAppVersion = err.nativeApp;
 				webEidInfo.errorStack = err.stack;
 			})
 			.finally(() => {
 				webEidInfo.statusDurationMs = new Date().getTime() - statusCheckStart;
-=======
-				webEidInfo.extensionversion = err.extension;
-				webEidInfo.nativeappversion = err.nativeApp;
-<<<<<<< HEAD
-    			const currentTime = new Date().getTime();
-=======
-        const currentTime = new Date().getTime();
->>>>>>> 316a5f0 (Updated from e-gov to version 1.4.2)
-				webEidInfo.wait = currentTime - webEidInfo.statuscommandstart;
-				webEidInfo.errorstack = err.stack;
-				if (["ERR_WEBEID_EXTENSION_UNAVAILABLE", "ERR_WEBEID_NATIVE_UNAVAILABLE", "ERR_WEBEID_VERSION_MISMATCH"].indexOf(err.code) !== -1) {
-					warning.find("#webeid-not-available").removeClass("hidden aria-hidden")
-				} else {
-					const warningElement = warning.find("#webeid-error");
-					const warningMessage = warningElement.html().replace("{0}", err.code);
-					warningElement.html(warningMessage);
-					warningElement.removeClass("hidden aria-hidden")
-				}
-				showOrHideWebEidWarning(warning, navItem);
->>>>>>> 7d02316 (Updated from e-gov to version 1.4.2)
 			});
 		return webEidInfo;
 	}
