@@ -38,8 +38,9 @@ public class IdCardErrorController {
             throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
         }
         logWebEidError(webEidErrorParameters);
-        taraSession.setState(AUTHENTICATION_FAILED);
 
+        // An exception is always thrown in this block. It is caught in class ErrorHandler, which sets the state of
+        // the session to AUTHENTICATION_FAILED and writes the failure into the statistics log.
         switch (webEidErrorParameters.code) {
             case "ERR_WEBEID_EXTENSION_UNAVAILABLE":
             case "ERR_WEBEID_NATIVE_UNAVAILABLE":
