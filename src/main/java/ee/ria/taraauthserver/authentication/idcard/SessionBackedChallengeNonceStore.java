@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.authentication.idcard;
 
+import ee.ria.taraauthserver.session.TaraSession;
 import eu.webeid.security.challenge.ChallengeNonce;
 import eu.webeid.security.challenge.ChallengeNonceStore;
 import lombok.NonNull;
@@ -15,25 +16,24 @@ import javax.servlet.http.HttpSession;
 @RequiredArgsConstructor
 public class SessionBackedChallengeNonceStore implements ChallengeNonceStore {
 
-    private static final String CHALLENGE_NONCE_KEY = "nonce";
-
     @NonNull
     final ObjectFactory<HttpSession> httpSessionFactory;
 
     @Override
     public void put(ChallengeNonce challengeNonce) {
-        currentSession().setAttribute(CHALLENGE_NONCE_KEY, challengeNonce);
+        currentSession().setWebEidChallengeNonce(challengeNonce);
     }
 
     @Override
     public ChallengeNonce getAndRemoveImpl() {
-        final ChallengeNonce challengeNonce = (ChallengeNonce) currentSession().getAttribute(CHALLENGE_NONCE_KEY);
-        currentSession().removeAttribute(CHALLENGE_NONCE_KEY);
+        TaraSession taraSession = currentSession();
+        final ChallengeNonce challengeNonce = taraSession.getWebEidChallengeNonce();
+        taraSession.setWebEidChallengeNonce(null);
         return challengeNonce;
     }
 
-    private HttpSession currentSession() {
-        return httpSessionFactory.getObject();
+    private TaraSession currentSession() {
+        return (TaraSession) httpSessionFactory.getObject().getAttribute(TaraSession.TARA_SESSION);
     }
 
 }
