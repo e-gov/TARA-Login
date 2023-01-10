@@ -24,7 +24,6 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 
 public class MockSessionFilter implements Filter {
 
-    private static final String CHALLENGE_NONCE_KEY = "nonce";
     private final CsrfMode csrfMode;
 
     @Getter
@@ -102,7 +101,7 @@ public class MockSessionFilter implements Filter {
                                              List<TaraSession.LegalPerson> legalPersonList,
                                              SPType spType,
                                              Map<String, String> shortNameTranslations,
-                                             ChallengeNonce nonce,
+                                             ChallengeNonce webEidChallengeNonce,
                                              TaraSession.AuthenticationResult authenticationResult) {
         Session session = createSession(sessionRepository);
         TaraSession taraSession = MockTaraSessionBuilder.builder()
@@ -115,11 +114,9 @@ public class MockSessionFilter implements Filter {
                 .spType(spType)
                 .shortNameTranslations(shortNameTranslations)
                 .authenticationResult(authenticationResult)
+                .webEidChallengeNonce(webEidChallengeNonce)
                 .build();
         session.setAttribute(TARA_SESSION, taraSession);
-        if (nonce != null) {
-            session.setAttribute(CHALLENGE_NONCE_KEY, nonce);
-        }
         return session;
     }
 

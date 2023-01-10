@@ -15,12 +15,18 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.x509.CRLReason;
 import org.bouncycastle.cert.ocsp.CertificateStatus;
 import org.bouncycastle.cert.ocsp.OCSPResp;
 import org.bouncycastle.cert.ocsp.RevokedStatus;
 import org.bouncycastle.cert.ocsp.UnknownStatus;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.bouncycastle.openssl.jcajce.JceOpenSSLPKCS8DecryptorProviderBuilder;
+import org.bouncycastle.operator.InputDecryptorProvider;
+import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -30,18 +36,19 @@ import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 import org.springframework.test.annotation.DirtiesContext;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
+import java.security.Security;
 import java.security.Signature;
-import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateFactory;
@@ -72,11 +79,11 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @Slf4j
 class IdCardLoginControllerTest extends BaseTest {
     private static final String TEST_NONCE = "dGVzdC1ub25jZQo=";
-    private static final String KEYSTORE_PATH = "id-card/38001085718(TEST_of_ESTEID2018)-keypair.p12";
-    private static final char[] KEYSTORE_PASSWORD = "1234".toCharArray();
     private static final String EXPIRED_CERT_PATH = "id-card/48812040138(TEST_of_ESTEID-SK_2011).pem";
     private static final String NOT_YET_VALID_CERT_PATH = "id-card/not-yet-valid-cert.pem";
-    private static final String KEYSTORE_ENTRY_ALIAS = "1";
+    private static final String VALID_CERT_PATH = "id-card/38001085718(TEST_of_ESTEID2018).cer.pem";
+    private static final String PRIVATE_KEY_PATH = "id-card/38001085718(TEST_of_ESTEID2018).key.pem";
+    private static final String PRIVATE_KEY_PASSWORD = "1234";
     private final AuthConfigurationProperties.Ocsp ocspConfiguration = new AuthConfigurationProperties.Ocsp();
     private static PrivateKey usersPrivateKey;
     private static String base64EncodedUserCertificate;
@@ -89,10 +96,9 @@ class IdCardLoginControllerTest extends BaseTest {
     private AuthConfigurationProperties.IdCardAuthConfigurationProperties configurationProperties;
 
     @BeforeAll
-    public static void setupTestClass() throws KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException, CertificateEncodingException {
-        KeyStore keyStore = loadKeyStore();
-        Certificate certificate = keyStore.getCertificate(KEYSTORE_ENTRY_ALIAS);
-        usersPrivateKey = (PrivateKey) keyStore.getKey(KEYSTORE_ENTRY_ALIAS, KEYSTORE_PASSWORD);
+    public static void setupTestClass() throws CertificateEncodingException {
+        Certificate certificate = loadCertificateFromResource(VALID_CERT_PATH);
+        usersPrivateKey = readPrivateKey(PRIVATE_KEY_PATH, PRIVATE_KEY_PASSWORD);
         base64EncodedUserCertificate = Base64.getEncoder().encodeToString(certificate.getEncoded());
     }
 
@@ -428,7 +434,7 @@ class IdCardLoginControllerTest extends BaseTest {
         TaraSession.AuthenticationResult result = taraSession.getAuthenticationResult();
         assertNull(result.getIdCode());
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
-        assertMessageWithMarkerIsLoggedOnce(IdCardLoginController.class, INFO, "Client-side Web eID operation successful", "tara.webeid.extension_version=2.2.0, tara.webeid.native_app_version=2.0.2+565, tara.webeid.status_duration_ms=200, tara.webeid.code=SUCCESS, tara.webeid.auth_token.unverified_certificate=MIIDgzCCAmsCFDeKo4FqUWu5z0CkXb7tJmbLUyeNMA0GCSqGSIb3DQEBCwUAMHwxCzAJBgNVBAYTAkVFMQ0wCwYDVQQIDARURVNUMQ0wCwYDVQQHDARURVNUMQ0wCwYDVQQKDARURVNUMQ0wCwYDVQQLDARURVNUMQ0wCwYDVQQDDARURVNUMSIwIAYJKoZIhvcNAQkBFhNleGFtcGxlQGV4YW1wbGUuY29tMCIYDzIwNzIxMjE1MjAwOTI4WhgPMjA3NzEyMTUyMDA5MjhaMHwxCzAJBgNVBAYTAkVFMQ0wCwYDVQQIDARURVNUMQ0wCwYDVQQHDARURVNUMQ0wCwYDVQQKDARURVNUMQ0wCwYDVQQLDARURVNUMQ0wCwYDVQQDDARURVNUMSIwIAYJKoZIhvcNAQkBFhNleGFtcGxlQGV4YW1wbGUuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtt96MXoypm+dtGyEdlil12UHmOlmV1cTQJ6FaZ/ZSm6kTpRzDgmKlFaCCKkCuGGhN9/pbFHVqbIA0TofRFRbfmtn0RjaZu3zzQ8ksVkohCbwjl8QHqBOPuT9XoRElPvBqje/0OMJW4Qk8Y6doZ5eKJeSv/zV+RFfftiN8XJtYJeBWFYtFWkyyRQG4etOVGjLocWSI6h1zxrofbSJxWgoyM/SgTqkh+TG8TL/K8HxnlOgDpEphmJ48e+ubzeCL90izs543TN/7zabUDEsFsbWlYwEkwuoQRbrLuoXDIrN3UfyQhFqMELfZaObP+mFGAG/ycCe+Ypzmxoen3a+KZvOiwIDAQABMA0GCSqGSIb3DQEBCwUAA4IBAQAuDNxafWGwlOeSEZU8XdXUnbyxEAQAzCAq09Gg8vYcdKCvelM0qgM7lHnEgZARAETSlvE4e7nuOtndaZfpMhcQUAMIFQqJEx64y7ksY4krzcOIvHmpK4waDzhXyT3K9Xtgk8XSZyTeYPBRDuTj6TYbsUQHvcHpE0neWtsZEde6Tn8TpYzeyE8bUi9RZFn4xZaeXDj0f0jO5JJRCRkVDn508DzDZPx2qsDT1IWPWHDnbSvgM8+7oFVI4NMhcFr1km+mkhNWqjaHsfu9AU4V2gy78qle7Lh8hfE3NNx2Y93ASh+WI2MhTKqIrhjzMdXSPVA892uIu9TbbcxJDUBfIDSL, tara.webeid.auth_token.signature=");
+        assertMessageWithMarkerIsLoggedOnce(IdCardLoginController.class, INFO, "Client-side Web eID operation successful", "tara.webeid.extension_version=2.2.0, tara.webeid.native_app_version=2.0.2+565, tara.webeid.status_duration_ms=200, tara.webeid.code=SUCCESS, tara.webeid.auth_token.unverified_certificate=MIIDhTCCAm0CFDKUIdM1Dd0ogPQbFsB5H4LRMJTcMA0GCSqGSIb3DQEBCwUAMH0xCzAJBgNVBAYTAkVFMQ0wCwYDVQQIDARURVNUMQ4wDAYDVQQHDAVURVNUIDENMAsGA1UECgwEVEVTVDENMAsGA1UECwwEVEVTVDENMAsGA1UEAwwEVEVTVDEiMCAGCSqGSIb3DQEJARYTZXhhbXBsZUBleGFtcGxlLmNvbTAiGA8yMDcyMTIyODA4MDk1NFoYDzIwNzcxMjI4MDgwOTU0WjB9MQswCQYDVQQGEwJFRTENMAsGA1UECAwEVEVTVDEOMAwGA1UEBwwFVEVTVCAxDTALBgNVBAoMBFRFU1QxDTALBgNVBAsMBFRFU1QxDTALBgNVBAMMBFRFU1QxIjAgBgkqhkiG9w0BCQEWE2V4YW1wbGVAZXhhbXBsZS5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDK4YH45a9WVapQ99qHJpD33D4A+cVGvrre6US4fuLivod1Z6V/p2wbf482kxNOkDQn87gtYGQnC8BH6OFpIpFSqJQfdhX/C513C/De5zjtlay8QNraaAJezAFi4IjpKeWLt7hu5GB403mSbJroyW+JzcEmnmWDE11MOFAxCDa8d9tFTuKRzEBwZjq70W++zr2DfSODkTzKjOarRTqZVQBTpyevF6x+Lvs02W4iRlIOvjCGNPT1YRcJ6Atrb+rZlON021lYen+1ZIoTt8xj7JVOuOb0AbEDzl2DYnOuhGzOaUuxGAigGXoT2DrDPLOZE66Jvy7yaXXhHFlPLQns45yzAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAJKLbM8vpkxsZNIgGE5lKOGXlDqVKD/qLNWKXaPriDiTQnP5uZTnQyjyDY9T0rwONTK8W/TkFgOO7olACOLg4GHfqsqGn2WuULQRzvLma2kDGXnPTzOXyPApZ4EckEfROaqOTqNAq051+cs/sOm7fKlr8ItkP0JGcil+kjWfQlekxhGLWGz2zvt8FXlaDKGbeihgMIEgAnHhpS3zy0epQyR4lo4G7upSUF0avNNlRbKgFgKts37BcjErkjgIZBbXJA/j14k9HbZCzDZfyjCLZEWpzxOb6a0tu9jisBLTay7PLHJHJE7Cmet5i+zfVSWPYWn9jpzoXRnZheKF+kx8kEo=, tara.webeid.auth_token.signature=");
         assertWarningIsLogged("Token validation was interrupted:");
         assertWarningIsLogged("Validation failed: User certificate is not yet valid");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_CERT_NOT_YET_VALID)");
@@ -814,20 +820,33 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @SneakyThrows
-    private static KeyStore loadKeyStore() {
-        KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        try (InputStream inputStream = IdCardLoginControllerTest.class.getClassLoader().getResourceAsStream(KEYSTORE_PATH)) {
-            keyStore.load(inputStream, KEYSTORE_PASSWORD);
-        }
-        return keyStore;
-    }
-
-    @SneakyThrows
-    private X509Certificate loadCertificateFromResource(String resourcePath) {
+    private static X509Certificate loadCertificateFromResource(String resourcePath) {
         try (InputStream inputStream = IdCardLoginControllerTest.class.getClassLoader().getResourceAsStream(resourcePath)) {
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
             return (X509Certificate) cf.generateCertificate(inputStream);
         }
+    }
+
+    @SneakyThrows
+    private static PrivateKey readPrivateKey(String privateKeyPath, String keyPassword) {
+        Object keyPair;
+        try(InputStream is = IdCardLoginControllerTest.class.getClassLoader().getResourceAsStream(privateKeyPath)) {
+            Reader reader = new BufferedReader(new InputStreamReader(is));
+            PEMParser keyReader = new PEMParser(reader);
+            keyPair = keyReader.readObject();
+            keyReader.close();
+        }
+
+        BouncyCastleProvider securityProvider = new BouncyCastleProvider();
+        Security.addProvider(securityProvider);
+        PKCS8EncryptedPrivateKeyInfo encryptedPrivateKeyInfo = (PKCS8EncryptedPrivateKeyInfo) keyPair;
+        InputDecryptorProvider pkcs8Prov = new JceOpenSSLPKCS8DecryptorProviderBuilder()
+                .setProvider(securityProvider)
+                .build(keyPassword.toCharArray());
+        PrivateKeyInfo privateKeyInfo = encryptedPrivateKeyInfo.decryptPrivateKeyInfo(pkcs8Prov);
+
+        JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("SunEC");
+        return converter.getPrivateKey(privateKeyInfo);
     }
 
     @SneakyThrows

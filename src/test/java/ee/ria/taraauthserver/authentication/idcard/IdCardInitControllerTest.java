@@ -6,7 +6,6 @@ import ee.ria.taraauthserver.session.MockSessionFilter;
 import ee.ria.taraauthserver.session.MockSessionFilter.CsrfMode;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
-import eu.webeid.security.challenge.ChallengeNonce;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -23,8 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
 class IdCardInitControllerTest extends BaseTest {
-
-    private static final String CHALLENGE_NONCE_KEY = "nonce";
 
     @Autowired
     private SessionRepository<Session> sessionRepository;
@@ -130,6 +127,7 @@ class IdCardInitControllerTest extends BaseTest {
     }
 
     private String getNonceFromSession(String sessionId) {
-        return ((ChallengeNonce) sessionRepository.findById(sessionId).getAttribute(CHALLENGE_NONCE_KEY)).getBase64EncodedNonce();
+        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        return taraSession.getWebEidChallengeNonce().getBase64EncodedNonce();
     }
 }

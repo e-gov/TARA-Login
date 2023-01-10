@@ -9,6 +9,7 @@ import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
+import eu.webeid.security.challenge.ChallengeNonce;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -62,6 +63,7 @@ public class TaraSession implements Serializable {
     private List<LegalPerson> legalPersonList;
     private LegalPerson selectedLegalPerson;
     private String consentChallenge;
+    private ChallengeNonce webEidChallengeNonce;
 
     public void setState(TaraAuthenticationState newState) {
         if (state == null || !state.equals(newState)) {
