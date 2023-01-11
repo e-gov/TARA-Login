@@ -49,11 +49,11 @@
   color: #5d6071;
   text-align: right;
   line-height: 1;
+  font-weight: 500;
   @media (max-width: $breakpoint-mobile) {
     margin-bottom: 10px;
     padding: 0;
     text-align: left;
-    font-weight: 500;
   }
 }
 .form-control {

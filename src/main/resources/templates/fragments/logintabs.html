@@ -29,6 +29,16 @@
      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
     <div class="c-tab-login__content" th:classappend="${static} ? is-active : ''" th:data-tab="${tab_id}">
         <br th:if="${not #lists.isEmpty(alerts)}">
+        <div class="c-header__mobile" xmlns:th="http://www.w3.org/1999/xhtml">
+            <div class="container">
+                <div class="c-header__logo">
+                    <div class="c-header__logo-link">
+                        <img th:src="#{logo.header.tara}" aria-hidden="true" alt="">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="logo-separator-mobile"></div>
         <div class="c-tab-login__content-wrap">
             <div class="c-tab-login__content-icon" aria-hidden="true">
                 <img class="icon" th:if="${@thymeleafSupport.getServiceLogo() != null}" th:src="${'data:image/svg+xml;base64,' + @thymeleafSupport.getServiceLogo()}">

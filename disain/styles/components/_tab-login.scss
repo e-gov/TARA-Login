@@ -192,7 +192,8 @@
       color: #34394c;
       font-weight: 400;
       @media (max-width: $breakpoint-mobile) {
-        display: none;
+        font-size: 20px;
+        margin-bottom: 20px;
       }
     }
     p {

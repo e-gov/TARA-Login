@@ -143,6 +143,15 @@ body.is-mobile-subview {
       }
     }
 }
+.logo-separator-mobile {
+    background-color: #dbdfe2;
+    height: 20px;
+    margin: 0px -15px 0 -15px;
+    display: none;
+    @media (max-width: $breakpoint-mobile) {
+      display: block;
+    }
+}
 
 // Helpers
 .d-flex {

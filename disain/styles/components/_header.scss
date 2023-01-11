@@ -8,6 +8,12 @@
   &__logo {
     line-height: 1;
   }
+  &__mobile {
+    display: none;
+    @media (max-width: $breakpoint-mobile) {
+      display: block;
+    }
+  }
   &__logo-link {
     display: inline-flex;
     align-items: center;
