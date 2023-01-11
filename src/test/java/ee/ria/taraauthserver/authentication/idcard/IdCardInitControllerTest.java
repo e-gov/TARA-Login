@@ -18,6 +18,7 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.matchesPattern;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
@@ -50,24 +51,19 @@ class IdCardInitControllerTest extends BaseTest {
     @Tag(value = "ESTEID_INIT")
     // TODO: AUT-1057: Add new tags?
     void handleRequest_MissingSession_Fails() {
-        MockSessionFilter mockSessionFilter = MockSessionFilter
-                .withoutTaraSession()
-                .sessionRepository(sessionRepository)
-                .csrfMode(CsrfMode.HEADER)
-                .build();
         given()
-                .filter(mockSessionFilter)
                 .when()
                 .post("/auth/id/init")
                 .then()
                 .assertThat()
-                .statusCode(400)
-                .body("message", equalTo("Teie seanssi ei leitud! Seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
-                .body("error", equalTo("Bad Request"))
+                .statusCode(403)
+                .header("Set-Cookie", nullValue())
+                .body("message", equalTo("Keelatud päring. Päring esitati topelt, seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
+                .body("error", equalTo("Forbidden"))
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36}"))
                 .body("reportable", equalTo(false));
 
-        assertErrorIsLogged("User exception: Invalid session");
+        assertErrorIsLogged("Access denied: Invalid CSRF token.");
         assertStatisticsIsNotLogged();
     }
 

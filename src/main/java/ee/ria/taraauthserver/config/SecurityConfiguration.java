@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.config;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import ee.ria.taraauthserver.security.NoSessionCreatingHttpSessionCsrfTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
@@ -11,18 +12,24 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.csrf.CsrfException;
+import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
-import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+
+import static ee.ria.taraauthserver.authentication.eidas.EidasCallbackController.EIDAS_CALLBACK_REQUEST_MAPPING;
 
 @Slf4j
 @EnableWebSecurity
@@ -44,7 +51,7 @@ public class SecurityConfiguration {
                 .httpBasic().disable()
                 .servletApi().disable()
                 .sessionManagement().disable()
-                .csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository()))
+                .csrf(this::configureCsrf)
                 .headers()
                 .xssProtection().xssProtectionEnabled(false)
                 .and()
@@ -55,6 +62,13 @@ public class SecurityConfiguration {
                 .includeSubDomains(true)
                 .maxAgeInSeconds(16070400);
         return http.build();
+    }
+
+    private void configureCsrf(CsrfConfigurer<HttpSecurity> csrf) {
+        csrf.csrfTokenRepository(csrfTokenRepository())
+                .requireCsrfProtectionMatcher(new AndRequestMatcher(
+                        CsrfFilter.DEFAULT_CSRF_MATCHER,
+                        new NegatedRequestMatcher(new AntPathRequestMatcher(EIDAS_CALLBACK_REQUEST_MAPPING))));
     }
 
     @Bean
@@ -68,9 +82,7 @@ public class SecurityConfiguration {
 
     @Bean
     public CsrfTokenRepository csrfTokenRepository() {
-        HttpSessionCsrfTokenRepository tokenRepository = new HttpSessionCsrfTokenRepository();
-        tokenRepository.setSessionAttributeName(TARA_SESSION_CSRF_TOKEN);
-        return tokenRepository;
+        return new NoSessionCreatingHttpSessionCsrfTokenRepository();
     }
 
     static class CustomAccessDeniedHandler implements AccessDeniedHandler {
