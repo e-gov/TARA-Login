@@ -1,0 +1,16 @@
+<div class="container" xmlns:th="http://www.w3.org/1999/xhtml">
+    <div class="c-tab-login__content-wrap">
+        <div class="c-tab-login__content-icon" aria-hidden="true">
+            <img class="icon" th:if="${@thymeleafSupport.getServiceLogo() != null}" th:src="${'data:image/svg+xml;base64,' + @thymeleafSupport.getServiceLogo()}">
+        </div>
+        <div class="c-tab-login__content-wait">
+            <div role="heading" aria-level="2">
+                <h2 th:utext="${#messages.msg('label.id-card.title')}"></h2>
+            </div>
+            <p th:utext="${#messages.msg('label.id-card.wait')}"></p>
+            <button role="button" type="button" class="c-btn c-btn--cancel" th:text="#{label.common.cancel}">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>

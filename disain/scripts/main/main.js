@@ -1,5 +1,6 @@
 jQuery(function ($) {
 	'use strict';
+	var webEidLoadingCancelledByUser = false;
 	
 	// Hide nav bar in desktop mode and display authentication method content in mobile mode if less than 2 auth methods
 	if ($('.c-tab-login__nav-link').length < 2) {
@@ -155,16 +156,16 @@ jQuery(function ($) {
 	// ID-card form submit
 	$('#idCardForm button.c-btn--primary').on('click', async function(event){
 		event.preventDefault();
-		const loginButtonElement = $(this);
+		const waitCancelButton = $('#id-card-wait button.c-btn--cancel');
 		const csrfToken = document.querySelector("input[name='_csrf']").getAttribute('value');
 
-		if (loginButtonElement.prop('disabled')) {
-			return;
-		}
-		loginButtonElement.prop('disabled', true);
-
+		showWebEidWaitMessage();
 		try {
 			let webEidInfo = await detectWebEid();
+			if (webEidLoadingCancelledByUser) {
+				webEidLoadingCancelledByUser = false;
+				return;
+			}
 			if (webEidInfo.code !== 'SUCCESS') {
 				handleWebEidJsError(csrfToken, webEidInfo);
 				return;
@@ -177,18 +178,28 @@ jQuery(function ($) {
 					'X-CSRF-TOKEN': csrfToken
 				}
 			});
+			if (webEidLoadingCancelledByUser) {
+				webEidLoadingCancelledByUser = false;
+				return;
+			}
 			if (!nonceResponse.ok) {
 				await handleIdCardBackendError(nonceResponse);
 				return;
 			}
 			const {nonce} = await nonceResponse.json();
+			if (webEidLoadingCancelledByUser) {
+				webEidLoadingCancelledByUser = false;
+				return;
+			}
+			// We can't cancel webeid.authenticate() once it's in progress, so we disable the "Cancel" button before executing that function.
+			waitCancelButton.prop('disabled', true);
 			const lang = document.documentElement.lang;
 			let authToken;
 			try {
 				authToken = await webeid.authenticate(nonce, {lang});
 			} catch (error) {
 				if (error.code === 'ERR_WEBEID_USER_CANCELLED') {
-					loginButtonElement.prop('disabled', false);
+					hideWebEidWaitMessage();
 				} else {
 					webEidInfo.code = error.code;
 					handleWebEidJsError(csrfToken, webEidInfo);
@@ -224,6 +235,13 @@ jQuery(function ($) {
 		}
 
 		$('#idCardForm').submit();
+	});
+
+	// Button to cancel waiting in ID-card form
+	$('#id-card-wait button.c-btn--cancel').on('click', async function(event){
+		event.preventDefault();
+		webEidLoadingCancelledByUser = true;
+		hideWebEidWaitMessage();
 	});
 
 	async function handleWebEidJsError(csrfToken, webEidInfo) {
@@ -417,6 +435,26 @@ jQuery(function ($) {
         feedback.removeAttr('role');
         feedback.addClass('is-hidden');
     }
+
+	function showWebEidWaitMessage() {
+		const waitCancelButton = $('#id-card-wait button.c-btn--cancel');
+		const contentDiv = $('.c-layout--full > .container');
+		const waitDiv = $('#id-card-wait');
+		waitCancelButton.prop('disabled', false);
+        contentDiv.addClass('hidden');
+		contentDiv.attr('aria-hidden', 'true');
+        waitDiv.removeClass('hidden');
+		waitDiv.removeAttr('aria-hidden');
+	}
+
+	function hideWebEidWaitMessage() {
+		const contentDiv = $('.c-layout--full > .container');
+		const waitDiv = $('#id-card-wait');
+		waitDiv.attr('aria-hidden', 'true');
+        waitDiv.addClass('hidden');
+        contentDiv.removeClass('hidden');
+		contentDiv.removeAttr('aria-hidden');
+	}
 
 	async function detectWebEid() {
 		let webEidInfo = {
