@@ -159,7 +159,9 @@ jQuery(function ($) {
 		const waitCancelButton = $('#id-card-wait button.c-btn--cancel');
 		const csrfToken = document.querySelector("input[name='_csrf']").getAttribute('value');
 
-		showWebEidWaitMessage();
+		activateIdCardView('wait', 'popup');
+		waitCancelButton.prop('disabled', false);
+
 		try {
 			let webEidInfo = await detectWebEid();
 			if (webEidLoadingCancelledByUser) {
@@ -199,7 +201,7 @@ jQuery(function ($) {
 				authToken = await webeid.authenticate(nonce, {lang});
 			} catch (error) {
 				if (error.code === 'ERR_WEBEID_USER_CANCELLED') {
-					hideWebEidWaitMessage();
+					activateIdCardView('form')
 				} else {
 					webEidInfo.code = error.code;
 					handleWebEidJsError(csrfToken, webEidInfo);
@@ -207,6 +209,7 @@ jQuery(function ($) {
 				return;
 			}
 
+			activateIdCardView('wait', 'login');
 			const authTokenResponse = await fetch('/auth/id/login', {
 				method: 'POST',
 				headers: {
@@ -225,12 +228,16 @@ jQuery(function ($) {
 				await handleIdCardBackendError(authTokenResponse);
 				return;
 			}
-		// Handle 'await fetch()' errors
+		// Handle 'await fetch()' errors, except if the user has cancelled waiting for Web eID
 		} catch (error) {
+			if (webEidLoadingCancelledByUser) {
+				webEidLoadingCancelledByUser = false;
+				return;
+			}
 			$('#idc-ajax-error-message').show();
 			$('#error-incident-number-wrapper').hide();
 			$('#error-report-url').hide();
-			displayIdCardError();
+			activateIdCardView('error');
 			return;
 		}
 
@@ -241,7 +248,7 @@ jQuery(function ($) {
 	$('#id-card-wait button.c-btn--cancel').on('click', async function(event){
 		event.preventDefault();
 		webEidLoadingCancelledByUser = true;
-		hideWebEidWaitMessage();
+		activateIdCardView('form');
 	});
 
 	async function handleWebEidJsError(csrfToken, webEidInfo) {
@@ -298,19 +305,7 @@ jQuery(function ($) {
 			.replace('{2}', hostName);
 		$('#error-report-notification').html(errorReportNotificationMessage);
 
-		displayIdCardError();
-	}
-
-	function displayIdCardError() {
-		const contentsElement = $('.c-layout--full > .container');
-		const languageSelectionElement = $('.c-lang-list');
-		const idCardErrorElement = $('#id-card-error');
-		contentsElement.attr('aria-hidden', 'true');
-		contentsElement.hide();
-		languageSelectionElement.attr('aria-hidden', 'true');
-		languageSelectionElement.hide();
-		idCardErrorElement.removeAttr('aria-hidden');
-		idCardErrorElement.show();
+		activateIdCardView('error');
 	}
 
 	// Mobile-ID limit max length
@@ -436,26 +431,6 @@ jQuery(function ($) {
         feedback.addClass('is-hidden');
     }
 
-	function showWebEidWaitMessage() {
-		const waitCancelButton = $('#id-card-wait button.c-btn--cancel');
-		const contentDiv = $('.c-layout--full > .container');
-		const waitDiv = $('#id-card-wait');
-		waitCancelButton.prop('disabled', false);
-        contentDiv.addClass('hidden');
-		contentDiv.attr('aria-hidden', 'true');
-        waitDiv.removeClass('hidden');
-		waitDiv.removeAttr('aria-hidden');
-	}
-
-	function hideWebEidWaitMessage() {
-		const contentDiv = $('.c-layout--full > .container');
-		const waitDiv = $('#id-card-wait');
-		waitDiv.attr('aria-hidden', 'true');
-        waitDiv.addClass('hidden');
-        contentDiv.removeClass('hidden');
-		contentDiv.removeAttr('aria-hidden');
-	}
-
 	async function detectWebEid() {
 		let webEidInfo = {
 			code: '',
@@ -483,6 +458,44 @@ jQuery(function ($) {
 		return webEidInfo;
 	}
 
+    function activateIdCardView(viewName, subviewName = null) {
+		const formSelector = '.c-layout--full > .container';
+		const waitMessageSelector = '#id-card-wait';
+		const errorMessageSelector = '#id-card-error';
+		const languageSelectionSelector = '.c-header-bar nav[role=navigation]';
+    	const visibleElementsInViews = {
+    		form: [formSelector, languageSelectionSelector].join(','),
+			wait: waitMessageSelector,
+			error: errorMessageSelector
+		}
+
+    	if (! (viewName in visibleElementsInViews)) {
+    		console.error('Invalid name for view: ' + viewName);
+    		return;
+		}
+
+		for (const [view, selector] of Object.entries(visibleElementsInViews)) {
+			if (view === viewName) {
+				unhideElements($(selector));
+			} else {
+				hideElements($(selector));
+			}
+		}
+
+		if (viewName === 'wait') {
+			const waitCancelButton = $('#id-card-wait button.c-btn--cancel');
+			const waitPopupText = $('#id-card-wait-popup');
+			const waitLoginText = $('#id-card-wait-login');
+			if (subviewName === 'popup') {
+				hideElements(waitLoginText);
+				unhideElements(waitPopupText, waitCancelButton);
+			} else {
+				hideElements(waitPopupText, waitCancelButton);
+				unhideElements(waitLoginText);
+			}
+		}
+    }
+
     function activateTab(link, content, warning) {
 		link.parent().attr('aria-selected', true);
 		link.addClass('is-active');
@@ -500,6 +513,20 @@ jQuery(function ($) {
         warning.attr('aria-hidden', true);
         warning.removeClass('is-active');
     }
+
+    function hideElements(...elements) {
+    	for (const element of elements) {
+			element.attr('aria-hidden', 'true');
+			element.addClass('hidden');
+		}
+	}
+
+    function unhideElements(...elements) {
+    	for (const element of elements) {
+			element.attr('aria-hidden', 'false');
+			element.removeClass('hidden');
+		}
+	}
 
     function getCurrentBrowser() {
         return navigator.userAgent;

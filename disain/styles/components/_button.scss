@@ -11,6 +11,9 @@
     padding: 12px 35px;
     font-size: 18px;
   }
+  &.hidden {
+    display: none;
+  }
   &--primary {
     color: #fff;
     background-color: #008936;
