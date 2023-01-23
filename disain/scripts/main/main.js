@@ -169,16 +169,17 @@ jQuery(function ($) {
 				return;
 			}
 			if (webEidInfo.code !== 'SUCCESS') {
-				handleWebEidJsError(csrfToken, webEidInfo);
+				await handleWebEidJsError(csrfToken, webEidInfo);
 				return;
 			}
 
-			const nonceResponse = await fetch('/auth/id/init', {
+			const nonceResponse = await fetchWithTimeout('/auth/id/init', {
 				method: 'POST',
 				headers: {
 					'Accept': 'application/json',
 					'X-CSRF-TOKEN': csrfToken
-				}
+				},
+				timeoutMs: 20000
 			});
 			if (webEidLoadingCancelledByUser) {
 				webEidLoadingCancelledByUser = false;
@@ -210,13 +211,14 @@ jQuery(function ($) {
 			}
 
 			activateIdCardView('wait', 'login');
-			const authTokenResponse = await fetch('/auth/id/login', {
+			const authTokenResponse = await fetchWithTimeout('/auth/id/login', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 					'Accept': 'application/json',
 					'X-CSRF-TOKEN': csrfToken
 				},
+				timeoutMs: 20000,
 				body: JSON.stringify({
 					authToken: authToken,
 					statusDurationMs: webEidInfo.statusDurationMs,
@@ -230,6 +232,7 @@ jQuery(function ($) {
 			}
 		// Handle 'await fetch()' errors, except if the user has cancelled waiting for Web eID
 		} catch (error) {
+			console.error(error);
 			if (webEidLoadingCancelledByUser) {
 				webEidLoadingCancelledByUser = false;
 				return;
@@ -251,6 +254,18 @@ jQuery(function ($) {
 		activateIdCardView('form');
 	});
 
+	async function fetchWithTimeout(resource, options = {}) {
+		const { timeoutMs = 20000 } = options;
+		const abortController = new AbortController();
+		const timerId = setTimeout(() => abortController.abort(), timeoutMs);
+		const response = await fetch(resource, {
+			...options,
+			signal: abortController.signal
+		});
+		clearTimeout(timerId);
+		return response;
+	}
+
 	async function handleWebEidJsError(csrfToken, webEidInfo) {
 		// Response from /auth/id/error endpoint is never 200 OK,
 		// but an HTTP error code with error details in the following format:
@@ -265,13 +280,14 @@ jQuery(function ($) {
 		// 	 'incident_nr': 'a2ae9f4e7fa1f237b5b402c3c96c5f70',
 		// 	 'reportable': true
 		// }
-		const response = await fetch('/auth/id/error', {
+		const response = await fetchWithTimeout('/auth/id/error', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
 				'Accept': 'application/json',
 				'X-CSRF-TOKEN': csrfToken
 			},
+			timeoutMs: 20000,
 			body: JSON.stringify({
 				code: webEidInfo.code,
 				extensionVersion: webEidInfo.extensionVersion,
