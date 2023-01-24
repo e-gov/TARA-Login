@@ -49,6 +49,7 @@ public enum ErrorCode {
     EIDAS_COUNTRY_NOT_SUPPORTED("message.eidas.not-allowed-country"),
     EIDAS_USER_CONSENT_NOT_GIVEN("message.eidas.error.user-consent-not-given"),
     EIDAS_AUTHENTICATION_FAILED("message.eidas.error.authentication-failed"),
+    EIDAS_INCORRECT_LOA("message.eidas.error.incorrect-loa"),
     EIDAS_INTERNAL_ERROR("message.eidas.error.internal-error"),
     INVALID_OIDC_CLIENT("message.error.invalid-oidc-client"),
     INVALID_OIDC_REQUEST("message.error.invalid-oidc-request"),

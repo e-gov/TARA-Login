@@ -274,6 +274,43 @@ class EidasCallbackControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "EIDAS_AUTH_CALLBACK_RESPONSE_HANDLING")
+    void eidasAuthCallback_returnUrl_response_401_incorrect_loa() {
+        createEidasCountryStub("mock_responses/eidas/eidas-countries-response.json", 200);
+        createEidasReturnUrlStub("mock_responses/eidas/eidas-returnurl-response-401-incorrect-loa.json", 401);
+        TaraSession.EidasAuthenticationResult eidasAuthenticationResult = new TaraSession.EidasAuthenticationResult();
+        eidasAuthenticationResult.setRelayState(UUID.randomUUID().toString());
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(EIDAS))
+                .authenticationResult(eidasAuthenticationResult)
+                .authenticationState(TaraAuthenticationState.WAITING_EIDAS_RESPONSE).build();
+        eidasRelayStateCache.put(MOCK_RELAY_STATE_VALUE, sessionFilter.getSession().getId());
+
+        given()
+                .filter(sessionFilter)
+                .when()
+                .formParam("RelayState", MOCK_RELAY_STATE_VALUE)
+                .formParam("SAMLResponse", "123test")
+                .post("/auth/eidas/callback")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Teie poolt valitud välisriigi autentimisvahend on teenuse poolt nõutust madalama autentimistasemega. Palun valige mõni muu autentimisvahend."))
+                .body("error", equalTo("Bad Request"));
+
+        assertWarningIsLogged("Session has been invalidated: " + sessionFilter.getSession().getId());
+        assertErrorIsLogged("User exception: 401 Unauthorized:");
+        assertMessageWithMarkerIsLoggedOnce(EidasCallbackController.class, INFO, "EIDAS request", "http.request.method=POST, url.full=https://localhost:9877/returnUrl, http.request.body.content={\"SAMLResponse\":\"123test\"}");
+        assertMessageWithMarkerIsLoggedOnce(RestTemplateErrorLogger.class, ERROR, "EIDAS response: 401", "http.response.status_code=401, http.response.body.content={\n" +
+                "  \"error\": \"Unauthorized\",\n" +
+                "  \"message\": \"202019 - Incorrect Level of Assurance in IdP response\",\n" +
+                "  \"status\": \"urn:oasis:names:tc:SAML:2.0:status:Responder\"\n" +
+                "}");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=EIDAS_INCORRECT_LOA)");
+    }
+
+    @Test
+    @Tag(value = "EIDAS_AUTH_CALLBACK_RESPONSE_HANDLING")
     void eidasAuthCallback_returnUrl_response_404() {
         createEidasCountryStub("mock_responses/eidas/eidas-countries-response.json", 200);
         createEidasReturnUrlStub(404);
