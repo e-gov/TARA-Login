@@ -163,7 +163,20 @@ jQuery(function ($) {
 		waitCancelButton.prop('disabled', false);
 
 		try {
-			let webEidInfo = await detectWebEid();
+			const nonceResponsePromise = fetchWithTimeout('/auth/id/init', {
+				method: 'POST',
+				headers: {
+					'Accept': 'application/json',
+					'X-CSRF-TOKEN': csrfToken
+				},
+				timeoutMs: 20000
+			});
+			// We are checking Web eID status in parallel with /auth/id/init request to reduce time the user has to wait.
+			// If Web eID status check fails, we won't wait for /auth/id/init request to finish, but fail immediately
+			// (the request will still finish in the background, but its response will be ignored).
+			// If the request finishes before the status check, we wait for the result of status check before deciding
+			// whether to proceed or fail.
+			const webEidInfo = await detectWebEid();
 			if (webEidLoadingCancelledByUser) {
 				webEidLoadingCancelledByUser = false;
 				return;
@@ -172,15 +185,7 @@ jQuery(function ($) {
 				await handleWebEidJsError(csrfToken, webEidInfo);
 				return;
 			}
-
-			const nonceResponse = await fetchWithTimeout('/auth/id/init', {
-				method: 'POST',
-				headers: {
-					'Accept': 'application/json',
-					'X-CSRF-TOKEN': csrfToken
-				},
-				timeoutMs: 20000
-			});
+			const nonceResponse = await nonceResponsePromise;
 			if (webEidLoadingCancelledByUser) {
 				webEidLoadingCancelledByUser = false;
 				return;
