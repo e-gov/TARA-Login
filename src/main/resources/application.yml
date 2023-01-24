@@ -7,8 +7,6 @@ spring:
       # SessionRepositoryFilter should be invoked before other filters so, that
       # Spring Session backed HttpSession implementation is available to subsequent filters.
       filter-order: -2147483648
-  mvc:
-    static-path-pattern: /content/**
 
 management:
   health:

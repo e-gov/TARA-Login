@@ -5,8 +5,6 @@ spring:
     timeout: 60s
     servlet:
       filter-order: -2147483648
-  mvc:
-    static-path-pattern: /content/**
 
 management:
   health:
