@@ -35,7 +35,6 @@ import static ee.ria.taraauthserver.authentication.eidas.EidasCallbackController
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfiguration {
-    public static final String TARA_SESSION_CSRF_TOKEN = "tara.csrf";
     private final AuthConfigurationProperties authConfigurationProperties;
 
     @Bean

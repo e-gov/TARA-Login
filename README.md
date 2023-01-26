@@ -181,16 +181,18 @@ Table 1.4.3 - Integration with the [SK SID service](https://github.com/SK-EID/sm
 <a name="esteid_conf"></a>
 ### 1.5 ID-card auth method
 
-ID-card authentication by itself is meant to be implemented in cooperation with a reverse proxy or a firewall in front of the login service. User identification process is started as a tls handshake that requires a client certificate issued by a particular CA (TLS client is the user's browser which has access to the user's ID-card). When successful, the user's X509 certificate should be forwarded to /auth/id endpoint in a custom HTTP header `XCLIENTCERTIFICATE`.
+ID-card authentication has been implemented using Web eID, which consists of a JavaScript library, a browser plugin and the native application to access the ID card.
+The authentication process is started by requesting a nonce from /auth/id/init endpoint. This nonce is put together with the site's URL in browser and signed with user's private key. The signature together with user's authentication certificate is sent to /auth/id/login endpoint, which validates both the certificate and the signature.
 
 Table 1.5.1 - Enabling ID-card authentication
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.auth-methods.id-card.enabled` | No | Enable or disable Id-card authentication method. Default `false` |
+| `site-origin` | Yes | URL of the web site where TARA login service is set up. This is used to check whether the signatures originate from the correct web site. Example: https://example.com |
 
 
-Table 1.5.2 - Assignig the Level of assurance to authentication method
+Table 1.5.2 - Assigning the Level of assurance to authentication method
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
@@ -232,6 +234,7 @@ tara:
     id-card:
       enabled: true
       level-of-assurance: HIGH
+      site-origin: https://example.com
       truststore-path: file:src/test/resources/idcard-truststore-test.p12
       truststore-type: PKCS12
       truststore-password: changeit
@@ -258,6 +261,7 @@ tara:
     id-card:
       enabled: true
       level-of-assurance: HIGH
+      site-origin: https://example.com
       truststore-path: file:src/test/resources/idcard-truststore-test.p12
       truststore-type: PKCS12
       truststore-password: changeit
@@ -294,6 +298,7 @@ tara:
     id-card:
       enabled: true
       level-of-assurance: HIGH
+      site-origin: https://example.com
       truststore-path: file:src/test/resources/idcard-truststore-test.p12
       truststore-type: PKCS12
       truststore-password: changeit
@@ -326,19 +331,6 @@ tara:
           url: http://ocsp.sk.ee/          
           responder-certificate-cn: SK OCSP RESPONDER 2011  
 ````
-
-<a name="esteid_basic_auth_conf"></a>
-Table 1.5.6 - Basic auth configuration
-
-Additional HTTP basic authentication can be enabled for `/auth/id` endpoint. To safeguard the `/auth/id` endpoint against potential configuration and deployment related errors that could allow users to access `/auth/id` endpoint directly. This is a precautionary measure which, when enabled, does not allow presenting the user certificate directly to the login service.
-
-ID-card auth endpoint is meant to be accessed behind a firewall, therefore basic auth configuration option is available with the following properties:
-
-| Parameter        | Mandatory | Description, example |
-| :---------------- | :---------- | :----------------|
-| `tara.auth-methods.id-card.basic-auth.enabled` | No | Enables or disables basic auth on /auth/id endpoint. Defaults to `false` if not specified. |
-| `tara.auth-methods.id-card.basic-auth.username` | No | Username to access /auth/id endpoint |
-| `tara.auth-methods.id-card.basic-auth.password` | No | Password to access /auth/id endpoint |
 
 <a name="eidas_conf"></a>
 ### 1.6 Eidas auth method

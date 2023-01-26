@@ -431,18 +431,13 @@ paths:
               schema:
                 type: string
                 example: 'The HTML error view is displayed'
-  /auth/id:
-    get:
+  /auth/id/init:
+    post:
       tags:
         - id-card
-      summary: ID-card authentication
+      summary: Starts ID-card authentication
       operationId: idCardAuthenticationInit
-      description: |
-        Performs additional checks on the ID-card's user certificate.
-
-        Use a reverse-proxy of firewall to conduct a two-way TLS handshake prior to connecting this endpoint.
-
-        NB! Important - NEVER expose this endpoint directly to the public. Always remove XCLIENTCERTIFICATE header sent directly from the client.
+      description: Initializes ID-card authentication by returning a single-use nonce.
       parameters:
         - name: Session cookie
           in: header
@@ -456,37 +451,213 @@ paths:
           description: Locale cookie
           schema:
             type: string
-        - name: XCLIENTCERTIFICATE
+        - name: X-CSRF-TOKEN
           in: header
           required: true
-          description: User's certificate from ID-card
+          description: CSRF token
           schema:
             type: string
+            example: 'c316e550-23e3-4fee-8cee-f8079a630fba'
       responses:
         '200':
-          description: JSON response with validation result
+          description: JSON response with nonce
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  name:
+                  nonce:
+                    type: string
+                    example: nbFRWBKan0tafR4LBcGPkLAuNXbZc0U134u1P9Qlxfw=
+        '400':
+          description: Bad request. Incorrect authentication state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdCardErrorResponse'
+        '403':
+          description: Forbidden (invalid CSRF token or missing session)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdCardErrorResponse'
+  /auth/id/login:
+    post:
+      tags:
+        - id-card
+      summary: Finalizes ID-card authentication
+      operationId: idCardAuthenticationLogin
+      description: Receives an authentication token including user's certificate and signed nonce and validates that token.
+      parameters:
+        - name: Session cookie
+          in: header
+          required: true
+          description: Session cookie
+          schema:
+            type: string
+        - name: Locale cookie
+          in: header
+          required: false
+          description: Locale cookie
+          schema:
+            type: string
+        - name: X-CSRF-TOKEN
+          in: header
+          required: true
+          description: CSRF token
+          schema:
+            type: string
+            example: 'c316e550-23e3-4fee-8cee-f8079a630fba'
+      requestBody:
+        description: Authentication token and statistics
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                extensionVersion:
+                  type: string
+                  example: '2.2.0'
+                nativeAppVersion:
+                  type: string
+                  example: '2.2.0+423'
+                statusDurationMs:
+                  type: string
+                  example: '87'
+                authToken:
+                  type: object
+                  properties:
+                    unverifiedCertificate:
+                      type: string
+                      description: The base64-encoded DER-encoded authentication certificate of the user
+                    signature:
+                      type: string
+                      description: The base64-encoded signature of the token
+                    algorithm:
+                      type: string
+                      example: 'ES384'
+                      pattern: '^[A-Z0-9]+'
+                    format:
+                      type: string
+                      example: 'web-eid:1.0'
+                      pattern: '^web-eid:1'
+                  required:
+                    - unverifiedCertificate
+                    - signature
+                    - algorithm
+                    - format
+              required:
+                - extensionVersion
+                - nativeAppVersion
+                - statusDurationMs
+                - authToken
+      responses:
+        '200':
+          description: JSON response confirming that login succeeded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
                     type: string
                     enum: [ COMPLETED ]
         '400':
-          description: Bad request. The user's client certificate is expired, or has been revoked, or has an unknown status.
+          description: |
+            Bad request. Possible reasons include:
+              - Incorrect authentication state
+              - Nonce missing from session
+              - Expired nonce
+              - User's certificate validity issues
+              - Missing fields or invalid values in request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdCardErrorResponse'
+        '403':
+          description: Forbidden (invalid CSRF token or missing session)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/IdCardErrorResponse'
         '500':
-          description: An internal error occurred. Invalid configuration or other integration issues.
+          description: An internal error occured. This usually refers to some issue with OCSP responder.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/IdCardErrorResponse'
         '502':
-          description: External service is not available. OCSP service is not responding.
+          description: OCSP service not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdCardErrorResponse'
+  /auth/id/error:
+    post:
+      tags:
+        - id-card
+      summary: Endpoint for handling frontend errors
+      operationId: idCardAuthenticationError
+      description: |
+        An endpoint which logs and translates errors that originate from frontend application: problems with
+        the ID-card software or browser plugin, timeout while entering PIN1 code, etc.
+      parameters:
+        - name: Session cookie
+          in: header
+          required: true
+          description: Session cookie
+          schema:
+            type: string
+        - name: Locale cookie
+          in: header
+          required: false
+          description: Locale cookie
+          schema:
+            type: string
+        - name: X-CSRF-TOKEN
+          in: header
+          required: true
+          description: CSRF token
+          schema:
+            type: string
+            example: 'c316e550-23e3-4fee-8cee-f8079a630fba'
+      requestBody:
+        description: Error code, error stack and statistics
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                  example: 'ERR_WEBEID_EXTENSION_UNAVAILABLE'
+                errorStack:
+                  type: string
+                  example: |
+                    NativeUnavailableError: a message from native application was expected, but native application closed connection
+                        at onDisconnectListener (chrome-extension://jskdhjoqkdpoowmxjqoisdylzwltgnsj/background.js:1215:12)
+                extensionVersion:
+                  type: string
+                  example: '2.2.0'
+                nativeAppVersion:
+                  type: string
+                  example: '2.2.0+423'
+                statusDurationMs:
+                  type: string
+                  example: '87'
+      responses:
+        '400':
+          description: |
+            This endpoint never returns HTTP 200 OK. HTTP 400 is expected result instead, because the purpose of this
+            endpoint is to log and return translated error messages. Therefore, it always returns an error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdCardErrorResponse'
+        '403':
+          description: Forbidden (invalid CSRF token or missing session)
           content:
             application/json:
               schema:
