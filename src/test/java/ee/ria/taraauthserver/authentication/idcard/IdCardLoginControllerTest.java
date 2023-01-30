@@ -114,8 +114,7 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    @Tag(value = "CSRF_PROTCTION")
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "CSRF_PROTECTION")
     void handleRequest_NoCsrf_Fails() {
         MockSessionFilter mockSessionFilter = MockSessionFilter
                 .withoutCsrf()
@@ -138,7 +137,7 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "CSRF_PROTECTION")
     void handleRequest_MissingSession_Fails() {
         given()
                 .body(createRequestBody())
@@ -160,7 +159,8 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
+    @Tag(value = "IDCARD_ERROR_HANDLING")
     void handleRequest_IncorrectAuthenticationState_Fails() {
         MockSessionFilter mockSessionFilter = MockSessionFilter
                 .withTaraSession()
@@ -188,7 +188,9 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
+    @Tag(value = "WEBEID_AUTHENTICATION_TOKEN_VALIDATION")
+    @Tag(value = "IDCARD_ERROR_HANDLING")
     void handleRequest_NonceNotFoundInSession_Fails() {
         MockSessionFilter mockSessionFilter = MockSessionFilter
                 .withTaraSession()
@@ -220,7 +222,9 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
+    @Tag(value = "WEBEID_AUTHENTICATION_TOKEN_VALIDATION")
+    @Tag(value = "IDCARD_ERROR_HANDLING")
     void handleRequest_NonceExpired_Fails() {
         MockSessionFilter mockSessionFilter = MockSessionFilter
                 .withTaraSession()
@@ -253,7 +257,9 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
+    @Tag(value = "WEBEID_AUTHENTICATION_TOKEN_VALIDATION")
+    @Tag(value = "IDCARD_ERROR_HANDLING")
     void handleRequest_InvalidAuthTokenFormat_Fails() {
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
         WebEidData body = createRequestBody();
@@ -283,7 +289,9 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
+    @Tag(value = "WEBEID_AUTHENTICATION_TOKEN_VALIDATION")
+    @Tag(value = "IDCARD_ERROR_HANDLING")
     void handleRequest_UnverifiedCertificateMissing_Fails() {
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
         WebEidData body = createRequestBody();
@@ -313,7 +321,9 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
+    @Tag(value = "WEBEID_AUTHENTICATION_TOKEN_VALIDATION")
+    @Tag(value = "IDCARD_ERROR_HANDLING")
     void handleRequest_UnverifiedCertificateEmpty_Fails() {
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
         WebEidData body = createRequestBody();
@@ -343,11 +353,13 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
+    @Tag(value = "WEBEID_AUTHENTICATION_TOKEN_VALIDATION")
+    @Tag(value = "IDCARD_ERROR_HANDLING")
     void handleRequest_UnverifiedCertificateInvalidContents_Fails() {
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
         WebEidData body = createRequestBody();
-        body.getAuthToken().setUnverifiedCertificate("SW52YWxpZCBjZXJ0aWZpY2F0ZQo="); // encoded string: "Invalid certificate"
+        body.getAuthToken().setUnverifiedCertificate("SW52YWxpZCBjZXJ0aWZpY2F0ZQo="); // Base64-encoded string: "Invalid certificate"
         given()
                 .body(body)
                 .filter(mockSessionFilter)
@@ -373,7 +385,10 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
+    @Tag(value = "WEBEID_AUTHENTICATION_TOKEN_VALIDATION")
+    @Tag(value = "CERTIFICATE_IS_VALID")
+    @Tag(value = "IDCARD_ERROR_HANDLING")
     void handleRequest_UnverifiedCertificateExpired_Fails() throws CertificateEncodingException {
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
         X509Certificate certificate = loadCertificateFromResource(EXPIRED_CERT_PATH);
@@ -405,7 +420,10 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
+    @Tag(value = "WEBEID_AUTHENTICATION_TOKEN_VALIDATION")
+    @Tag(value = "CERTIFICATE_IS_VALID")
+    @Tag(value = "IDCARD_ERROR_HANDLING")
     void handleRequest_UnverifiedCertificateNotYetValid_Fails() throws CertificateEncodingException {
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
         X509Certificate certificate = loadCertificateFromResource(NOT_YET_VALID_CERT_PATH);
@@ -438,8 +456,9 @@ class IdCardLoginControllerTest extends BaseTest {
 
     @Test
     @DirtiesContext
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     @Tag(value = "OCSP_DISABLED")
+    @Tag(value = "IDCARD_AUTH_SUCCESSFUL")
     void handleRequest_OcspDisabled_Success() {
         configurationProperties.setOcspEnabled(false); // TODO AUT-857
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
@@ -470,7 +489,9 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
+    @Tag(value = "OCSP_RESPONSE_STATUS_HANDLING")
+    @Tag(value = "IDCARD_AUTH_SUCCESSFUL")
     void handleRequest_OcspEnabled_Success() {
         setupMockOcspResponseForSingleTest("CN=TEST of ESTEID2018", CertificateStatus.GOOD, "/esteid2018");
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
@@ -504,7 +525,9 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
+    @Tag(value = "OCSP_RESPONSE_STATUS_HANDLING")
+    @Tag(value = "IDCARD_AUTH_SUCCESSFUL")
     void handleRequest_withEmail_Success() {
         setupMockOcspResponseForSingleTest("CN=TEST of ESTEID2018", CertificateStatus.GOOD, "/esteid2018");
         MockSessionFilter mockSessionFilter = MockSessionFilter
@@ -545,8 +568,9 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     @Tag(value = "OCSP_RESPONSE_STATUS_HANDLING")
+    @Tag(value = "IDCARD_ERROR_HANDLING")
     void handleRequest_RevokedCertificate_FailsOcspCheck() {
         setupMockOcspResponseForSingleTest("CN=TEST of ESTEID2018", new RevokedStatus(new Date(), CRLReason.unspecified), "/esteid2018");
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
@@ -578,8 +602,9 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     @Tag(value = "OCSP_RESPONSE_STATUS_HANDLING")
+    @Tag(value = "IDCARD_ERROR_HANDLING")
     void handleRequest_UnknownCertificate_FailsOcspCheck() {
         setupMockOcspResponseForSingleTest("CN=TEST of ESTEID2018", new UnknownStatus(), "/esteid2018");
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
@@ -612,8 +637,9 @@ class IdCardLoginControllerTest extends BaseTest {
 
     @Test
     @DirtiesContext
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     @Tag(value = "OCSP_FAILOVER_CONF")
+    @Tag(value = "IDCARD_AUTH_SUCCESSFUL")
     void handleRequest_OcspResponse404WithFallbackService_Success() {
         // Issuer 'TEST of ESTEID2018' is removed from main OCSP list to fall back to 'fallback-ocsp' configuration.
         List<AuthConfigurationProperties.Ocsp> ocsps = configurationProperties.getOcsp().stream()
@@ -652,8 +678,9 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     @Tag(value = "OCSP_CA_WHITELIST")
+    @Tag(value = "IDCARD_ERROR_HANDLING")
     void handleRequest_OcspResponderCertificateIssuerNotTrusted_Error() {
         setupMockOcspResponseForSingleTest("CN=WRONG CN", CertificateStatus.GOOD, "/esteid2018");
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
@@ -682,8 +709,9 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     @Tag(value = "OCSP_RESPONSE_VALID_SIG")
+    @Tag(value = "IDCARD_ERROR_HANDLING")
     void handleRequest_OcspResponderCertificateIssuerDifferentFromUserCertificateIssuer_Error() {
         setupMockOcspResponseForSingleTest("CN=TEST of ESTEID-SK 2011", CertificateStatus.GOOD, "/esteid2018");
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
@@ -712,8 +740,9 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     @Tag(value = "OCSP_VALID_RESPONSE")
+    @Tag(value = "IDCARD_ERROR_HANDLING")
     void handleRequest_OcspResponseBodyMissing_Error() {
         wireMockServer.stubFor(WireMock.post("/esteid2018")
                 .willReturn(aResponse()
@@ -742,8 +771,9 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     @Tag(value = "OCSP_VALID_RESPONSE")
+    @Tag(value = "IDCARD_ERROR_HANDLING")
     void handleRequest_OcspServiceNotAvailable_Error() {
         wireMockServer.stubFor(WireMock.post(urlEqualTo("/esteid2018"))
                 .willReturn(aResponse()

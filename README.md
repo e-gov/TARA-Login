@@ -13,7 +13,6 @@
     * [Mobile-ID auth method](#mid_conf)
     * [Smart-ID auth method](#sid_conf)
     * [ID-card auth method](#esteid_conf)
-      * [Basic auth configuration](#esteid_basic_auth_conf)
     * [Eidas auth method](#eidas_conf)
     * [Monitoring](#monitoring_conf)
         * [Custom application health endpoint configuration](#monitoring_heartbeat_conf)
@@ -188,8 +187,8 @@ Table 1.5.1 - Enabling ID-card authentication
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `tara.auth-methods.id-card.enabled` | No | Enable or disable Id-card authentication method. Default `false` |
-| `site-origin` | Yes | URL of the web site where TARA login service is set up. This is used to check whether the signatures originate from the correct web site. Example: https://example.com |
+| `tara.auth-methods.id-card.enabled` | No | Enable or disable ID-card authentication method. Default `false` |
+| `tara.auth-methods.id-card.site-origin` | Yes | URL of the web site where TARA login service is set up. This is used to check whether the signatures originate from the correct web site. Example: https://example.com |
 
 
 Table 1.5.2 - Assigning the Level of assurance to authentication method

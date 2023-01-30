@@ -1,7 +1,6 @@
 package ee.ria.taraauthserver.authentication.idcard;
 
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
-import ee.ria.taraauthserver.session.TaraSession;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,14 +11,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.SessionAttribute;
 
 import java.util.Map;
 
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_WEBEID_ERROR;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_WEBEID_NOT_AVAILABLE;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_WEBEID_USER_TIMEOUT;
-import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static net.logstash.logback.marker.Markers.append;
 
@@ -30,8 +27,7 @@ import static net.logstash.logback.marker.Markers.append;
 public class IdCardErrorController {
 
     @PostMapping(value = "/auth/id/error", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String, Object>> handleRequest(@RequestBody WebEidErrorParameters webEidErrorParameters,
-                                                             @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+    public ResponseEntity<Map<String, Object>> handleRequest(@RequestBody WebEidErrorParameters webEidErrorParameters) {
         logWebEidError(webEidErrorParameters);
 
         // An exception is always thrown in this block. It is caught in class ErrorHandler, which sets the state of

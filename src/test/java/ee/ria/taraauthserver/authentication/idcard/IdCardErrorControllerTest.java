@@ -32,8 +32,7 @@ class IdCardErrorControllerTest extends BaseTest {
     private SessionRepository<Session> sessionRepository;
 
     @Test
-    @Tag(value = "CSRF_PROTCTION")
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "CSRF_PROTECTION")
     void handleRequest_NoCsrf_Fails() {
         given()
                 .body(new WebEidErrorParameters())
@@ -54,7 +53,7 @@ class IdCardErrorControllerTest extends BaseTest {
     }
 
     @Test
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "CSRF_PROTECTION")
     void handleRequest_MissingSession_Fails() {
         given()
                 .body(createRequestBody())
@@ -76,7 +75,7 @@ class IdCardErrorControllerTest extends BaseTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"ERR_WEBEID_EXTENSION_UNAVAILABLE", "ERR_WEBEID_NATIVE_UNAVAILABLE", "ERR_WEBEID_VERSION_MISMATCH"})
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "IDCARD_ERROR_HANDLING")
     void handleRequest_ExtensionUnavailableWithEstonianLocale_ReturnsCorrectResponse(String errorCode) {
         MockSessionFilter mockSessionFilter = MockSessionFilter
                 .withTaraSession()
@@ -108,7 +107,7 @@ class IdCardErrorControllerTest extends BaseTest {
     }
 
     @Test
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "IDCARD_ERROR_HANDLING")
     void handleRequest_WebEidErrorMessageWithEstonianLocale_ReturnsCorrectResponse() {
         MockSessionFilter mockSessionFilter = MockSessionFilter
                 .withTaraSession()

@@ -28,9 +28,8 @@ class IdCardInitControllerTest extends BaseTest {
     private SessionRepository<Session> sessionRepository;
 
     @Test
-    @Tag(value = "ESTEID_INIT")
-    @Tag(value = "CSRF_PROTCTION")
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_INIT_ENDPOINT")
+    @Tag(value = "CSRF_PROTECTION")
     void handleRequest_NoCsrf_Fails() {
         given()
                 .filter(MockSessionFilter.withoutCsrf().sessionRepository(sessionRepository).build())
@@ -48,8 +47,8 @@ class IdCardInitControllerTest extends BaseTest {
     }
 
     @Test
-    @Tag(value = "ESTEID_INIT")
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_INIT_ENDPOINT")
+    @Tag(value = "CSRF_PROTECTION")
     void handleRequest_MissingSession_Fails() {
         given()
                 .when()
@@ -68,8 +67,7 @@ class IdCardInitControllerTest extends BaseTest {
     }
 
     @Test
-    @Tag(value = "ESTEID_INIT")
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_INIT_ENDPOINT")
     void handleRequest_CorrectAuthenticationState_ReturnsNonce() {
         MockSessionFilter mockSessionFilter = MockSessionFilter
                 .withTaraSession()
@@ -96,8 +94,7 @@ class IdCardInitControllerTest extends BaseTest {
     }
 
     @Test
-    @Tag(value = "ESTEID_INIT")
-    // TODO: AUT-1057: Add new tags?
+    @Tag(value = "ESTEID_INIT_ENDPOINT")
     void handleRequest_IncorrectAuthenticationState_ReturnsError() {
         MockSessionFilter mockSessionFilter = MockSessionFilter
                 .withTaraSession()

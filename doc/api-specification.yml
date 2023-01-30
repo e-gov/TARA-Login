@@ -518,12 +518,15 @@ paths:
               properties:
                 extensionVersion:
                   type: string
+                  description: The version number of the browser plugin of Web eID
                   example: '2.2.0'
                 nativeAppVersion:
                   type: string
+                  description: The version number of the native application of Web eID
                   example: '2.2.0+423'
                 statusDurationMs:
                   type: string
+                  description: The amount of time in milliseconds that the browser spent on checking the status of Web eID
                   example: '87'
                 authToken:
                   type: object
