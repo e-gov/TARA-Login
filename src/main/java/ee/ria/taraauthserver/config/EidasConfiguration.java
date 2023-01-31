@@ -67,16 +67,16 @@ public class EidasConfiguration {
                 url,
                 HttpMethod.GET,
                 entity,
-                new ParameterizedTypeReference<Map<SPType, List<String>>>() {
+                new ParameterizedTypeReference<Map<SPType, Map<String, List<String>>>>() {
                 });
         requestLogger.logResponse(response);
 
-        Map<SPType, List<String>> countries = response.getBody();
+        Map<SPType, Map<String, List<String>>> countries = response.getBody();
         if (countries == null || countries.isEmpty()) {
             throw new IllegalStateException("EIDAS client responded with empty supported countries list");
         }
-        Collections.sort(countries.get(SPType.PRIVATE));
-        Collections.sort(countries.get(SPType.PUBLIC));
+        // Collections.sort(countries.get(SPType.PRIVATE));
+        // Collections.sort(countries.get(SPType.PUBLIC));
         eidasConfigurationProperties.setAvailableCountries(countries);
         log.info("Updated countries configuration to: {}", value("tara.conf.auth-methods.eidas.available_countries", countries));
     }
