@@ -162,14 +162,14 @@ jQuery(function ($) {
 		activateIdCardView('wait', 'popup');
 		waitCancelButton.prop('disabled', false);
 
+		let activeTimer = undefined;
 		try {
-			const nonceResponsePromise = fetchWithTimeout('/auth/id/init', {
+			const responseWithTimeoutPromise = fetchWithTimeout('/auth/id/init', {
 				method: 'POST',
 				headers: {
 					'Accept': 'application/json',
 					'X-CSRF-TOKEN': csrfToken
-				},
-				timeoutMs: 20000
+				}
 			});
 			// We are checking Web eID status in parallel with /auth/id/init request to reduce time the user has to wait.
 			// If Web eID status check fails, we won't wait for /auth/id/init request to finish, but fail immediately
@@ -185,7 +185,9 @@ jQuery(function ($) {
 				await handleWebEidJsError(csrfToken, webEidInfo);
 				return;
 			}
-			const nonceResponse = await nonceResponsePromise;
+			const {response: nonceResponse, timerId: nonceTimerId} = await responseWithTimeoutPromise;
+			activeTimer = nonceTimerId;
+
 			if (webEidLoadingCancelledByUser) {
 				webEidLoadingCancelledByUser = false;
 				return;
@@ -195,6 +197,7 @@ jQuery(function ($) {
 				return;
 			}
 			const {nonce} = await nonceResponse.json();
+			clearTimeout(nonceTimerId);
 			if (webEidLoadingCancelledByUser) {
 				webEidLoadingCancelledByUser = false;
 				return;
@@ -210,20 +213,19 @@ jQuery(function ($) {
 					activateIdCardView('form')
 				} else {
 					webEidInfo.code = error.code;
-					handleWebEidJsError(csrfToken, webEidInfo);
+					await handleWebEidJsError(csrfToken, webEidInfo);
 				}
 				return;
 			}
 
 			activateIdCardView('wait', 'login');
-			const authTokenResponse = await fetchWithTimeout('/auth/id/login', {
+			const {response: authTokenResponse, timerId: loginTimerId} = await fetchWithTimeout('/auth/id/login', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 					'Accept': 'application/json',
 					'X-CSRF-TOKEN': csrfToken
 				},
-				timeoutMs: 20000,
 				body: JSON.stringify({
 					authToken: authToken,
 					statusDurationMs: webEidInfo.statusDurationMs,
@@ -231,13 +233,13 @@ jQuery(function ($) {
 					nativeAppVersion: webEidInfo.nativeAppVersion
 				})
 			});
+			activeTimer = loginTimerId;
 			if (!authTokenResponse.ok) {
 				await handleIdCardBackendError(authTokenResponse);
 				return;
 			}
 		// Handle 'await fetch()' errors, except if the user has cancelled waiting for Web eID
 		} catch (error) {
-			console.error(error);
 			if (webEidLoadingCancelledByUser) {
 				webEidLoadingCancelledByUser = false;
 				return;
@@ -247,6 +249,10 @@ jQuery(function ($) {
 			$('#error-report-url').hide();
 			activateIdCardView('error');
 			return;
+		} finally {
+			// clearTimeout() is always safe to call (doesn't throw errors),
+			// even if there are currently no active timers.
+			clearTimeout(activeTimer);
 		}
 
 		$('#idCardForm').submit();
@@ -267,8 +273,7 @@ jQuery(function ($) {
 			...options,
 			signal: abortController.signal
 		});
-		clearTimeout(timerId);
-		return response;
+		return { 'response': response, 'timerId': timerId };
 	}
 
 	async function handleWebEidJsError(csrfToken, webEidInfo) {
@@ -285,14 +290,13 @@ jQuery(function ($) {
 		// 	 'incident_nr': 'a2ae9f4e7fa1f237b5b402c3c96c5f70',
 		// 	 'reportable': true
 		// }
-		const response = await fetchWithTimeout('/auth/id/error', {
+		const { response, timerId } = await fetchWithTimeout('/auth/id/error', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
 				'Accept': 'application/json',
 				'X-CSRF-TOKEN': csrfToken
 			},
-			timeoutMs: 20000,
 			body: JSON.stringify({
 				code: webEidInfo.code,
 				extensionVersion: webEidInfo.extensionVersion,
@@ -301,11 +305,21 @@ jQuery(function ($) {
 				statusDurationMs: webEidInfo.statusDurationMs
 			})
 		});
-		await handleIdCardBackendError(response);
+		try {
+			await handleIdCardBackendError(response);
+		} finally {
+			clearTimeout(timerId);
+		}
 	}
 
 	async function handleIdCardBackendError(response) {
 		const error = await response.json();
+		// Don't proceed with showing error if the user has already cancelled the action
+		if (webEidLoadingCancelledByUser) {
+			webEidLoadingCancelledByUser = false;
+			return;
+		}
+
 		$('#error-message').html(error.message);
 		$('#error-incident-number').html(error.incident_nr);
 
