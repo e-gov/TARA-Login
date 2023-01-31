@@ -121,7 +121,7 @@ jQuery(function ($) {
             }
         });
 	}
-	
+
 	function validateEstonianIdCode(value){
 		return value && /^[0-9]{11}$/.test(value);
 	}
@@ -386,26 +386,41 @@ jQuery(function ($) {
     });
 
 	// EU citizen form submit
-	$('#eidasForm button.c-btn--primary').on('click', function(event){
+	$('#eidasForm').on('click', 'a.method-btn', function(event){
 		event.preventDefault();
 		
 		if ($(this).prop('disabled')) return;
 		$(this).prop('disabled', true);
 
 		if (validateSelectizeValue($('#eidasForm select'), function(value){return value;})) {
+      $('#method-input').val($(this).data("value"));
 			$('#eidasForm').submit();
 		} else {
 			$(this).prop('disabled', false);
 		}
 	});
-	
+
 	// EU country selection validate on select
 	$('#eidasForm select').on('change', function(){
-		validateSelectizeValue($(this), function(){return true;});
+		if (validateSelectizeValue($(this), function(){return true;})) {
+      var selectedCountry = $(this).val();
+      var methods = $(this).data('methods');
+      $("#login-form-methods").html("");
+      for (let i = 0; i < methods[selectedCountry].length; i++) {
+        let methodName = methods[selectedCountry][i];
+        if (methodName == "eidas") {
+          var imageUrl = '../content/assets/methods/eidas.svg';
+        } else {
+          var imageUrl = '../content/assets/methods/' + selectedCountry.toLowerCase() + '/' + methodName + '.svg';
+        }
+        var methodButton = $('<a href="#" role="button" class="method-btn" data-value="' + methodName + '"><div class="method-btn-base"><image src="' + imageUrl + '" class="method-btn-icon"></image><div></div></div></a>');
+        $("#login-form-methods").append(methodButton);
+      }
+    }
 	});
 
 	function showAlert(alert) {
-        alert.attr("role", "alert");
+      alert.attr("role", "alert");
 	    alert.removeAttr("aria-hidden");
 	    alert.addClass('show');
 	}

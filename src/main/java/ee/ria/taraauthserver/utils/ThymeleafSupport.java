@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponents;
+import org.json.JSONObject;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Collections;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptyList;
@@ -88,9 +90,9 @@ public class ThymeleafSupport {
     public Map<String, List<String>> getHashOfCountriesWithMethods() {
         TaraSession taraSession = SessionUtils.getAuthSession();
         if (eidasConfigurationProperties == null || taraSession == null) {
-            return emptyList();
+            return emptyMap();
         }
-        Map<SPType, List<String>> availableCountries = eidasConfigurationProperties.getAvailableCountries();
+        Map<SPType, Map<String, List<String>>> availableCountries = eidasConfigurationProperties.getAvailableCountries();
         SPType spType = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getInstitution().getSector();
         return availableCountries.get(spType);
     }

@@ -182,7 +182,7 @@ public class AuthInitController {
         return loginRequestInfo.getRequestedScopes().stream()
                 .filter(rs -> rs.matches(regex))
                 .map(this::getCountryCodeFromScope)
-                .filter(rs -> eidasConfigurationProperties.getAvailableCountries().get(spType).contains(rs))
+                .filter(rs -> eidasConfigurationProperties.getAvailableCountries().get(spType).containsKey(rs))
                 .findFirst()
                 .orElse(null);
     }
