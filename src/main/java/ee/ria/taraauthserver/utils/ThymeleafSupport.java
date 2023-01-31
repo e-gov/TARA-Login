@@ -89,12 +89,30 @@ public class ThymeleafSupport {
 
     public Map<String, List<String>> getHashOfCountriesWithMethods() {
         TaraSession taraSession = SessionUtils.getAuthSession();
-        if (eidasConfigurationProperties == null || taraSession == null) {
-            return emptyMap();
-        }
         Map<SPType, Map<String, List<String>>> availableCountries = eidasConfigurationProperties.getAvailableCountries();
+        if (eidasConfigurationProperties == null || taraSession == null || availableCountries == null)
+            return emptyMap();
+        List<String> allowedAuthMethods = toPropertyNames(taraSession.getAllowedAuthMethods());
         SPType spType = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getInstitution().getSector();
+        List<String> methodsToCheck = new ArrayList<>(List.of("id-card", "smart-id", "mobile-id"));
+        if (availableCountries.containsKey(spType)) {
+            for (String country : availableCountries.get(spType).keySet()) {
+                availableCountries.get(spType).get(country).removeIf(m -> !allowedAuthMethods.contains(m) && methodsToCheck.contains(m));
+                if (availableCountries.get(spType).get(country).isEmpty()) 
+                        availableCountries.get(spType).remove(country);
+            }
+        }
         return availableCountries.get(spType);
+    }
+
+    private List<String> toPropertyNames(List<AuthenticationType> allowedAuthMethods) {
+        System.out.println(allowedAuthMethods);
+        if (allowedAuthMethods.isEmpty())
+            return emptyList();
+
+        return allowedAuthMethods.stream()
+            .map(AuthenticationType::getPropertyName)
+            .collect(Collectors.toList());
     }
 
     public JSONObject toJSON(Map<String, List<String>> methods) {
