@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.ArrayList;
 
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
@@ -56,19 +57,18 @@ public class EidasController {
     private Cache<String, String> eidasRelayStateCache;
 
     @PostMapping(value = "/auth/eidas/init", produces = MediaType.TEXT_HTML_VALUE)
-    public RedirectView EidasInit(@RequestParam("country") String country, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession, HttpServletResponse servletResponse) {
+    public RedirectView EidasInit(@RequestParam("country") String country, @RequestParam("method") String method, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession, HttpServletResponse servletResponse) {
         String relayState = UUID.randomUUID().toString();
         log.info("Initiating EIDAS authentication session with relay state: {}", value("tara.session.eidas.relay_state", relayState));
         validateSession(taraSession);
         eidasRelayStateCache.put(relayState, taraSession.getSessionId()); // TODO AUT-854
         SPType spType = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getInstitution().getSector();
 
-        if (!eidasConfigurationProperties.getAvailableCountries().get(spType).contains(country)) {
-            BadRequestException exception = getAppropriateException(spType);
-            throw exception;
+        if (!eidasConfigurationProperties.getAvailableCountries().get(spType).containsKey(country)) {
+            throw new BadRequestException(getAppropriateErrorCode(spType), "Requested country not supported for " + spType + " sector.");
         }
 
-        String requestUrl = createRequestUrl(country, taraSession, relayState);
+        String requestUrl = createRequestUrl(country, method, taraSession, relayState);
 
         requestLogger.logRequest(requestUrl, HttpMethod.GET);
         var response = eidasRestTemplate.exchange(
@@ -98,11 +98,12 @@ public class EidasController {
         taraSession.setAuthenticationResult(authenticationResult);
     }
 
-    private String createRequestUrl(String country, TaraSession taraSession, String relayState) {
+    private String createRequestUrl(String country, String method, TaraSession taraSession, String relayState) {
         String url = eidasConfigurationProperties.getClientUrl() + "/login";
         OidcClient oidcClient = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient();
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
                 .queryParam("Country", country)
+                .queryParam("Method", method)
                 .queryParam("RequesterID", taraSession.getLoginRequestInfo().getClientId())
                 .queryParam("SPType", oidcClient.getInstitution().getSector())
                 .queryParam("State", taraSession.getLoginRequestInfo().getOidcState())
@@ -113,14 +114,13 @@ public class EidasController {
         return builder.toUriString();
     }
 
-    private BadRequestException getAppropriateException(SPType spType) {
-        Map<SPType, List<String>> allowedCountries = eidasConfigurationProperties.getAvailableCountries();
-        String[] messageParameters = new String[1];
-        messageParameters[0] = String.join(", ", allowedCountries.get(spType));
-        return new BadRequestException(
-                ErrorCode.EIDAS_COUNTRY_NOT_SUPPORTED,
-                "Requested country not supported for " + spType + " sector.",
-                messageParameters);
+    private ErrorCode getAppropriateErrorCode(SPType spType) {
+        Map<SPType, Map<String, List<String>>> allowedCountries = eidasConfigurationProperties.getAvailableCountries();
+        ErrorCode errorCode = ErrorCode.EIDAS_COUNTRY_NOT_SUPPORTED;
+        Object[] messageParameters = new Object[1];
+        messageParameters[0] = String.join(", ", new ArrayList<>(allowedCountries.get(spType).keySet()));
+        errorCode.setMessageParameters(messageParameters);
+        return errorCode;
     }
 
     private List<String> getAcrFromSessionOidcContext(TaraSession taraSession) {

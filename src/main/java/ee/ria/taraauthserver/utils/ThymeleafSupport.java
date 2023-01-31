@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponents;
+import org.json.JSONObject;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -21,8 +22,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Collections;
 
-import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 
 @Slf4j
 public class ThymeleafSupport {
@@ -77,15 +79,33 @@ public class ThymeleafSupport {
         return uriComponents.getPath() + "?" + uriComponents.getQuery();
     }
 
-    public List<String> getListOfCountries() {
+    public List<String> getListOfCountries( Map<String, List<String>> countries_with_methods) {
+        return new ArrayList<>(countries_with_methods.keySet());
+    }
+
+    public Map<String, List<String>> getHashOfCountriesWithMethods() {
         TaraSession taraSession = SessionUtils.getAuthSession();
         if (eidasConfigurationProperties == null || taraSession == null) {
-            return emptyList();
+            return emptyMap();
         }
-        Map<SPType, List<String>> availableCountries = eidasConfigurationProperties.getAvailableCountries();
+        Map<SPType, Map<String, List<String>>> availableCountries = eidasConfigurationProperties.getAvailableCountries();
         SPType spType = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getInstitution().getSector();
         return availableCountries.get(spType);
     }
+
+    public JSONObject toJSON(Map<String, List<String>> methods) {
+        return new JSONObject(methods);
+    }
+
+    //   public List<String> getListOfCountries_legacy() {
+    //     TaraSession taraSession = SessionUtils.getAuthSession();
+    //     if (eidasConfigurationProperties == null || taraSession == null) {
+    //         return emptyList();
+    //     }
+    //     Map<SPType, Map<String, List<String>>> availableCountries = eidasConfigurationProperties.getAvailableCountries();
+    //     SPType spType = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getInstitution().getSector();
+    //     return new ArrayList<>(availableCountries.get(spType).keySet());
+    // }
 
     public String getBackUrl() {
         TaraSession taraSession = SessionUtils.getAuthSession();

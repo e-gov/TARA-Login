@@ -20,7 +20,7 @@ public class EidasConfigurationProperties extends AuthConfigurationProperties.Au
 
     private int refreshCountriesIntervalInMilliseconds;
 
-    private Map<SPType, List<String>> availableCountries = new HashMap<>();
+    private Map<SPType, Map<String, List<String>>> availableCountries = new HashMap<>();
 
     private int requestTimeoutInSeconds = 3;
 
