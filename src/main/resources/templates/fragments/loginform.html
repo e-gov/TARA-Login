@@ -208,26 +208,25 @@
                  th:remove="tag"
                  aria-hidden="true" aria-labelledby="eu-citizen">
                 <form role="form" method="post" id="eidasForm" th:action="@{/auth/eidas/init}" class="c-form"
-                      layout:fragment="login-form-content">
+                      layout:fragment="login-form-content" th:with="countries_with_methods=${@thymeleafSupport.getHashOfCountriesWithMethods()}">
                     <table>
                         <tbody>
                         <tr>
                             <td>
-                                <select id="country-select" name="country">
+                                <select id="country-select" name="country" th:attr="data-methods=${@thymeleafSupport.toJSON(countries_with_methods)}">
                                     <option value="" th:text="#{label.eu-citizen.select-country}">Select</option>
-                                    <option th:each="country : ${@thymeleafSupport.getListOfCountries()}"
+                                    <option th:each="country : ${@thymeleafSupport.getListOfCountries(countries_with_methods)}"
                                             th:value="${country}"
                                             th:text="${#messages.msg('label.countries.' + country)}"></option>
                                 </select>
                                 <div class="invalid-feedback is-hidden"
                                      th:text="#{message.eu-citizen.select-country}"></div>
+                                <input type="text" id="method-input" name="method" value="" class="hidden"/>
                             </td>
                         </tr>
                         <tr>
-                            <td>
-                                <button role="button" type="button" class="c-btn c-btn--primary"
-                                        th:text="#{label.common.login}">Login
-                                </button>
+                            <td id="login-form-methods">
+                              
                             </td>
                         </tr>
                         </tbody>

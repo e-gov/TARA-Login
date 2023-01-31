@@ -11,6 +11,19 @@
     padding: 12px 35px;
     font-size: 18px;
   }
+  &--secondary {
+    color: #000;
+    border: 2px solid #7c7f82;
+    background-color: #fff;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    font-size: 16px;
+    height: 45px;
+    width: 200px;
+    &:hover {
+      border-color: darken( #7c7f82, 10% );
+    }
+  }
   &--primary {
     color: #fff;
     background-color: #008936;
@@ -39,4 +52,38 @@
 	text-decoration: none;
 	text-align: center;
   }
+}
+.method-btn{
+  display: block;
+  font-size: 16px;
+  width: 100%;
+  color: #3a3a3a;
+  text-decoration: none;
+  outline: none;
+  text-align: center;
+  cursor: pointer;
+  transform: translateY(0);
+  transition: .1s;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  height: 43px;
+  user-select: none;
+  background-color: #fff;
+  min-width: 211px;
+  overflow: hidden;
+  margin-bottom: 5px;
+  &:hover {
+    border-color: darken( #d9d9d9, 15% );
+  }
+}
+.method-btn-base {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 10px;
+}
+.method-btn-icon {
+  width: 80px;
+  height: auto;
 }
