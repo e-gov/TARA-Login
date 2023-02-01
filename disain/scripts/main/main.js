@@ -422,7 +422,6 @@ jQuery(function ($) {
 		
 		if ($(this).prop('disabled')) return;
 		$(this).prop('disabled', true);
-
 		if (validateSelectizeValue($('#eidasForm select'), function(value){return value;})) {
       $('#method-input').val($(this).data("value"));
 			$('#eidasForm').submit();
