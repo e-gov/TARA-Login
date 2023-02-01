@@ -392,9 +392,15 @@ jQuery(function ($) {
 		if ($(this).prop('disabled')) return;
 		$(this).prop('disabled', true);
 
-		if (validateSelectizeValue($('#eidasForm select'), function(value){return value;})) {
-      $('#method-input').val($(this).data("value"));
-			$('#eidasForm').submit();
+		if (validateSelectizeValue($('#eidasForm select'), function(value){ return value; })) {
+      let value = $(this).data("value");
+      let country = $(this).data("country");
+      if (["smart-id", "mobile-id"].indexOf(value) > -1) {
+        activateMethodContent(country, value);
+      } else {
+        $('#method-input').val(value);
+        $('#eidasForm').submit();
+      }
 		} else {
 			$(this).prop('disabled', false);
 		}
