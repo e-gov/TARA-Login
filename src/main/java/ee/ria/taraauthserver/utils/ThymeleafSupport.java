@@ -22,6 +22,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptyList;
 
 @Slf4j
@@ -77,7 +78,14 @@ public class ThymeleafSupport {
         return uriComponents.getPath() + "?" + uriComponents.getQuery();
     }
 
-    public List<String> getListOfCountries() {
+    public List<String> getListOfCountries( Map<String, List<String>> countries_with_methods) {
+        if (countries_with_methods == null) {
+            return emptyList();
+        }
+        return new ArrayList<>(countries_with_methods.keySet());
+    }
+
+    public Map<String, List<String>> getHashOfCountriesWithMethods() {
         TaraSession taraSession = SessionUtils.getAuthSession();
         if (eidasConfigurationProperties == null || taraSession == null) {
             return emptyList();
@@ -86,6 +94,23 @@ public class ThymeleafSupport {
         SPType spType = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getInstitution().getSector();
         return availableCountries.get(spType);
     }
+
+    public JSONObject toJSON(Map<String, List<String>> methods) {
+        if (methods == null) {
+            return new JSONObject();
+        }
+        return new JSONObject(methods);
+    }
+
+    //   public List<String> getListOfCountries_legacy() {
+    //     TaraSession taraSession = SessionUtils.getAuthSession();
+    //     if (eidasConfigurationProperties == null || taraSession == null) {
+    //         return emptyList();
+    //     }
+    //     Map<SPType, Map<String, List<String>>> availableCountries = eidasConfigurationProperties.getAvailableCountries();
+    //     SPType spType = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getInstitution().getSector();
+    //     return new ArrayList<>(availableCountries.get(spType).keySet());
+    // }
 
     public String getBackUrl() {
         TaraSession taraSession = SessionUtils.getAuthSession();
