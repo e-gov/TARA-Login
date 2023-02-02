@@ -81,6 +81,7 @@ public class EidasControllerTest extends BaseTest {
     void eidasAuthInit_session_missing() {
         given()
                 .formParam("country", "CA")
+                .formParam("method", "eidas")
                 .when()
                 .post("/auth/eidas/init")
                 .then()
