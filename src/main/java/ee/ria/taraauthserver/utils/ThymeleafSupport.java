@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.Collections;
 
 import static java.util.Collections.emptyMap;
+import static java.util.Collections.emptyList;
 
 @Slf4j
 public class ThymeleafSupport {
@@ -80,6 +81,9 @@ public class ThymeleafSupport {
     }
 
     public List<String> getListOfCountries( Map<String, List<String>> countries_with_methods) {
+        if (countries_with_methods == null) {
+            return emptyList();
+        }
         return new ArrayList<>(countries_with_methods.keySet());
     }
 
@@ -94,6 +98,9 @@ public class ThymeleafSupport {
     }
 
     public JSONObject toJSON(Map<String, List<String>> methods) {
+        if (methods == null) {
+            return new JSONObject();
+        }
         return new JSONObject(methods);
     }
 
