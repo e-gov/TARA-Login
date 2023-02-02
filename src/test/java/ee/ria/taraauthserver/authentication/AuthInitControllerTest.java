@@ -42,9 +42,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class AuthInitControllerTest extends BaseTest {
     private static final String TEST_LOGIN_CHALLENGE = "abcdefg098AAdsCC";
     private static final String TEST_GOVSSO_LOGIN_CHALLENGE = "abcdeff098aadfccabcdeff098aadfcc";
-    private static final Map<SPType, List<String>> AVAILABLE_COUNTRIES = Map.of(
-            SPType.PUBLIC, List.of("CA"),
-            SPType.PRIVATE, List.of("IT")
+    private static final Map<SPType, Map<String, List<String>>> AVAILABLE_COUNTRIES = Map.of(
+            SPType.PUBLIC, Map.of("CA", List.of("eidas")),
+            SPType.PRIVATE, Map.of("IT", List.of("eidas"))
     );
 
     @Autowired
@@ -1002,7 +1002,7 @@ class AuthInitControllerTest extends BaseTest {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response_eidasonly_with_invalid_country.json")));
-        String expectedCountriesRegex = ".*<select id=\"country-select\" name=\"country\">\\s*<option value=\"\">Select your country</option>\\s*<option value=\"CA\">Test \\(CA\\)</option>\\s*</select>.*";
+        String expectedCountriesRegex = ".*<select id=\"country-select\" name=\"country\" data-methods=\".*\">\\s*<option value=\"\">Select your country</option>\\s*<option value=\"CA\">Test \\(CA\\)</option>\\s*</select>.*";
         Pattern expectedCountriesPattern = Pattern.compile(expectedCountriesRegex, Pattern.DOTALL);
 
         String sessionId = given()
@@ -1031,7 +1031,7 @@ class AuthInitControllerTest extends BaseTest {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/oidc/mock_response_eidasonly_with_invalid_country_private_sector.json")));
-        String expectedCountriesRegex = ".*<select id=\"country-select\" name=\"country\">\\s*<option value=\"\">Select your country</option>\\s*<option value=\"IT\">Italy</option>\\s*</select>.*";
+        String expectedCountriesRegex = ".*<select id=\"country-select\" name=\"country\" data-methods=\".*\">\\s*<option value=\"\">Select your country</option>\\s*<option value=\"IT\">Italy</option>\\s*</select>.*";
         Pattern expectedCountriesPattern = Pattern.compile(expectedCountriesRegex, Pattern.DOTALL);
 
         String sessionId = given()
