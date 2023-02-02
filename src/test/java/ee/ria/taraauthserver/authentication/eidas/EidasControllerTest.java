@@ -43,9 +43,9 @@ import static java.lang.String.format;
 
 @Slf4j
 public class EidasControllerTest extends BaseTest {
-    private static final Map<SPType, List<String>> AVAILABLE_COUNTRIES = Map.of(
-            SPType.PUBLIC, List.of("CA"),
-            SPType.PRIVATE, List.of("IT")
+    private static final Map<SPType, Map<String, List<String>>> AVAILABLE_COUNTRIES = Map.of(
+            SPType.PUBLIC, Map.of("CA", List.of("eidas")),
+            SPType.PRIVATE, Map.of("IT", List.of("eidas"))
     );
 
     @Autowired
@@ -60,6 +60,7 @@ public class EidasControllerTest extends BaseTest {
         given()
                 .filter(MockSessionFilter.withoutTaraSession().sessionRepository(sessionRepository).build())
                 .formParam("country", "CA")
+                .formParam("method", "eidas")
                 .when()
                 .post("/auth/eidas/init")
                 .then()
@@ -82,6 +83,7 @@ public class EidasControllerTest extends BaseTest {
         given()
                 .filter(sessionFilter)
                 .formParam("country", "CA")
+                .formParam("method", "eidas")
                 .when()
                 .post("/auth/eidas/init")
                 .then()
@@ -122,8 +124,8 @@ public class EidasControllerTest extends BaseTest {
     @Test
     @Tag(value = "EIDAS_AUTH_INIT_REQUEST_CHECKS")
     void eidasAuthInit_request_country_public_not_supported() {
-        HashMap<SPType, List<String>> availableCountries = new HashMap<>(AVAILABLE_COUNTRIES);
-        availableCountries.put(SPType.PUBLIC, List.of("CA", "LV", "LT"));
+        Map<SPType, Map<String, List<String>>> availableCountries = new HashMap<>(AVAILABLE_COUNTRIES);
+        availableCountries.put(SPType.PUBLIC, Map.of("CA", List.of("eidas"), "LV", List.of("eidas"), "LT", List.of("eidas")));
         eidasConfigurationProperties.setAvailableCountries(availableCountries); // TODO AUT-857
         createEidasCountryStub("mock_responses/eidas/eidas-countries-response.json", 200);
         createEidasLoginStub("mock_responses/eidas/eidas-login-response.json", 200);
@@ -151,7 +153,7 @@ public class EidasControllerTest extends BaseTest {
     @Test
     @Tag(value = "EIDAS_AUTH_INIT_REQUEST_CHECKS")
     void eidasAuthInit_request_country_private_not_supported() {
-        HashMap<SPType, List<String>> availableCountries = new HashMap<>(AVAILABLE_COUNTRIES);
+        Map<SPType, Map<String, List<String>>> availableCountries = new HashMap<>(AVAILABLE_COUNTRIES);
         eidasConfigurationProperties.setAvailableCountries(availableCountries); // TODO AUT-857
         createEidasCountryStub("mock_responses/eidas/eidas-countries-response.json", 200);
         createEidasLoginStub("mock_responses/eidas/eidas-login-response.json", 200);
@@ -166,6 +168,7 @@ public class EidasControllerTest extends BaseTest {
                 .filter(taraSessionFilter)
                 .when()
                 .formParam("country", "CA")
+                .formParam("method", "eidas")
                 .post("/auth/eidas/init")
                 .then()
                 .assertThat()
@@ -199,6 +202,7 @@ public class EidasControllerTest extends BaseTest {
                 .filter(sessionFilter)
                 .when()
                 .param("country", "CA")
+                .param("method", "eidas")
                 .post("/auth/eidas/init")
                 .then()
                 .assertThat()
@@ -228,6 +232,7 @@ public class EidasControllerTest extends BaseTest {
                 .filter(sessionFilter)
                 .when()
                 .param("country", "CA")
+                .param("method", "eidas")
                 .post("/auth/eidas/init")
                 .then()
                 .assertThat()
@@ -242,7 +247,7 @@ public class EidasControllerTest extends BaseTest {
         // assertEquals("a:b:c", oidcClient.getEidasRequesterId().toString());
         assertEquals("openIdDemo", taraSession.getLoginRequestInfo().getClientId());
         assertEquals(SPType.PUBLIC, oidcClient.getInstitution().getSector());
-        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request", "http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&RequesterID=openIdDemo&SPType=public&State=" + taraSession.getLoginRequestInfo().getOidcState() + "&SessionID=" + taraSession.getSessionId()); // Regex?
+        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request", "http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&Method=eidas&RequesterID=openIdDemo&SPType=public&State=" + taraSession.getLoginRequestInfo().getOidcState() + "&SessionID=" + taraSession.getSessionId()); // Regex?
         // assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS response: 200", "http.response.status_code=200, http.response.body.content=\"<html xmlns=\\\"http://www.w3.org/1999/xhtml\\\" xml:lang=\\\"en\\\"><body onload=\\\"document.forms[0].submit()\\\"><noscript><p><strong>Note: </strong> Since your browser does not support JavaScript, you must press the Continue button once to proceed.</p></noscript><form action=\\\"https&#x3a;&#x2f;&#x2f;eidastest.eesti.ee/&#x3a;8080&#x2f;EidasNode&#x2f;ServiceProvider\\\" method=\\\"post\\\"><div><input type=\\\"hidden\\\" name=\\\"SAMLRequest\\\" value=\\\"PD94bWw...........MnA6QXV0aG5SZXF1ZXN0Pg==\\\"/><input type=\\\"hidden\\\" name=\\\"country\\\" value=\\\"CA\\\"/></div><noscript><div><input type=\\\"submit\\\" value=\\\"Continue\\\"/></div></noscript></form></body></html>");
         assertStatisticsIsNotLogged();
     }
@@ -263,6 +268,7 @@ public class EidasControllerTest extends BaseTest {
                 .filter(sessionFilter)
                 .when()
                 .param("country", "CA")
+                .param("method", "eidas")
                 .post("/auth/eidas/init")
                 .then()
                 .assertThat()

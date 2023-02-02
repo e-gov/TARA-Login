@@ -1,4 +1,4 @@
 {
-  "public": ["CA"],
-  "private": ["IT"]
+  "public": { "CA": ["eidas"] },
+  "private": { "IT": ["eidas"] }
 }
