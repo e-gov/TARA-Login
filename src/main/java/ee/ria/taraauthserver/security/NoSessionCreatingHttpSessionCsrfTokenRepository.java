@@ -39,7 +39,7 @@ public class NoSessionCreatingHttpSessionCsrfTokenRepository implements CsrfToke
                 /* Difference from HttpSessionCsrfTokenRepository, session creation is disabled here.
                  * Rest of the class has same logic as HttpSessionCsrfTokenRepository.
                  */
-                log.info("Not saving CSRF token, session not created");
+                log.debug("Not saving CSRF token, session not created");
             }
         }
     }
