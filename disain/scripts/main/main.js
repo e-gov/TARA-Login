@@ -1,6 +1,5 @@
 jQuery(function ($) {
 	'use strict';
-	var webEidLoadingCancelledByUser = false;
 	
 	// Hide nav bar in desktop mode and display authentication method content in mobile mode if less than 2 auth methods
 	if ($('.c-tab-login__nav-link').length < 2) {
@@ -156,11 +155,9 @@ jQuery(function ($) {
 	// ID-card form submit
 	$('#idCardForm button.c-btn--primary').on('click', async function(event){
 		event.preventDefault();
-		const waitCancelButton = $('#id-card-wait button.c-btn--cancel');
 		const csrfToken = document.querySelector("input[name='_csrf']").getAttribute('value');
 
-		activateIdCardView('wait', 'popup');
-		waitCancelButton.prop('disabled', false);
+		activateIdCardView('waitPopup');
 
 		const webEidStatusPromise = detectWebEid();
 		const nonceResponse = await fetchJson('/auth/id/init', {
@@ -170,21 +167,17 @@ jQuery(function ($) {
 				'X-CSRF-TOKEN': csrfToken
 			}
 		});
+		if (!nonceResponse) {
+			return;
+		}
 		// We are checking Web eID status in parallel with /auth/id/init request to reduce the total time the user
 		// has to wait in a successful case. It might make the failure case of Web eID status check a bit slower,
 		// though, as we will wait for both results before checking them, for the ease of error handling.
 		const webEidInfo = await webEidStatusPromise;
-		if (webEidLoadingCancelledByUser || !nonceResponse) {
-			webEidLoadingCancelledByUser = false;
-			return;
-		}
 		if (webEidInfo.code !== 'SUCCESS') {
-			waitCancelButton.prop('disabled', true);
 			await handleWebEidJsError(csrfToken, webEidInfo);
 			return;
 		}
-		// We can't cancel webeid.authenticate() once it's in progress, so we disable the "Cancel" button before executing that function.
-		waitCancelButton.prop('disabled', true);
 		const lang = document.documentElement.lang;
 		let authToken;
 		try {
@@ -199,7 +192,7 @@ jQuery(function ($) {
 			return;
 		}
 
-		activateIdCardView('wait', 'login');
+		activateIdCardView('waitLogin');
 		const authTokenResponse = await fetchJson('/auth/id/login', {
 			method: 'POST',
 			headers: {
@@ -219,48 +212,38 @@ jQuery(function ($) {
 		}
 	});
 
-	// Button to cancel waiting in ID-card form
-	$('#id-card-wait button.c-btn--cancel').on('click', async function(event){
-		event.preventDefault();
-		webEidLoadingCancelledByUser = true;
-		activateIdCardView('form');
-	});
-
 	async function fetchJson(resource, options = {}) {
 		const { timeoutMs = 20000 } = options;
 		const abortController = new AbortController();
 		const timerId = setTimeout(() => abortController.abort(), timeoutMs);
-		const response = await fetch(resource, {
-			...options,
-			signal: abortController.signal
-		});
-		let responseJson = null;
 		try {
-			responseJson = await response.json();
+			const response = await fetch(resource, {
+				...options,
+				signal: abortController.signal
+			});
+			const responseJson = await response.json();
 			if (!response.ok) {
-				// If the response is not OK, but JSON body can be retrieved, then show the error page, even if the
-				// user has already cancelled the action, because the server has probably set the status to
-				// AUTHENTICATION_FAILED already, in which case we need to start a new authentication anyway.
+				// If the response is not OK, but JSON body was successfully retrieved and parsed, then show the error
+				// page using the contents from the parsed response. The server has probably set the status to
+				// AUTHENTICATION_FAILED already, so we need to start a new authentication after that.
 				handleIdCardBackendError(responseJson);
 				return null;
 			}
+			return responseJson;
 		} catch (error) {
-			// If, for some unlikely reason, response.json() throws error, but response itself is OK, then we don't
-			// need to start a new authentication and therefore we don't show the error page to the user if he/she has
-			// already cancelled the loading before that.
-			if (webEidLoadingCancelledByUser && response.ok) {
-				webEidLoadingCancelledByUser = false;
-			} else {
-				$('#idc-ajax-error-message').show();
-				$('#error-incident-number-wrapper').hide();
-				$('#error-report-url').hide();
-				activateIdCardView('error');
-			}
+			// If the JSON body cannot be retrieved, show the general AJAX error page.
+			showIdCardAjaxError();
 			return null;
 		} finally {
 			clearTimeout(timerId);
 		}
-		return responseJson;
+	}
+
+	function showIdCardAjaxError() {
+		$('#idc-ajax-error-message').show();
+		$('#error-incident-number-wrapper').hide();
+		$('#error-report-url').hide();
+		activateIdCardView('error');
 	}
 
 	async function handleWebEidJsError(csrfToken, webEidInfo) {
@@ -468,14 +451,17 @@ jQuery(function ($) {
 		return webEidInfo;
 	}
 
-    function activateIdCardView(viewName, subviewName = null) {
+    function activateIdCardView(viewName) {
 		const formSelector = '.c-layout--full > .container';
 		const waitMessageSelector = '#id-card-wait';
+		const waitPopupMessageSelector = '#id-card-wait-popup';
+		const waitLoginMessageSelector = '#id-card-wait-login';
 		const errorMessageSelector = '#id-card-error';
 		const languageSelectionSelector = '.c-header-bar nav[role=navigation]';
     	const visibleElementsInViews = {
     		form: [formSelector, languageSelectionSelector].join(','),
-			wait: waitMessageSelector,
+			waitPopup: [waitMessageSelector, waitPopupMessageSelector].join(','),
+			waitLogin: [waitMessageSelector, waitLoginMessageSelector].join(','),
 			error: errorMessageSelector
 		}
 
@@ -484,26 +470,17 @@ jQuery(function ($) {
     		return;
 		}
 
+    	const hideList = [];
+    	const unhideList = [];
 		for (const [view, selector] of Object.entries(visibleElementsInViews)) {
 			if (view === viewName) {
-				unhideElements($(selector));
+				unhideList.push($(selector));
 			} else {
-				hideElements($(selector));
+				hideList.push($(selector));
 			}
 		}
-
-		if (viewName === 'wait') {
-			const waitCancelButton = $('#id-card-wait button.c-btn--cancel');
-			const waitPopupText = $('#id-card-wait-popup');
-			const waitLoginText = $('#id-card-wait-login');
-			if (subviewName === 'popup') {
-				hideElements(waitLoginText);
-				unhideElements(waitPopupText, waitCancelButton);
-			} else {
-				hideElements(waitPopupText, waitCancelButton);
-				unhideElements(waitLoginText);
-			}
-		}
+		hideElements(hideList);
+		unhideElements(unhideList);
     }
 
     function activateTab(link, content, warning) {
@@ -524,14 +501,14 @@ jQuery(function ($) {
         warning.removeClass('is-active');
     }
 
-    function hideElements(...elements) {
+    function hideElements(elements) {
     	for (const element of elements) {
 			element.attr('aria-hidden', 'true');
 			element.addClass('hidden');
 		}
 	}
 
-    function unhideElements(...elements) {
+    function unhideElements(elements) {
     	for (const element of elements) {
 			element.attr('aria-hidden', 'false');
 			element.removeClass('hidden');
