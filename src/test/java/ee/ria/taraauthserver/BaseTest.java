@@ -26,7 +26,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
-import org.springframework.test.context.ContextConfiguration;
 
 import java.util.HashMap;
 import java.util.List;
@@ -59,7 +58,6 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 @Slf4j
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-@ContextConfiguration(classes = {BaseTestConfiguration.class})
 public abstract class BaseTest {
     public static final String CHARSET_UTF_8 = ";charset=UTF-8";
 
