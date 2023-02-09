@@ -149,6 +149,10 @@
           display: block;
         }
   }
+  &__warning-item {
+    font-weight: bold;
+    white-space: pre-line;
+  }
   &__content-wrap {
     display: flex;
     background-color: #fff;
