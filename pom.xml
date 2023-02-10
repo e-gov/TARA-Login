@@ -26,6 +26,7 @@
     <properties>
         <maven.compiler.release>11</maven.compiler.release>
 
+        <elastic-apm.version>1.36.0</elastic-apm.version>
         <spring-cloud.version>2022.0.1</spring-cloud.version>
         <webeid.version>2.1.1</webeid.version>
     </properties>
@@ -63,7 +64,12 @@
         <dependency>
             <groupId>co.elastic.apm</groupId>
             <artifactId>apm-agent-api</artifactId>
-            <version>1.36.0</version>
+            <version>${elastic-apm.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>co.elastic.apm</groupId>
+            <artifactId>apm-agent-attach</artifactId>
+            <version>${elastic-apm.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
