@@ -469,6 +469,7 @@ paths:
                   nonce:
                     type: string
                     example: nbFRWBKan0tafR4LBcGPkLAuNXbZc0U134u1P9Qlxfw=
+                    description: Nonce that must be given to browser's Web eID component for signing
         '400':
           description: Bad request. Incorrect authentication state
           content:
@@ -530,21 +531,22 @@ paths:
                   example: '87'
                 authToken:
                   type: object
+                  description: Authentication token constructed by browser's Web eID component
                   properties:
                     unverifiedCertificate:
                       type: string
-                      description: The base64-encoded DER-encoded authentication certificate of the user
+                      description: The Base64-encoded DER-encoded X.509 authentication certificate of the user
                     signature:
                       type: string
-                      description: The base64-encoded signature of the token
+                      description: The Base64-encoded signature of the token
                     algorithm:
                       type: string
                       example: 'ES384'
-                      pattern: '^[A-Z0-9]+'
+                      description: The algorithm used to produce the signature
                     format:
                       type: string
                       example: 'web-eid:1.0'
-                      pattern: '^web-eid:1'
+                      description: The type identifier and version of the token format separated by a colon character ':'
                   required:
                     - unverifiedCertificate
                     - signature
@@ -572,7 +574,7 @@ paths:
               - Incorrect authentication state
               - Nonce missing from session
               - Expired nonce
-              - User's certificate validity issues
+              - Authentication token not valid
               - Missing fields or invalid values in request body
           content:
             application/json:
@@ -600,10 +602,10 @@ paths:
     post:
       tags:
         - id-card
-      summary: Endpoint for handling frontend errors
+      summary: Endpoint for handling front-end errors
       operationId: idCardAuthenticationError
       description: |
-        An endpoint which logs and translates errors that originate from frontend application: problems with
+        An endpoint which logs and translates errors that originate from front-end application: problems with
         the ID-card software or browser plugin, timeout while entering PIN1 code, etc.
       parameters:
         - name: Session cookie
@@ -636,20 +638,25 @@ paths:
                 code:
                   type: string
                   example: 'ERR_WEBEID_EXTENSION_UNAVAILABLE'
+                  description: Error code
                 errorStack:
                   type: string
                   example: |
                     NativeUnavailableError: a message from native application was expected, but native application closed connection
                         at onDisconnectListener (chrome-extension://jskdhjoqkdpoowmxjqoisdylzwltgnsj/background.js:1215:12)
+                  description: Error stack trace
                 extensionVersion:
                   type: string
                   example: '2.2.0'
+                  description: The version number of the browser plugin of Web eID
                 nativeAppVersion:
                   type: string
                   example: '2.2.0+423'
+                  description: The version number of the native application of Web eID
                 statusDurationMs:
                   type: string
                   example: '87'
+                  description: The amount of time in milliseconds that the browser spent on checking the status of Web eID
       responses:
         '400':
           description: |
@@ -1462,24 +1469,18 @@ components:
           type: string
           description: The locale from the user session (if present)
           example: 'en_US'
+        login_challenge:
+          type: string
+          description: The login challenge from the OIDC service used for initializing login session
+          example: '824113da6da44889943b98715a06d699'
         incident_number:
           type: string
           description: Unique ID to identify the error in logs
           example: 98JAE6AL9VGY2OFQ
-    IdCardErrorResponse:
-      type: object
-      properties:
-        status:
-          type: string
-          example: 'ERROR'
-        message:
-          type: string
-          description: 'Human readable error message. Translated according to active locale in user session'
-          example: 'Error description'
-        incident_nr:
-          type: string
-          description: 'Unique ID to identify the error in logs'
-          example: 'c6b00494c24db783dc950a95a17212c0'
+        reportable:
+          type: boolean
+          description: Shows whether the error should be reported
+          example: true
     Dependency:
       type: object
       properties:

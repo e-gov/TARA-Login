@@ -180,15 +180,14 @@ Table 1.4.3 - Integration with the [SK SID service](https://github.com/SK-EID/sm
 <a name="esteid_conf"></a>
 ### 1.5 ID-card auth method
 
-ID-card authentication has been implemented using Web eID, which consists of a JavaScript library, a browser plugin and the native application to access the ID card.
-The authentication process is started by requesting a nonce from /auth/id/init endpoint. This nonce is put together with the site's URL in browser and signed with user's private key. The signature together with user's authentication certificate is sent to /auth/id/login endpoint, which validates both the certificate and the signature.
+ID-card authentication has been implemented using Web eID, which consists of a JavaScript library, a browser plugin and the native application to access the ID-card.
 
 Table 1.5.1 - Enabling ID-card authentication
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.auth-methods.id-card.enabled` | No | Enable or disable ID-card authentication method. Default `false` |
-| `tara.auth-methods.id-card.site-origin` | Yes | URL of the web site where TARA login service is set up. This is used to check whether the signatures originate from the correct web site. Example: https://example.com |
+| `tara.auth-methods.id-card.site-origin` | Yes | Web page's [origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) (scheme (protocol), hostname (domain), and port) where user's browser accesses TARA service from. Web eID browser component embeds web page's origin into authentication token signature and this configuration value must be identical, otherwise signature validation fails. Example: https://example.com |
 
 
 Table 1.5.2 - Assigning the Level of assurance to authentication method

@@ -36,11 +36,11 @@ public class IdCardErrorController {
             case "ERR_WEBEID_EXTENSION_UNAVAILABLE":
             case "ERR_WEBEID_NATIVE_UNAVAILABLE":
             case "ERR_WEBEID_VERSION_MISMATCH":
-                throw new BadRequestException(IDC_WEBEID_NOT_AVAILABLE, webEidErrorParameters.code);
+                throw new BadRequestException(IDC_WEBEID_NOT_AVAILABLE, "Client-side Web eID operation error: " + webEidErrorParameters.code);
             case "ERR_WEBEID_USER_TIMEOUT":
-                throw new BadRequestException(IDC_WEBEID_USER_TIMEOUT, webEidErrorParameters.code);
+                throw new BadRequestException(IDC_WEBEID_USER_TIMEOUT, "Client-side Web eID operation error: " + webEidErrorParameters.code);
             default:
-                throw new BadRequestException(IDC_WEBEID_ERROR, webEidErrorParameters.code, new String[]{webEidErrorParameters.code});
+                throw new BadRequestException(IDC_WEBEID_ERROR, "Client-side Web eID operation error: " + webEidErrorParameters.code, new String[]{webEidErrorParameters.code});
         }
     }
 
