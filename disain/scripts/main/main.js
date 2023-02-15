@@ -232,18 +232,11 @@ jQuery(function ($) {
 			return responseJson;
 		} catch (error) {
 			// If the JSON body cannot be retrieved, show the general AJAX error page.
-			showIdCardAjaxError();
+			activateIdCardView('ajaxError');
 			return null;
 		} finally {
 			clearTimeout(timerId);
 		}
-	}
-
-	function showIdCardAjaxError() {
-		$('#idc-ajax-error-message').show();
-		$('#error-incident-number-wrapper').hide();
-		$('#error-report-url').hide();
-		activateIdCardView('error');
 	}
 
 	async function handleWebEidJsError(csrfToken, webEidInfo) {
@@ -279,26 +272,29 @@ jQuery(function ($) {
 
 	function handleIdCardBackendError(responseJson) {
 		$('#error-message').html(responseJson.message);
-		$('#error-incident-number').html(responseJson.incident_nr);
 
-		const plainTextMessage = $('#error-message').text();
-		const os = navigator.platform;
-		const browserInfo = navigator.appCodeName + '/' + navigator.appVersion;
-		const hostName = location.hostname;
-		const errorReportUrl = $('#error-report-url').attr('href')
-			.replace('{1}', plainTextMessage)
-			.replace('{2}', responseJson.incident_nr)
-			.replace('{3}', os)
-			.replace('{4}', browserInfo)
-			.replace('{5}', hostName);
-		$('#error-report-url').attr('href', errorReportUrl);
+		if (responseJson.reportable === true) {
+			$('#error-incident-number').html(responseJson.incident_nr);
+			const plainTextMessage = $('#error-message').text();
+			const os = navigator.platform;
+			const browserInfo = navigator.appCodeName + '/' + navigator.appVersion;
+			const hostName = location.hostname;
+			const errorReportUrl = $('#error-report-url').attr('href')
+				.replace('{1}', plainTextMessage)
+				.replace('{2}', responseJson.incident_nr)
+				.replace('{3}', os)
+				.replace('{4}', browserInfo)
+				.replace('{5}', hostName);
+			$('#error-report-url').attr('href', errorReportUrl);
 
-		const errorReportNotificationMessage = $('#error-report-notification').html()
-			.replace('{1}', responseJson.incident_nr)
-			.replace('{2}', hostName);
-		$('#error-report-notification').html(errorReportNotificationMessage);
-
-		activateIdCardView('error');
+			const errorReportNotificationMessage = $('#error-report-notification').html()
+				.replace('{1}', responseJson.incident_nr)
+				.replace('{2}', hostName);
+			$('#error-report-notification').html(errorReportNotificationMessage);
+			activateIdCardView('reportableError');
+		} else {
+			activateIdCardView('notReportableError');
+		}
 	}
 
 	// Mobile-ID limit max length
@@ -456,13 +452,19 @@ jQuery(function ($) {
 		const waitMessageSelector = '#id-card-wait';
 		const waitPopupMessageSelector = '#id-card-wait-popup';
 		const waitLoginMessageSelector = '#id-card-wait-login';
-		const errorMessageSelector = '#id-card-error';
+		const errorContainerSelector = '#id-card-error';
+		const errorMessageSelector = '#error-message';
+		const ajaxErrorSelector = '#idc-ajax-error-message';
+		const errorReportUrlSelector = '#error-report-url';
+		const errorIncidentNumberWrapperSelector = '#error-incident-number-wrapper';
 		const languageSelectionSelector = '.c-header-bar nav[role=navigation]';
     	const visibleElementsInViews = {
     		form: [formSelector, languageSelectionSelector].join(','),
 			waitPopup: [waitMessageSelector, waitPopupMessageSelector].join(','),
 			waitLogin: [waitMessageSelector, waitLoginMessageSelector].join(','),
-			error: errorMessageSelector
+			reportableError: [errorContainerSelector, errorMessageSelector, errorReportUrlSelector, errorIncidentNumberWrapperSelector].join(','),
+			notReportableError: [errorContainerSelector, errorMessageSelector].join(','),
+			ajaxError: [errorContainerSelector, ajaxErrorSelector].join(',')
 		}
 
     	if (! (viewName in visibleElementsInViews)) {
