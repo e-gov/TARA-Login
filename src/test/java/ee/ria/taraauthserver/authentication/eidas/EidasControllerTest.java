@@ -233,7 +233,7 @@ public class EidasControllerTest extends BaseTest {
                 .statusCode(502);
 
         assertErrorIsLogged("Service not available: I/O error on GET request for \"https://localhost:9877/login\": Read timed out; nested exception is java.net.SocketTimeoutException: Read timed out");
-        // assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request", "http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&RequesterID=openIdDemo&SPType=public&State="); // Regex?
+        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request", "http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&Method=eidas&RequesterID=openIdDemo&SPType=public&State="); // Regex?
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=INTERNAL_ERROR)", sessionFilter.getSession().getId()));
     }
 
