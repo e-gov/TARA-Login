@@ -125,6 +125,8 @@
                                     <input type="tel" maxlength="15" id="mid-phone-number" class="form-control"
                                            name="telephoneNumber">
                                 </div>
+                                <input type="hidden" id="mid-country-code"
+                                       class="form-control" name="countryCode" th:value="#{label.mobile-id.personal-code-prefix}"/>
                                 <div class="invalid-feedback is-hidden"
                                      th:text="#{message.common.phone-number-missing}"></div>
                                 <div class="invalid-feedback is-hidden"
@@ -159,12 +161,14 @@
                             <td>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
-                                        <span class="input-group-text"
+                                        <span id="personal-code-prefix" class="input-group-text"
                                               th:text="#{label.smart-id.personal-code-prefix}"></span>
                                     </div>
-                                    <input type="number" inputmode="decimal" maxlength="11" id="sid-personal-code"
-                                           class="form-control" name="idCode">
+                                    <input type="text" inputmode="text" maxlength="12" id="sid-personal-code"
+                                           class="form-control" name="idCode"/>
                                 </div>
+                                <input type="hidden" id="sid-country-code"
+                                       class="form-control" name="countryCode" th:value="#{label.smart-id.personal-code-prefix}"/>
                                 <div class="invalid-feedback is-hidden"
                                      th:text="#{message.common.personal-code-missing}"></div>
                                 <div class="invalid-feedback is-hidden"
@@ -206,9 +210,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td id="login-form-methods">
-                              
-                            </td>
+                            <td id="login-form-methods"></td>
                         </tr>
                         </tbody>
                     </table>
