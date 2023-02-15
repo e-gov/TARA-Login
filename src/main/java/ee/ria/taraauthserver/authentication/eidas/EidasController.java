@@ -79,7 +79,6 @@ public class EidasController {
         requestLogger.logResponse(response);
 
         updateSession(country, taraSession, relayState);
-        // return getHtmlRedirectPageFromResponse(servletResponse, response);
         return new RedirectView(getHtmlRedirectPageFromResponse(servletResponse, response));
     }
 

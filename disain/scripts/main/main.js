@@ -42,17 +42,18 @@ jQuery(function ($) {
 
 		var docwidth = $(document).width();
 		var active = $(this).data('tab');
+    var content = $('.c-tab-login__content[data-tab="' + active + '"]');
+    var inputGroup = content.find(".input-group");
 
 		// Clear alert and feedback messages
 		hideAlert($('.c-tab-login__content[data-tab="' + active + '"] [role="alert"]'));
-		hideFeedback($('.c-tab-login__content[data-tab="' + active + '"] .invalid-feedback'));
-		$('.c-tab-login__content[data-tab="' + active + '"] .input-group').removeClass('is-invalid');
-		$('.c-tab-login__content[data-tab="' + active + '"] .selectize-input').removeClass('is-invalid');
-
+		hideFeedback(content.find(".invalid-feedback"));
+		inputGroup.removeClass('is-invalid');
+    content.find(".selectize-input").removeClass('is-invalid');
 		$('.c-tab-login__nav-item').removeClass('is-active');
 		deActivateTab($('.c-tab-login__nav-link'), $('.c-tab-login__content'), $('.c-tab-login__warning'));
 
-        activateTab($(this), $('.c-tab-login__content[data-tab="' + active + '"]'), $('.c-tab-login__warning[data-tab="' + active + '"]'));
+    activateTab($(this), content, $('.c-tab-login__warning[data-tab="' + active + '"]'));
 		try {
             // In some cases exception could be thrown while accessing localStorage, see https://github.com/Modernizr/Modernizr/blob/v3.11.6/feature-detects/storage/localstorage.js
             localStorage.setItem('active-tab', active);
@@ -97,33 +98,48 @@ jQuery(function ($) {
 		hideAlert($(this).closest('.alert'));
 	});
 
-	// Country select
-	if ($('#country-select').length){
-		// Note that when updating tom-select, you have to convert tom-select.base.js from ecmascript-6 to ecmascript-5 for gulp compatibility and comment out the preventDefault(e) method under KEY_TAB settings to use regular tab behaviour.
-        new TomSelect("#country-select",{
-            selectOnTab: true,
-            onChange:function(){
-                // Removes the placeholder text when a country has been selected and a placeholder exists. Also sets the input width to 0 so it wouldn't create a new line on narrow screens.
-                if ($('#country-select-tomselected').is("[placeholder]")) {
-                    $('#country-select-tomselected').removeAttr('placeholder');
-                    $('#country-select-tomselected').css({"width":0, "min-width":0});
-                }
-            },
-            sortField: {
-                field: "text",
-                direction: "asc"
-            },
-            render:{
-                // Removes the "no results found" default message when using the search function.
-                no_results:function(data,escape){
-                    return '';
-                }
+  // Country select
+  if ($('#country-select').length){
+    // Note that when updating tom-select, you have to convert tom-select.base.js from ecmascript-6 to ecmascript-5 for gulp compatibility and comment out the preventDefault(e) method under KEY_TAB settings to use regular tab behaviour.
+    var countrySelect = new TomSelect("#country-select",{
+        selectOnTab: true,
+        onChange:function(){
+            // Removes the placeholder text when a country has been selected and a placeholder exists. Also sets the input width to 0 so it wouldn't create a new line on narrow screens.
+            if ($('#country-select-tomselected').is("[placeholder]")) {
+                $('#country-select-tomselected').removeAttr('placeholder');
+                $('#country-select-tomselected').css({"width":0, "min-width":0});
             }
-        });
-	}
+        },
+        sortField: {
+            field: "text",
+            direction: "asc"
+        },
+        render:{
+            // Removes the "no results found" default message when using the search function.
+            no_results:function(data,escape){
+                return '';
+            }
+        }
+    });
+  }
+ 
+  function getValidateFunction(country_code_field){
+    switch(country_code_field.val()) {
+      case "EE":
+        return validateEstonianIdCode;
+      case "LV":
+        return validateLatvianIdCode;
+      default:
+        return function(){return true;}
+    }
+  }
 
 	function validateEstonianIdCode(value){
 		return value && /^[0-9]{11}$/.test(value);
+	}
+
+  function validateLatvianIdCode(value){
+		return value && /^(\d{6})-[012]\d{4}$/.test(value);
 	}
 	
 	function validateEstonianPhoneNumber(value){
@@ -229,7 +245,7 @@ jQuery(function ($) {
                 proccessedErrorReportNotification = proccessedErrorReportNotification.replace("{1}", jsonResponse.incident_nr);
                 errorReportNotification.text(proccessedErrorReportNotification);
 
-                console.log(jsonResponse.reportable);
+                // console.log(jsonResponse.reportable);
 
                 if (jsonResponse.reportable === "true") {
                     $('#idCardForm .alert-popup #error-incident-number-wrapper').show();
@@ -339,8 +355,9 @@ jQuery(function ($) {
 
 	// Smart-ID limit max length
 	$('#smartIdForm input#sid-personal-code.form-control').on('keypress change input', function(event) {
-		if ($(this).val().length >= 11) {
-			$(this).val($(this).val().substring(0, 11));
+    // TODO: Validate length according to country
+		if ($(this).val().length >= 12) {
+			$(this).val($(this).val().substring(0, 12));
 			event.preventDefault();
 			return false;
 		}
@@ -352,8 +369,8 @@ jQuery(function ($) {
 		
 		if ($(this).prop('disabled')) return;
 		$(this).prop('disabled', true);
-		
-		if (validateFormFieldValue($('#sid-personal-code'), validateEstonianIdCode)) {
+
+		if (validateFormFieldValue($('#sid-personal-code'), getValidateFunction($('#sid-country-code')))) {
 			$('#smartIdForm').submit();
 		} else {
 			$(this).prop('disabled', false);
@@ -392,9 +409,15 @@ jQuery(function ($) {
 		if ($(this).prop('disabled')) return;
 		$(this).prop('disabled', true);
 
-		if (validateSelectizeValue($('#eidasForm select'), function(value){return value;})) {
-      $('#method-input').val($(this).data("value"));
-			$('#eidasForm').submit();
+		if (validateSelectizeValue($('#eidasForm select'), function(value){ return value; })) {
+      let value = $(this).data("value");
+      let country = $(this).data("country");
+      if (value === "smart-id") {
+        activateMethodContent(country, value);
+      } else {
+        $('#method-input').val(value);
+        $('#eidasForm').submit();
+      }
 		} else {
 			$(this).prop('disabled', false);
 		}
@@ -406,18 +429,37 @@ jQuery(function ($) {
       var selectedCountry = $(this).val();
       var methods = $(this).data('methods');
       $("#login-form-methods").html("");
-      for (let i = 0; i < methods[selectedCountry].length; i++) {
-        let methodName = methods[selectedCountry][i];
-        if (methodName == "eidas") {
-          var imageUrl = '../content/assets/methods/eidas.svg';
-        } else {
-          var imageUrl = '../content/assets/methods/' + selectedCountry.toLowerCase() + '/' + methodName + '.svg';
+      if (methods[selectedCountry] !== undefined) {
+        for (let i = 0; i < methods[selectedCountry].length; i++) {
+          let methodName = methods[selectedCountry][i];
+          if (methodName == "eidas") {
+            var imageUrl = '../content/assets/methods/eidas.svg';
+          } else {
+            var imageUrl = '../content/assets/methods/' + selectedCountry.toLowerCase() + '/' + methodName + '.svg';
+          }
+          var methodButton = $('<a href="#" role="button" class="method-btn" data-value="' + methodName + '" data-country="' + selectedCountry + '"><div class="method-btn-base"><image src="' + imageUrl + '" class="method-btn-icon"></image><div></div></div></a>');
+          $("#login-form-methods").append(methodButton);
         }
-        var methodButton = $('<a href="#" role="button" class="method-btn" data-value="' + methodName + '"><div class="method-btn-base"><image src="' + imageUrl + '" class="method-btn-icon"></image><div></div></div></a>');
-        $("#login-form-methods").append(methodButton);
       }
     }
 	});
+
+  function activateMethodContent(country, method){
+    var content = $('.c-tab-login__content');
+    var methodContent = $('.c-tab-login__content[data-tab="' + method + '"]');
+    // Clear alert and feedback messages
+		hideAlert($('.c-tab-login__content[data-tab="' + method + '"] [role="alert"]'));
+		hideFeedback(methodContent.find(".invalid-feedback"));
+    methodContent.find(".input-group").removeClass('is-invalid');
+    methodContent.find(".selectize-input").removeClass('is-invalid');
+    methodContent.find("#personal-code-prefix")[0].innerText = country;
+    methodContent.find("#sid-country-code").val(country);
+    content.attr("aria-hidden", true);
+    content.removeClass('is-active');
+
+    methodContent.attr("aria-hidden", false);
+    methodContent.addClass('is-active');
+  }
 
 	function showAlert(alert) {
       alert.attr("role", "alert");
@@ -500,20 +542,36 @@ jQuery(function ($) {
 		// If the result is not clear yet, don't change anything
 	}
 
-    function activateTab(link, content, warning) {
+  function activateTab(link, content, warning) {
 		let navItem = link.parent();
 		navItem.attr("aria-selected", true);
 		link.addClass('is-active');
-		if (link.attr("data-tab") === "id-card") {
-			if (webEidCheckResult === 'NOT_STARTED') {
-				detectWebeid(warning, navItem);
-			} else {
-				showOrHideWebEidWarning(warning, navItem);
-			}
-		}
-        content.attr("aria-hidden", false);
-        content.addClass('is-active');
-
+    switch(link.attr("data-tab")) {
+      case "id-card":
+        if (webEidCheckResult === 'NOT_STARTED') {
+          detectWebeid(warning, navItem);
+        } else {
+          showOrHideWebEidWarning(warning, navItem);
+        }
+        break;
+      case "smart-id":
+        content.find("#sid-country-code").val("EE");
+        let prefix = content.find("#personal-code-prefix")[0];
+        if (prefix !== undefined){
+          prefix.innerText = "EE";
+        }
+        break;
+      case "eu-citizen":
+        if (countrySelect != undefined) {
+          countrySelect.clear();
+          countrySelect.setValue("");
+          let placeholder = $('#country-select').find(":selected").text();
+          $('#country-select-tomselected').attr('placeholder', placeholder);
+          $('#country-select-tomselected').css({"width":"100%"});
+        }
+     }    
+    content.attr("aria-hidden", false);
+    content.addClass('is-active');
 		// Show warning div if there are any warnings to display
 		// (not including web-eid warning, which is always there, but usually hidden)
 		if (warning.find("div.alert-warning > ul > li").not("#webeid-warning.hidden").length > 0) {

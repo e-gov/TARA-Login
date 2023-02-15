@@ -116,13 +116,13 @@ public class AuthSidService {
     @Autowired
     private Executor taskExecutor;
 
-    public AuthenticationHash startSidAuthSession(TaraSession taraSession, String idCode) {
+    public AuthenticationHash startSidAuthSession(TaraSession taraSession, String countryCode, String idCode) {
         AuthenticationHash authenticationHash = getAuthenticationHash();
         AuthenticationRequestBuilder requestBuilder = sidClient.createAuthentication();
         taraSession.setState(INIT_SID);
 
         CompletableFuture
-                .supplyAsync(withMdcAndLocale(() -> initAuthentication(idCode, taraSession, authenticationHash, requestBuilder)),
+                .supplyAsync(withMdcAndLocale(() -> initAuthentication(countryCode, idCode, taraSession, authenticationHash, requestBuilder)),
                         delayedExecutor(smartIdConfigurationProperties.getDelayInitiateSidSessionInMilliseconds(), MILLISECONDS, taskExecutor))
                 .thenAcceptAsync(withMdc((sidSessionId) -> pollAuthenticationResult(sidSessionId, taraSession, requestBuilder)),
                         delayedExecutor(smartIdConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLISECONDS, taskExecutor));
@@ -133,12 +133,12 @@ public class AuthSidService {
         return AuthenticationHash.generateRandomHash(HashType.valueOf(smartIdConfigurationProperties.getHashType()));
     }
 
-    private String initAuthentication(String idCode, TaraSession taraSession, AuthenticationHash authenticationHash, AuthenticationRequestBuilder requestBuilder) {
+    private String initAuthentication(String countryCode, String idCode, TaraSession taraSession, AuthenticationHash authenticationHash, AuthenticationRequestBuilder requestBuilder) {
         Span span = ElasticApm.currentTransaction().startSpan("app", "MID", "poll");
         span.setName("AuthSidService#initAuthentication");
         span.setStartTimestamp(now().plus(200, MILLIS).minus(smartIdConfigurationProperties.getDelayInitiateSidSessionInMilliseconds(), MILLIS).toEpochMilli() * 1_000);
         try (final Scope scope = span.activate()) {
-            SemanticsIdentifier semanticsIdentifier = new SemanticsIdentifier(SemanticsIdentifier.IdentityType.PNO, SemanticsIdentifier.CountryCode.EE, idCode);
+            SemanticsIdentifier semanticsIdentifier = new SemanticsIdentifier(SemanticsIdentifier.IdentityType.PNO, SemanticsIdentifier.CountryCode.valueOf(countryCode), idCode);
             requestBuilder
                     .withRelyingPartyUUID(taraSession.getSmartIdRelyingPartyUuid().orElse(smartIdConfigurationProperties.getRelyingPartyUuid()))
                     .withRelyingPartyName(taraSession.getSmartIdRelyingPartyName().orElse(smartIdConfigurationProperties.getRelyingPartyName()))
@@ -225,7 +225,7 @@ public class AuthSidService {
             taraAuthResult.setFirstName(authIdentity.getGivenName());
             taraAuthResult.setLastName(authIdentity.getSurname());
             taraAuthResult.setSubject(authIdentity.getCountry() + authIdentity.getIdentityNumber());
-            taraAuthResult.setDateOfBirth(MidNationalIdentificationCodeValidator.getBirthDate(authIdentity.getIdentityNumber()));
+            // taraAuthResult.setDateOfBirth(MidNationalIdentificationCodeValidator.getBirthDate(authIdentity.getIdentityNumber()));
         }
         taraAuthResult.setAmr(AuthenticationType.SMART_ID);
         taraAuthResult.setAcr(smartIdConfigurationProperties.getLevelOfAssurance());
