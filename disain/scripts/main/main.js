@@ -157,6 +157,8 @@ jQuery(function ($) {
         return validateEstonianIdCode;
       case "LV":
         return validateLatvianIdCode;
+      case "LT":
+        return validateLithuanianIdCode;
       default:
         return function(){return true;}
     }
@@ -169,6 +171,10 @@ jQuery(function ($) {
   function validateLatvianIdCode(value){
 		return value && /^(\d{6})-[012]\d{4}$/.test(value);
 	}
+
+  function validateLithuanianIdCode(value){
+    return value && /^[0-9][0-9]{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])[0-9]{4}$/.test(value);
+  }
 	
 	function validateEstonianPhoneNumber(value){
 		return value && /^[0-9]{3,15}$/.test(value);
@@ -491,8 +497,13 @@ jQuery(function ($) {
 	// Smart-ID limit max length
 	$('#smartIdForm input#sid-personal-code.form-control').on('keypress change input', function(event) {
     // TODO: Validate length according to country
-		if ($(this).val().length >= 12) {
-			$(this).val($(this).val().substring(0, 12));
+    let countryCode = $('#sid-country-code').val();
+    let maxLength = 11;
+    if (countryCode === "LV") {
+      maxLength = 12;
+    }
+		if ($(this).val().length >= maxLength) {
+			$(this).val($(this).val().substring(0, maxLength));
 			event.preventDefault();
 			return false;
 		}
