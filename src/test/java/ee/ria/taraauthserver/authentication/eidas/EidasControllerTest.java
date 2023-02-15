@@ -152,25 +152,26 @@ public class EidasControllerTest extends BaseTest {
         eidasConfigurationProperties.setAvailableCountries(availableCountries); // TODO AUT-857
         createEidasCountryStub("mock_responses/eidas/eidas-countries-response.json", 200);
         createEidasLoginStub("mock_responses/eidas/eidas-login-response.json", 200);
+        MockSessionFilter sessionFilter  = MockSessionFilter.withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(List.of(EIDAS))
+                .authenticationState(INIT_AUTH_PROCESS).build();
 
         given()
-                .filter(MockSessionFilter.withTaraSession()
-                        .sessionRepository(sessionRepository)
-                        .authenticationTypes(List.of(EIDAS))
-                        .authenticationState(INIT_AUTH_PROCESS)
-                        .clientAllowedScopes(List.of("eidas")).build())
+                .filter(sessionFilter)
                 .when()
                 .formParam("country", "IT")
+                .formParam("method", "eidas")
                 .post("/auth/eidas/init")
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Antud riigikood ei ole lubatud. Lubatud riigikoodid on: CA, LV, LT"))
+                .body("message", equalTo("Antud riigikood ei ole lubatud. Lubatud riigikoodid on: LV, CA, LT"))
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: Requested country not supported for public sector.");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=EIDAS_COUNTRY_NOT_SUPPORTED)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=EIDAS_COUNTRY_NOT_SUPPORTED)", sessionFilter.getSession().getId()));
     }
 
     @Test

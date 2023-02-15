@@ -5,10 +5,33 @@ import ee.sk.mid.MidNationalIdentificationCodeValidator;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-public class NationalIdNumberValidator implements ConstraintValidator<ValidNationalIdNumber, String> {
+import org.springframework.beans.BeanWrapperImpl;
+
+public class NationalIdNumberValidator implements ConstraintValidator<ValidNationalIdNumber, Object> {
+
+    private String fieldName;
+    private String dependFieldName;
 
     @Override
-    public boolean isValid(String value, ConstraintValidatorContext context) {
-        return MidNationalIdentificationCodeValidator.isValid(value);
+    public void initialize(ValidNationalIdNumber annotation) {
+        fieldName          = annotation.fieldName();
+        dependFieldName    = annotation.dependFieldName();
+    }
+
+    @Override
+    public boolean isValid(Object value, ConstraintValidatorContext context) {
+        if (value == null) {
+            return false;
+        }
+        BeanWrapperImpl wrapper = new BeanWrapperImpl(value);
+  
+        String fieldValue       = String.valueOf(wrapper.getPropertyValue(fieldName));
+        String dependFieldValue = String.valueOf(wrapper.getPropertyValue(dependFieldName));
+    
+        if (dependFieldValue.equals("EE")) {
+            return MidNationalIdentificationCodeValidator.isValid(fieldValue);
+        } else {
+            return true;
+        }
     }
 }
