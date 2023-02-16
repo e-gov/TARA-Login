@@ -148,7 +148,7 @@ jQuery(function ($) {
     return value && /^[0-9][0-9]{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])[0-9]{4}$/.test(value);
   }
 	
-	function validateEstonianPhoneNumber(value){
+	function validatePhoneNumber(value){
 		return value && /^[0-9]{3,15}$/.test(value);
 	}
 	
@@ -337,7 +337,7 @@ jQuery(function ($) {
 		
 		var valid = true;
 		valid = validateFormFieldValue($('#mid-personal-code'), getValidateFunction($('#mid-country-code'))) && valid;
-		valid = validateFormFieldValue($('#mid-phone-number'), validateEstonianPhoneNumber) && valid;
+		valid = validateFormFieldValue($('#mid-phone-number'), validatePhoneNumber) && valid;
 		
 		if (valid) {
 			$('#mobileIdForm').submit();
