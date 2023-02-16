@@ -37,3 +37,5 @@ build/
 .env
 src/main/resources/rebel.xml
 src/main/resources/rebel-remote.xml
+
+src/main/resources/static/
