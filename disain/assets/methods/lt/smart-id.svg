@@ -1,4 +1,7 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 1dcda18 (Added Lithuanian mobile-id support)
 <svg viewBox="0 0 99 25" fill="none" xmlns="http://www.w3.org/2000/svg" class="SmartIdButton_icon_uZ2V3">
 <g clip-path="url(#clip0)" fill="#00AFAA"><path d="M15.723 7.835a.888.888 0 01-.897.902.888.888 0 01-.897-.902c0-.507.393-.902.897-.902.505 0 .897.395.897.902z"></path>
 <path d="M19.479 22.717a.787.787 0 01-.589-.282.754.754 0 01.14-1.014 11.115 11.115 0 004.513-8.935C23.57 6.398 18.61 1.409 12.5 1.409c-.533 0-1.065.028-1.598.113v15.67c0 .395-.308.705-.728.705-.393 0-.729-.31-.729-.704V.902c0-.338.252-.648.589-.705A12.01 12.01 0 0112.5-.056c6.895 0 12.5 5.608 12.5 12.514 0 3.974-1.906 7.75-5.1 10.09-.141.14-.281.169-.421.169z"></path>
@@ -8,6 +11,7 @@
 </g>
 <defs><clipPath id="clip0"><path fill="#fff" d="M0 0h25v25H0z"></path></clipPath>
 <clipPath id="clip1"><path fill="#fff" transform="translate(32 9)" d="M0 0h67v9H0z"></path></clipPath></defs>
+<<<<<<< HEAD
 </svg>
 =======
 <svg viewBox="0 0 186.2 24.9" xmlns="http://www.w3.org/2000/svg">
@@ -27,3 +31,6 @@
 	c0,2.6-1.6,3.9-4.7,3.9h-0.8v3.3l6.5,10h5L103.6,14.1z"/>
 </svg>
 >>>>>>> 71012e1 (Added LV and LT smart-id authentication methods)
+=======
+</svg>
+>>>>>>> 1dcda18 (Added Lithuanian mobile-id support)
