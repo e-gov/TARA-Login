@@ -35,7 +35,7 @@ public class AuthMidController {
     private AuthMidService authMidService;
 
     @PostMapping(value = "/auth/mid/init", produces = MediaType.TEXT_HTML_VALUE, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public String authMidInit(@Validated @ModelAttribute(value = "credential") MidRequest midRequest, Model model, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+    public String authMidInit(@Validated MidRequest midRequest, Model model, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         log.info("Initiating Mobile-ID authentication session");
         validateSession(taraSession);
         midRequest.telephoneNumber = "+372" + midRequest.telephoneNumber;
@@ -53,9 +53,10 @@ public class AuthMidController {
     }
 
     @Data
+    @ValidNationalIdNumber(fieldName = "idCode", dependFieldName = "countryCode")
     public static class MidRequest {
-        @ValidNationalIdNumber(message = "{message.mid-rest.error.invalid-identity-code}")
         private String idCode;
+        private String countryCode;
         @NotNull(message = "{message.mid-rest.error.invalid-phone-number}")
         @Pattern(regexp = "\\d{3,15}", message = "{message.mid-rest.error.invalid-phone-number}")
         private String telephoneNumber;

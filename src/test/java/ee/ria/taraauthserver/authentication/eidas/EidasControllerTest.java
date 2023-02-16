@@ -129,25 +129,26 @@ public class EidasControllerTest extends BaseTest {
         eidasConfigurationProperties.setAvailableCountries(availableCountries); // TODO AUT-857
         createEidasCountryStub("mock_responses/eidas/eidas-countries-response.json", 200);
         createEidasLoginStub("mock_responses/eidas/eidas-login-response.json", 200);
+        MockSessionFilter sessionFilter  = MockSessionFilter.withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(List.of(EIDAS))
+                .authenticationState(INIT_AUTH_PROCESS).build();
 
         given()
-                .filter(MockSessionFilter.withTaraSession()
-                        .sessionRepository(sessionRepository)
-                        .authenticationTypes(List.of(EIDAS))
-                        .authenticationState(INIT_AUTH_PROCESS)
-                        .clientAllowedScopes(List.of("eidas")).build())
+                .filter(sessionFilter)
                 .when()
                 .formParam("country", "IT")
+                .formParam("method", "eidas")
                 .post("/auth/eidas/init")
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Antud riigikood ei ole lubatud. Lubatud riigikoodid on: CA, LV, LT"))
+                .body("message", equalTo("Antud riigikood ei ole lubatud. Lubatud riigikoodid on: LV, CA, LT"))
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: Requested country not supported for public sector.");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=EIDAS_COUNTRY_NOT_SUPPORTED)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=EIDAS_COUNTRY_NOT_SUPPORTED)", sessionFilter.getSession().getId()));
     }
 
     @Test
@@ -209,7 +210,7 @@ public class EidasControllerTest extends BaseTest {
                 .statusCode(502);
 
         assertErrorIsLogged("Service not available: I/O error on GET request for \"https://localhost:9877/login\": Read timed out; nested exception is java.net.SocketTimeoutException: Read timed out");
-        // assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request", "http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&RequesterID=openIdDemo&SPType=public&State="); // Regex?
+        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request", "http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&Method=eidas&RequesterID=openIdDemo&SPType=public&State="); // Regex?
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=INTERNAL_ERROR)", sessionFilter.getSession().getId()));
     }
 
@@ -248,7 +249,6 @@ public class EidasControllerTest extends BaseTest {
         assertEquals("openIdDemo", taraSession.getLoginRequestInfo().getClientId());
         assertEquals(SPType.PUBLIC, oidcClient.getInstitution().getSector());
         assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request", "http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&Method=eidas&RequesterID=openIdDemo&SPType=public&State=" + taraSession.getLoginRequestInfo().getOidcState() + "&SessionID=" + taraSession.getSessionId()); // Regex?
-        // assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS response: 200", "http.response.status_code=200, http.response.body.content=\"<html xmlns=\\\"http://www.w3.org/1999/xhtml\\\" xml:lang=\\\"en\\\"><body onload=\\\"document.forms[0].submit()\\\"><noscript><p><strong>Note: </strong> Since your browser does not support JavaScript, you must press the Continue button once to proceed.</p></noscript><form action=\\\"https&#x3a;&#x2f;&#x2f;eidastest.eesti.ee/&#x3a;8080&#x2f;EidasNode&#x2f;ServiceProvider\\\" method=\\\"post\\\"><div><input type=\\\"hidden\\\" name=\\\"SAMLRequest\\\" value=\\\"PD94bWw...........MnA6QXV0aG5SZXF1ZXN0Pg==\\\"/><input type=\\\"hidden\\\" name=\\\"country\\\" value=\\\"CA\\\"/></div><noscript><div><input type=\\\"submit\\\" value=\\\"Continue\\\"/></div></noscript></form></body></html>");
         assertStatisticsIsNotLogged();
     }
 

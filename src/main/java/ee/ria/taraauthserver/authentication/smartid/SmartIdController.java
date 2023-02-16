@@ -32,10 +32,10 @@ public class SmartIdController {
     private AuthSidService authSidService;
 
     @PostMapping(value = "/auth/sid/init", produces = MediaType.TEXT_HTML_VALUE, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public String authSidInit(@Validated @ModelAttribute(value = "credential") SidCredential sidCredential, Model model, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
-        log.info("Initiating Smart-ID authentication session");
+    public String authSidInit(@Validated SidCredential sidCredential, Model model, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+        log.info("Initiating Smart-ID authentication session for country: " + sidCredential.getCountryCode());
         validateSession(taraSession);
-        AuthenticationHash authenticationHash = authSidService.startSidAuthSession(taraSession, sidCredential.getIdCode());
+        AuthenticationHash authenticationHash = authSidService.startSidAuthSession(taraSession, sidCredential.getCountryCode(), sidCredential.getIdCode());
         model.addAttribute("smartIdVerificationCode", authenticationHash.calculateVerificationCode());
         return "sidLoginCode";
     }
@@ -48,8 +48,9 @@ public class SmartIdController {
     }
 
     @Data
+    @ValidNationalIdNumber(fieldName = "idCode", dependFieldName = "countryCode")
     public static class SidCredential {
-        @ValidNationalIdNumber(message = "{message.mid-rest.error.invalid-identity-code}")
         private String idCode;
+        private String countryCode;
     }
 }
