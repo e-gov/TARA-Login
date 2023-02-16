@@ -66,14 +66,14 @@
   transition: .1s;
   border: 1px solid #d9d9d9;
   border-radius: 6px;
-  height: 43px;
+  height: 45px;
   user-select: none;
   background-color: #fff;
   min-width: 211px;
   overflow: hidden;
   margin-bottom: 5px;
   &:hover {
-    border-color: darken( #d9d9d9, 15% );
+    border-color: darken( #d9d9d9, 25% );
   }
 }
 .method-btn-base {
@@ -84,6 +84,6 @@
   padding: 0 10px;
 }
 .method-btn-icon {
-  width: 80px;
+  width: 110px;
   height: auto;
 }
