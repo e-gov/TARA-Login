@@ -43,16 +43,17 @@ The webapp provides implementation for following authentication methods:
 <a name="build_requirements"></a>
 ### Requirements:
 
-Java (JDK 11+) runtime is required to build and run the webapp. 
+- Java (JDK 11+) runtime is required to build and run the webapp.
+- [Docker](https://www.docker.com/) is required to package images, fonts, CSS and JavaScript using `npm` and `gulp`.
+- [Maven](https://maven.apache.org/) is required to build and test the software.
 
 <a name="build"></a>
 ### Building the webapp:
 
-[Maven](https://maven.apache.org/) is used to build and test the software.
-
-To build the software, execute the following command:
+To build the software, execute the following commands in the current (TARA2-Login) directory:
 
 ````
+docker run --rm -v "${PWD}:/data" -w /data/disain -u $(id -u):$(id -g) node:14 sh -c 'npm install && node_modules/.bin/gulp build'
 ./mvnw clean package
 ````
 

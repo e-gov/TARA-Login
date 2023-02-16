@@ -1,1 +1,0 @@
-document.forms.eidasRedirectForm.submit();
