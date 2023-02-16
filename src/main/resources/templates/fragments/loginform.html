@@ -118,7 +118,7 @@
                             <td>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
-                                        <span class="input-group-text"
+                                        <span class="personal-code-prefix input-group-text"
                                               th:text="#{label.mobile-id.personal-code-prefix}"></span>
                                     </div>
                                     <input type="number" inputmode="decimal" id="mid-personal-code" class="form-control"
@@ -138,14 +138,16 @@
                             <td>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
-                                        <span class="input-group-text"
+                                        <span class="phone-number-prefix input-group-text"
                                               th:text="#{label.mobile-id.phone-number-prefix}"></span>
                                     </div>
                                     <input type="tel" maxlength="15" id="mid-phone-number" class="form-control"
                                            name="telephoneNumber">
                                 </div>
                                 <input type="hidden" id="mid-country-code"
-                                       class="form-control" name="countryCode" th:value="#{label.mobile-id.personal-code-prefix}"/>
+                                       class="country-code" name="countryCode" th:value="#{label.mobile-id.personal-code-prefix}"/>
+                                <input type="hidden" id="mid-phone-number-prefix"
+                                       name="phoneNumberPrefix" th:value="#{label.mobile-id.phone-number-prefix}"/>
                                 <div class="invalid-feedback is-hidden"
                                      th:text="#{message.common.phone-number-missing}"></div>
                                 <div class="invalid-feedback is-hidden"
@@ -180,14 +182,14 @@
                             <td>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
-                                        <span id="personal-code-prefix" class="input-group-text"
+                                        <span class="personal-code-prefix input-group-text"
                                               th:text="#{label.smart-id.personal-code-prefix}"></span>
                                     </div>
                                     <input type="text" inputmode="text" maxlength="12" id="sid-personal-code"
                                            class="form-control" name="idCode"/>
                                 </div>
                                 <input type="hidden" id="sid-country-code"
-                                       class="form-control" name="countryCode" th:value="#{label.smart-id.personal-code-prefix}"/>
+                                       class="country-code" name="countryCode" th:value="#{label.smart-id.personal-code-prefix}"/>
                                 <div class="invalid-feedback is-hidden"
                                      th:text="#{message.common.personal-code-missing}"></div>
                                 <div class="invalid-feedback is-hidden"

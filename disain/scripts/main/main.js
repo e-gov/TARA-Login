@@ -148,7 +148,7 @@ jQuery(function ($) {
     return value && /^[0-9][0-9]{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])[0-9]{4}$/.test(value);
   }
 	
-	function validateEstonianPhoneNumber(value){
+	function validatePhoneNumber(value){
 		return value && /^[0-9]{3,15}$/.test(value);
 	}
 	
@@ -336,8 +336,8 @@ jQuery(function ($) {
 		$(this).prop('disabled', true);
 		
 		var valid = true;
-		valid = validateFormFieldValue($('#mid-personal-code'), validateEstonianIdCode) && valid;
-		valid = validateFormFieldValue($('#mid-phone-number'), validateEstonianPhoneNumber) && valid;
+		valid = validateFormFieldValue($('#mid-personal-code'), getValidateFunction($('#mid-country-code'))) && valid;
+		valid = validateFormFieldValue($('#mid-phone-number'), validatePhoneNumber) && valid;
 		
 		if (valid) {
 			$('#mobileIdForm').submit();
@@ -423,7 +423,7 @@ jQuery(function ($) {
 		if (validateSelectizeValue($('#eidasForm select'), function(value){ return value; })) {
       let value = $(this).data("value");
       let country = $(this).data("country");
-      if (value === "smart-id") {
+      if (["smart-id", "mobile-id"].indexOf(value) > -1) {
         activateMethodContent(country, value);
       } else {
         $('#method-input').val(value);
@@ -463,13 +463,29 @@ jQuery(function ($) {
 		hideFeedback(methodContent.find(".invalid-feedback"));
     methodContent.find(".input-group").removeClass('is-invalid');
     methodContent.find(".selectize-input").removeClass('is-invalid');
-    methodContent.find("#personal-code-prefix")[0].innerText = country;
-    methodContent.find("#sid-country-code").val(country);
+    methodContent.find(".personal-code-prefix")[0].innerText = country;
+    if (method === "mobile-id"){
+      let prefix = getPhoneNumberPrefix(country);
+      methodContent.find(".phone-number-prefix")[0].innerText = prefix;
+      methodContent.find("#mid-phone-number-prefix").val(prefix);
+    }
+    methodContent.find(".country-code").val(country);
     content.attr("aria-hidden", true);
     content.removeClass('is-active');
 
     methodContent.attr("aria-hidden", false);
     methodContent.addClass('is-active');
+  }
+
+  function getPhoneNumberPrefix(country){
+    switch(country) {
+      case "EE":
+        return "+372";
+      case "LT":
+        return "+370";
+      default:
+        return "+372";
+    }
   }
 
 	function showAlert(alert) {
@@ -566,10 +582,19 @@ jQuery(function ($) {
         }
         break;
       case "smart-id":
-        content.find("#sid-country-code").val("EE");
-        let prefix = content.find("#personal-code-prefix")[0];
-        if (prefix !== undefined){
-          prefix.innerText = "EE";
+      case "mobile-id":
+        content.find(".country-code").val("EE");
+        let personalCodePrefix = content.find(".personal-code-prefix")[0];
+        let phoneNumberPrefix = content.find(".phone-number-prefix")[0];
+        let phoneNumberPrefixInput = content.find("#mid-phone-number-prefix");
+        if (personalCodePrefix !== undefined){
+          personalCodePrefix.innerText = "EE";
+        }
+        if (phoneNumberPrefix !== undefined){
+          phoneNumberPrefix.innerText = "+372";
+        }
+        if (phoneNumberPrefixInput !== undefined){
+          phoneNumberPrefixInput.val("+372");
         }
         break;
       case "eu-citizen":
