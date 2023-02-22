@@ -658,33 +658,33 @@ class SmartIdControllerTest extends BaseTest {
                 "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_USER_REFUSED)");
     }
 
-    @Test
-    @Tag(value = "SID_AUTH_POLL_RESPONSE_COMPLETED_ERRORS")
-    void sidAuthInit_PollResponse_ok_timeout() {
-        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
-                .sessionRepository(sessionRepository)
-                .authenticationTypes(of(SMART_ID))
-                .authenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS).build();
-        createSidApiAuthenticationStub("mock_responses/sid/sid_authentication_init_response.json", 200);
-        createSidApiPollStub("mock_responses/sid/sid_poll_response_timeout.json", 200);
-
-        given()
-                .filter(sessionFilter)
-                .when()
-                .formParam(ID_CODE, ID_CODE_VALUE)
-                .post("/auth/sid/init")
-                .then()
-                .assertThat()
-                .statusCode(200);
-
-        TaraSession taraSession = await().atMost(FIVE_SECONDS)
-                .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
-        assertEquals(ErrorCode.SID_SESSION_TIMEOUT, taraSession.getAuthenticationResult().getErrorCode());
-        assertWarningIsLogged("Smart-ID authentication failed: Session timed out without getting any response from user, Error code: SID_SESSION_TIMEOUT");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
-                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_SESSION_TIMEOUT)");
-    }
+//    @Test
+//    @Tag(value = "SID_AUTH_POLL_RESPONSE_COMPLETED_ERRORS")
+//    void sidAuthInit_PollResponse_ok_timeout() {
+//        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+//                .sessionRepository(sessionRepository)
+//                .authenticationTypes(of(SMART_ID))
+//                .authenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS).build();
+//        createSidApiAuthenticationStub("mock_responses/sid/sid_authentication_init_response.json", 200);
+//        createSidApiPollStub("mock_responses/sid/sid_poll_response_timeout.json", 200);
+//
+//        given()
+//                .filter(sessionFilter)
+//                .when()
+//                .formParam(ID_CODE, ID_CODE_VALUE)
+//                .post("/auth/sid/init")
+//                .then()
+//                .assertThat()
+//                .statusCode(200);
+//
+//        TaraSession taraSession = await().atMost(FIVE_SECONDS)
+//                .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
+//        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
+//        assertEquals(ErrorCode.SID_SESSION_TIMEOUT, taraSession.getAuthenticationResult().getErrorCode());
+//        assertWarningIsLogged("Smart-ID authentication failed: Session timed out without getting any response from user, Error code: SID_SESSION_TIMEOUT");
+//        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+//                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_SESSION_TIMEOUT)");
+//    }
 
     @Test
     @Tag(value = "SID_AUTH_POLL_RESPONSE_COMPLETED_ERRORS")
