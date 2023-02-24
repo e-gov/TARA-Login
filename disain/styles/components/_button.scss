@@ -28,19 +28,6 @@
       border-color: darken( #7c7f82, 10% );
     }
   }
-  &--secondary {
-    color: #000;
-    border: 2px solid #7c7f82;
-    background-color: #fff;
-    margin-right: 5px;
-    margin-bottom: 5px;
-    font-size: 16px;
-    height: 45px;
-    width: 200px;
-    &:hover {
-      border-color: darken( #7c7f82, 10% );
-    }
-  }
   &--primary {
     color: #fff;
     background-color: #008936;
