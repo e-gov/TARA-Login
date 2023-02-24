@@ -28,7 +28,7 @@ public class NationalIdNumberValidator implements ConstraintValidator<ValidNatio
         String fieldValue       = String.valueOf(wrapper.getPropertyValue(fieldName));
         String dependFieldValue = String.valueOf(wrapper.getPropertyValue(dependFieldName));
     
-        if (dependFieldValue.equals("EE")) {
+        if (dependFieldValue.equals("EE") || dependFieldValue.equals("LT")) {
             return MidNationalIdentificationCodeValidator.isValid(fieldValue);
         } else {
             return true;
