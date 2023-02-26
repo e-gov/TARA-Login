@@ -156,7 +156,7 @@ class IdCardLoginControllerTest extends BaseTest {
                 .header("Set-Cookie", nullValue())
                 .body("message", equalTo("Keelatud päring. Päring esitati topelt, seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("error", equalTo("Forbidden"))
-                .body("incident_nr", matchesPattern("[a-f0-9-]{36}"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("Access denied: Invalid CSRF token.");
@@ -186,7 +186,7 @@ class IdCardLoginControllerTest extends BaseTest {
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("message", equalTo("Ebakorrektne päring. Vale seansi staatus."))
                 .body("error", equalTo("Bad Request"))
-                .body("incident_nr", matchesPattern("[a-f0-9-]{36}"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false));
 
         String sessionId = mockSessionFilter.getSession().getId();
@@ -220,7 +220,7 @@ class IdCardLoginControllerTest extends BaseTest {
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Ebakorrektne päring."))
-                .body("incident_nr", matchesPattern("[a-f0-9-]{36}"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false));
 
         String sessionId = mockSessionFilter.getSession().getId();
@@ -256,7 +256,7 @@ class IdCardLoginControllerTest extends BaseTest {
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Ebakorrektne päring."))
-                .body("incident_nr", matchesPattern("[a-f0-9-]{36}"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false));
 
         String sessionId = mockSessionFilter.getSession().getId();
@@ -288,7 +288,7 @@ class IdCardLoginControllerTest extends BaseTest {
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Ebakorrektne päring."))
-                .body("incident_nr", matchesPattern("[a-f0-9-]{36}"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false));
 
         String sessionId = mockSessionFilter.getSession().getId();
@@ -320,7 +320,7 @@ class IdCardLoginControllerTest extends BaseTest {
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Ebakorrektne päring."))
-                .body("incident_nr", matchesPattern("[a-f0-9-]{36}"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false));
 
         String sessionId = mockSessionFilter.getSession().getId();
@@ -352,7 +352,7 @@ class IdCardLoginControllerTest extends BaseTest {
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Ebakorrektne päring."))
-                .body("incident_nr", matchesPattern("[a-f0-9-]{36}"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false));
 
         String sessionId = mockSessionFilter.getSession().getId();
@@ -384,7 +384,7 @@ class IdCardLoginControllerTest extends BaseTest {
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Ebakorrektne päring."))
-                .body("incident_nr", matchesPattern("[a-f0-9-]{36}"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false));
 
         String sessionId = mockSessionFilter.getSession().getId();
@@ -419,7 +419,7 @@ class IdCardLoginControllerTest extends BaseTest {
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("ID-kaardi sertifikaadid ei kehti."))
-                .body("incident_nr", matchesPattern("[a-f0-9-]{36}"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false));
 
         String sessionId = mockSessionFilter.getSession().getId();
@@ -455,7 +455,7 @@ class IdCardLoginControllerTest extends BaseTest {
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("ID-kaardi sertifikaadid ei kehti."))
-                .body("incident_nr", matchesPattern("[a-f0-9-]{36}"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(true));
 
         String sessionId = mockSessionFilter.getSession().getId();
@@ -601,7 +601,7 @@ class IdCardLoginControllerTest extends BaseTest {
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("ID-kaardi sertifikaadid on peatatud või tühistatud. Palun pöörduge Politsei- ja Piirivalveameti teenindusse."))
-                .body("incident_nr", matchesPattern("[a-f0-9-]{36}"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false));
 
         String sessionId = mockSessionFilter.getSession().getId();
@@ -636,7 +636,7 @@ class IdCardLoginControllerTest extends BaseTest {
                 .body("status", equalTo(400))
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("ID-kaardi sertifikaadi staatus on teadmata."))
-                .body("incident_nr", matchesPattern("[a-f0-9-]{36}"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(true));
 
         String sessionId = mockSessionFilter.getSession().getId();
@@ -714,7 +714,7 @@ class IdCardLoginControllerTest extends BaseTest {
                 .body("status", equalTo(500))
                 .body("error", equalTo("Internal Server Error"))
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
-                .body("incident_nr", matchesPattern("[a-f0-9-]{36}"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(true));
 
         String sessionId = mockSessionFilter.getSession().getId();
@@ -749,7 +749,7 @@ class IdCardLoginControllerTest extends BaseTest {
                 .body("status", equalTo(500))
                 .body("error", equalTo("Internal Server Error"))
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
-                .body("incident_nr", matchesPattern("[a-f0-9-]{36}"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(true));
 
         String sessionId = mockSessionFilter.getSession().getId();
@@ -788,7 +788,7 @@ class IdCardLoginControllerTest extends BaseTest {
                 .body("status", equalTo(500))
                 .body("error", equalTo("Internal Server Error"))
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
-                .body("incident_nr", matchesPattern("[a-f0-9-]{36}"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(true));
 
         String sessionId = mockSessionFilter.getSession().getId();
@@ -824,7 +824,7 @@ class IdCardLoginControllerTest extends BaseTest {
                 .body("status", equalTo(502))
                 .body("error", equalTo("Bad Gateway"))
                 .body("message", equalTo("ID-kaardi sertifikaadi kehtivuse info küsimine ei õnnestunud. Palun proovige mõne aja pärast uuesti."))
-                .body("incident_nr", matchesPattern("[a-f0-9-]{36}"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(true));
 
         String sessionId = mockSessionFilter.getSession().getId();

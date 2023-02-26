@@ -59,7 +59,7 @@ class IdCardInitControllerTest extends BaseTest {
                 .header("Set-Cookie", nullValue())
                 .body("message", equalTo("Keelatud päring. Päring esitati topelt, seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("error", equalTo("Forbidden"))
-                .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36}"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("Access denied: Invalid CSRF token.");
@@ -112,7 +112,7 @@ class IdCardInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Ebakorrektne päring. Vale seansi staatus."))
                 .body("error", equalTo("Bad Request"))
-                .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36}"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [INIT_AUTH_PROCESS]");

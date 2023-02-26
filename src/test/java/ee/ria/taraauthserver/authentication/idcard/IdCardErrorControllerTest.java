@@ -45,7 +45,7 @@ class IdCardErrorControllerTest extends BaseTest {
                 .statusCode(403)
                 .body("error", equalTo("Forbidden"))
                 .body("message", equalTo("Keelatud päring. Päring esitati topelt, seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
-                .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36}"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("Access denied: Invalid CSRF token.");
@@ -66,7 +66,7 @@ class IdCardErrorControllerTest extends BaseTest {
                 .header("Set-Cookie", nullValue())
                 .body("message", equalTo("Keelatud päring. Päring esitati topelt, seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("error", equalTo("Forbidden"))
-                .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36}"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("Access denied: Invalid CSRF token.");
@@ -94,7 +94,7 @@ class IdCardErrorControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .body("message", startsWith("Palun uuendage ID-tarkvara <a href=\"https://www.id.ee/artikkel/paigalda-id-tarkvara/\">id.ee veebilehelt</a> ja järgige seal kirjeldatud veebibrauseri seadistamise juhiseid.<br/>Uuendamata ID-tarkvaraga ei ole võimalik ID-kaardiga sisse logida "))
-                .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36}"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false));
 
         String sessionId = mockSessionFilter.getSession().getId();
@@ -128,7 +128,7 @@ class IdCardErrorControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", startsWith("ID-kaardiga veebis sisse logimiseks ja allkirjastamiseks vajalik Web eID laiendus ei ole Teie arvutis töökorras.<br/>Palun kontrollige vastavalt <a href=\"https://www.id.ee/artikkel/id-kaardiga-sisenemine-voi-allkirjastamine-e-teenustes-ebaonnestub-2/\">id.ee juhendile</a>, kas ID-tarkvara on ajakohane ja veebilehitseja õigesti seadistatud.<br/>Uuendamata ID-tarkvaraga ja valesti seadistatud veebilehitsejaga ei ole võimalik ID-kaardiga sisse logida "))
                 .body("message", endsWith(" autentimisteenuse kaudu.<br/>Vea kood ERR_WEBEID_UNKNOWN_ERROR"))
-                .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36}"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(true));
 
         String sessionId = mockSessionFilter.getSession().getId();
