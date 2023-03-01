@@ -41,7 +41,7 @@
         <div class="logo-separator-mobile"></div>
         <div class="c-tab-login__content-wrap">
             <div class="c-tab-login__content-icon" aria-hidden="true">
-                <img class="icon" th:if="${@thymeleafSupport.getServiceLogo() != null}" th:src="${'data:image/svg+xml;base64,' + @thymeleafSupport.getServiceLogo()}">
+                <img id="client-logo" class="icon" th:if="${@thymeleafSupport.getServiceLogo() != null}" th:src="${'data:image/svg+xml;base64,' + @thymeleafSupport.getServiceLogo()}">
             </div>
             <div class="c-tab-login__content-text">
                 <div role="heading" aria-level="2">

@@ -1,7 +1,7 @@
 <div class="container" xmlns:th="http://www.w3.org/1999/xhtml">
     <div class="c-tab-login__content-wrap">
         <div class="c-tab-login__content-icon" aria-hidden="true">
-            <img class="icon" th:if="${@thymeleafSupport.getServiceLogo() != null}" th:src="${'data:image/svg+xml;base64,' + @thymeleafSupport.getServiceLogo()}">
+            <img id="client-logo-wait" th:if="${@thymeleafSupport.getServiceLogo() != null}" class="icon">
         </div>
         <div class="c-tab-login__content-wait">
             <div role="heading" aria-level="2">
