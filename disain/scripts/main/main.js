@@ -159,7 +159,6 @@ jQuery(function ($) {
 
 	// ID-card form submit
 	$('#idCardForm button.c-btn--primary').on('click', async function(event){
-		event.preventDefault();
 		const csrfToken = document.querySelector("input[name='_csrf']").getAttribute('value');
 
 		activateIdCardView('waitPopup');
@@ -313,8 +312,6 @@ jQuery(function ($) {
 	
 	// Mobile-ID form submit
 	$('#mobileIdForm button.c-btn--primary').on('click', function(event){
-		event.preventDefault();
-		
 		if ($(this).prop('disabled')) return;
 		$(this).prop('disabled', true);
 		
@@ -353,8 +350,6 @@ jQuery(function ($) {
 
 	// Smart-ID form submit
 	$('#smartIdForm button.c-btn--primary').on('click', function(event){
-		event.preventDefault();
-		
 		if ($(this).prop('disabled')) return;
 		$(this).prop('disabled', true);
 		
@@ -392,8 +387,6 @@ jQuery(function ($) {
 
 	// EU citizen form submit
 	$('#eidasForm button.c-btn--primary').on('click', function(event){
-		event.preventDefault();
-		
 		if ($(this).prop('disabled')) return;
 		$(this).prop('disabled', true);
 		
