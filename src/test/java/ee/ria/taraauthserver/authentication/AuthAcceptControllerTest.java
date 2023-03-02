@@ -25,6 +25,7 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERS
 import static io.restassured.RestAssured.given;
 import static java.util.List.of;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static java.lang.String.format;
 
 @Slf4j
@@ -40,6 +41,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(403)
+                .header("Set-Cookie", nullValue())
                 .body("error", equalTo("Forbidden"))
                 .body("message", equalTo("Keelatud päring. Päring esitati topelt, seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("reportable", equalTo(false));
@@ -47,20 +49,22 @@ public class AuthAcceptControllerTest extends BaseTest {
         assertErrorIsLogged("Access denied: Invalid CSRF token.");
         assertStatisticsIsNotLogged();
     }
-
     @Test
-    @Tag(value = "ACCEPT_LOGIN")
-    void authAccept_missingSession() {
+    @Tag("ACCEPT_LOGIN")
+    @Tag("CSRF_PROTCTION")
+    void authAccept_session_missing() {
         given()
-                .filter(MockSessionFilter.withoutTaraSession().sessionRepository(sessionRepository).build())
                 .when()
                 .post("/auth/accept")
                 .then()
                 .assertThat()
-                .statusCode(400)
-                .body("message", equalTo("Teie seanssi ei leitud! Seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
+                .statusCode(403)
+                .header("Set-Cookie", nullValue())
+                .body("error", equalTo("Forbidden"))
+                .body("message", equalTo("Keelatud päring. Päring esitati topelt, seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("reportable", equalTo(false));
 
+        assertErrorIsLogged("Access denied: Invalid CSRF token.");
         assertStatisticsIsNotLogged();
     }
 

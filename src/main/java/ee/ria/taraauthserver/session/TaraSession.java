@@ -54,6 +54,7 @@ public class TaraSession implements Serializable {
     public static final String TARA_SESSION = "tara.session";
     private final String sessionId;
 
+    // NOTE: All field getters that should not be logged, must be annotated with @JsonIgnore
     private TaraAuthenticationState state;
     private LoginRequestInfo loginRequestInfo;
     private LoginRequestInfo govSsoLoginRequestInfo;
@@ -72,10 +73,12 @@ public class TaraSession implements Serializable {
         this.state = newState;
     }
 
+    @JsonIgnore
     public boolean isEmailScopeRequested() {
         return isScopeRequested(EMAIL);
     }
 
+    @JsonIgnore
     public boolean isPhoneNumberScopeRequested() {
         return isScopeRequested(PHONE);
     }
@@ -150,6 +153,7 @@ public class TaraSession implements Serializable {
         @JsonIgnore
         private String loginVerifierRedirectUrl;
 
+        @JsonIgnore
         public String getOidcState() {
             return URLEncodedUtils.parse(url.getQuery(), UTF_8)
                     .stream()
@@ -159,6 +163,7 @@ public class TaraSession implements Serializable {
                     .orElse("not set");
         }
 
+        @JsonIgnore
         public String getGovSsoChallenge() {
             return URLEncodedUtils.parse(url.getQuery(), UTF_8)
                     .stream()
@@ -168,6 +173,7 @@ public class TaraSession implements Serializable {
                     .orElse(null);
         }
 
+        @JsonIgnore
         public String getRedirectUri() {
             return URLEncodedUtils.parse(url.getQuery(), UTF_8)
                     .stream()
@@ -177,12 +183,14 @@ public class TaraSession implements Serializable {
                     .orElse("not set");
         }
 
+        @JsonIgnore
         public String getUserCancelUri() {
             String redirectUri = getRedirectUri();
             String encodedState = URLEncoder.encode(getOidcState(), UTF_8);
             return redirectUri + "?error=user_cancel&error_description=User+canceled+the+authentication+process.&state=" + encodedState;
         }
 
+        @JsonIgnore
         public String getClientId() {
             return Optional.of(this)
                     .map(TaraSession.LoginRequestInfo::getClient)
@@ -190,13 +198,13 @@ public class TaraSession implements Serializable {
                     .orElse(null);
         }
 
+        @JsonIgnore
         public String getClientLogo() {
             return getOidcClient()
                     .map(TaraSession.OidcClient::getLogo)
                     .orElse(null);
         }
 
-        // TODO: Add similar @JsonIgnore annotations to all the get...() methods in this class that don't need to be present in JSON
         @JsonIgnore
         public Optional<OidcClient> getOidcClient() {
             return Optional.of(this)
@@ -205,6 +213,7 @@ public class TaraSession implements Serializable {
                     .map(MetaData::getOidcClient);
         }
 
+        @JsonIgnore
         public Optional<Institution> getInstitution() {
             return getOidcClient()
                     .map(TaraSession.OidcClient::getInstitution);
@@ -415,6 +424,7 @@ public class TaraSession implements Serializable {
         private final String legalPersonIdentifier;
     }
 
+    @JsonIgnore
     public String getOidcClientTranslatedShortName() {
         OidcClient oidcClient = getAppropriateLoginRequestInfo().getClient().getMetaData().getOidcClient();
         Map<String, String> shortNameTranslations = oidcClient.getShortNameTranslations();
@@ -427,6 +437,7 @@ public class TaraSession implements Serializable {
         return translatedShortName;
     }
 
+    @JsonIgnore
     public String getOidcClientTranslatedName() {
         OidcClient oidcClient = getAppropriateLoginRequestInfo().getClient().getMetaData().getOidcClient();
         Map<String, String> nameTranslations = oidcClient.getNameTranslations();
@@ -439,6 +450,7 @@ public class TaraSession implements Serializable {
         return translatedName;
     }
 
+    @JsonIgnore
     public TaraSession.LoginRequestInfo getAppropriateLoginRequestInfo() {
         TaraSession.LoginRequestInfo loginRequestInfo = getGovSsoLoginRequestInfo();
         if (loginRequestInfo == null) {
@@ -447,6 +459,7 @@ public class TaraSession implements Serializable {
         return loginRequestInfo;
     }
 
+    @JsonIgnore
     public Boolean isAdditionalSmartIdVerificationCodeCheckNeeded() {
         return Optional.of(this)
                 .map(TaraSession::getLoginRequestInfo)
@@ -458,6 +471,7 @@ public class TaraSession implements Serializable {
                 .orElse(true);
     }
 
+    @JsonIgnore
     public Optional<String> getSmartIdRelyingPartyName() {
         return Optional.of(this)
                 .map(TaraSession::getLoginRequestInfo)
@@ -468,6 +482,7 @@ public class TaraSession implements Serializable {
                 .map(TaraSession.SmartIdSettings::getRelyingPartyName);
     }
 
+    @JsonIgnore
     public Optional<String> getSmartIdRelyingPartyUuid() {
         return Optional.of(this)
                 .map(TaraSession::getLoginRequestInfo)

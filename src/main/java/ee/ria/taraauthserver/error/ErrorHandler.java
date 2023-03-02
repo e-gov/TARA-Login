@@ -28,6 +28,7 @@ import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_LOGIN_CHALL
 import static ee.ria.taraauthserver.error.ErrorCode.INTERNAL_ERROR;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static java.util.Objects.requireNonNull;
 import static net.logstash.logback.marker.Markers.append;
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 
@@ -40,16 +41,14 @@ public class ErrorHandler {
     private void invalidateSessionAndSendError(HttpServletRequest request, HttpServletResponse response, int status, Exception ex) throws IOException {
         HttpSession session = request.getSession(false);
         if (session != null) {
-            TaraSession taraSession = (TaraSession) session.getAttribute(TARA_SESSION);
-            if (taraSession != null) {
-                setErrorCode(taraSession, ex);
-                if (!AUTHENTICATION_FAILED.equals(taraSession.getState())) {
-                    taraSession.setState(AUTHENTICATION_FAILED);
-                    statisticsLogger.log(taraSession, ex);
-                }
-                if (taraSession.getLoginRequestInfo() != null) {
-                    request.setAttribute(ERROR_ATTR_LOGIN_CHALLENGE, taraSession.getLoginRequestInfo().getChallenge());
-                }
+            TaraSession taraSession = (TaraSession) requireNonNull(session.getAttribute(TARA_SESSION));
+            setErrorCode(taraSession, ex);
+            if (!AUTHENTICATION_FAILED.equals(taraSession.getState())) {
+                taraSession.setState(AUTHENTICATION_FAILED);
+                statisticsLogger.log(taraSession, ex);
+            }
+            if (taraSession.getLoginRequestInfo() != null) {
+                request.setAttribute(ERROR_ATTR_LOGIN_CHALLENGE, taraSession.getLoginRequestInfo().getChallenge());
             }
             session.invalidate();
             log.warn(append(TARA_SESSION, taraSession), "Session has been invalidated: {}", session.getId());

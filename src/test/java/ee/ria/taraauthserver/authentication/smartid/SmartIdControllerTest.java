@@ -41,6 +41,7 @@ import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static java.lang.String.format;
 
@@ -83,6 +84,7 @@ class SmartIdControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(403)
+                .header("Set-Cookie", nullValue())
                 .body("message", equalTo("Keelatud päring. Päring esitati topelt, seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("reportable", equalTo(false));
 
@@ -91,21 +93,21 @@ class SmartIdControllerTest extends BaseTest {
     }
 
     @Test
-    @Tag(value = "SID_AUTH_CHECKS_SESSION")
+    @Tag("SID_AUTH_CHECKS_SESSION")
+    @Tag("CSRF_PROTCTION")
     void sidAuthInit_session_missing() {
         given()
-                .filter(MockSessionFilter.withoutTaraSession().sessionRepository(sessionRepository).build())
                 .formParam(ID_CODE, ID_CODE_VALUE)
                 .when()
                 .post("/auth/sid/init")
                 .then()
                 .assertThat()
-                .statusCode(400)
-                .body("message", equalTo("Teie seanssi ei leitud! Seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
-                .body("error", equalTo("Bad Request"))
+                .statusCode(403)
+                .header("Set-Cookie", nullValue())
+                .body("message", equalTo("Keelatud päring. Päring esitati topelt, seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("reportable", equalTo(false));
 
-        assertErrorIsLogged("User exception: Invalid session");
+        assertErrorIsLogged("Access denied: Invalid CSRF token.");
         assertStatisticsIsNotLogged();
     }
 

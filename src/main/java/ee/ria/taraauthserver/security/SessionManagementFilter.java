@@ -6,7 +6,6 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.MDC;
-import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -14,20 +13,20 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
 import static ee.ria.taraauthserver.authentication.AuthInitController.AUTH_INIT_REQUEST_MAPPING;
-import static ee.ria.taraauthserver.authentication.eidas.EidasCallbackController.EIDAS_CALLBACK_REQUEST_MAPPING;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
+import static java.util.Objects.requireNonNull;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static net.logstash.logback.marker.Markers.append;
 
 @Slf4j
 public class SessionManagementFilter extends OncePerRequestFilter {
     private static final RequestMatcher AUTH_INIT_REQUEST_MATCHER = new AntPathRequestMatcher(AUTH_INIT_REQUEST_MAPPING);
-    private static final RequestMatcher EIDAS_CALLBACK_REQUEST_MATCHER = new AntPathRequestMatcher(EIDAS_CALLBACK_REQUEST_MAPPING);
     private static final RequestMatcher AUTH_REQUEST_MATCHER = new AntPathRequestMatcher("/auth/**");
     public static final String MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID = "labels.tara_trace_id";
     private static final String APM_LABEL_KEY_FLOW_TRACE_ID = "tara_trace_id";
@@ -36,10 +35,6 @@ public class SessionManagementFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-
-        if (EIDAS_CALLBACK_REQUEST_MATCHER.matches(request)) {
-            request.setAttribute("SHOULD_NOT_FILTER" + CsrfFilter.class.getName(), Boolean.TRUE);
-        }
 
         HttpSession session = request.getSession(false);
         if (AUTH_INIT_REQUEST_MATCHER.matches(request)) {
@@ -54,7 +49,8 @@ public class SessionManagementFilter extends OncePerRequestFilter {
             MDC.remove(MDC_ATTRIBUTE_KEY_GOVSSO_FLOW_TRACE_ID);
         }
 
-        filterChain.doFilter(request, response);
+        SessionCreationRestrictingRequestWrapper wrappedRequest = new SessionCreationRestrictingRequestWrapper(request);
+        filterChain.doFilter(wrappedRequest, response);
         // TODO: Could clear MDC in finally block, but tests fail while application itself behaves correctly, needs investigation.
     }
 
@@ -65,8 +61,8 @@ public class SessionManagementFilter extends OncePerRequestFilter {
     }
 
     private void setGovSsoFlowTraceId(HttpSession session) {
-        TaraSession taraSession = (TaraSession) session.getAttribute(TARA_SESSION);
-        if (taraSession != null && taraSession.getGovSsoLoginRequestInfo() != null) {
+        TaraSession taraSession = (TaraSession) requireNonNull(session.getAttribute(TARA_SESSION));
+        if (taraSession.getGovSsoLoginRequestInfo() != null) {
             setGovSsoFlowTraceId(taraSession.getGovSsoLoginRequestInfo().getChallenge());
         } else {
             MDC.remove(MDC_ATTRIBUTE_KEY_GOVSSO_FLOW_TRACE_ID);
@@ -89,4 +85,36 @@ public class SessionManagementFilter extends OncePerRequestFilter {
         log.debug(append("tara.session.session_id", session.getId()), "New session created");
         return session;
     }
+
+    @Slf4j
+    private static class SessionCreationRestrictingRequestWrapper extends HttpServletRequestWrapper {
+
+        public SessionCreationRestrictingRequestWrapper(HttpServletRequest request) {
+            super(request);
+        }
+
+        @Override
+        public HttpSession getSession(boolean create) {
+            HttpSession session = super.getSession(false);
+            if (session != null) {
+                return session;
+            }
+            if (!create) {
+                return null;
+            }
+            throw new SessionCreationNotAllowedException();
+        }
+
+        @Override
+        public HttpSession getSession() {
+            return getSession(true);
+        }
+
+        @Override
+        public String changeSessionId() {
+            throw new SessionIdChangeNotAllowedException();
+        }
+
+    }
+
 }

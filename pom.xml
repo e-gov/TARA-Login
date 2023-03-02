@@ -5,12 +5,13 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.5</version>
+        <!-- TODO GSSO-534 Upgrade to Spring Boot 3.x -->
+        <version>2.7.8</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>ee.ria.tara</groupId>
     <artifactId>tara-login-server</artifactId>
-    <version>1.4.3</version>
+    <version>1.4.5</version>
     <packaging>war</packaging>
     <name>tara-login-server</name>
     <description>TARA login server</description>
@@ -25,7 +26,7 @@
     <properties>
         <maven.compiler.release>11</maven.compiler.release>
         <logback.version>1.2.6</logback.version>
-        <spring-cloud.version>2021.0.5</spring-cloud.version>
+        <spring-cloud.version>2022.0.1</spring-cloud.version>
     </properties>
 
     <dependencies>
@@ -56,7 +57,7 @@
         <dependency>
             <groupId>co.elastic.apm</groupId>
             <artifactId>apm-agent-api</artifactId>
-            <!-- TODO Elastic APM Agent 1.30.x and 1.31.0 clear "trace.id" from org.slf4j.MDC before error page is rendered. -->
+            <!-- TODO AUT-953 Elastic APM Agent 1.30.x and 1.31.0 clear "trace.id" from org.slf4j.MDC before error page is rendered. -->
             <version>1.29.0</version>
         </dependency>
         <dependency>
@@ -85,7 +86,7 @@
         <dependency>
             <groupId>org.apache.ignite</groupId>
             <artifactId>ignite-core</artifactId>
-            <!-- TODO Upgrade to >=2.14.0 when the following issue is resolved:
+            <!-- TODO AUT-1086 Upgrade to >=2.14.0 when the following issue is resolved:
                   https://www.mail-archive.com/user@ignite.apache.org/msg33644.html -->
             <version>2.13.0</version>
         </dependency>
@@ -124,13 +125,13 @@
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk15on</artifactId>
-            <version>1.70</version>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>1.72</version>
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
-            <artifactId>bcpkix-jdk15on</artifactId>
-            <version>1.70</version>
+            <artifactId>bcpkix-jdk18on</artifactId>
+            <version>1.72</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -144,11 +145,13 @@
         <dependency>
             <groupId>ee.sk.mid</groupId>
             <artifactId>mid-rest-java-client</artifactId>
+            <!-- TODO AUT-925 Upgrade dependency. -->
             <version>1.4</version>
         </dependency>
         <dependency>
             <groupId>ee.sk.smartid</groupId>
             <artifactId>smart-id-java-client</artifactId>
+            <!-- TODO AUT-925 Upgrade dependency. -->
             <version>2.1.4</version>
         </dependency>
         <dependency>
@@ -275,7 +278,7 @@
                 <groupId>pl.project13.maven</groupId>
                 <artifactId>git-commit-id-plugin</artifactId>
                 <configuration>
-                    <offline>true</offline><!-- TODO Remove when >= 5.0.0 is used, there offline=true is default. -->
+                    <offline>true</offline><!-- TODO GSSO-534 Remove when >= 5.0.0 is used (with Spring Boot 3.x), there offline=true is default. -->
                 </configuration>
             </plugin>
         </plugins>

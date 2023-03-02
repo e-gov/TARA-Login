@@ -44,7 +44,6 @@ public class SessionConfiguration {
     @Bean
     public FilterRegistrationBean<SessionRepositoryFilter<?>> sessionRepositoryFilterRegistrationTest(@Value("${spring.session.servlet.filter-order}") Integer filterOrder, SessionRepositoryFilter<?> filter) {
         FilterRegistrationBean<SessionRepositoryFilter<?>> registrationBean = new FilterRegistrationBean<>(filter);
-        registrationBean.setUrlPatterns(of("/auth/*", "/oidc-error"));
         registrationBean.setOrder(filterOrder);
         return registrationBean;
     }

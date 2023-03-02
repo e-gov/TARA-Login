@@ -163,21 +163,21 @@ class AuthMidControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "MID_AUTH_INIT")
+    @Tag("CSRF_PROTCTION")
     void midAuthInit_session_missing() {
         given()
-                .filter(MockSessionFilter.withoutTaraSession().sessionRepository(sessionRepository).build())
                 .formParam("idCode", "60001019906")
                 .formParam("telephoneNumber", "00000766")
                 .when()
                 .post("/auth/mid/init")
                 .then()
                 .assertThat()
-                .statusCode(400)
-                .body("message", equalTo("Teie seanssi ei leitud! Seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
-                .body("error", equalTo("Bad Request"))
+                .statusCode(403)
+                .body("error", equalTo("Forbidden"))
+                .body("message", equalTo("Keelatud päring. Päring esitati topelt, seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("reportable", equalTo(false));
 
-        assertErrorIsLogged("User exception: Invalid session");
+        assertErrorIsLogged("Access denied: Invalid CSRF token.");
         assertStatisticsIsNotLogged();
     }
 

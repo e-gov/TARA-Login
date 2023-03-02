@@ -15,6 +15,7 @@ import java.util.EnumSet;
 import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 import static net.logstash.logback.argument.StructuredArguments.value;
 
 @Slf4j
@@ -25,8 +26,8 @@ public class SessionUtils {
         RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes();
         ServletRequestAttributes attributes = (ServletRequestAttributes) requestAttributes;
         HttpServletRequest request = attributes.getRequest();
-        HttpSession httpSession = request.getSession();
-        return httpSession == null ? null : (TaraSession) httpSession.getAttribute(TARA_SESSION);
+        HttpSession httpSession = request.getSession(false);
+        return httpSession == null ? null : (TaraSession) requireNonNull(httpSession.getAttribute(TARA_SESSION));
     }
 
     public void assertSessionInState(TaraSession taraSession, EnumSet<TaraAuthenticationState> validSessionStates) {

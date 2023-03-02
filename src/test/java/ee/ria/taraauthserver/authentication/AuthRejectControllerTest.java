@@ -24,6 +24,7 @@ import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.MOCK_LOGIN_CH
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static java.lang.String.format;
 
@@ -42,6 +43,7 @@ class AuthRejectControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
+                .header("Set-Cookie", nullValue())
                 .body("message", equalTo("Teie seanssi ei leitud! Seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("reportable", equalTo(false));
 

@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.config;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import ee.ria.taraauthserver.security.NoSessionCreatingHttpSessionCsrfTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,13 +18,17 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.csrf.CsrfException;
+import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
-import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -31,12 +36,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+import static ee.ria.taraauthserver.authentication.eidas.EidasCallbackController.EIDAS_CALLBACK_REQUEST_MAPPING;
 import static ee.ria.taraauthserver.authentication.idcard.IdCardController.AUTH_ID_REQUEST_MAPPING;
 
 @Slf4j
 @EnableWebSecurity
 public class SecurityConfiguration {
-    public static final String TARA_SESSION_CSRF_TOKEN = "tara.csrf";
 
     @Order(1)
     @ConditionalOnProperty(value = "tara.auth-methods.id-card.basic-auth.enabled")
@@ -112,7 +117,7 @@ public class SecurityConfiguration {
                     .httpBasic().disable()
                     .servletApi().disable()
                     .sessionManagement().disable()
-                    .csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository()))
+                    .csrf(this::configureCsrf)
                     .headers()
                     .xssProtection().xssProtectionEnabled(false)
                     .and()
@@ -124,6 +129,13 @@ public class SecurityConfiguration {
                     .maxAgeInSeconds(16070400);
         }
 
+        private void configureCsrf(CsrfConfigurer<HttpSecurity> csrf) {
+            csrf.csrfTokenRepository(csrfTokenRepository())
+                    .requireCsrfProtectionMatcher(new AndRequestMatcher(
+                            CsrfFilter.DEFAULT_CSRF_MATCHER,
+                            new NegatedRequestMatcher(new AntPathRequestMatcher(EIDAS_CALLBACK_REQUEST_MAPPING))));
+        }
+
         @Override
         public void configure(WebSecurity webSecurity) {
             StrictHttpFirewall firewall = new StrictHttpFirewall();
@@ -133,9 +145,7 @@ public class SecurityConfiguration {
 
         @Bean
         public CsrfTokenRepository csrfTokenRepository() {
-            HttpSessionCsrfTokenRepository tokenRepository = new HttpSessionCsrfTokenRepository();
-            tokenRepository.setSessionAttributeName(TARA_SESSION_CSRF_TOKEN);
-            return tokenRepository;
+            return new NoSessionCreatingHttpSessionCsrfTokenRepository();
         }
     }
 

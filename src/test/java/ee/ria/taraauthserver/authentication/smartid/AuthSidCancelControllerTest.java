@@ -21,6 +21,7 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static java.util.List.of;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static java.lang.String.format;
@@ -40,6 +41,7 @@ class AuthSidCancelControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(403)
+                .header("Set-Cookie", nullValue())
                 .body("message", equalTo("Keelatud päring. Päring esitati topelt, seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("reportable", equalTo(false));
 
@@ -48,20 +50,20 @@ class AuthSidCancelControllerTest extends BaseTest {
     }
 
     @Test
-    @Tag(value = "SID_AUTH_STATUS_CHECK_VALID_SESSION")
-    void authSidPollCancel_sessionMissing() {
+    @Tag("SID_AUTH_STATUS_CHECK_VALID_SESSION")
+    @Tag("CSRF_PROTCTION")
+    void authSidPollCancel_session_missing() {
         given()
-                .filter(MockSessionFilter.withoutTaraSession().sessionRepository(sessionRepository).build())
                 .when()
                 .post("/auth/sid/poll/cancel")
                 .then()
                 .assertThat()
-                .statusCode(400)
-                .body("message", equalTo("Teie seanssi ei leitud! Seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
-                .body("error", equalTo("Bad Request"))
+                .statusCode(403)
+                .header("Set-Cookie", nullValue())
+                .body("message", equalTo("Keelatud päring. Päring esitati topelt, seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
                 .body("reportable", equalTo(false));
 
-        assertErrorIsLogged("User exception: Invalid session");
+        assertErrorIsLogged("Access denied: Invalid CSRF token.");
         assertStatisticsIsNotLogged();
     }
 
