@@ -28,6 +28,7 @@ import static io.restassured.RestAssured.given;
 import static java.util.List.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static java.lang.String.format;
 
 @Slf4j
