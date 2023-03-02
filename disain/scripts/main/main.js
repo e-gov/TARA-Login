@@ -578,9 +578,9 @@ jQuery(function ($) {
         for (let i = 0; i < methods[selectedCountry].length; i++) {
           let methodName = methods[selectedCountry][i];
           if (methodName == "eidas") {
-            var imageUrl = '../content/assets/methods/eidas.svg';
+            var imageUrl = '../assets/methods/eidas.svg';
           } else {
-            var imageUrl = '../content/assets/methods/' + selectedCountry.toLowerCase() + '/' + methodName + '.svg';
+            var imageUrl = '../assets/methods/' + selectedCountry.toLowerCase() + '/' + methodName + '.svg';
           }
           var methodButton = $('<a href="#" role="button" class="method-btn" data-value="' + methodName + '" data-country="' + selectedCountry + '"><div class="method-btn-base"><image src="' + imageUrl + '" class="method-btn-icon"></image><div></div></div></a>');
           $("#login-form-methods").append(methodButton);
