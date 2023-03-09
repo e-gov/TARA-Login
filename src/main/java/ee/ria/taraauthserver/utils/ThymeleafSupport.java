@@ -17,6 +17,7 @@ import org.springframework.web.util.UriComponents;
 import org.json.JSONObject;
 
 import java.time.OffsetDateTime;
+import java.util.stream.Collectors;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -81,20 +82,35 @@ public class ThymeleafSupport {
     }
 
     public List<String> getListOfCountries( Map<String, List<String>> countries_with_methods) {
-        if (countries_with_methods == null) {
+        if (countries_with_methods == null)
             return emptyList();
-        }
+
         return new ArrayList<>(countries_with_methods.keySet());
     }
 
     public Map<String, List<String>> getHashOfCountriesWithMethods() {
         TaraSession taraSession = SessionUtils.getAuthSession();
-        if (eidasConfigurationProperties == null || taraSession == null) {
-            return emptyMap();
-        }
         Map<SPType, Map<String, List<String>>> availableCountries = eidasConfigurationProperties.getAvailableCountries();
+        if (eidasConfigurationProperties == null || taraSession == null || availableCountries == null)
+            return emptyMap();
+        List<String> allowedAuthMethods = toPropertyNames(taraSession.getAllowedAuthMethods());
         SPType spType = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getInstitution().getSector();
+        if (availableCountries.containsKey(spType) && availableCountries.get(spType).containsKey("EE")) {
+            availableCountries.get(spType).get("EE").retainAll(allowedAuthMethods);
+            if (availableCountries.get(spType).get("EE").isEmpty()) 
+                availableCountries.get(spType).remove("EE");
+        }
         return availableCountries.get(spType);
+    }
+
+    private List<String> toPropertyNames(List<AuthenticationType> allowedAuthMethods) {
+        System.out.println(allowedAuthMethods);
+        if (allowedAuthMethods.isEmpty())
+            return emptyList();
+
+        return allowedAuthMethods.stream()
+            .map(AuthenticationType::getPropertyName)
+            .collect(Collectors.toList());
     }
 
     public JSONObject toJSON(Map<String, List<String>> methods) {

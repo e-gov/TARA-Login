@@ -1,15 +1,16 @@
 .c-btn {
-  display: inline-block;
+  /* display: inline-block; */
   padding: 11px 35px;
   font-weight: 500;
   border-radius: 8px;
   border: 0;
   cursor: pointer;
   @media (max-width: $breakpoint-mobile) {
-    display: block;
+    /* display: block; */
     width: 100%;
     padding: 12px 35px;
     font-size: 18px;
+    margin-bottom: 5px;
   }
   &--primary {
     color: #fff;
@@ -60,7 +61,7 @@
   overflow: hidden;
   margin-bottom: 5px;
   &:hover {
-    border-color: darken( #d9d9d9, 25% );
+    border: 2px solid #344255;
   }
 }
 .method-btn-base {
@@ -71,6 +72,6 @@
   padding: 0 10px;
 }
 .method-btn-icon {
-  width: 110px;
-  height: auto;
+  width: auto;
+  height: 28px;
 }
