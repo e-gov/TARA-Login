@@ -1,12 +1,10 @@
 .c-btn {
-  /* display: inline-block; */
   padding: 11px 35px;
   font-weight: 500;
   border-radius: 8px;
   border: 0;
   cursor: pointer;
   @media (max-width: $breakpoint-mobile) {
-    /* display: block; */
     width: 100%;
     padding: 12px 35px;
     font-size: 18px;
