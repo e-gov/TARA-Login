@@ -22,6 +22,7 @@ import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URL;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -43,8 +44,8 @@ class AuthInitControllerTest extends BaseTest {
     private static final String TEST_LOGIN_CHALLENGE = "abcdefg098AAdsCC";
     private static final String TEST_GOVSSO_LOGIN_CHALLENGE = "abcdeff098aadfccabcdeff098aadfcc";
     private static final Map<SPType, Map<String, List<String>>> AVAILABLE_COUNTRIES = Map.of(
-            SPType.PUBLIC, Map.of("CA", List.of("eidas")),
-            SPType.PRIVATE, Map.of("IT", List.of("eidas"))
+            SPType.PUBLIC, Map.of("CA", new ArrayList<>(List.of("eidas"))),
+            SPType.PRIVATE, Map.of("IT", new ArrayList<>(List.of("eidas")))
     );
 
     @Autowired
