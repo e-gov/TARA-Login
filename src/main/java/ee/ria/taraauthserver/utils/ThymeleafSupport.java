@@ -95,10 +95,13 @@ public class ThymeleafSupport {
             return emptyMap();
         List<String> allowedAuthMethods = toPropertyNames(taraSession.getAllowedAuthMethods());
         SPType spType = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getInstitution().getSector();
-        if (availableCountries.containsKey(spType) && availableCountries.get(spType).containsKey("EE")) {
-            availableCountries.get(spType).get("EE").retainAll(allowedAuthMethods);
-            if (availableCountries.get(spType).get("EE").isEmpty()) 
-                availableCountries.get(spType).remove("EE");
+        List<String> methodsToCheck = new ArrayList<>(List.of("id-card", "smart-id", "mobile-id"));
+        if (availableCountries.containsKey(spType)) {
+            for (String country : availableCountries.get(spType).keySet()) {
+                availableCountries.get(spType).get(country).removeIf(m -> !allowedAuthMethods.contains(m) && methodsToCheck.contains(m));
+                if (availableCountries.get(spType).get(country).isEmpty()) 
+                        availableCountries.get(spType).remove(country);
+            }
         }
         return availableCountries.get(spType);
     }
