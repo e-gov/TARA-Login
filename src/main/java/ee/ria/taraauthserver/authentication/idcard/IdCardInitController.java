@@ -5,7 +5,6 @@ import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraSession.IdCardAuthenticationResult;
 import eu.webeid.security.challenge.ChallengeNonceGenerator;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -25,9 +24,7 @@ import static java.util.Map.of;
 @ConditionalOnProperty(value = "tara.auth-methods.id-card.enabled")
 @RequiredArgsConstructor
 public class IdCardInitController {
-
-    @NonNull
-    private ChallengeNonceGenerator nonceGenerator;
+    private final ChallengeNonceGenerator nonceGenerator;
 
     @PostMapping(value = "/auth/id/init")
     public ResponseEntity<Map<String, String>> handleRequest(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {

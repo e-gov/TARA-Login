@@ -3,7 +3,6 @@ package ee.ria.taraauthserver.authentication.idcard;
 import ee.ria.taraauthserver.session.TaraSession;
 import eu.webeid.security.challenge.ChallengeNonce;
 import eu.webeid.security.challenge.ChallengeNonceStore;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -15,9 +14,7 @@ import javax.servlet.http.HttpSession;
 @Service
 @RequiredArgsConstructor
 public class SessionBackedChallengeNonceStore implements ChallengeNonceStore {
-
-    @NonNull
-    final ObjectFactory<HttpSession> httpSessionFactory;
+    private final ObjectFactory<HttpSession> httpSessionFactory;
 
     @Override
     public void put(ChallengeNonce challengeNonce) {

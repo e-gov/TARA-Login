@@ -24,6 +24,7 @@ import static ee.ria.taraauthserver.error.ErrorCode.INTERNAL_ERROR;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.EXTERNAL_TRANSACTION;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_MID_STATUS_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_STATUS_CANCELED;
 import static java.util.Optional.empty;
@@ -43,20 +44,30 @@ public class StatisticsLogger {
     public void log(TaraSession taraSession, Exception ex) {
         if (taraSession != null && taraSession.getLoginRequestInfo() != null) {
             getStateToLog(taraSession)
-                    .ifPresent(state -> {
-                        SessionStatisticsBuilder statisticsBuilder = SessionStatistics.builder();
-                        processAuthenticationRequest(taraSession, state, statisticsBuilder);
-                        processAuthenticationResult(taraSession, ex, statisticsBuilder);
-                        SessionStatistics sessionStatistics = statisticsBuilder.build();
-                        if (ex != null) {
-                            log.error(appendFields(sessionStatistics), "Authentication result: " + state, ex);
-                        } else if (taraSession.getAuthenticationResult() != null
-                                && taraSession.getAuthenticationResult().getErrorCode() != null) {
-                            log.error(appendFields(sessionStatistics), "Authentication result: {}", state);
-                        } else {
-                            log.info(appendFields(sessionStatistics), "Authentication result: {}", state);
-                        }
-                    });
+                    .ifPresent(state -> log(taraSession, state, ex));
+        }
+    }
+
+    public void logExternalTransaction(TaraSession taraSession) {
+        log(taraSession, EXTERNAL_TRANSACTION, null);
+    }
+
+    public void logExternalTransaction(TaraSession taraSession, Exception ex) {
+        log(taraSession, EXTERNAL_TRANSACTION, ex);
+    }
+
+    private void log(TaraSession taraSession, TaraAuthenticationState state, Exception ex) {
+        SessionStatisticsBuilder statisticsBuilder = SessionStatistics.builder();
+        processAuthenticationRequest(taraSession, state, statisticsBuilder);
+        processAuthenticationResult(taraSession, ex, statisticsBuilder);
+        SessionStatistics sessionStatistics = statisticsBuilder.build();
+        if (ex != null) {
+            log.error(appendFields(sessionStatistics), "Authentication result: " + state, ex);
+        } else if (taraSession.getAuthenticationResult() != null
+                && taraSession.getAuthenticationResult().getErrorCode() != null) {
+            log.error(appendFields(sessionStatistics), "Authentication result: {}", state);
+        } else {
+            log.info(appendFields(sessionStatistics), "Authentication result: {}", state);
         }
     }
 

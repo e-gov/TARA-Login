@@ -5,6 +5,8 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.authentication.idcard.IdCardLoginController.WebEidData;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.ErrorHandler;
 import ee.ria.taraauthserver.session.MockSessionFilter;
 import ee.ria.taraauthserver.session.MockSessionFilter.CsrfMode;
@@ -33,6 +35,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
@@ -62,6 +67,7 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static ch.qos.logback.classic.Level.ERROR;
 import static ch.qos.logback.classic.Level.INFO;
@@ -71,6 +77,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest.generateOcspResponderCertificate;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
+import static java.lang.String.format;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.nullValue;
@@ -296,7 +303,7 @@ class IdCardLoginControllerTest extends BaseTest {
         assertMessageWithMarkerIsLoggedOnce(IdCardLoginController.class, INFO, "Client-side Web eID operation successful", "tara.webeid.extension_version=2.2.0, tara.webeid.native_app_version=2.0.2+565, tara.webeid.status_duration_ms=200, tara.webeid.code=SUCCESS, tara.webeid.auth_token.unverified_certificate=MIIEDTCCA26gAwIBAgIQSJCBLo408CZcysmwbeFJYzAKBggqhkjOPQQDBDBgMQswCQYDVQQGEwJFRTEbMBkGA1UECgwSU0sgSUQgU29sdXRpb25zIEFTMRcwFQYDVQRhDA5OVFJFRS0xMDc0NzAxMzEbMBkGA1UEAwwSVEVTVCBvZiBFU1RFSUQyMDE4MB4XDTE5MDUwMjEwNDI1NloXDTI5MDUwMjEwNDI1NlowfzELMAkGA1UEBhMCRUUxFjAUBgNVBCoMDUpBQUstS1JJU1RKQU4xEDAOBgNVBAQMB0rDlUVPUkcxKjAoBgNVBAMMIUrDlUVPUkcsSkFBSy1LUklTVEpBTiwzODAwMTA4NTcxODEaMBgGA1UEBRMRUE5PRUUtMzgwMDEwODU3MTgwdjAQBgcqhkjOPQIBBgUrgQQAIgNiAARjRfVZiep2g1kkUzxTcP0n8OIeXcBv67y5I/d91i5t7PzeG0oIn4YirFA2jpigzVpp0behIEn+PxonDpd5kRBrLYJKi2kxrf/aqRtihkVSxRWc+tepYp9UU3KMz4Ktuj2jggHMMIIByDAJBgNVHRMEAjAAMA4GA1UdDwEB/wQEAwIDiDBHBgNVHSAEQDA+MDIGCysGAQQBg5EhAQIBMCMwIQYIKwYBBQUHAgEWFWh0dHBzOi8vd3d3LnNrLmVlL0NQUzAIBgYEAI96AQIwKAYDVR0RBCEwH4EdamFhay1rcmlzdGphbi5qb2VvcmdAZWVzdGkuZWUwHQYDVR0OBBYEFMbYLLR9I+bizugSrwcdnRKiqvlTMGEGCCsGAQUFBwEDBFUwUzBRBgYEAI5GAQUwRzBFFj9odHRwczovL3NrLmVlL2VuL3JlcG9zaXRvcnkvY29uZGl0aW9ucy1mb3ItdXNlLW9mLWNlcnRpZmljYXRlcy8TAkVOMCAGA1UdJQEB/wQWMBQGCCsGAQUFBwMCBggrBgEFBQcDBDAfBgNVHSMEGDAWgBTAhJkpxE6fOwI09pnhClYACCk+ezBzBggrBgEFBQcBAQRnMGUwLAYIKwYBBQUHMAGGIGh0dHA6Ly9haWEuZGVtby5zay5lZS9lc3RlaWQyMDE4MDUGCCsGAQUFBzAChilodHRwOi8vYy5zay5lZS9UZXN0X29mX0VTVEVJRDIwMTguZGVyLmNydDAKBggqhkjOPQQDBAOBjAAwgYgCQgGtZvDpqYbH1lSpVLmZ7I8LMlpLO0No1bnTucV5+g3SVvsMR1LI9+L/tDmbPP6f7nAb3ovPAV7BNUQfJRR79G+ijwJCAKKkclADtEOMeSH5kLLw5429rFzHyQeYxp9Tz8c7raiat/OhNMwWnpZ0EE6kUSJ+/j/QLlimDsCv/RVEWZzA9UMJ, tara.webeid.auth_token.signature=");
         assertErrorIsLogged(ErrorHandler.class, "User exception: Only token format version 'web-eid:1' is currently supported");
         assertMessageWithMarkerIsLoggedOnce(ErrorHandler.class, WARN, "Session has been invalidated: " + sessionId, "tara.session=TaraSession(sessionId=" + sessionId + ", state=AUTHENTICATION_FAILED, loginRequestInfo=TaraSession.LoginRequestInfo(");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INVALID_REQUEST)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INVALID_REQUEST)");
     }
 
     @Test
@@ -328,7 +335,7 @@ class IdCardLoginControllerTest extends BaseTest {
         assertMessageWithMarkerIsLoggedOnce(IdCardLoginController.class, INFO, "Client-side Web eID operation successful", "tara.webeid.extension_version=2.2.0, tara.webeid.native_app_version=2.0.2+565, tara.webeid.status_duration_ms=200, tara.webeid.code=SUCCESS, tara.webeid.auth_token.unverified_certificate=null, tara.webeid.auth_token.signature=");
         assertErrorIsLogged(ErrorHandler.class, "User exception: 'unverifiedCertificate' field is missing, null or empty");
         assertMessageWithMarkerIsLoggedOnce(ErrorHandler.class, WARN, "Session has been invalidated: " + sessionId, "tara.session=TaraSession(sessionId=" + sessionId + ", state=AUTHENTICATION_FAILED, loginRequestInfo=TaraSession.LoginRequestInfo(");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INVALID_REQUEST)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INVALID_REQUEST)");
     }
 
     @Test
@@ -360,7 +367,7 @@ class IdCardLoginControllerTest extends BaseTest {
         assertMessageWithMarkerIsLoggedOnce(IdCardLoginController.class, INFO, "Client-side Web eID operation successful", "tara.webeid.extension_version=2.2.0, tara.webeid.native_app_version=2.0.2+565, tara.webeid.status_duration_ms=200, tara.webeid.code=SUCCESS, tara.webeid.auth_token.unverified_certificate=, tara.webeid.auth_token.signature=");
         assertMessageWithMarkerIsLoggedOnce(ErrorHandler.class, WARN, "Session has been invalidated: " + sessionId, "tara.session=TaraSession(sessionId=" + sessionId + ", state=AUTHENTICATION_FAILED, loginRequestInfo=TaraSession.LoginRequestInfo(");
         assertErrorIsLogged(ErrorHandler.class, "User exception: 'unverifiedCertificate' field is missing, null or empty");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INVALID_REQUEST)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INVALID_REQUEST)");
     }
 
     @Test
@@ -392,7 +399,7 @@ class IdCardLoginControllerTest extends BaseTest {
         assertMessageWithMarkerIsLoggedOnce(IdCardLoginController.class, INFO, "Client-side Web eID operation successful", "tara.webeid.extension_version=2.2.0, tara.webeid.native_app_version=2.0.2+565, tara.webeid.status_duration_ms=200, tara.webeid.code=SUCCESS, tara.webeid.auth_token.unverified_certificate=SW52YWxpZCBjZXJ0aWZpY2F0ZQo=, tara.webeid.auth_token.signature=");
         assertErrorIsLogged(ErrorHandler.class, "User exception: Certificate decoding from Base64 or parsing failed");
         assertMessageWithMarkerIsLoggedOnce(ErrorHandler.class, WARN, "Session has been invalidated: " + sessionId, "tara.session=TaraSession(sessionId=" + sessionId + ", state=AUTHENTICATION_FAILED, loginRequestInfo=TaraSession.LoginRequestInfo(");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INVALID_REQUEST)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INVALID_REQUEST)");
     }
 
     @Test
@@ -428,7 +435,7 @@ class IdCardLoginControllerTest extends BaseTest {
         assertWarningIsLogged("Token validation was interrupted:");
         assertErrorIsLogged(ErrorHandler.class, "User exception: User certificate has expired");
         assertMessageWithMarkerIsLoggedOnce(ErrorHandler.class, WARN, "Session has been invalidated: " + sessionId, "tara.session=TaraSession(sessionId=" + sessionId + ", state=AUTHENTICATION_FAILED, loginRequestInfo=TaraSession.LoginRequestInfo(");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_CERT_EXPIRED)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_CERT_EXPIRED)");
     }
 
     @Test
@@ -464,7 +471,7 @@ class IdCardLoginControllerTest extends BaseTest {
         assertWarningIsLogged("Token validation was interrupted:");
         assertErrorIsLogged(ErrorHandler.class, "User exception: User certificate is not yet valid");
         assertMessageWithMarkerIsLoggedOnce(ErrorHandler.class, WARN, "Session has been invalidated: " + sessionId, "tara.session=TaraSession(sessionId=" + sessionId + ", state=AUTHENTICATION_FAILED, loginRequestInfo=TaraSession.LoginRequestInfo(");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_CERT_NOT_YET_VALID)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_CERT_NOT_YET_VALID)");
     }
 
     @Test
@@ -534,7 +541,7 @@ class IdCardLoginControllerTest extends BaseTest {
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2018, http.request.body.content={\"http.request.body.content\":");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
         assertInfoIsLogged("OCSP certificate validation. Serialnumber=<96454726563488174362096220658227824995>, SubjectDN=<SERIALNUMBER=PNOEE-38001085718, CN=\"JÕEORG,JAAK-KRISTJAN,38001085718\", SURNAME=JÕEORG, GIVENNAME=JAAK-KRISTJAN, C=EE>, issuerDN=<CN=TEST of ESTEID2018, OID.2.5.4.97=NTREE-10747013, O=SK ID Solutions AS, C=EE>");
-        assertStatisticsIsNotLogged();
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=38001085718, ocspUrl=https://localhost:9877/esteid2018, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
     }
 
     @Test
@@ -543,11 +550,13 @@ class IdCardLoginControllerTest extends BaseTest {
     @Tag(value = "IDCARD_AUTH_SUCCESSFUL")
     void handleRequest_withEmail_Success() {
         setupMockOcspResponseForSingleTest("CN=TEST of ESTEID2018", CertificateStatus.GOOD, "/esteid2018");
+        TaraSession.IdCardAuthenticationResult authenticationResult = new TaraSession.IdCardAuthenticationResult();
+        authenticationResult.setAmr(AuthenticationType.ID_CARD);
         MockSessionFilter mockSessionFilter = MockSessionFilter
                 .withTaraSession()
                 .clientAllowedScopes(List.of("email", "openid"))
                 .requestedScopes(List.of("email", "openid"))
-                .authenticationResult(new TaraSession.IdCardAuthenticationResult())
+                .authenticationResult(authenticationResult)
                 .nonce(new ChallengeNonce(TEST_NONCE, ZonedDateTime.now().plus(Duration.ofMinutes(5))))
                 .csrfMode(CsrfMode.HEADER)
                 .sessionRepository(sessionRepository)
@@ -577,7 +586,7 @@ class IdCardLoginControllerTest extends BaseTest {
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2018, http.request.body.content={\"http.request.body.content\":");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
         assertInfoIsLogged("OCSP certificate validation. Serialnumber=<96454726563488174362096220658227824995>, SubjectDN=<SERIALNUMBER=PNOEE-38001085718, CN=\"JÕEORG,JAAK-KRISTJAN,38001085718\", SURNAME=JÕEORG, GIVENNAME=JAAK-KRISTJAN, C=EE>, issuerDN=<CN=TEST of ESTEID2018, OID.2.5.4.97=NTREE-10747013, O=SK ID Solutions AS, C=EE>");
-        assertStatisticsIsNotLogged();
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=38001085718, ocspUrl=https://localhost:9877/esteid2018, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
     }
 
     @Test
@@ -612,7 +621,8 @@ class IdCardLoginControllerTest extends BaseTest {
         assertMessageWithMarkerIsLoggedOnce(ErrorHandler.class, WARN, "Session has been invalidated: " + sessionId, "tara.session=TaraSession(sessionId=" + sessionId + ", state=AUTHENTICATION_FAILED, loginRequestInfo=TaraSession.LoginRequestInfo(");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2018, http.request.body.content={\"http.request.body.content\":");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_REVOKED)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=38001085718, ocspUrl=https://localhost:9877/esteid2018, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=IDC_REVOKED)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=38001085718, ocspUrl=https://localhost:9877/esteid2018, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_REVOKED)");
     }
 
     @Test
@@ -647,7 +657,8 @@ class IdCardLoginControllerTest extends BaseTest {
         assertMessageWithMarkerIsLoggedOnce(ErrorHandler.class, WARN, "Session has been invalidated: " + sessionId, "tara.session=TaraSession(sessionId=" + sessionId + ", state=AUTHENTICATION_FAILED, loginRequestInfo=TaraSession.LoginRequestInfo(");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2018, http.request.body.content={\"http.request.body.content\":");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_UNKNOWN)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=38001085718, ocspUrl=https://localhost:9877/esteid2018, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=IDC_UNKNOWN)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=38001085718, ocspUrl=https://localhost:9877/esteid2018, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_UNKNOWN)");
     }
 
     @Disabled("TODO: AUT-1164 Fails in Jenkins")
@@ -693,12 +704,13 @@ class IdCardLoginControllerTest extends BaseTest {
         assertStatisticsIsNotLogged();
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("ocspResponseStatuses")
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     @Tag(value = "OCSP_CA_WHITELIST")
     @Tag(value = "IDCARD_ERROR_HANDLING")
-    void handleRequest_OcspResponderCertificateIssuerNotTrusted_Error() {
-        setupMockOcspResponseForSingleTest("CN=WRONG CN", CertificateStatus.GOOD, "/esteid2018");
+    void handleRequest_OcspResponderCertificateIssuerNotTrusted_Error(CertificateStatus certificateStatus, ErrorCode expectedErrorCode) {
+        setupMockOcspResponseForSingleTest("CN=WRONG CN", certificateStatus, "/esteid2018");
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
 
         given()
@@ -720,20 +732,22 @@ class IdCardLoginControllerTest extends BaseTest {
         String sessionId = mockSessionFilter.getSession().getId();
         assertNull(sessionRepository.findById(sessionId));
         assertInfoIsLogged("OCSP certificate validation. Serialnumber=<96454726563488174362096220658227824995>, SubjectDN=<SERIALNUMBER=PNOEE-38001085718, CN=\"JÕEORG,JAAK-KRISTJAN,38001085718\", SURNAME=JÕEORG, GIVENNAME=JAAK-KRISTJAN, C=EE>, issuerDN=<CN=TEST of ESTEID2018, OID.2.5.4.97=NTREE-10747013, O=SK ID Solutions AS, C=EE>");
-        assertErrorIsLogged(ErrorHandler.class, "Server encountered an unexpected error: OCSP validation failed: Issuer certificate with CN 'WRONG CN' is not a trusted certificate!");
+        assertErrorIsLogged(ErrorHandler.class, "Server encountered an unexpected error: Issuer certificate with CN 'WRONG CN' is not a trusted certificate!");
         assertMessageWithMarkerIsLoggedOnce(IdCardLoginController.class, INFO, "Client-side Web eID operation successful", "tara.webeid.extension_version=2.2.0, tara.webeid.native_app_version=2.0.2+565, tara.webeid.status_duration_ms=200, tara.webeid.code=SUCCESS, tara.webeid.auth_token.unverified_certificate=MIIEDTCCA26gAwIBAgIQSJCBLo408CZcysmwbeFJYzAKBggqhkjOPQQDBDBgMQswCQYDVQQGEwJFRTEbMBkGA1UECgwSU0sgSUQgU29sdXRpb25zIEFTMRcwFQYDVQRhDA5OVFJFRS0xMDc0NzAxMzEbMBkGA1UEAwwSVEVTVCBvZiBFU1RFSUQyMDE4MB4XDTE5MDUwMjEwNDI1NloXDTI5MDUwMjEwNDI1NlowfzELMAkGA1UEBhMCRUUxFjAUBgNVBCoMDUpBQUstS1JJU1RKQU4xEDAOBgNVBAQMB0rDlUVPUkcxKjAoBgNVBAMMIUrDlUVPUkcsSkFBSy1LUklTVEpBTiwzODAwMTA4NTcxODEaMBgGA1UEBRMRUE5PRUUtMzgwMDEwODU3MTgwdjAQBgcqhkjOPQIBBgUrgQQAIgNiAARjRfVZiep2g1kkUzxTcP0n8OIeXcBv67y5I/d91i5t7PzeG0oIn4YirFA2jpigzVpp0behIEn+PxonDpd5kRBrLYJKi2kxrf/aqRtihkVSxRWc+tepYp9UU3KMz4Ktuj2jggHMMIIByDAJBgNVHRMEAjAAMA4GA1UdDwEB/wQEAwIDiDBHBgNVHSAEQDA+MDIGCysGAQQBg5EhAQIBMCMwIQYIKwYBBQUHAgEWFWh0dHBzOi8vd3d3LnNrLmVlL0NQUzAIBgYEAI96AQIwKAYDVR0RBCEwH4EdamFhay1rcmlzdGphbi5qb2VvcmdAZWVzdGkuZWUwHQYDVR0OBBYEFMbYLLR9I+bizugSrwcdnRKiqvlTMGEGCCsGAQUFBwEDBFUwUzBRBgYEAI5GAQUwRzBFFj9odHRwczovL3NrLmVlL2VuL3JlcG9zaXRvcnkvY29uZGl0aW9ucy1mb3ItdXNlLW9mLWNlcnRpZmljYXRlcy8TAkVOMCAGA1UdJQEB/wQWMBQGCCsGAQUFBwMCBggrBgEFBQcDBDAfBgNVHSMEGDAWgBTAhJkpxE6fOwI09pnhClYACCk+ezBzBggrBgEFBQcBAQRnMGUwLAYIKwYBBQUHMAGGIGh0dHA6Ly9haWEuZGVtby5zay5lZS9lc3RlaWQyMDE4MDUGCCsGAQUFBzAChilodHRwOi8vYy5zay5lZS9UZXN0X29mX0VTVEVJRDIwMTguZGVyLmNydDAKBggqhkjOPQQDBAOBjAAwgYgCQgGtZvDpqYbH1lSpVLmZ7I8LMlpLO0No1bnTucV5+g3SVvsMR1LI9+L/tDmbPP6f7nAb3ovPAV7BNUQfJRR79G+ijwJCAKKkclADtEOMeSH5kLLw5429rFzHyQeYxp9Tz8c7raiat/OhNMwWnpZ0EE6kUSJ+/j/QLlimDsCv/RVEWZzA9UMJ, tara.webeid.auth_token.signature=");
         assertMessageWithMarkerIsLoggedOnce(ErrorHandler.class, WARN, "Session has been invalidated: " + sessionId, "tara.session=TaraSession(sessionId=" + sessionId + ", state=AUTHENTICATION_FAILED, loginRequestInfo=TaraSession.LoginRequestInfo(");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2018, http.request.body.content={\"http.request.body.content\":");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=38001085718, ocspUrl=https://localhost:9877/esteid2018, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=%s)", expectedErrorCode));
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=38001085718, ocspUrl=https://localhost:9877/esteid2018, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=%s)", expectedErrorCode));
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("ocspResponseStatuses")
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     @Tag(value = "OCSP_RESPONSE_VALID_SIG")
     @Tag(value = "IDCARD_ERROR_HANDLING")
-    void handleRequest_OcspResponderCertificateIssuerDifferentFromUserCertificateIssuer_Error() {
-        setupMockOcspResponseForSingleTest("CN=TEST of ESTEID-SK 2011", CertificateStatus.GOOD, "/esteid2018");
+    void handleRequest_OcspResponderCertificateIssuerDifferentFromUserCertificateIssuer_Error(CertificateStatus certificateStatus, ErrorCode expectedErrorCode) {
+        setupMockOcspResponseForSingleTest("CN=TEST of ESTEID-SK 2011", certificateStatus, "/esteid2018");
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
 
         given()
@@ -755,12 +769,13 @@ class IdCardLoginControllerTest extends BaseTest {
         String sessionId = mockSessionFilter.getSession().getId();
         assertNull(sessionRepository.findById(sessionId));
         assertInfoIsLogged("OCSP certificate validation. Serialnumber=<96454726563488174362096220658227824995>, SubjectDN=<SERIALNUMBER=PNOEE-38001085718, CN=\"JÕEORG,JAAK-KRISTJAN,38001085718\", SURNAME=JÕEORG, GIVENNAME=JAAK-KRISTJAN, C=EE>, issuerDN=<CN=TEST of ESTEID2018, OID.2.5.4.97=NTREE-10747013, O=SK ID Solutions AS, C=EE>");
-        assertErrorIsLogged(ErrorHandler.class, "Server encountered an unexpected error: OCSP validation failed: In case of AIA OCSP, the OCSP responder certificate must be issued by the authority that issued the user certificate. Expected issuer: 'CN=TEST of ESTEID2018, OID.2.5.4.97=NTREE-10747013, O=SK ID Solutions AS, C=EE', but the OCSP responder signing certificate was issued by 'EMAILADDRESS=pki@sk.ee, CN=TEST of ESTEID-SK 2011, O=AS Sertifitseerimiskeskus, C=EE'");
+        assertErrorIsLogged(ErrorHandler.class, "Server encountered an unexpected error: In case of AIA OCSP, the OCSP responder certificate must be issued by the authority that issued the user certificate. Expected issuer: 'CN=TEST of ESTEID2018, OID.2.5.4.97=NTREE-10747013, O=SK ID Solutions AS, C=EE', but the OCSP responder signing certificate was issued by 'EMAILADDRESS=pki@sk.ee, CN=TEST of ESTEID-SK 2011, O=AS Sertifitseerimiskeskus, C=EE'");
         assertMessageWithMarkerIsLoggedOnce(IdCardLoginController.class, INFO, "Client-side Web eID operation successful", "tara.webeid.extension_version=2.2.0, tara.webeid.native_app_version=2.0.2+565, tara.webeid.status_duration_ms=200, tara.webeid.code=SUCCESS, tara.webeid.auth_token.unverified_certificate=MIIEDTCCA26gAwIBAgIQSJCBLo408CZcysmwbeFJYzAKBggqhkjOPQQDBDBgMQswCQYDVQQGEwJFRTEbMBkGA1UECgwSU0sgSUQgU29sdXRpb25zIEFTMRcwFQYDVQRhDA5OVFJFRS0xMDc0NzAxMzEbMBkGA1UEAwwSVEVTVCBvZiBFU1RFSUQyMDE4MB4XDTE5MDUwMjEwNDI1NloXDTI5MDUwMjEwNDI1NlowfzELMAkGA1UEBhMCRUUxFjAUBgNVBCoMDUpBQUstS1JJU1RKQU4xEDAOBgNVBAQMB0rDlUVPUkcxKjAoBgNVBAMMIUrDlUVPUkcsSkFBSy1LUklTVEpBTiwzODAwMTA4NTcxODEaMBgGA1UEBRMRUE5PRUUtMzgwMDEwODU3MTgwdjAQBgcqhkjOPQIBBgUrgQQAIgNiAARjRfVZiep2g1kkUzxTcP0n8OIeXcBv67y5I/d91i5t7PzeG0oIn4YirFA2jpigzVpp0behIEn+PxonDpd5kRBrLYJKi2kxrf/aqRtihkVSxRWc+tepYp9UU3KMz4Ktuj2jggHMMIIByDAJBgNVHRMEAjAAMA4GA1UdDwEB/wQEAwIDiDBHBgNVHSAEQDA+MDIGCysGAQQBg5EhAQIBMCMwIQYIKwYBBQUHAgEWFWh0dHBzOi8vd3d3LnNrLmVlL0NQUzAIBgYEAI96AQIwKAYDVR0RBCEwH4EdamFhay1rcmlzdGphbi5qb2VvcmdAZWVzdGkuZWUwHQYDVR0OBBYEFMbYLLR9I+bizugSrwcdnRKiqvlTMGEGCCsGAQUFBwEDBFUwUzBRBgYEAI5GAQUwRzBFFj9odHRwczovL3NrLmVlL2VuL3JlcG9zaXRvcnkvY29uZGl0aW9ucy1mb3ItdXNlLW9mLWNlcnRpZmljYXRlcy8TAkVOMCAGA1UdJQEB/wQWMBQGCCsGAQUFBwMCBggrBgEFBQcDBDAfBgNVHSMEGDAWgBTAhJkpxE6fOwI09pnhClYACCk+ezBzBggrBgEFBQcBAQRnMGUwLAYIKwYBBQUHMAGGIGh0dHA6Ly9haWEuZGVtby5zay5lZS9lc3RlaWQyMDE4MDUGCCsGAQUFBzAChilodHRwOi8vYy5zay5lZS9UZXN0X29mX0VTVEVJRDIwMTguZGVyLmNydDAKBggqhkjOPQQDBAOBjAAwgYgCQgGtZvDpqYbH1lSpVLmZ7I8LMlpLO0No1bnTucV5+g3SVvsMR1LI9+L/tDmbPP6f7nAb3ovPAV7BNUQfJRR79G+ijwJCAKKkclADtEOMeSH5kLLw5429rFzHyQeYxp9Tz8c7raiat/OhNMwWnpZ0EE6kUSJ+/j/QLlimDsCv/RVEWZzA9UMJ, tara.webeid.auth_token.signature=");
         assertMessageWithMarkerIsLoggedOnce(ErrorHandler.class, WARN, "Session has been invalidated: " + sessionId, "tara.session=TaraSession(sessionId=" + sessionId + ", state=AUTHENTICATION_FAILED, loginRequestInfo=TaraSession.LoginRequestInfo(");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2018, http.request.body.content={\"http.request.body.content\":");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=38001085718, ocspUrl=https://localhost:9877/esteid2018, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=%s)", expectedErrorCode));
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=38001085718, ocspUrl=https://localhost:9877/esteid2018, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=%s)", expectedErrorCode));
     }
 
     @Test
@@ -797,7 +812,8 @@ class IdCardLoginControllerTest extends BaseTest {
         assertMessageWithMarkerIsLoggedOnce(IdCardLoginController.class, INFO, "Client-side Web eID operation successful", "tara.webeid.extension_version=2.2.0, tara.webeid.native_app_version=2.0.2+565, tara.webeid.status_duration_ms=200, tara.webeid.code=SUCCESS, tara.webeid.auth_token.unverified_certificate=MIIEDTCCA26gAwIBAgIQSJCBLo408CZcysmwbeFJYzAKBggqhkjOPQQDBDBgMQswCQYDVQQGEwJFRTEbMBkGA1UECgwSU0sgSUQgU29sdXRpb25zIEFTMRcwFQYDVQRhDA5OVFJFRS0xMDc0NzAxMzEbMBkGA1UEAwwSVEVTVCBvZiBFU1RFSUQyMDE4MB4XDTE5MDUwMjEwNDI1NloXDTI5MDUwMjEwNDI1NlowfzELMAkGA1UEBhMCRUUxFjAUBgNVBCoMDUpBQUstS1JJU1RKQU4xEDAOBgNVBAQMB0rDlUVPUkcxKjAoBgNVBAMMIUrDlUVPUkcsSkFBSy1LUklTVEpBTiwzODAwMTA4NTcxODEaMBgGA1UEBRMRUE5PRUUtMzgwMDEwODU3MTgwdjAQBgcqhkjOPQIBBgUrgQQAIgNiAARjRfVZiep2g1kkUzxTcP0n8OIeXcBv67y5I/d91i5t7PzeG0oIn4YirFA2jpigzVpp0behIEn+PxonDpd5kRBrLYJKi2kxrf/aqRtihkVSxRWc+tepYp9UU3KMz4Ktuj2jggHMMIIByDAJBgNVHRMEAjAAMA4GA1UdDwEB/wQEAwIDiDBHBgNVHSAEQDA+MDIGCysGAQQBg5EhAQIBMCMwIQYIKwYBBQUHAgEWFWh0dHBzOi8vd3d3LnNrLmVlL0NQUzAIBgYEAI96AQIwKAYDVR0RBCEwH4EdamFhay1rcmlzdGphbi5qb2VvcmdAZWVzdGkuZWUwHQYDVR0OBBYEFMbYLLR9I+bizugSrwcdnRKiqvlTMGEGCCsGAQUFBwEDBFUwUzBRBgYEAI5GAQUwRzBFFj9odHRwczovL3NrLmVlL2VuL3JlcG9zaXRvcnkvY29uZGl0aW9ucy1mb3ItdXNlLW9mLWNlcnRpZmljYXRlcy8TAkVOMCAGA1UdJQEB/wQWMBQGCCsGAQUFBwMCBggrBgEFBQcDBDAfBgNVHSMEGDAWgBTAhJkpxE6fOwI09pnhClYACCk+ezBzBggrBgEFBQcBAQRnMGUwLAYIKwYBBQUHMAGGIGh0dHA6Ly9haWEuZGVtby5zay5lZS9lc3RlaWQyMDE4MDUGCCsGAQUFBzAChilodHRwOi8vYy5zay5lZS9UZXN0X29mX0VTVEVJRDIwMTguZGVyLmNydDAKBggqhkjOPQQDBAOBjAAwgYgCQgGtZvDpqYbH1lSpVLmZ7I8LMlpLO0No1bnTucV5+g3SVvsMR1LI9+L/tDmbPP6f7nAb3ovPAV7BNUQfJRR79G+ijwJCAKKkclADtEOMeSH5kLLw5429rFzHyQeYxp9Tz8c7raiat/OhNMwWnpZ0EE6kUSJ+/j/QLlimDsCv/RVEWZzA9UMJ, tara.webeid.auth_token.signature=");
         assertMessageWithMarkerIsLoggedOnce(ErrorHandler.class, WARN, "Session has been invalidated: " + sessionId, "tara.session=TaraSession(sessionId=" + sessionId + ", state=AUTHENTICATION_FAILED, loginRequestInfo=TaraSession.LoginRequestInfo(");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2018, http.request.body.content={\"http.request.body.content\":");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=38001085718, ocspUrl=https://localhost:9877/esteid2018, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=38001085718, ocspUrl=https://localhost:9877/esteid2018, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
@@ -832,13 +848,16 @@ class IdCardLoginControllerTest extends BaseTest {
         assertErrorIsLogged(ErrorHandler.class, "Service not available: Service returned HTTP status code 404");
         assertMessageWithMarkerIsLoggedOnce(IdCardLoginController.class, INFO, "Client-side Web eID operation successful", "tara.webeid.extension_version=2.2.0, tara.webeid.native_app_version=2.0.2+565, tara.webeid.status_duration_ms=200, tara.webeid.code=SUCCESS, tara.webeid.auth_token.unverified_certificate=MIIEDTCCA26gAwIBAgIQSJCBLo408CZcysmwbeFJYzAKBggqhkjOPQQDBDBgMQswCQYDVQQGEwJFRTEbMBkGA1UECgwSU0sgSUQgU29sdXRpb25zIEFTMRcwFQYDVQRhDA5OVFJFRS0xMDc0NzAxMzEbMBkGA1UEAwwSVEVTVCBvZiBFU1RFSUQyMDE4MB4XDTE5MDUwMjEwNDI1NloXDTI5MDUwMjEwNDI1NlowfzELMAkGA1UEBhMCRUUxFjAUBgNVBCoMDUpBQUstS1JJU1RKQU4xEDAOBgNVBAQMB0rDlUVPUkcxKjAoBgNVBAMMIUrDlUVPUkcsSkFBSy1LUklTVEpBTiwzODAwMTA4NTcxODEaMBgGA1UEBRMRUE5PRUUtMzgwMDEwODU3MTgwdjAQBgcqhkjOPQIBBgUrgQQAIgNiAARjRfVZiep2g1kkUzxTcP0n8OIeXcBv67y5I/d91i5t7PzeG0oIn4YirFA2jpigzVpp0behIEn+PxonDpd5kRBrLYJKi2kxrf/aqRtihkVSxRWc+tepYp9UU3KMz4Ktuj2jggHMMIIByDAJBgNVHRMEAjAAMA4GA1UdDwEB/wQEAwIDiDBHBgNVHSAEQDA+MDIGCysGAQQBg5EhAQIBMCMwIQYIKwYBBQUHAgEWFWh0dHBzOi8vd3d3LnNrLmVlL0NQUzAIBgYEAI96AQIwKAYDVR0RBCEwH4EdamFhay1rcmlzdGphbi5qb2VvcmdAZWVzdGkuZWUwHQYDVR0OBBYEFMbYLLR9I+bizugSrwcdnRKiqvlTMGEGCCsGAQUFBwEDBFUwUzBRBgYEAI5GAQUwRzBFFj9odHRwczovL3NrLmVlL2VuL3JlcG9zaXRvcnkvY29uZGl0aW9ucy1mb3ItdXNlLW9mLWNlcnRpZmljYXRlcy8TAkVOMCAGA1UdJQEB/wQWMBQGCCsGAQUFBwMCBggrBgEFBQcDBDAfBgNVHSMEGDAWgBTAhJkpxE6fOwI09pnhClYACCk+ezBzBggrBgEFBQcBAQRnMGUwLAYIKwYBBQUHMAGGIGh0dHA6Ly9haWEuZGVtby5zay5lZS9lc3RlaWQyMDE4MDUGCCsGAQUFBzAChilodHRwOi8vYy5zay5lZS9UZXN0X29mX0VTVEVJRDIwMTguZGVyLmNydDAKBggqhkjOPQQDBAOBjAAwgYgCQgGtZvDpqYbH1lSpVLmZ7I8LMlpLO0No1bnTucV5+g3SVvsMR1LI9+L/tDmbPP6f7nAb3ovPAV7BNUQfJRR79G+ijwJCAKKkclADtEOMeSH5kLLw5429rFzHyQeYxp9Tz8c7raiat/OhNMwWnpZ0EE6kUSJ+/j/QLlimDsCv/RVEWZzA9UMJ, tara.webeid.auth_token.signature=");
         assertMessageWithMarkerIsLoggedOnce(ErrorHandler.class, WARN, "Session has been invalidated: " + sessionId, "tara.session=TaraSession(sessionId=" + sessionId + ", state=AUTHENTICATION_FAILED, loginRequestInfo=TaraSession.LoginRequestInfo(");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_OCSP_NOT_AVAILABLE)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=38001085718, ocspUrl=https://localhost:9877/ocsp, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=IDC_OCSP_NOT_AVAILABLE)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=38001085718, ocspUrl=https://localhost:9877/ocsp, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_OCSP_NOT_AVAILABLE)");
     }
 
     private MockSessionFilter buildDefaultSessionFilter() {
+        TaraSession.IdCardAuthenticationResult authenticationResult = new TaraSession.IdCardAuthenticationResult();
+        authenticationResult.setAmr(AuthenticationType.ID_CARD);
         return MockSessionFilter
                 .withTaraSession()
-                .authenticationResult(new TaraSession.IdCardAuthenticationResult())
+                .authenticationResult(authenticationResult)
                 .nonce(new ChallengeNonce(TEST_NONCE, ZonedDateTime.now().plus(Duration.ofMinutes(5))))
                 .csrfMode(CsrfMode.HEADER)
                 .sessionRepository(sessionRepository)
@@ -892,7 +911,7 @@ class IdCardLoginControllerTest extends BaseTest {
     @SneakyThrows
     private static PrivateKey readPrivateKey(String privateKeyPath, String keyPassword) {
         Object keyPair;
-        try(InputStream is = IdCardLoginControllerTest.class.getClassLoader().getResourceAsStream(privateKeyPath)) {
+        try (InputStream is = IdCardLoginControllerTest.class.getClassLoader().getResourceAsStream(privateKeyPath)) {
             Reader reader = new BufferedReader(new InputStreamReader(is));
             PEMParser keyReader = new PEMParser(reader);
             keyPair = keyReader.readObject();
@@ -971,6 +990,14 @@ class IdCardLoginControllerTest extends BaseTest {
                                 .withFixedDelay(responseParams.getDelay())
                                 .withHeader("Content-Type", "application/ocsp-response")
                 )
+        );
+    }
+
+    private static Stream<Arguments> ocspResponseStatuses() {
+        return Stream.of(
+                Arguments.of(CertificateStatus.GOOD, ErrorCode.IDC_VALIDATION_ERROR_RESULT_GOOD),
+                Arguments.of(new RevokedStatus(new Date(), CRLReason.unspecified), ErrorCode.IDC_VALIDATION_ERROR_RESULT_REVOKED),
+                Arguments.of(new UnknownStatus(), ErrorCode.IDC_VALIDATION_ERROR_RESULT_UNKNOWN)
         );
     }
 }

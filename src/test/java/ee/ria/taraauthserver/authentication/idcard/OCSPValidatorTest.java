@@ -10,6 +10,8 @@ import com.github.tomakehurst.wiremock.extension.ResponseTransformer;
 import com.github.tomakehurst.wiremock.http.Request;
 import com.github.tomakehurst.wiremock.http.Response;
 import ee.ria.taraauthserver.config.TaraAuthServerConfiguration;
+import ee.ria.taraauthserver.error.exceptions.OCSPCertificateStatusException;
+import ee.ria.taraauthserver.error.exceptions.OCSPIllegalStateException;
 import ee.ria.taraauthserver.error.exceptions.OCSPServiceNotAvailableException;
 import ee.ria.taraauthserver.error.exceptions.OCSPValidationException;
 import lombok.Builder;
@@ -205,7 +207,7 @@ public class OCSPValidatorTest {
             ocspValidator.checkCert(userCert);
             fail("Should not reach this!");
         } catch (Exception e) {
-            assertEquals(IllegalArgumentException.class, e.getClass());
+            assertEquals(OCSPIllegalStateException.class, e.getClass());
             assertThat(e.getMessage(), containsString("Issuer certificate with CN 'TEST of ESTEID-SK 2015' is not a trusted certificate!"));
         }
     }
@@ -376,8 +378,8 @@ public class OCSPValidatorTest {
             ocspValidator.checkCert(userCert);
             fail("Should not reach this!");
         } catch (Exception e) {
-            assertEquals(IllegalStateException.class, e.getClass());
-            assertThat(e.getMessage(), containsString("OCSP validation failed: Certificate with CN: 'TEST of SK OCSP RESPONDER 2011' is not trusted! Please check your configuration!"));
+            assertEquals(OCSPValidationException.class, e.getClass());
+            assertThat(e.getMessage(), containsString("Certificate with CN: 'TEST of SK OCSP RESPONDER 2011' is not trusted! Please check your configuration!"));
         }
     }
 
@@ -392,7 +394,7 @@ public class OCSPValidatorTest {
             ocspValidator.checkCert(userCert);
             fail("Should not reach this!");
         } catch (Exception e) {
-            assertEquals(IllegalStateException.class, e.getClass());
+            assertEquals(OCSPIllegalStateException.class, e.getClass());
             assertThat(e.getMessage(), containsString("No nonce found in OCSP response"));
         }
     }
@@ -410,7 +412,7 @@ public class OCSPValidatorTest {
             ocspValidator.checkCert(userCert);
             fail("Should not reach this!");
         } catch (Exception e) {
-            assertEquals(IllegalStateException.class, e.getClass());
+            assertEquals(OCSPIllegalStateException.class, e.getClass());
             assertThat(e.getMessage(), containsString("Invalid OCSP response nonce"));
         }
     }
@@ -432,7 +434,7 @@ public class OCSPValidatorTest {
             ocspValidator.checkCert(userCert);
             fail("Should not reach this!");
         } catch (Exception e) {
-            assertEquals(IllegalStateException.class, e.getClass());
+            assertEquals(OCSPValidationException.class, e.getClass());
             assertThat(e.getMessage(), containsString("OCSP response was older than accepted"));
         }
     }
@@ -453,7 +455,7 @@ public class OCSPValidatorTest {
             ocspValidator.checkCert(userCert);
             fail("Should not reach this!");
         } catch (Exception e) {
-            assertEquals(IllegalStateException.class, e.getClass());
+            assertEquals(OCSPValidationException.class, e.getClass());
             assertThat(e.getMessage(), containsString("OCSP response cannot be produced in the future"));
         }
     }
@@ -475,7 +477,7 @@ public class OCSPValidatorTest {
             ocspValidator.checkCert(userCert);
             fail("Should not reach this!");
         } catch (Exception e) {
-            assertEquals(IllegalStateException.class, e.getClass());
+            assertEquals(OCSPValidationException.class, e.getClass());
             assertThat(e.getMessage(), containsString("OCSP response signature is not valid"));
         }
     }
@@ -507,8 +509,8 @@ public class OCSPValidatorTest {
             ocspValidator.checkCert(userCert);
             fail("Should not reach this!");
         } catch (Exception e) {
-            assertEquals(IllegalStateException.class, e.getClass());
-            assertThat(e.getMessage(), containsString("OCSP validation failed: Invalid OCSP response! " +
+            assertEquals(OCSPValidationException.class, e.getClass());
+            assertThat(e.getMessage(), containsString("Invalid OCSP response! " +
                     "Responder ID in response contains value: TEST, but there was " +
                     "no cert provided with this CN in the response."));
         }
@@ -539,7 +541,7 @@ public class OCSPValidatorTest {
             ocspValidator.checkCert(loadCertificateFromResource(MOCK_USER_CERT_2015_PATH));
             fail("Should not reach this!");
         } catch (Exception e) {
-            assertEquals(IllegalStateException.class, e.getClass());
+            assertEquals(OCSPValidationException.class, e.getClass());
             assertThat(e.getMessage(), containsString("Invalid OCSP response! Responder ID in response contains value: TEST, but there was no cert provided with this CN in the response."));
         }
     }
@@ -556,7 +558,7 @@ public class OCSPValidatorTest {
             ocspValidator.checkCert(userCert);
             fail("Should not reach this!");
         } catch (Exception e) {
-            assertEquals(OCSPValidationException.class, e.getClass());
+            assertEquals(OCSPCertificateStatusException.class, e.getClass());
             assertThat(e.getMessage(), containsString("Invalid certificate status <REVOKED> received"));
         }
     }
@@ -571,7 +573,7 @@ public class OCSPValidatorTest {
             ocspValidator.checkCert(userCert);
             fail("Should not reach this!");
         } catch (Exception e) {
-            assertEquals(OCSPValidationException.class, e.getClass());
+            assertEquals(OCSPCertificateStatusException.class, e.getClass());
             assertThat(e.getMessage(), containsString("Invalid certificate status <UNKNOWN> received"));
         }
     }
@@ -610,8 +612,8 @@ public class OCSPValidatorTest {
             ocspValidator.checkCert(userCert);
             fail("Should not reach this!");
         } catch (Exception e) {
-            assertEquals(IllegalStateException.class, e.getClass());
-            assertThat(e.getMessage(), containsString("OCSP validation failed: In case of AIA OCSP, the OCSP responder certificate " +
+            assertEquals(OCSPValidationException.class, e.getClass());
+            assertThat(e.getMessage(), containsString("In case of AIA OCSP, the OCSP responder certificate " +
                     "must be issued by the authority that issued the user certificate. " +
                     "Expected issuer: 'CN=TEST of ESTEID2018, OID.2.5.4.97=NTREE-10747013, O=SK ID Solutions AS, C=EE', " +
                     "but the OCSP responder signing certificate " +
@@ -676,8 +678,8 @@ public class OCSPValidatorTest {
             ocspValidator.checkCert(loadCertificateFromResource(MOCK_USER_CERT_2015_PATH));
             fail("Should not reach this!");
         } catch (Exception e) {
-            assertEquals(IllegalStateException.class, e.getClass());
-            assertThat(e.getMessage(), containsString("OCSP validation failed: Unable to find responder CN from OCSP response"));
+            assertEquals(OCSPValidationException.class, e.getClass());
+            assertThat(e.getMessage(), containsString("Unable to find responder CN from OCSP response"));
         }
     }
 
@@ -685,7 +687,7 @@ public class OCSPValidatorTest {
     @Tag(value = "OCSP_RESPONSE_VALID_SIG")
     public void checkCertShouldThrowExceptionWhenUserCertNotSignedByTrustedCa() throws Exception {
         Mockito.when(trustedCertificates.get("MOCK CA")).thenReturn(loadCertificateFromResource(MOCK_ISSUER_CERT_2011_PATH));
-        Exception expectedEx = assertThrows(IllegalStateException.class, () -> {
+        Exception expectedEx = assertThrows(OCSPIllegalStateException.class, () -> {
             ocspValidator.checkCert(generateOcspResponderCertificate("CN=\"TEST\"", responderKeys, responderKeys, "CN=MOCK CA").getCertificate());
         });
         assertEquals("Failed to verify user certificate", expectedEx.getMessage());
@@ -917,7 +919,7 @@ public class OCSPValidatorTest {
     private X509Certificate loadCertificateFromResource(String resourcePath) throws CertificateException, IOException {
         Resource resource = resourceLoader.getResource(resourcePath);
         if (!resource.exists()) {
-            throw new IllegalArgumentException("Could not find file " + resourcePath);
+            throw new IllegalStateException("Could not find file " + resourcePath);
         }
 
         try (InputStream inputStream = resource.getInputStream()) {
