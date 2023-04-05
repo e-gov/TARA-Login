@@ -7,7 +7,7 @@
     <div class="container">
 
         Redirecting, please wait...
-        <form id="eidasInitRedirectForm" role="form" method="post" th:action="@{/auth/eidas/init}">
+        <form id="eidasInitRedirectForm" method="post" th:action="@{/auth/eidas/init}">
             <input type="hidden" th:name="country" th:value="${country}"/>
             <noscript>
                 <div>

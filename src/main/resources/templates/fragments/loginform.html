@@ -51,9 +51,9 @@
     </div>
 
     <div class="c-tab-login">
-        <nav role="navigation" class="c-tab-login__header"
+        <nav class="c-tab-login__header"
              th:aria-label="#{label.aria.authentication-method.navigation}">
-            <ul class="c-tab-login__nav">
+            <ul class="c-tab-login__nav" role="tablist">
                 <th:block
                         th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).ID_CARD)}">
                     <li th:replace="~{fragments/logintabs :: nav_default('id-card')}"></li>
@@ -72,13 +72,13 @@
                 </th:block>
             </ul>
         </nav>
-        <main role="main" class="c-tab-login__main">
+        <main class="c-tab-login__main">
             <div th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).ID_CARD)}"
                  layout:insert="~{fragments/logintabs :: content('id-card')}" th:remove="tag"
                  aria-hidden="true" aria-labelledby="id-card">
-                <form role="form" th:action="@{/auth/accept}" method="post" id="idCardForm" class="c-form"
+                <form th:action="@{/auth/accept}" method="post" id="idCardForm" class="c-form"
                       layout:fragment="login-form-content">
-                    <button role="button" type="button" class="c-btn c-btn--primary" th:text="#{label.common.login}">
+                    <button type="button" class="c-btn c-btn--primary" th:text="#{label.common.login}">
                         Login
                     </button>
                 </form>
@@ -87,7 +87,7 @@
             <div th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).MOBILE_ID)}"
                  layout:insert="~{fragments/logintabs :: content('mobile-id')}" th:remove="tag"
                  aria-hidden="true" aria-labelledby="mobile-id">
-                <form role="form" th:action="@{/auth/mid/init}" method="post" id="mobileIdForm" class="c-form"
+                <form th:action="@{/auth/mid/init}" method="post" id="mobileIdForm" class="c-form"
                       layout:fragment="login-form-content">
                     <table role="presentation">
                         <tbody>
@@ -134,7 +134,7 @@
                         <tr>
                             <td></td>
                             <td>
-                                <button role="button" type="button" class="c-btn c-btn--primary"
+                                <button type="button" class="c-btn c-btn--primary"
                                         th:text="#{label.common.login}">Login
                                 </button>
                             </td>
@@ -147,7 +147,7 @@
             <div th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).SMART_ID)}"
                  layout:insert="~{fragments/logintabs :: content('smart-id')}" th:remove="tag"
                  aria-hidden="true" aria-labelledby="smart-id">
-                <form role="form" th:action="@{/auth/sid/init}" method="post" id="smartIdForm" class="c-form"
+                <form th:action="@{/auth/sid/init}" method="post" id="smartIdForm" class="c-form"
                       layout:fragment="login-form-content">
                     <table role="presentation">
                         <tbody>
@@ -162,7 +162,7 @@
                                         <span class="input-group-text"
                                               th:text="#{label.smart-id.personal-code-prefix}"></span>
                                     </div>
-                                    <input type="number" inputmode="decimal" maxlength="11" id="sid-personal-code"
+                                    <input type="number" inputmode="decimal" id="sid-personal-code"
                                            class="form-control" name="idCode">
                                 </div>
                                 <div class="invalid-feedback is-hidden"
@@ -174,7 +174,7 @@
                         <tr>
                             <td></td>
                             <td>
-                                <button role="button" type="button" class="c-btn c-btn--primary"
+                                <button type="button" class="c-btn c-btn--primary"
                                         th:text="#{label.common.login}">Login
                                 </button>
                             </td>
@@ -188,7 +188,7 @@
                  layout:insert="~{fragments/logintabs :: content(tab_id = 'eu-citizen', title = 'title-long')}"
                  th:remove="tag"
                  aria-hidden="true" aria-labelledby="eu-citizen">
-                <form role="form" method="post" id="eidasForm" th:action="@{/auth/eidas/init}" class="c-form"
+                <form method="post" id="eidasForm" th:action="@{/auth/eidas/init}" class="c-form"
                       layout:fragment="login-form-content">
                     <table role="presentation">
                         <tbody>
@@ -206,7 +206,7 @@
                         </tr>
                         <tr>
                             <td>
-                                <button id="confirmCountryChoice" role="button" type="button" class="c-btn c-btn--primary"
+                                <button id="confirmCountryChoice" type="button" class="c-btn c-btn--primary"
                                         th:text="#{label.common.login}">Login
                                 </button>
                             </td>

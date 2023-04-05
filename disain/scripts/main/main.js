@@ -76,10 +76,12 @@ jQuery(function ($) {
 	    var errorReportNotification = $('#error-report-notification');
 	    var processedErrorReportUrl = errorReportUrl.attr('href');
 	    var processedErrorReportNotification = errorReportNotification.text();
-        processedErrorReportUrl = processedErrorReportUrl.replace('{3}', getCurrentOperatingSystem())
-        processedErrorReportUrl = processedErrorReportUrl.replace('{4}', getCurrentBrowser())
-        processedErrorReportUrl = processedErrorReportUrl.replace('{5}', window.location.host)
-        processedErrorReportNotification = processedErrorReportNotification.replace('{2}', window.location.host)
+
+        processedErrorReportUrl = processedErrorReportUrl.replace('(3)', getCurrentOperatingSystem())
+        processedErrorReportUrl = processedErrorReportUrl.replace('(4)', getCurrentBrowser())
+        processedErrorReportUrl = processedErrorReportUrl.replace('(5)', window.location.host)
+        processedErrorReportNotification = processedErrorReportNotification.replace('(2)', window.location.host)
+
         errorReportUrl.attr('href', processedErrorReportUrl);
         errorReportNotification.text(processedErrorReportNotification);
         $('#error-report-notification').removeClass('hidden');
@@ -104,6 +106,7 @@ jQuery(function ($) {
                     $('#country-select-tomselected').removeAttr('placeholder');
                     $('#country-select-tomselected').css({'width':0, 'min-width':0});
                 }
+                // Places focus on the button that confirms country code choice after choosing your country. Otherwise the screenreader focus is placed at the top of the page.
                 $('#confirmCountryChoice')[0].focus();
             },
             sortField: {
@@ -294,16 +297,16 @@ jQuery(function ($) {
 			const browserInfo = navigator.appCodeName + '/' + navigator.appVersion;
 			const hostName = location.hostname;
 			const errorReportUrl = $('#error-report-url').attr('href')
-				.replace('{1}', plainTextMessage)
-				.replace('{2}', responseJson.incident_nr)
-				.replace('{3}', os)
-				.replace('{4}', browserInfo)
-				.replace('{5}', hostName);
+				.replace('(1)', plainTextMessage)
+				.replace('(2)', responseJson.incident_nr)
+				.replace('(3)', os)
+				.replace('(4)', browserInfo)
+				.replace('(5)', hostName);
 			$('#error-report-url').attr('href', errorReportUrl);
 
 			const errorReportNotificationMessage = $('#error-report-notification').text()
-				.replace('{1}', responseJson.incident_nr)
-				.replace('{2}', hostName);
+				.replace('(1)', responseJson.incident_nr)
+				.replace('(2)', hostName);
 			$('#error-report-notification').text(errorReportNotificationMessage);
 			activateIdCardView('reportableError');
 		} else {

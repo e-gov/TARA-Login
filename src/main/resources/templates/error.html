@@ -11,7 +11,7 @@
             <p th:unless="${message != null}" th:text="#{message.error.general}"></p>
             <p th:if="${incident_nr != null && reportable == true}" th:text="#{label.error.incident-number(${incident_nr})}"></p>
             <p th:if="${incident_nr != null && reportable == true}"><a id="error-report-url" class="mailto-link"
-                                                 th:href="#{label.error.error-report-content(${@thymeleafSupport.getErrorReportEmail()},${message},${incident_nr})}"
+                                                 th:href="#{label.error.error-report-content(${@thymeleafSupport.getErrorReportEmail()},${message},${incident_nr},'(3)','(4)','(5)')}"
                                                  th:text="#{label.error.error-report-link}">Send error report</a></p>
             <p th:if="${incident_nr != null}" id="error-report-notification" class="hidden"
                th:text="#{label.error.error-report-notification(${@thymeleafSupport.getErrorReportEmail()}, ${incident_nr})}"></p>

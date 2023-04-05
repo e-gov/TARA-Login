@@ -5,11 +5,11 @@
         <p id="error-message"></p>
         <p id="idc-ajax-error-message" class="hidden aria-hidden" th:text="#{message.idc.ajax-error}"></p>
         <p id="error-incident-number-wrapper">
-            <label th:text="#{label.error.incident-number('')}" for="error-incident-number"></label>
+            <span th:text="#{label.error.incident-number('')}"></span>
             <span id="error-incident-number"></span>
         </p>
         <p><a id="error-report-url"
-              th:href="#{label.error.error-report-content(${@thymeleafSupport.getErrorReportEmail()})}"
+              th:href="#{label.error.error-report-content(${@thymeleafSupport.getErrorReportEmail()},'(1)','(2)','(3)','(4)','(5)')}"
               th:text="#{label.error.error-report-link}">Send error report</a>
         </p>
         <p>
