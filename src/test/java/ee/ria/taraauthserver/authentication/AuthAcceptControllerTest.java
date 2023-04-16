@@ -48,6 +48,7 @@ public class AuthAcceptControllerTest extends BaseTest {
         assertErrorIsLogged("Access denied: Invalid CSRF token.");
         assertStatisticsIsNotLogged();
     }
+
     @Test
     @Tag("ACCEPT_LOGIN")
     @Tag("CSRF_PROTCTION")

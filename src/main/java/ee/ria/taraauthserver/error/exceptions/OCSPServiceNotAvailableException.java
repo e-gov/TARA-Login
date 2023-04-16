@@ -1,12 +1,18 @@
 package ee.ria.taraauthserver.error.exceptions;
 
-public class OCSPServiceNotAvailableException extends RuntimeException {
+import lombok.Getter;
 
-    public OCSPServiceNotAvailableException(String message) {
+public class OCSPServiceNotAvailableException extends RuntimeException {
+    @Getter
+    private String ocspUrl;
+
+    public OCSPServiceNotAvailableException(String message, String ocspUrl) {
         super(message);
+        this.ocspUrl = ocspUrl;
     }
 
-    public OCSPServiceNotAvailableException(String message, Exception e) {
+    public OCSPServiceNotAvailableException(String message, String ocspUrl, Exception e) {
         super(message, e);
+        this.ocspUrl = ocspUrl;
     }
 }

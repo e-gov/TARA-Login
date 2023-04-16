@@ -4,8 +4,11 @@ import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import ee.ria.taraauthserver.error.exceptions.OCSPCertificateStatusException;
+import ee.ria.taraauthserver.error.exceptions.OCSPIllegalStateException;
 import ee.ria.taraauthserver.error.exceptions.OCSPServiceNotAvailableException;
 import ee.ria.taraauthserver.error.exceptions.OCSPValidationException;
+import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraSession.IdCardAuthenticationResult;
@@ -32,7 +35,6 @@ import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.Map;
 
-import static ee.ria.taraauthserver.authentication.idcard.CertificateStatus.REVOKED;
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
 import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_INCIDENT_NR;
 import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_REPORTABLE;
@@ -41,8 +43,7 @@ import static ee.ria.taraauthserver.error.ErrorCode.ESTEID_INVALID_REQUEST;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_EXPIRED;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_NOT_YET_VALID;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_OCSP_NOT_AVAILABLE;
-import static ee.ria.taraauthserver.error.ErrorCode.IDC_REVOKED;
-import static ee.ria.taraauthserver.error.ErrorCode.IDC_UNKNOWN;
+import static ee.ria.taraauthserver.error.ErrorCode.INTERNAL_ERROR;
 import static ee.ria.taraauthserver.security.RequestCorrelationFilter.MDC_ATTRIBUTE_KEY_REQUEST_TRACE_ID;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
@@ -55,6 +56,7 @@ import static net.logstash.logback.marker.Markers.append;
 import static org.springframework.context.i18n.LocaleContextHolder.getLocale;
 import static org.springframework.http.HttpStatus.BAD_GATEWAY;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 @Slf4j
 @RestController
@@ -75,6 +77,9 @@ public class IdCardController {
     @Autowired
     private OCSPValidator ocspValidator;
 
+    @Autowired
+    private StatisticsLogger statisticsLogger;
+
     @GetMapping(path = {AUTH_ID_REQUEST_MAPPING})
     public ResponseEntity<Map<String, Object>> handleRequest(HttpServletRequest request, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         logWebEidParameters(request);
@@ -94,12 +99,23 @@ public class IdCardController {
         if (configurationProperties.isOcspEnabled()) {
             try {
                 Ocsp validatingOcspConf = ocspValidator.checkCert(certificate);
-                updateAuthenticationResult(taraSession, certificate, validatingOcspConf);
-            } catch (OCSPServiceNotAvailableException ex) {
+                updateAuthenticationResult(taraSession, certificate, validatingOcspConf.getUrl());
+                statisticsLogger.logExternalTransaction(taraSession);
+            } catch (OCSPServiceNotAvailableException e) {
+                handleStatisticsLogging(taraSession, certificate, IDC_OCSP_NOT_AVAILABLE, e.getOcspUrl(), e);
                 return createErrorResponse(taraSession, IDC_OCSP_NOT_AVAILABLE, "OCSP service is currently not available", BAD_GATEWAY);
-            } catch (OCSPValidationException ex) {
-                ErrorCode errorCode = ex.getStatus() == REVOKED ? IDC_REVOKED : IDC_UNKNOWN;
-                return createErrorResponse(taraSession, errorCode, ex.getMessage(), BAD_REQUEST);
+            } catch (OCSPCertificateStatusException e) {
+                handleStatisticsLogging(taraSession, certificate, e.getErrorCode(), e.getOcspUrl(), null);
+                return createErrorResponse(taraSession, e.getErrorCode(), e.getMessage(), BAD_REQUEST);
+            } catch (OCSPValidationException e) {
+                handleStatisticsLogging(taraSession, certificate, e.getErrorCode(), e.getOcspUrl(), e);
+                return createErrorResponse(taraSession, e.getErrorCode(), e.getMessage(), BAD_REQUEST);
+            } catch (OCSPIllegalStateException e) {
+                handleStatisticsLogging(taraSession, certificate, INTERNAL_ERROR, e.getOcspUrl(), e);
+                return createErrorResponse(taraSession, INTERNAL_ERROR, e.getMessage(), INTERNAL_SERVER_ERROR);
+            } catch (Exception e) {
+                handleStatisticsLogging(taraSession, certificate, INTERNAL_ERROR, null, e);
+                return createErrorResponse(taraSession, INTERNAL_ERROR, e.getMessage(), INTERNAL_SERVER_ERROR);
             }
         } else {
             log.info("Skipping OCSP validation because OCSP is disabled.");
@@ -146,19 +162,28 @@ public class IdCardController {
         return X509Utils.toX509Certificate(encodedCertificate);
     }
 
-    private void updateAuthenticationResult(TaraSession taraSession, X509Certificate certificate, Ocsp validatingOcspConf) {
+    private void handleStatisticsLogging(TaraSession taraSession, X509Certificate certificate, ErrorCode errorCode, String ocspUrl, Exception e) {
+        IdCardAuthenticationResult authenticationResult = (IdCardAuthenticationResult) taraSession.getAuthenticationResult();
+        updateAuthenticationResult(taraSession, certificate, ocspUrl);
+        authenticationResult.setOcspUrl(ocspUrl);
+        authenticationResult.setErrorCode(errorCode);
+        if (e == null) {
+            statisticsLogger.logExternalTransaction(taraSession);
+        } else {
+            statisticsLogger.logExternalTransaction(taraSession, e);
+        }
+    }
+
+    private void updateAuthenticationResult(TaraSession taraSession, X509Certificate certificate, String validatingOcspConfUrl) {
         Map<String, String> params = X509Utils.getCertificateParams(certificate);
         String idCode = EstonianIdCodeUtil.getEstonianIdCode(params.get(CN_SERIALNUMBER));
         IdCardAuthenticationResult authenticationResult = (IdCardAuthenticationResult) taraSession.getAuthenticationResult();
-
-        if (validatingOcspConf != null) {
-            authenticationResult.setOcspUrl(validatingOcspConf.getUrl());
-        }
 
         if (taraSession.isEmailScopeRequested()) {
             String email = X509Utils.getRfc822NameSubjectAltName(certificate);
             authenticationResult.setEmail(email);
         }
+        authenticationResult.setOcspUrl(validatingOcspConfUrl);
         authenticationResult.setFirstName(params.get(CN_GIVEN_NAME));
         authenticationResult.setLastName(params.get(CN_SURNAME));
         authenticationResult.setIdCode(idCode);

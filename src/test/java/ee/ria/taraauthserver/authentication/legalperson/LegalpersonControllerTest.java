@@ -408,6 +408,7 @@ public class LegalpersonControllerTest extends BaseTest {
         assertErrorIsLogged("Access denied: Invalid CSRF token.");
         assertStatisticsIsNotLogged();
     }
+
     @Test
     @Tag(value = "LEGAL_PERSON_SELECTION_CONFIRMED")
     @Tag("CSRF_PROTCTION")

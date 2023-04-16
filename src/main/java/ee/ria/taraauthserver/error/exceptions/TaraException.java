@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.error.exceptions;
 
 import ee.ria.taraauthserver.error.ErrorCode;
 import lombok.Getter;
+import lombok.NonNull;
 
 public abstract class TaraException extends RuntimeException {
 
@@ -12,7 +13,7 @@ public abstract class TaraException extends RuntimeException {
         this(errorCode, message, null);
     }
 
-    public TaraException(ErrorCode errorCode, String message, Exception exception) {
+    public TaraException(@NonNull ErrorCode errorCode, String message, Exception exception) {
         super(message, exception);
         this.errorCode = errorCode;
     }

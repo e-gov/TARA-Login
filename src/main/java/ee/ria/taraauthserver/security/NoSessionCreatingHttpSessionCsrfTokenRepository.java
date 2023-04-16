@@ -31,8 +31,7 @@ public class NoSessionCreatingHttpSessionCsrfTokenRepository implements CsrfToke
             if (session != null) {
                 session.removeAttribute(CSRF_TOKEN_ATTR_NAME);
             }
-        }
-        else {
+        } else {
             if (session != null) {
                 session.setAttribute(CSRF_TOKEN_ATTR_NAME, token);
             } else {

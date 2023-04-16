@@ -62,7 +62,8 @@ public class ErrorHandler {
                 taraSession.getAuthenticationResult() != null &&
                 taraSession.getAuthenticationResult().getErrorCode() == null) {
             taraSession.getAuthenticationResult().setErrorCode(defaultIfNull(((TaraException) ex).getErrorCode(), INTERNAL_ERROR));
-        } else if (taraSession.getAuthenticationResult() != null) {
+        } else if (taraSession.getAuthenticationResult() != null &&
+                taraSession.getAuthenticationResult().getErrorCode() == null) {
             taraSession.getAuthenticationResult().setErrorCode(INTERNAL_ERROR);
         }
     }

@@ -103,7 +103,7 @@ class IdCardControllerTest extends BaseTest {
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertErrorIsLogged("User exception: XCLIENTCERTIFICATE can not be null");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=ESTEID_INVALID_REQUEST)");
     }
 
     @Test
@@ -128,7 +128,7 @@ class IdCardControllerTest extends BaseTest {
         assertTrue(response.body().htmlPath().getString("**.find { it.@role == 'alert'}.p.a.@href").contains("mailto:"));
         assertTrue(response.body().htmlPath().getString("**.find { it.@role == 'alert'}.p.text()").contains("Palun saatke e-kiri aadressile"));
         assertErrorIsLogged("User exception: XCLIENTCERTIFICATE can not be null");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=ESTEID_INVALID_REQUEST)");
     }
 
     @Test
@@ -172,7 +172,7 @@ class IdCardControllerTest extends BaseTest {
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertErrorIsLogged("User exception: XCLIENTCERTIFICATE can not be an empty string");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=ESTEID_INVALID_REQUEST)");
     }
 
     @Test
@@ -257,7 +257,7 @@ class IdCardControllerTest extends BaseTest {
         assertEquals(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, taraSession.getState());
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
-        assertStatisticsIsNotLogged();
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=37101010021, ocspUrl=https://localhost:9877/esteid2015, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
     }
 
     @Test
@@ -309,7 +309,7 @@ class IdCardControllerTest extends BaseTest {
         assertInfoIsLogged("Client-side Web eID check: ERR_WEBEID_EXTENSION_UNAVAILABLE");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
-        assertStatisticsIsNotLogged();
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=37101010021, ocspUrl=https://localhost:9877/esteid2015, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
     }
 
     @Test
@@ -334,9 +334,8 @@ class IdCardControllerTest extends BaseTest {
         TaraSession authSession = new TaraSession(session.getId());
         authSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
         TaraSession.LoginRequestInfo loginRequestInfo = new TaraSession.LoginRequestInfo();
-        TaraSession.Client client = new TaraSession.Client();
-        client.setScope("openid email");
-        loginRequestInfo.setClient(client);
+        loginRequestInfo.getClient().getMetaData().getOidcClient().getInstitution().setSector(SPType.PUBLIC);
+        loginRequestInfo.getClient().setScope("openid email");
         loginRequestInfo.setRequestedScopes(List.of("email", "openid"));
         authSession.setLoginRequestInfo(loginRequestInfo);
         session.setAttribute(TARA_SESSION, authSession);
@@ -366,7 +365,7 @@ class IdCardControllerTest extends BaseTest {
         assertEquals(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, taraSession.getState());
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
-        assertStatisticsIsNotLogged();
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=37101010021, ocspUrl=https://localhost:9877/esteid2015, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
     }
 
     @Test
@@ -444,7 +443,8 @@ class IdCardControllerTest extends BaseTest {
         assertWarningIsLogged("OCSP validation failed: Invalid certificate status <REVOKED> received");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_REVOKED)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=37101010021, ocspUrl=https://localhost:9877/esteid2015, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=IDC_REVOKED)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=37101010021, ocspUrl=https://localhost:9877/esteid2015, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_REVOKED)");
     }
 
     @Test
@@ -485,7 +485,8 @@ class IdCardControllerTest extends BaseTest {
         assertWarningIsLogged("OCSP validation failed: Invalid certificate status <UNKNOWN> received");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_UNKNOWN)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=37101010021, ocspUrl=https://localhost:9877/esteid2015, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=IDC_UNKNOWN)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=37101010021, ocspUrl=https://localhost:9877/esteid2015, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_UNKNOWN)");
     }
 
     @Test
@@ -518,7 +519,7 @@ class IdCardControllerTest extends BaseTest {
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .body("status", equalTo("COMPLETED"));
 
-        assertStatisticsIsNotLogged();
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=37101010021, ocspUrl=https://localhost:9877/ocsp, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
     }
 
     @Test
@@ -548,12 +549,13 @@ class IdCardControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .headers(EXPECTED_RESPONSE_HEADERS)
-                .statusCode(500);
+                .statusCode(400);
 
-        assertErrorIsLogged("Server encountered an unexpected error: OCSP validation failed: Issuer certificate with CN 'WRONG CN' is not a trusted certificate!");
+        assertWarningIsLogged("OCSP validation failed: Issuer certificate with CN 'WRONG CN' is not a trusted certificate!");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=37101010021, ocspUrl=https://localhost:9877/esteid2015, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=IDC_VALIDATION_ERROR_RESULT_GOOD)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=37101010021, ocspUrl=https://localhost:9877/esteid2015, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_VALIDATION_ERROR_RESULT_GOOD)");
     }
 
     @Test
@@ -583,12 +585,13 @@ class IdCardControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .headers(EXPECTED_RESPONSE_HEADERS)
-                .statusCode(500);
+                .statusCode(400);
 
-        assertErrorIsLogged("Server encountered an unexpected error: OCSP validation failed: In case of AIA OCSP, the OCSP responder certificate must be issued by the authority that issued the user certificate. Expected issuer: 'CN=TEST of ESTEID-SK 2015, OID.2.5.4.97=NTREE-10747013, O=AS Sertifitseerimiskeskus, C=EE', but the OCSP responder signing certificate was issued by 'EMAILADDRESS=pki@sk.ee, CN=TEST of ESTEID-SK 2011, O=AS Sertifitseerimiskeskus, C=EE'");
+        assertWarningIsLogged("OCSP validation failed: In case of AIA OCSP, the OCSP responder certificate must be issued by the authority that issued the user certificate. Expected issuer: 'CN=TEST of ESTEID-SK 2015, OID.2.5.4.97=NTREE-10747013, O=AS Sertifitseerimiskeskus, C=EE', but the OCSP responder signing certificate was issued by 'EMAILADDRESS=pki@sk.ee, CN=TEST of ESTEID-SK 2011, O=AS Sertifitseerimiskeskus, C=EE'");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=37101010021, ocspUrl=https://localhost:9877/esteid2015, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=IDC_VALIDATION_ERROR_RESULT_GOOD)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=37101010021, ocspUrl=https://localhost:9877/esteid2015, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_VALIDATION_ERROR_RESULT_GOOD)");
     }
 
     @Test
@@ -611,10 +614,12 @@ class IdCardControllerTest extends BaseTest {
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .statusCode(500);
 
-        assertErrorIsLogged("Server encountered an unexpected error: OCSP validation failed: malformed response: no response data found");
+        assertWarningIsLogged("OCSP validation failed: OCSP validation failed: malformed response: no response data found");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
+                "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=37101010021, ocspUrl=https://localhost:9877/esteid2015, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=INTERNAL_ERROR)");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
-                "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+                "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=37101010021, ocspUrl=https://localhost:9877/esteid2015, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
@@ -640,8 +645,10 @@ class IdCardControllerTest extends BaseTest {
                 .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
 
         assertWarningIsLogged("OCSP validation failed: OCSP service is currently not available");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
+                "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=37101010021, ocspUrl=https://localhost:9877/ocsp, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=IDC_OCSP_NOT_AVAILABLE)");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
-                "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_OCSP_NOT_AVAILABLE)");
+                "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=37101010021, ocspUrl=https://localhost:9877/ocsp, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_OCSP_NOT_AVAILABLE)");
     }
 
     @Test

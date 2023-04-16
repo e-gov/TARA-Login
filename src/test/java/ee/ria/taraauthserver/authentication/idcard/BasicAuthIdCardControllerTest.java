@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.authentication.idcard;
 
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import io.restassured.RestAssured;
@@ -136,13 +137,16 @@ class BasicAuthIdCardControllerTest extends BaseTest {
         assertEquals(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, taraSession.getState());
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
-        assertStatisticsIsNotLogged();
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=37101010021, ocspUrl=https://localhost:9877/esteid2015, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
     }
 
     private String createSessionWithAuthenticationState(TaraAuthenticationState authenticationState) {
         Session session = sessionRepository.createSession();
         TaraSession authSession = new TaraSession(session.getId());
         authSession.setState(authenticationState);
+        TaraSession.LoginRequestInfo loginRequestInfo = new TaraSession.LoginRequestInfo();
+        loginRequestInfo.getClient().getMetaData().getOidcClient().getInstitution().setSector(SPType.PUBLIC);
+        authSession.setLoginRequestInfo(loginRequestInfo);
         session.setAttribute(TARA_SESSION, authSession);
         sessionRepository.save(session);
         return session.getId();

@@ -60,14 +60,9 @@ import static org.unbescape.xml.XmlEscape.escapeXml11;
 public class BusinessRegistryService {
     private static final String SOAP_REQUEST_TEMPLATE = "xtee-arireg.esindus_v2.v1.ftl";
     private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.X_ROAD, this.getClass());
-
-    @NonNull
     private final Configuration templateConfiguration;
-    @NonNull
     private final LegalPersonProperties legalPersonProperties;
-    @NonNull
     private final SSLContext sslContext;
-
     private final String xpathFilterForEttevotjad;
 
     public BusinessRegistryService(@NonNull Configuration templateConfiguration,

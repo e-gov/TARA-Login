@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.security;
 
+import lombok.NonNull;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
@@ -22,7 +23,7 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
 
     private final String version;
 
-    public RequestCorrelationFilter(BuildProperties buildProperties, GitProperties gitProperties) {
+    public RequestCorrelationFilter(@NonNull BuildProperties buildProperties, @NonNull GitProperties gitProperties) {
         version = getVersion(buildProperties, gitProperties);
         logger.info("Application version: " + version);
     }
