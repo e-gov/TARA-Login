@@ -1,3 +1,7 @@
+<div th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).ID_CARD)}">
+    <div id="id-card-error" th:insert="~{fragments/error}" th:class="hidden"/>
+    <div id="id-card-wait" th:insert="~{fragments/wait}" th:class="hidden"/>
+</div>
 <div class="container" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
     <noscript>
         <div class="alert alert-error" role="alert">
