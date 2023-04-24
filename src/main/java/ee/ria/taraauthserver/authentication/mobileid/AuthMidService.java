@@ -6,6 +6,7 @@ import co.elastic.apm.api.Span;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.MidAuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.error.ErrorCode;
+import ee.ria.taraauthserver.error.exceptions.MidValidationException;
 import ee.ria.taraauthserver.logging.JaxRsClientRequestLogger;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.TaraSession;
@@ -70,6 +71,7 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_MID_STA
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static ee.ria.taraauthserver.utils.RequestUtils.withMdc;
 import static ee.ria.taraauthserver.utils.RequestUtils.withMdcAndLocale;
+import static java.lang.String.format;
 import static java.time.Instant.now;
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.util.concurrent.CompletableFuture.delayedExecutor;
@@ -105,6 +107,7 @@ public class AuthMidService {
         errorMap.put(MidDeliveryException.class, MID_DELIVERY_ERROR);
         errorMap.put(ProcessingException.class, MID_INTERNAL_ERROR);
         errorMap.put(NotAllowedException.class, ERROR_GENERAL);
+        errorMap.put(MidValidationException.class, MID_VALIDATION_ERROR);
     }
 
     @Autowired
@@ -261,8 +264,7 @@ public class AuthMidService {
         } else {
             taraSession.setState(AUTHENTICATION_FAILED);
             taraAuthResult.setErrorCode(MID_VALIDATION_ERROR);
-            log.error("Authentication result validation failed: {}",
-                    value("tara.session.authentication_result.mid_errors", midAuthResult.getErrors()));
+            throw new MidValidationException(format("Authentication result validation failed: %s", midAuthResult.getErrors()));
         }
     }
 
@@ -271,8 +273,10 @@ public class AuthMidService {
         ErrorCode errorCode = translateExceptionToErrorCode(ex);
         taraSession.getAuthenticationResult().setErrorCode(errorCode);
 
-        if (errorCode == ERROR_GENERAL || errorCode == MID_INTERNAL_ERROR) {
+        if (ERROR_GENERAL == errorCode || MID_INTERNAL_ERROR == errorCode) {
             log.error(append("error.code", errorCode.name()), "Mobile-ID authentication exception: {}", ex.getMessage(), ex);
+        } else if (MID_VALIDATION_ERROR == errorCode) {
+            log.error(append("error.code", errorCode.name()), ex.getMessage(), ex);
         } else {
             log.warn("Mobile-ID authentication failed: {}, Error code: {}", value("error.message", ex.getMessage()), value("error.code", errorCode.name()));
         }
@@ -284,7 +288,7 @@ public class AuthMidService {
 
     private void handleStatisticsLogging(TaraSession taraSession, Exception ex) {
         ErrorCode errorCode = taraSession.getAuthenticationResult().getErrorCode();
-        if (ERROR_GENERAL == errorCode || MID_INTERNAL_ERROR == errorCode) {
+        if (ERROR_GENERAL == errorCode || MID_INTERNAL_ERROR == errorCode || MID_VALIDATION_ERROR == errorCode) {
             statisticsLogger.logExternalTransaction(taraSession, ex);
         } else {
             statisticsLogger.logExternalTransaction(taraSession);

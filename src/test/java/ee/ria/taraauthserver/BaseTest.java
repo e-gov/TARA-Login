@@ -47,6 +47,7 @@ import static io.restassured.RestAssured.config;
 import static io.restassured.config.RedirectConfig.redirectConfig;
 import static java.util.List.of;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInRelativeOrder;
 import static org.hamcrest.Matchers.hasSize;
@@ -242,8 +243,8 @@ public abstract class BaseTest {
         if (additionalFilter != null) {
             eventStream = eventStream.filter(additionalFilter);
         }
-        List<ILoggingEvent> events = eventStream.collect(toList());
-        List<String> messages = events.stream().map(ILoggingEvent::getFormattedMessage).collect(toList());
+        List<ILoggingEvent> events = eventStream.collect(toUnmodifiableList());
+        List<String> messages = events.stream().map(ILoggingEvent::getFormattedMessage).collect(toUnmodifiableList());
         assertThat("Expected log messages not found in output.\n\tExpected log messages: " + of(messagePrefixesInRelativeOrder) + ",\n\tActual log messages: " + messages,
                 messages, containsInRelativeOrder(expectedMessages.stream().map(CoreMatchers::startsWith).toArray(Matcher[]::new)));
         return events;
@@ -260,11 +261,18 @@ public abstract class BaseTest {
     }
 
     protected void assertMessageWithMarkerIsLoggedOnce(Class<?> loggerClass, Level loggingLevel, String exactMessage, String markerValuePrefix) {
-        List<ILoggingEvent> loggingEvents = mockAppender.list.stream()
+        assertMessageWithMarkerIsLoggedOnce(loggerClass, loggingLevel, null, exactMessage, markerValuePrefix);
+    }
+
+    protected void assertMessageWithMarkerIsLoggedOnce(Class<?> loggerClass, Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String exactMessage, String markerValuePrefix) {
+        Stream<ILoggingEvent> eventStream = mockAppender.list.stream()
                 .filter(e -> (loggerClass == null || e.getLoggerName().equals(loggerClass.getCanonicalName())) &&
                         e.getMarker() != null &&
-                        e.getFormattedMessage().equals(exactMessage))
-                .collect(toList());
+                        e.getFormattedMessage().equals(exactMessage));
+        if (additionalFilter != null) {
+            eventStream = eventStream.filter(additionalFilter);
+        }
+        List<ILoggingEvent> loggingEvents = eventStream.collect(toUnmodifiableList());
         assertThat(loggingEvents, hasSize(1));
         ILoggingEvent loggingEvent = loggingEvents.get(0);
         assertEquals(loggingLevel, loggingEvent.getLevel());
@@ -273,6 +281,10 @@ public abstract class BaseTest {
 
     protected void assertStatisticsIsLoggedOnce(Level loggingLevel, String exactMessage, String markerValuePrefix) {
         assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, loggingLevel, exactMessage, markerValuePrefix);
+    }
+
+    protected void assertStatisticsIsLoggedOnce(Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String exactMessage, String markerValuePrefix) {
+        assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, loggingLevel, additionalFilter, exactMessage, markerValuePrefix);
     }
 
     protected void assertStatisticsIsNotLogged() {

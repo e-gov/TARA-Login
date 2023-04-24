@@ -13,6 +13,7 @@ import io.restassured.response.Response;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.bouncycastle.asn1.x509.CRLReason;
 import org.bouncycastle.cert.ocsp.CertificateStatus;
 import org.bouncycastle.cert.ocsp.OCSPResp;
@@ -52,6 +53,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static ee.ria.taraauthserver.authentication.idcard.IdCardController.HEADER_SSL_CLIENT_CERT;
 import static ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest.generateOcspResponderCertificate;
 import static ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest.generateUserCertificate;
+import static ee.ria.taraauthserver.security.SessionManagementFilter.MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
@@ -366,6 +368,104 @@ class IdCardControllerTest extends BaseTest {
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
         assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=37101010021, ocspUrl=https://localhost:9877/esteid2015, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+    }
+
+    @Test
+    @Tag(value = "LOG_TARA_TRACE_ID")
+    void taraTraceIdOnAllLogsWhen_successfulAuthentication() throws Exception {
+        KeyPairGenerator rsa = KeyPairGenerator.getInstance("RSA");
+        rsa.initialize(2048);
+        KeyPair certKeyPair = rsa.generateKeyPair();
+        X509Certificate ocspResponderCert = generateOcspResponderCertificate("CN=MOCK OCSP RESPONDER, C=EE", certKeyPair, responderKeys, "CN=TEST of ESTEID-SK 2015").getCertificate();
+        ocspResponseTransformer.setSignerKey(certKeyPair.getPrivate());
+        setUpMockOcspResponse(MockOcspResponseParams.builder()
+                .ocspServer(wireMockServer)
+                .responseStatus(OCSPResp.SUCCESSFUL)
+                .certificateStatus(CertificateStatus.GOOD)
+                .responseId("CN=MOCK OCSP RESPONDER")
+                .ocspConf(ocspConfiguration)
+                .responderCertificate(
+                        ocspResponderCert
+                ).build(), "/esteid2015");
+        String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+
+        given()
+                .when()
+                .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
+                .sessionId("SESSION", sessionId)
+                .get("/auth/id")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .headers(EXPECTED_RESPONSE_HEADERS)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8")
+                .body("status", equalTo("COMPLETED"));
+
+        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        String taraTraceId = DigestUtils.sha256Hex(taraSession.getSessionId());
+        assertEquals(TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED, taraSession.getState());
+        assertMessageIsLogged(e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
+                "OCSP certificate validation. Serialnumber=<65449997589027889654393452356031223090>, SubjectDN=<SERIALNUMBER=37101010021, GIVENNAME=IGOR, SURNAME=ŽAIKOVSKI, CN=\"ŽAIKOVSKI,IGOR,37101010021\", OU=authentication, O=ESTEID, C=EE>, issuerDN=<CN=TEST of ESTEID-SK 2015, OID.2.5.4.97=NTREE-10747013, O=AS Sertifitseerimiskeskus, C=EE>",
+                "State: NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT -> NATURAL_PERSON_AUTHENTICATION_COMPLETED");
+        assertMessageWithMarkerIsLoggedOnce(IdCardController.class, INFO, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
+                "Client-side Web eID check: null", "tara.webeid.extension_version=null, tara.webeid.native_app_version=null, tara.webeid.error_stack=null, tara.webeid.status_duration_ms=null");
+        assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
+                "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
+        assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
+                "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
+        assertStatisticsIsLoggedOnce(INFO, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
+                "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=37101010021, ocspUrl=https://localhost:9877/esteid2015, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+    }
+
+    @Test
+    @Tag(value = "LOG_TARA_TRACE_ID")
+    void taraTraceIdOnAllLogsWhen_failedAuthentication() throws Exception {
+        KeyPairGenerator rsa = KeyPairGenerator.getInstance("RSA");
+        rsa.initialize(2048);
+        KeyPair certKeyPair = rsa.generateKeyPair();
+        X509Certificate ocspResponderCert = generateOcspResponderCertificate("CN=MOCK OCSP RESPONDER, C=EE", certKeyPair, responderKeys, "CN=TEST of ESTEID-SK 2015").getCertificate();
+        ocspResponseTransformer.setSignerKey(certKeyPair.getPrivate());
+        setUpMockOcspResponse(MockOcspResponseParams.builder()
+                .ocspServer(wireMockServer)
+                .responseStatus(OCSPResp.SUCCESSFUL)
+                .certificateStatus(new RevokedStatus(
+                        new Date(), CRLReason.unspecified
+                ))
+                .responseId("CN=MOCK OCSP RESPONDER")
+                .ocspConf(ocspConfiguration)
+                .responderCertificate(
+                        ocspResponderCert
+                ).build(), "/esteid2015");
+        String sessionId = createSessionWithAuthenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS);
+
+        given()
+                .when()
+                .header(HEADER_SSL_CLIENT_CERT, X509_CERT)
+                .sessionId("SESSION", sessionId)
+                .get("/auth/id")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .headers(EXPECTED_RESPONSE_HEADERS)
+                .body("status", equalTo("ERROR"))
+                .body("message", equalTo("ID-kaardi sertifikaadid on peatatud või tühistatud. Palun pöörduge Politsei- ja Piirivalveameti teenindusse."))
+                .body("incident_nr", matchesPattern("[A-Za-z0-9,-]{36,36}"));
+
+        //assertWarningIsLogged("OCSP validation failed: Invalid certificate status <REVOKED> received");
+        String taraTraceId = DigestUtils.sha256Hex(sessionId);
+        assertMessageIsLogged(e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
+                "OCSP certificate validation. Serialnumber=<65449997589027889654393452356031223090>, SubjectDN=<SERIALNUMBER=37101010021, GIVENNAME=IGOR, SURNAME=ŽAIKOVSKI, CN=\"ŽAIKOVSKI,IGOR,37101010021\", OU=authentication, O=ESTEID, C=EE>, issuerDN=<CN=TEST of ESTEID-SK 2015, OID.2.5.4.97=NTREE-10747013, O=AS Sertifitseerimiskeskus, C=EE>");
+        assertWarningIsLogged(IdCardController.class, "OCSP validation failed: Invalid certificate status <REVOKED> received");
+        assertMessageWithMarkerIsLoggedOnce(IdCardController.class, INFO, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
+                "Client-side Web eID check: null", "tara.webeid.extension_version=null, tara.webeid.native_app_version=null, tara.webeid.error_stack=null, tara.webeid.status_duration_ms=null");
+        assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
+                "OCSP request", "http.request.method=GET, url.full=https://localhost:9877/esteid2015, http.request.body.content={\"http.request.body.content\":");
+        assertMessageWithMarkerIsLoggedOnce(OCSPValidator.class, INFO, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
+                "OCSP response: 200", "http.response.status_code=200, http.response.body.content=");
+        assertStatisticsIsLoggedOnce(ERROR, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
+                "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=37101010021, ocspUrl=https://localhost:9877/esteid2015, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=IDC_REVOKED)");
+        assertStatisticsIsLoggedOnce(ERROR, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
+                "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=37101010021, ocspUrl=https://localhost:9877/esteid2015, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_REVOKED)");
     }
 
     @Test
