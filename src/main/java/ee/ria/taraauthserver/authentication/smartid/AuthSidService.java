@@ -248,7 +248,7 @@ public class AuthSidService {
         ErrorCode errorCode = translateExceptionToErrorCode(ex);
         taraSession.getAuthenticationResult().setErrorCode(errorCode);
 
-        if (errorCode == ERROR_GENERAL || errorCode == SID_INTERNAL_ERROR) {
+        if (ERROR_GENERAL == errorCode || SID_INTERNAL_ERROR == errorCode || SID_VALIDATION_ERROR == errorCode) {
             log.error(append("error.code", errorCode.name()), "Smart-ID authentication exception: {}", ex.getMessage(), ex);
         } else {
             log.warn("Smart-ID authentication failed: {}, Error code: {}", value("error.message", ex.getMessage()), value("error.code", errorCode.name()));
@@ -263,7 +263,7 @@ public class AuthSidService {
 
     private void handleStatisticsLogging(TaraSession taraSession, Exception ex) {
         ErrorCode errorCode = taraSession.getAuthenticationResult().getErrorCode();
-        if (ERROR_GENERAL == errorCode || SID_INTERNAL_ERROR == errorCode) {
+        if (ERROR_GENERAL == errorCode || SID_INTERNAL_ERROR == errorCode || SID_VALIDATION_ERROR == errorCode) {
             statisticsLogger.logExternalTransaction(taraSession, ex);
         } else {
             statisticsLogger.logExternalTransaction(taraSession);

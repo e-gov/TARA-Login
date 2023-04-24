@@ -89,7 +89,6 @@ public class IdCardLoginController {
 
         // TARA is using customized OCSP validation instead of AuthTokenValidator's built-in check
         if (configurationProperties.isOcspEnabled()) {
-            IdCardAuthenticationResult authenticationResult = (IdCardAuthenticationResult) taraSession.getAuthenticationResult();
             try {
                 Ocsp validatingOcspConf = ocspValidator.checkCert(certificate);
                 updateAuthenticationResult(taraSession, certificate, validatingOcspConf.getUrl());
