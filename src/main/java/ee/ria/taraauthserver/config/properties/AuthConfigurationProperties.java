@@ -50,6 +50,8 @@ public class AuthConfigurationProperties {
 
     private HydraConfigurationProperties hydraService = new HydraConfigurationProperties();
 
+    private EeidConfigurationProperties eeidService = new EeidConfigurationProperties();
+
     private TlsConfigurationProperties tls = new TlsConfigurationProperties();
 
     private EnumMap<AuthenticationType, AuthMethodProperties> authMethods = new EnumMap<>(AuthenticationType.class);
@@ -85,6 +87,23 @@ public class AuthConfigurationProperties {
         private int requestTimeoutInSeconds = 3;
 
         private int maxConnectionsTotal = 50;
+    }
+
+
+    @Data
+    @Validated
+    @ConfigurationProperties(prefix = "tara.eeid-service")
+    public static class EeidConfigurationProperties {
+
+        @NotBlank
+        private String acceptConsentUrl;
+
+        @NotBlank
+        private String webauthnLoginUrl;
+
+        @NotBlank
+        private String webauthnRegisterUrl;
+
     }
 
     @Data
@@ -124,6 +143,16 @@ public class AuthConfigurationProperties {
         LevelOfAssurance levelOfAssurance;
 
         boolean enabled = false;
+    }
+
+    @Data
+    @Validated
+    @EqualsAndHashCode(callSuper = true)
+    @ConfigurationProperties(prefix = "tara.auth-methods.webauthn")
+    public static class WebauthnConfigurationProperties extends AuthMethodProperties {
+
+        @NotNull
+        private String clientUrl;
     }
 
     @Data

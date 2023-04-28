@@ -1,0 +1,1 @@
+document.forms.webauthnLoginRedirectForm.submit();

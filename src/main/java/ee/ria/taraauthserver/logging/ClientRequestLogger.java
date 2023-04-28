@@ -29,6 +29,7 @@ public class ClientRequestLogger {
         ALERTS,
         EIDAS,
         TARA_HYDRA,
+        WEBAUTHN,
         GOVSSO_HYDRA,
         OCSP,
         X_ROAD
