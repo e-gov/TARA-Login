@@ -67,9 +67,9 @@ public class WebauthnCancelController {
     }
 
     public void validateSession(Session session) {
-        if (session == null) {
+        if (session == null)
             throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
-        }
+
         TaraSession taraSession = requireNonNull(session.getAttribute(TARA_SESSION));
         SessionUtils.assertSessionInState(taraSession, WAITING_WEBAUTHN_RESPONSE);
         if (((TaraSession.WebauthnAuthenticationResult) taraSession.getAuthenticationResult()).getRelayState() == null) {
