@@ -141,11 +141,25 @@
             <groupId>ee.sk.mid</groupId>
             <artifactId>mid-rest-java-client</artifactId>
             <version>${mid-rest.version}</version>
+            <exclusions>
+                <!-- bcprov-jdk18on is used instead.-->
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>bcprov-jdk15on</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>ee.sk.smartid</groupId>
             <artifactId>smart-id-java-client</artifactId>
             <version>${smart-id.version}</version>
+            <exclusions>
+                <!-- bcprov-jdk18on is used instead.-->
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>bcprov-jdk15on</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.freemarker</groupId>
@@ -215,6 +229,33 @@
                     -->
                     <target>${maven.compiler.release}</target>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <!-- Allow only single edition (currently latest is jdk18on) of Bouncy Castle libraries.
+                                     Other libraries may reference different editions of the same Bouncy Castle library
+                                     (bcprov-jdk15on vs bcprov-jdk18on), but duplicate classes on classpath must be
+                                     avoided. -->
+                                <bannedDependencies>
+                                    <excludes>
+                                        <exclude>org.bouncycastle:*</exclude>
+                                    </excludes>
+                                    <includes>
+                                        <exclude>org.bouncycastle:*-jdk18on</exclude>
+                                    </includes>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
