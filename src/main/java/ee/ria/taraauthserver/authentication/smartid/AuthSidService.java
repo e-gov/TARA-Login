@@ -230,12 +230,16 @@ public class AuthSidService {
 
         SmartIdAuthenticationResponse response = requestBuilder.createSmartIdAuthenticationResponse(sessionStatus);
         AuthenticationIdentity authIdentity = AuthenticationResponseValidator.constructAuthenticationIdentity(response.getCertificate());
-        taraAuthResult.setIdCode(authIdentity.getIdentityNumber());
-        taraAuthResult.setCountry(authIdentity.getCountry());
-        taraAuthResult.setFirstName(authIdentity.getGivenName());
-        taraAuthResult.setLastName(authIdentity.getSurname());
-        taraAuthResult.setSubject(authIdentity.getCountry() + authIdentity.getIdentityNumber());
-        // taraAuthResult.setDateOfBirth(MidNationalIdentificationCodeValidator.getBirthDate(authIdentity.getIdentityNumber()));
+
+        if (authIdentity != null) {
+            taraAuthResult.setIdCode(authIdentity.getIdentityNumber());
+            taraAuthResult.setCountry(authIdentity.getCountry());
+            taraAuthResult.setFirstName(authIdentity.getGivenName());
+            taraAuthResult.setLastName(authIdentity.getSurname());
+            taraAuthResult.setSubject(authIdentity.getCountry() + authIdentity.getIdentityNumber());
+            if (authIdentity.getCountry() != "LV")
+                taraAuthResult.setDateOfBirth(MidNationalIdentificationCodeValidator.getBirthDate(authIdentity.getIdentityNumber()));
+        }
         taraAuthResult.setAmr(AuthenticationType.SMART_ID);
         taraAuthResult.setAcr(smartIdConfigurationProperties.getLevelOfAssurance());
 

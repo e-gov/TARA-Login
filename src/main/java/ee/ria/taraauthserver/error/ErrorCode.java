@@ -56,6 +56,8 @@ public enum ErrorCode {
     EIDAS_AUTHENTICATION_FAILED("message.eidas.error.authentication-failed"),
     EIDAS_INCORRECT_LOA("message.eidas.error.incorrect-loa"),
     EIDAS_INTERNAL_ERROR("message.eidas.error.internal-error"),
+    WEBAUTHN_INTERNAL_ERROR("message.webauthn.error.internal-error"),
+    WEBAUTHN_AUTHENTICATION_FAILED("message.webauthn.error.authentication-failed"),
     INVALID_OIDC_CLIENT("message.error.invalid-oidc-client"),
     INVALID_OIDC_REQUEST("message.error.invalid-oidc-request"),
     LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE("label.legal-person.error.service-not-available"),
