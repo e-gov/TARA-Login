@@ -197,7 +197,6 @@ public class WebauthnCallbackController {
         TaraSession.WebauthnAuthenticationResult authenticationResult = new TaraSession.WebauthnAuthenticationResult();
         authenticationResult.setFirstName(response.getAttributes().getFirstName());
         authenticationResult.setLastName(response.getAttributes().getFamilyName());
-        // authenticationResult.setIdCode(getIdCodeFromPersonIdentifier(personIdentifierMatcher));
         authenticationResult.setPhoneNumber(response.getAttributes().getPhoneNumber());
         authenticationResult.setEmail(response.getAttributes().getEmail());
         authenticationResult.setDateOfBirth(LocalDate.parse(response.getAttributes().getDateOfBirth()));
