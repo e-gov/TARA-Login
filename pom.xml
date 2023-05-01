@@ -46,6 +46,17 @@
             <groupId>org.webeid.security</groupId>
             <artifactId>authtoken-validation</artifactId>
             <version>${webeid.version}</version>
+            <exclusions>
+                <!-- bcprov-jdk18on and bcpkix-jdk18on are used instead.-->
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>bcpkix-jdk15on</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>bcprov-jdk15on</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
