@@ -33,7 +33,8 @@ import java.io.IOException;
 import static ee.ria.taraauthserver.authentication.eidas.EidasCallbackController.EIDAS_CALLBACK_REQUEST_MAPPING;
 import static ee.ria.taraauthserver.authentication.webauthn.WebauthnCallbackController.WEBAUTHN_LOGIN_CALLBACK_REQUEST_MAPPING;
 import static ee.ria.taraauthserver.authentication.webauthn.WebauthnCallbackController.WEBAUTHN_REGISTER_CALLBACK_REQUEST_MAPPING;
-import static ee.ria.taraauthserver.authentication.webauthn.WebauthnCancelController.WEBAUTHN_CANCEL_REQUEST_MAPPING;
+import static ee.ria.taraauthserver.authentication.webauthn.WebauthnCancelController.WEBAUTHN_LOGIN_CANCEL_REQUEST_MAPPING;
+import static ee.ria.taraauthserver.authentication.webauthn.WebauthnCancelController.WEBAUTHN_REGISTRATION_CANCEL_REQUEST_MAPPING;
 import static ee.ria.taraauthserver.authentication.idcard.IdCardController.AUTH_ID_REQUEST_MAPPING;
 import static ee.ria.taraauthserver.authentication.AuthInitController.AUTH_INIT_REQUEST_MAPPING;
 

@@ -103,10 +103,7 @@ public class AuthInitController {
         if (language == null)
             RequestUtils.setLocale(getDefaultOrRequestedLocale(newTaraSession));
 
-        if (eidasOnlyWithCountryRequested(loginRequestInfo)) {
-            model.addAttribute("country", getAllowedEidasCountryCode(loginRequestInfo));
-            return "redirectToEidasInit";
-        } else if (webauthnRequested(loginRequestInfo) && cancelWebauthn == null) { 
+        if (webauthnRequested(loginRequestInfo) && cancelWebauthn == null) { 
             return "redirectToWebauthnLogin";
         } else { 
             return "loginView";

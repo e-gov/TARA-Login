@@ -79,7 +79,7 @@ public class EidasController {
                 String.class);
         requestLogger.logResponse(response);
 
-        updateSession(country, taraSession, relayState);
+        updateSession(country, method, taraSession, relayState);
         return new RedirectView(getHtmlRedirectPageFromResponse(servletResponse, response));
     }
 
@@ -89,9 +89,9 @@ public class EidasController {
         return response.getBody();
     }
 
-    private void updateSession(String country, TaraSession taraSession, String relayState) {
+    private void updateSession(String country, String method, TaraSession taraSession, String relayState) {
         TaraSession.EidasAuthenticationResult authenticationResult = new TaraSession.EidasAuthenticationResult();
-        authenticationResult.setAmr(AuthenticationType.EIDAS);
+        authenticationResult.setAmr(AuthenticationType.findByAmrName(method));
         authenticationResult.setRelayState(relayState);
         authenticationResult.setCountry(country);
         taraSession.setState(WAITING_EIDAS_RESPONSE);
@@ -99,18 +99,17 @@ public class EidasController {
     }
 
     private String createRequestUrl(String country, String method, TaraSession taraSession, String relayState) {
-        String url = eidasConfigurationProperties.getClientUrl() + "/login";
+        String url = eidasConfigurationProperties.getClientUrl() + "/auth/eidas/login";
         OidcClient oidcClient = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient();
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
-                .queryParam("Country", country)
-                .queryParam("Method", method)
-                .queryParam("RequesterID", taraSession.getLoginRequestInfo().getClientId())
-                .queryParam("SPType", oidcClient.getInstitution().getSector())
-                .queryParam("State", taraSession.getLoginRequestInfo().getOidcState())
-                .queryParam("SessionID", taraSession.getSessionId());
+                .queryParam("country", country)
+                .queryParam("method", method)
+                .queryParam("client_id", taraSession.getLoginRequestInfo().getClientId())
+                .queryParam("state", taraSession.getLoginRequestInfo().getOidcState())
+                .queryParam("relay_state", relayState);
         List<String> acr = getAcrFromSessionOidcContext(taraSession);
         if (acr != null)
-            builder.queryParam("LoA", acr.get(0).toUpperCase());
+            builder.queryParam("loa", acr.get(0).toUpperCase());
         return builder.toUriString();
     }
 
