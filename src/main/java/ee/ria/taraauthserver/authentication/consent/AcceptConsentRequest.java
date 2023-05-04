@@ -39,7 +39,8 @@ public class AcceptConsentRequest {
         profileAttributes.setFamilyName(taraSession.getAuthenticationResult().getLastName());
         profileAttributes.setSubject(taraSession.getAuthenticationResult().getSubject());
         profileAttributes.setAuthenticationType(taraSession.getAuthenticationResult().getAmr());
-        profileAttributes.setDateOfBirth(taraSession.getAuthenticationResult().getDateOfBirth().toString());
+        if (taraSession.getAuthenticationResult().getDateOfBirth() != null)
+            profileAttributes.setDateOfBirth(taraSession.getAuthenticationResult().getDateOfBirth().toString());
 
         if (phoneNumberIsRequested(taraSession) && taraSession.getAuthenticationResult().getAmr().equals(AuthenticationType.MOBILE_ID)) {
             idToken.setPhoneNr(taraSession.getAuthenticationResult().getPhoneNumber());

@@ -110,7 +110,7 @@ public class WebauthnCallbackController {
         try {
             String requestUrl = webauthnConfigurationProperties.getClientUrl() + "/webauthn/credential_authentication/return";
 
-            requestLogger.logRequest(requestUrl, HttpMethod.POST, Map.of("WebauthnResponse", webauthnResponse));
+            requestLogger.logRequest(requestUrl, HttpMethod.POST, Map.of("webauthn_response", webauthnResponse));
             var response = hydraRestTemplate.exchange(
                     requestUrl,
                     HttpMethod.POST,
@@ -212,7 +212,7 @@ public class WebauthnCallbackController {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add("WebauthnResponse", webauthnResponse);
+        map.add("webauthn_response", webauthnResponse);
         return new HttpEntity<>(map, headers);
     }
 
