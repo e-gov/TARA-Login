@@ -65,13 +65,13 @@ tara:
     host-url: https://localhost:8080/alerts
     static-alert:
       message-templates[0]:
-        message: "Tegemist on testkeskkonnaga ja autentimiseks vajalik info on <a href='https://github.com/internetee/eeID-manager/blob/main/TESTING.md#testing'>eeID dokumentatsioonis</a>!"
+        message: "Tegemist on testkeskkonnaga ja autentimiseks vajalik info on <a href='https://github.com/internetee/eeID-DOC/blob/main/TESTING.md#testing'>eeID dokumentatsioonis</a>!"
         locale: et
       message-templates[1]:
-        message: "This is a test environment and necessary credentials for testing is available in <a href='https://github.com/internetee/eeID-manager/blob/main/TESTING.md#testing'>eeID documentation</a>!"
+        message: "This is a test environment and necessary credentials for testing is available in <a href='https://github.com/internetee/eeID-DOC/blob/main/TESTING.md#testing'>eeID documentation</a>!"
         locale: en
       message-templates[2]:
-        message: "Это тестовая среда, и необходимые учетные данные для тестирования доступны в <a href='https://github.com/internetee/eeID-manager/blob/main/TESTING.md#testing'>документации eeID!</a>"
+        message: "Это тестовая среда, и необходимые учетные данные для тестирования доступны в <a href='https://github.com/internetee/eeID-DOC/blob/main/TESTING.md#testing'>документации eeID!</a>"
         locale: ru
 
   auth-methods:

@@ -237,7 +237,7 @@ public class AuthSidService {
             taraAuthResult.setFirstName(authIdentity.getGivenName());
             taraAuthResult.setLastName(authIdentity.getSurname());
             taraAuthResult.setSubject(authIdentity.getCountry() + authIdentity.getIdentityNumber());
-            if (authIdentity.getCountry() != "LV")
+            if (!taraAuthResult.getCountry().equals("LV"))
                 taraAuthResult.setDateOfBirth(MidNationalIdentificationCodeValidator.getBirthDate(authIdentity.getIdentityNumber()));
         }
         taraAuthResult.setAmr(AuthenticationType.SMART_ID);
