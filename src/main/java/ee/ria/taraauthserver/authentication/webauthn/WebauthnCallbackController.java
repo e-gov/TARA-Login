@@ -195,11 +195,13 @@ public class WebauthnCallbackController {
         TaraSession taraSession = requireNonNull(session.getAttribute(TARA_SESSION));
         taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
         TaraSession.WebauthnAuthenticationResult authenticationResult = new TaraSession.WebauthnAuthenticationResult();
+        String dateOfBirth = response.getAttributes().getDateOfBirth();
         authenticationResult.setFirstName(response.getAttributes().getFirstName());
         authenticationResult.setLastName(response.getAttributes().getFamilyName());
         authenticationResult.setPhoneNumber(response.getAttributes().getPhoneNumber());
         authenticationResult.setEmail(response.getAttributes().getEmail());
-        authenticationResult.setDateOfBirth(LocalDate.parse(response.getAttributes().getDateOfBirth()));
+        if (dateOfBirth != null)
+            authenticationResult.setDateOfBirth(LocalDate.parse(dateOfBirth));
         authenticationResult.setAcr(webauthnConfigurationProperties.getLevelOfAssurance());
         authenticationResult.setAmr(AuthenticationType.WEBAUTHN);
         authenticationResult.setSubject(response.getAttributes().getPersonIdentifier());
