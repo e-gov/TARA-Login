@@ -58,7 +58,7 @@ public class EidasConfiguration {
     }
 
     private void refreshCountriesList() {
-        String url = eidasConfigurationProperties.getClientUrl() + "/supportedCountries";
+        String url = eidasConfigurationProperties.getClientUrl() + "/auth/eidas/supported_countries";
         HttpHeaders headers = new HttpHeaders();
         headers.set("ENVIRONMENT", eidasConfigurationProperties.getEnvironment());
         HttpEntity<String> entity = new HttpEntity<String>("parameters", headers);
