@@ -21,7 +21,7 @@
    th:lang="${lang}"
    th:data-tab="${tab_id}">
     <span class="c-tab-login__nav-label">
-        <span th:text="${#messages.msg('label.' + tab_id + '.title')}" th:remove="tag">Tab</span>
+        <span th:utext="${#messages.msg('label.' + tab_id + '.title')}" th:remove="tag">Tab</span>
     </span>
 </a>
 
@@ -55,7 +55,7 @@
             <div class="text"><a th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a></div>
             <div class="text" th:if="${#messages.msgOrNull('label.' + tab_id + '.help') != null}">
                 <a th:href="${#messages.msg('link.' + tab_id + '.help')}"
-                   th:text="${#messages.msg('label.' + tab_id + '.help')}" target="_blank" rel="noopener">Help</a>
+                   th:utext="${#messages.msg('label.' + tab_id + '.help')}" target="_blank" rel="noopener">Help</a>
             </div>
         </div>
     </div>

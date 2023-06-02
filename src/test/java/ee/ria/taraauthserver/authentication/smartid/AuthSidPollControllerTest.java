@@ -142,7 +142,7 @@ class AuthSidPollControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .body("error", equalTo("Bad Request"))
-                .body("message", equalTo("Kasutajal on mitu Smart-ID kontot ja ühe kontoga tühistati autentimine."))
+                .body("message", equalTo("Kasutajal on mitu<span translate=\"no\" lang=\"en\"> Smart-ID </span>kontot ja ühe kontoga tühistati autentimine."))
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
 
@@ -203,7 +203,7 @@ class AuthSidPollControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(502)
                 .body("error", equalTo("Bad Gateway"))
-                .body("message", equalTo("Smart-ID teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti."))
+                .body("message", equalTo("<span translate=\"no\" lang=\"en\">Smart-ID </span>teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti."))
                 .body("reportable", equalTo(true))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
 
