@@ -103,7 +103,7 @@
                                               th:text="#{label.mobile-id.personal-code-prefix}"></span>
                                     </div>
                                     <input type="number" inputmode="decimal" id="mid-personal-code" class="form-control"
-                                           name="idCode">
+                                           name="idCode" autocomplete="username">
                                 </div>
                                 <div class="invalid-feedback is-hidden"
                                      th:text="#{message.common.personal-code-missing}"></div>
@@ -123,7 +123,7 @@
                                               th:text="#{label.mobile-id.phone-number-prefix}"></span>
                                     </div>
                                     <input type="tel" maxlength="15" id="mid-phone-number" class="form-control"
-                                           name="telephoneNumber">
+                                           name="telephoneNumber" autocomplete="tel-national">
                                 </div>
                                 <div class="invalid-feedback is-hidden"
                                      th:text="#{message.common.phone-number-missing}"></div>
@@ -163,7 +163,7 @@
                                               th:text="#{label.smart-id.personal-code-prefix}"></span>
                                     </div>
                                     <input type="number" inputmode="decimal" id="sid-personal-code"
-                                           class="form-control" name="idCode">
+                                           class="form-control" name="idCode" autocomplete="username">
                                 </div>
                                 <div class="invalid-feedback is-hidden"
                                      th:text="#{message.common.personal-code-missing}"></div>
