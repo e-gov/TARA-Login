@@ -98,7 +98,6 @@ jQuery(function ($) {
 	if ($('#country-select').length){
 		// Note that when updating tom-select, you have to convert tom-select.base.js from ecmascript-6 to ecmascript-5 for gulp compatibility and comment out the preventDefault(e) method under KEY_TAB settings to use regular tab behaviour.
         new TomSelect('#country-select',{
-            selectOnTab: true,
             onChange:function(){
                 // Removes the placeholder text when a country has been selected and a placeholder exists. Also sets the input width to 0 so it wouldn't create a new line on narrow screens.
                 if ($('#country-select-tomselected').is('[placeholder]')) {
