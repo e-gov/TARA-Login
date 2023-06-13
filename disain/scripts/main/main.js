@@ -13,6 +13,16 @@ jQuery(function ($) {
         $('.c-tab-login__nav-item').addClass('is-active');
 	}
 
+	// Show auth methods in mobile view, if we think the user is actually using a mobile device, keep ID-card hidden
+	$('.c-tab-login__nav-item').each(function() {
+		const linkElement = $(this).find('.c-tab-login__nav-link');
+		const tabId = linkElement.attr('data-tab');
+		if (tabId === 'id-card' && isProbablyMobileDevice()) {
+			return;
+		}
+		$(this).removeClass('hide-on-mobile');
+	})
+
 	// Activate previously selected or first auth method
     try {
 
@@ -522,4 +532,8 @@ jQuery(function ($) {
     function getCurrentOperatingSystem() {
         return navigator.platform;
     }
+
+	function isProbablyMobileDevice() {
+		return /Mobi|Android/i.test(navigator.userAgent);
+	}
 });

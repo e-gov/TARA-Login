@@ -1,4 +1,4 @@
-<li class="c-tab-login__nav-item" aria-selected="false" th:fragment="nav_default(tab_id)"
+<li class="c-tab-login__nav-item hide-on-mobile" aria-selected="false" th:fragment="nav_default(tab_id)"
     th:classappend="${static} ? is-active : ''" xmlns:th="http://www.w3.org/1999/xhtml">
     <span th:classappend="${static} ? '' : c-tab-login__nav-back-link"></span>
     <th:block th:switch="${tab_id}">
