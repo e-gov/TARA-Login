@@ -104,6 +104,7 @@ jQuery(function ($) {
                     $('#country-select-tomselected').removeAttr('placeholder');
                     $('#country-select-tomselected').css({'width':0, 'min-width':0});
                 }
+                $('#confirmCountryChoice')[0].focus();
             },
             sortField: {
                 field: 'text',
