@@ -51,10 +51,16 @@ The webapp provides implementation for following authentication methods:
 
 To build the software, execute the following commands in the current (TARA2-Login) directory:
 
-````
+```shell
 docker run --rm -v "${PWD}:/data" -w /data/disain -u $(id -u):$(id -g) node:14 sh -c 'npm install && node_modules/.bin/gulp build'
 ./mvnw clean package
-````
+```
+
+For Git Bash on Windows:
+```shell
+MSYS_NO_PATHCONV=1 docker run --rm -v "${PWD}:/data" -w /data/disain node:14 sh -c 'npm install && node_modules/.bin/gulp build'
+./mvnw clean package
+```
 
 You can find the compiled WAR archive in the target/ directory.
 
