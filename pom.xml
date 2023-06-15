@@ -271,7 +271,7 @@
                                         <exclude>org.bouncycastle:*</exclude>
                                     </excludes>
                                     <includes>
-                                        <exclude>org.bouncycastle:*-jdk18on</exclude>
+                                        <include>org.bouncycastle:*-jdk18on</include>
                                     </includes>
                                 </bannedDependencies>
                             </rules>
