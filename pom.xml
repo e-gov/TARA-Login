@@ -6,12 +6,12 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <!-- TODO GSSO-534 Upgrade to Spring Boot 3.x -->
-        <version>2.7.11</version>
+        <version>2.7.12</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>ee.ria.tara</groupId>
     <artifactId>tara-login-server</artifactId>
-    <version>1.5.2</version>
+    <version>1.5.3</version>
     <packaging>war</packaging>
     <name>tara-login-server</name>
     <description>TARA login server</description>
@@ -27,15 +27,15 @@
         <maven.compiler.release>11</maven.compiler.release>
 
         <bouncycastle.version>1.73</bouncycastle.version>
-        <elastic-apm.version>1.37.0</elastic-apm.version>
+        <elastic-apm.version>1.39.0</elastic-apm.version>
         <ignite.version>2.13.0</ignite.version><!-- TODO AUT-1086 Upgrade to >=2.14.0 when the following issue is
                                                      resolved:
                                                      https://www.mail-archive.com/user@ignite.apache.org/msg33644.html -->
-        <jacoco-maven-plugin.version>0.8.9</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
         <logstash-logback-encoder.version>7.3</logstash-logback-encoder.version>
         <mid-rest.version>1.4</mid-rest.version><!-- TODO AUT-925 Upgrade dependency. -->
         <smart-id.version>2.1.4</smart-id.version><!-- TODO AUT-925 Upgrade dependency. -->
-        <spring-cloud.version>2021.0.6</spring-cloud.version><!-- Spring Cloud 2021.0.x release train is compatible with
+        <spring-cloud.version>2022.0.3</spring-cloud.version><!-- Spring Cloud 2021.0.x release train is compatible with
                                                                    Spring Boot 2.7.x -->
         <webeid.version>2.1.1</webeid.version>
         <wiremock.version>2.35.0</wiremock.version>
