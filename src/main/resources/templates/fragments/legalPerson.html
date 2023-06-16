@@ -2,7 +2,7 @@
 <div class="container" xmlns:th="http://www.w3.org/1999/xhtml">
     <noscript>
         <div class="alert alert-error">
-            <p><strong th:utext="#{message.warning.noscript}"></strong></p>
+            <div class="text"><strong th:utext="#{message.warning.noscript}"></strong></div>
         </div>
         <br>
     </noscript>
@@ -24,9 +24,9 @@
                     <ul id="results-legal-person-list"></ul>
                 </div>
                 <div id="error-results-container" class="alert alert-error hidden">
-                    <p id="error-no-results" class="hidden" th:utext="#{label.legal-person.error.no-results}"></p>
-                    <p id="error-service-not-available" class="hidden" th:utext="#{label.legal-person.error.service-not-available}"></p>
-                    <p id="error-technical-problem" class="hidden" th:utext="#{label.legal-person.error.internal-service-error}"></p>
+                    <div id="error-no-results" class="hidden text" th:utext="#{label.legal-person.error.no-results}"></div>
+                    <div id="error-service-not-available" class="hidden text" th:utext="#{label.legal-person.error.service-not-available}"></div>
+                    <div id="error-technical-problem" class="hidden text" th:utext="#{label.legal-person.error.internal-service-error}"></div>
                 </div>
                 <form method="POST" th:action="@{/auth/legalperson/confirm}" class="c-form" id="selectLegalPerson">
                     <input type="hidden" name="legal_person_identifier" value=""/>
@@ -38,11 +38,11 @@
             <br>
 
             <div id="error-controls-container" class="hidden">
-                <p class="link-back"><a th:href="${'/auth/init?login_challenge=' + login_challenge}" th:utext="#{label.common.back}"></a></p>
+                <div class="link-back text"><a th:href="${'/auth/init?login_challenge=' + login_challenge}" th:utext="#{label.common.back}"></a></div>
             </div>
         </div>
         <div class="c-tab-login__footer">
-            <p><a th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a></p>
+            <div class="text"><a th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a></div>
         </div>
     </div>
 </div>

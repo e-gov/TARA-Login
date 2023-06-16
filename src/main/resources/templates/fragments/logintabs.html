@@ -52,11 +52,11 @@
             </div>
         </div>
         <div class="c-tab-login__footer">
-            <p><a th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a></p>
-            <p th:if="${#messages.msgOrNull('label.' + tab_id + '.help') != null}">
+            <div class="text"><a th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a></div>
+            <div class="text" th:if="${#messages.msgOrNull('label.' + tab_id + '.help') != null}">
                 <a th:href="${#messages.msg('link.' + tab_id + '.help')}"
                    th:text="${#messages.msg('label.' + tab_id + '.help')}" target="_blank" rel="noopener">Help</a>
-            </p>
+            </div>
         </div>
     </div>
 </div>
