@@ -35,7 +35,7 @@
         <logstash-logback-encoder.version>7.3</logstash-logback-encoder.version>
         <mid-rest.version>1.4</mid-rest.version><!-- TODO AUT-925 Upgrade dependency. -->
         <smart-id.version>2.1.4</smart-id.version><!-- TODO AUT-925 Upgrade dependency. -->
-        <spring-cloud.version>2022.0.3</spring-cloud.version><!-- Spring Cloud 2021.0.x release train is compatible with
+        <spring-cloud.version>2021.0.7</spring-cloud.version><!-- Spring Cloud 2021.0.x release train is compatible with
                                                                    Spring Boot 2.7.x -->
         <webeid.version>2.1.1</webeid.version>
         <wiremock.version>2.35.0</wiremock.version>
