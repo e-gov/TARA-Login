@@ -1,23 +1,23 @@
 <div class="container" xmlns:th="http://www.w3.org/1999/xhtml">
     <div class="alert alert-error" role="alert">
-        <div class="text"><strong><span th:class="error-title" th:text="#{message.error.auth.title}" th:remove="tag"></span></strong>
+        <div><strong><span th:class="error-title" th:text="#{message.error.auth.title}" th:remove="tag"></span></strong>
         </div>
-        <div class="text" id="error-message"></div>
-        <div id="idc-ajax-error-message" class="hidden aria-hidden text" th:text="#{message.idc.ajax-error}"></div>
-        <div class="text" id="error-incident-number-wrapper">
+        <div id="error-message"></div>
+        <div id="idc-ajax-error-message" class="hidden aria-hidden" th:text="#{message.idc.ajax-error}"></div>
+        <div id="error-incident-number-wrapper">
             <span th:text="#{label.error.incident-number('')}"></span>
             <span id="error-incident-number"></span>
         </div>
-        <div class="text"><a id="error-report-url"
+        <div><a id="error-report-url"
               th:href="#{label.error.error-report-content(${@thymeleafSupport.getErrorReportEmail()},'(1)','(2)','(3)','(4)','(5)')}"
               th:text="#{label.error.error-report-link}">Send error report</a>
         </div>
-        <div class="text">
+        <div>
             <span id="error-report-notification" class="hidden"
                   th:text="#{label.error.error-report-notification(${@thymeleafSupport.getErrorReportEmail()})}"/>
         </div>
     </div>
-    <div th:if="${@thymeleafSupport.getBackUrl() != '#'}" class="link-back text">
+    <div th:if="${@thymeleafSupport.getBackUrl() != '#'}" class="link-back">
         <a th:href="${@thymeleafSupport.getBackUrl()}" th:text="#{label.common.back}">Back</a>
     </div>
 </div>
