@@ -16,7 +16,7 @@
                     </li>
                     <li class="c-lang-list__item" th:if="${@thymeleafSupport.isNotLocale('ru', #locale)}">
                         <a class="c-lang-list__link" th:href="${@thymeleafSupport.getLocaleUrl('ru')}"
-                           th:text="#{label.header.ru}" th:hreflang="ru" th:lang="ru">РУССКИЙ</a>
+                           th:text="#{label.header.ru}" th:hreflang="ru" th:lang="ru" aria-label="russki">РУССКИЙ</a>
                     </li>
                 </ul>
             </nav>
