@@ -1,4 +1,4 @@
-<img src="src/main/resources/static/assets/eu_regional_development_fund_horizontal.jpg" width="350" height="200">
+<img src="disain/assets/eu_regional_development_fund_horizontal.jpg" width="350" height="200">
 
 # TARA login service
 
