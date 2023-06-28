@@ -80,7 +80,7 @@ jQuery(function ($) {
         processedErrorReportUrl = processedErrorReportUrl.replace('(3)', getCurrentOperatingSystem())
         processedErrorReportUrl = processedErrorReportUrl.replace('(4)', getCurrentBrowser())
         processedErrorReportUrl = processedErrorReportUrl.replace('(5)', window.location.host)
-        processedErrorReportNotification = processedErrorReportNotification.replace('(2)', window.location.host)
+        processedErrorReportNotification = processedErrorReportNotification.replace('{2}', window.location.host)
 
         errorReportUrl.attr('href', processedErrorReportUrl);
         errorReportNotification.text(processedErrorReportNotification);
@@ -305,8 +305,8 @@ jQuery(function ($) {
 			$('#error-report-url').attr('href', errorReportUrl);
 
 			const errorReportNotificationMessage = $('#error-report-notification').text()
-				.replace('(1)', responseJson.incident_nr)
-				.replace('(2)', hostName);
+				.replace('{1}', responseJson.incident_nr)
+				.replace('{2}', hostName);
 			$('#error-report-notification').text(errorReportNotificationMessage);
 			activateIdCardView('reportableError');
 		} else {

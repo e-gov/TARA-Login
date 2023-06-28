@@ -3,9 +3,9 @@
         <div><strong><span th:class="error-title" th:text="#{message.error.auth.title}" th:remove="tag"></span></strong>
         </div>
         <div id="error-message"></div>
-        <div id="idc-ajax-error-message" class="hidden aria-hidden" th:text="#{message.idc.ajax-error}"></div>
+        <div id="idc-ajax-error-message" class="hidden aria-hidden" th:utext="#{message.idc.ajax-error}"></div>
         <div id="error-incident-number-wrapper">
-            <span th:text="#{label.error.incident-number('')}"></span>
+            <span th:utext="#{label.error.incident-number('')}"></span>
             <span id="error-incident-number"></span>
         </div>
         <div><a id="error-report-url"
@@ -14,7 +14,7 @@
         </div>
         <div>
             <span id="error-report-notification" class="hidden"
-                  th:text="#{label.error.error-report-notification(${@thymeleafSupport.getErrorReportEmail()})}"/>
+                  th:utext="#{label.error.error-report-notification(${@thymeleafSupport.getErrorReportEmail()})}"/>
         </div>
     </div>
     <div th:if="${@thymeleafSupport.getBackUrl() != '#'}" class="link-back">
