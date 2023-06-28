@@ -7,7 +7,7 @@
             <div role="heading" aria-level="2">
                 <h2 th:text="${#messages.msg('label.id-card.title')}"></h2>
             </div>
-            <p id="id-card-wait-popup" th:text="${#messages.msg('label.id-card.wait-popup')}" class="hidden" aria-hidden="true"></p>
+            <p id="id-card-wait-popup" th:utext="${#messages.msg('label.id-card.wait-popup')}" class="hidden" aria-hidden="true"></p>
             <p id="id-card-wait-login" th:text="${#messages.msg('label.id-card.wait-login')}" class="hidden" aria-hidden="true"></p>
         </div>
     </div>
