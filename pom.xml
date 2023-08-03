@@ -25,8 +25,21 @@
 
     <properties>
         <maven.compiler.release>11</maven.compiler.release>
+
+        <bouncycastle.version>1.73</bouncycastle.version>
+        <elastic-apm.version>1.39.0</elastic-apm.version>
+        <ignite.version>2.13.0</ignite.version><!-- TODO AUT-1086 Upgrade to >=2.14.0 when the following issue is
+                                                     resolved:
+                                                     https://www.mail-archive.com/user@ignite.apache.org/msg33644.html -->
+        <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
+        <logstash-logback-encoder.version>7.3</logstash-logback-encoder.version>
+        <mid-rest.version>1.4</mid-rest.version><!-- TODO AUT-925 Upgrade dependency. -->
+        <smart-id.version>2.1.4</smart-id.version><!-- TODO AUT-925 Upgrade dependency. -->
+        <spring-cloud.version>2022.0.3</spring-cloud.version><!-- Spring Cloud 2021.0.x release train is compatible with
+                                                                   Spring Boot 2.7.x -->
+        <webeid.version>2.1.1</webeid.version>
+        <wiremock.version>2.35.0</wiremock.version>
         <logback.version>1.2.6</logback.version>
-        <spring-cloud.version>2022.0.1</spring-cloud.version>
     </properties>
 
     <dependencies>
@@ -112,51 +125,6 @@
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
             <version>${logstash-logback-encoder.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-            <version>${logback.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-access</artifactId>
-            <version>${logback.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-            <version>${logback.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-access</artifactId>
-            <version>${logback.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-            <version>${logback.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-access</artifactId>
-            <version>${logback.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>

@@ -664,7 +664,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("reportable", equalTo(true));
 
@@ -761,7 +761,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("message", equalTo("Vigane päring. GovSSO päringu volituskood ei ole korrektne."))
                 .body("reportable", equalTo(false));
 
@@ -790,7 +790,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("message", equalTo("Vigane päring. GovSSO päringu volituskood ei ole korrektne."))
                 .body("reportable", equalTo(false));
 
@@ -819,7 +819,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(502)
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("reportable", equalTo(true));
 
@@ -844,7 +844,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("message", equalTo("Päringus puudub scope parameeter."))
                 .body("reportable", equalTo(true));
 

@@ -549,7 +549,7 @@ public class LegalpersonControllerTest extends BaseTest {
                 .when()
                 .post("/auth/legalperson/confirm")
                 .then()
-                .assertThat()src/test/java/ee/ria/taraauthserver/authentication/legalperson/LegalpersonControllerTest.java
+                .assertThat()
                 .statusCode(302)
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .header("Location", Matchers.endsWith("/some/test/url"));
