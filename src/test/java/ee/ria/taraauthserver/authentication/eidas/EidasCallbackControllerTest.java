@@ -309,7 +309,7 @@ class EidasCallbackControllerTest extends BaseTest {
                 "  \"message\": \"202019 - Incorrect Level of Assurance in IdP response\",\n" +
                 "  \"status\": \"urn:oasis:names:tc:SAML:2.0:status:Responder\"\n" +
                 "}");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=EIDAS_INCORRECT_LOA)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=EIDAS_INCORRECT_LOA)", sessionFilter.getSession().getId()));
     }
 
     @Test
