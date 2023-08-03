@@ -387,7 +387,9 @@ jQuery(function ($) {
 	});
 	
 	// Mobile-ID form submit
-	$('#mobileIdForm button.c-btn--primary').on('click', function(event){
+	$('#mobileIdForm button.submit').on('click', function(event){
+    event.preventDefault();
+
 		if ($(this).prop('disabled')) return;
 		$(this).prop('disabled', true);
 		
@@ -431,7 +433,9 @@ jQuery(function ($) {
 	});
 
 	// Smart-ID form submit
-	$('#smartIdForm button.c-btn--primary').on('click', function(event){
+	$('#smartIdForm button.submit').on('click', function(event){
+    event.preventDefault();
+
 		if ($(this).prop('disabled')) return;
 		$(this).prop('disabled', true);
 
