@@ -77,10 +77,11 @@ tara:
   auth-methods:
     id-card:
       enabled: true
+      site-origin: https://localhost:8081
       ocsp-enabled: false
       level-of-assurance: HIGH
-      truststore-path: classpath:tls-truststore.jks
-      truststore-type: JKS
+      truststore-path: classpath:idcard-truststore-test.p12
+      truststore-type: PKCS12
       truststore-password: changeit
       ocsp:
         - issuer-cn: TEST of ESTEID-SK 2011
