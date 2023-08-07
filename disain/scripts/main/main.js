@@ -234,9 +234,8 @@ jQuery(function ($) {
 	}
 
 	// ID-card form submit
-	$('#idCardForm button.c-btn--primary').on('click', async function(event){
+	$('#idCardForm button.submit').on('click', async function(event){
 		const csrfToken = document.querySelector("input[name='_csrf']").getAttribute('value');
-
 		activateIdCardView('waitPopup');
 
 		const webEidStatusPromise = detectWebEid();
