@@ -35,7 +35,6 @@ import static ee.ria.taraauthserver.authentication.webauthn.WebauthnCallbackCont
 import static ee.ria.taraauthserver.authentication.webauthn.WebauthnCallbackController.WEBAUTHN_REGISTER_CALLBACK_REQUEST_MAPPING;
 import static ee.ria.taraauthserver.authentication.webauthn.WebauthnCancelController.WEBAUTHN_LOGIN_CANCEL_REQUEST_MAPPING;
 import static ee.ria.taraauthserver.authentication.webauthn.WebauthnCancelController.WEBAUTHN_REGISTRATION_CANCEL_REQUEST_MAPPING;
-import static ee.ria.taraauthserver.authentication.idcard.IdCardController.AUTH_ID_REQUEST_MAPPING;
 import static ee.ria.taraauthserver.authentication.AuthInitController.AUTH_INIT_REQUEST_MAPPING;
 
 @Slf4j
@@ -78,7 +77,8 @@ public class SecurityConfiguration {
                         new AntPathRequestMatcher(EIDAS_CALLBACK_REQUEST_MAPPING),
                         new AntPathRequestMatcher(WEBAUTHN_LOGIN_CALLBACK_REQUEST_MAPPING),
                         new AntPathRequestMatcher(WEBAUTHN_REGISTER_CALLBACK_REQUEST_MAPPING),
-                        new AntPathRequestMatcher(WEBAUTHN_CANCEL_REQUEST_MAPPING)
+                        new AntPathRequestMatcher(WEBAUTHN_LOGIN_CANCEL_REQUEST_MAPPING),
+                        new AntPathRequestMatcher(WEBAUTHN_REGISTRATION_CANCEL_REQUEST_MAPPING)
                     ))));
     }
 

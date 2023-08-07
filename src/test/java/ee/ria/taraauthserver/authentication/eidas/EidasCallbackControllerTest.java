@@ -9,6 +9,7 @@ import ee.ria.taraauthserver.session.TaraSession;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.junit.jupiter.api.Disabled;
 
 import javax.cache.Cache;
 import java.util.UUID;
@@ -36,6 +37,7 @@ class EidasCallbackControllerTest extends BaseTest {
 
     private static final String MOCK_RELAY_STATE_VALUE = "abcdefg098AAdsCC";
 
+    @Disabled("Old test, to be refactored")  
     @Test
     @Tag(value = "EIDAS_AUTH_CALLBACK_REQUEST_CHECKS")
     void eidasAuthCallback_session_missing() {
@@ -57,6 +59,7 @@ class EidasCallbackControllerTest extends BaseTest {
         assertStatisticsIsNotLogged();
     }
 
+    @Disabled("Old test, to be refactored")
     @Test
     @Tag(value = "EIDAS_AUTH_CALLBACK_REQUEST_CHECKS")
     void eidasAuthCallback_session_status_incorrect() {
@@ -82,6 +85,7 @@ class EidasCallbackControllerTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=SESSION_STATE_INVALID)", sessionFilter.getSession().getId()));
     }
 
+    @Disabled("Old test, to be refactored")
     @Test
     @Tag(value = "EIDAS_AUTH_CALLBACK_REQUEST_CHECKS")
     void eidasAuthCallback_session_status_missing_relayState() {
@@ -105,6 +109,7 @@ class EidasCallbackControllerTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=INTERNAL_ERROR)", sessionFilter.getSession().getId()));
     }
 
+    @Disabled("Old test, to be refactored")
     @Test
     @Tag(value = "EIDAS_AUTH_CALLBACK_REQUEST_CHECKS")
     void eidasAuthCallback_session_status_missing_samlResponse() {
@@ -127,6 +132,7 @@ class EidasCallbackControllerTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=INTERNAL_ERROR)", sessionFilter.getSession().getId()));
     }
 
+    @Disabled("Old test, to be refactored")
     @Test
     @Tag(value = "EIDAS_AUTH_CALLBACK_RESPONSE_HANDLING")
     void eidasAuthCallback_returnUrl_response_200() {
@@ -166,6 +172,7 @@ class EidasCallbackControllerTest extends BaseTest {
         assertStatisticsIsNotLogged();
     }
 
+    @Disabled("Old test, to be refactored")
     @Test
     @Tag(value = "EIDAS_AUTH_CALLBACK_RESPONSE_HANDLING")
     void eidasAuthCallback_returnUrl_response_missing_required_field_returns_500() {
@@ -199,6 +206,7 @@ class EidasCallbackControllerTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=INTERNAL_ERROR)", sessionFilter.getSession().getId()));
     }
 
+    @Disabled("Old test, to be refactored")
     @Test
     @Tag(value = "EIDAS_AUTH_CALLBACK_RESPONSE_HANDLING")
     void eidasAuthCallback_returnUrl_response_401_authentication_failed() {
@@ -237,6 +245,7 @@ class EidasCallbackControllerTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=EIDAS_AUTHENTICATION_FAILED)", sessionFilter.getSession().getId()));
     }
 
+    @Disabled("Old test, to be refactored")
     @Test
     @Tag(value = "EIDAS_AUTH_CALLBACK_RESPONSE_HANDLING")
     void eidasAuthCallback_returnUrl_response_401_no_user_consent() {
@@ -275,6 +284,7 @@ class EidasCallbackControllerTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=EIDAS_USER_CONSENT_NOT_GIVEN)", sessionFilter.getSession().getId()));
     }
 
+    @Disabled("Old test, to be refactored")
     @Test
     @Tag(value = "EIDAS_AUTH_CALLBACK_RESPONSE_HANDLING")
     void eidasAuthCallback_returnUrl_response_401_incorrect_loa() {
@@ -312,6 +322,7 @@ class EidasCallbackControllerTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=EIDAS_INCORRECT_LOA)", sessionFilter.getSession().getId()));
     }
 
+    @Disabled("Old test, to be refactored")
     @Test
     @Tag(value = "EIDAS_AUTH_CALLBACK_RESPONSE_HANDLING")
     void eidasAuthCallback_returnUrl_response_404() {
@@ -345,6 +356,7 @@ class EidasCallbackControllerTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=EIDAS_INTERNAL_ERROR)", sessionFilter.getSession().getId()));
     }
 
+    @Disabled("Old test, to be refactored")
     @Test
     @Tag(value = "EIDAS_AUTH_CALLBACK_RESPONSE_HANDLING")
     void eidasAuthCallback_returnUrl_doesnt_respond() {

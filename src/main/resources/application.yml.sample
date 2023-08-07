@@ -57,6 +57,11 @@ tara:
     request-timeout-in-seconds: 1
     max-connections-total: 5
 
+  eeid-service:
+    webauthn-login-url: http://localhost:3000/webauthn/credential_authentication/new
+    webauthn-register-url: http://localhost:3000/webauthn/credentials/new
+    accept-consent-url: http://manager:3000/webauthn/consent
+
   default-locale: et
   error-report-email: noreply@internet.ee
 
@@ -75,6 +80,10 @@ tara:
         locale: ru
 
   auth-methods:
+    webauthn:
+      enabled: true
+      level-of-assurance: HIGH
+      client-url: http://manager:3000
     id-card:
       enabled: true
       site-origin: https://localhost:8081

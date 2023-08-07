@@ -67,6 +67,7 @@ public class EidasCallbackController {
     public static final Pattern VALID_PERSON_IDENTIFIER_PATTERN = Pattern.compile("^([A-Z]{2,2})\\/([A-Z]{2,2})\\/(.*)$");
     public static final String REQUEST_DENIED = "Request denied";
     public static final String AUTHN_FAILED = "Authentication failed";
+    public static final String INCORRECT_LOA = "202019";
     private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.EIDAS, this.getClass());
 
     @Autowired
