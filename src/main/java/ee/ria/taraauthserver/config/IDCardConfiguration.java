@@ -1,6 +1,12 @@
 package ee.ria.taraauthserver.config;
 
 import ee.ria.taraauthserver.utils.X509Utils;
+import eu.webeid.security.challenge.ChallengeNonceGenerator;
+import eu.webeid.security.challenge.ChallengeNonceGeneratorBuilder;
+import eu.webeid.security.challenge.ChallengeNonceStore;
+import eu.webeid.security.exceptions.JceException;
+import eu.webeid.security.validator.AuthTokenValidator;
+import eu.webeid.security.validator.AuthTokenValidatorBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -9,10 +15,12 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.security.KeyStore;
 import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
+import java.time.Duration;
 import java.util.Map;
 
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
@@ -23,6 +31,8 @@ import static net.logstash.logback.argument.StructuredArguments.value;
 @ConditionalOnProperty(value = "tara.auth-methods.id-card.enabled")
 @Configuration
 public class IDCardConfiguration {
+
+    private static final long CHALLENGE_NONCE_TTL_MINUTES = 5;
 
     @Bean
     KeyStore idcardKeystore(ResourceLoader resourceLoader, IdCardAuthConfigurationProperties configurationProvider) {
@@ -52,6 +62,31 @@ public class IDCardConfiguration {
             return trustedCertificates;
         } catch (Exception e) {
             throw new IllegalArgumentException("Failed to read trusted certificates from id-card truststore: " + e.getMessage(), e);
+        }
+    }
+
+    @Bean
+    public ChallengeNonceGenerator generator(ChallengeNonceStore challengeNonceStore) {
+        return new ChallengeNonceGeneratorBuilder()
+                .withNonceTtl(Duration.ofMinutes(CHALLENGE_NONCE_TTL_MINUTES))
+                .withChallengeNonceStore(challengeNonceStore)
+                .build();
+    }
+
+    @Bean
+    public AuthTokenValidator validator(IdCardAuthConfigurationProperties configurationProvider, Map<String, X509Certificate> trustedCertificatesMap) {
+        X509Certificate[] certificates = trustedCertificatesMap.values().toArray(new X509Certificate[0]);
+        try {
+            return new AuthTokenValidatorBuilder()
+                    .withSiteOrigin(configurationProvider.getSiteOrigin().toURI())
+                    // TARA is using customized OCSP validation instead of AuthTokenValidator's built-in check
+                    .withoutUserCertificateRevocationCheckWithOcsp()
+                    // This duplicates some checks that have already been implemented in OCSPValidator class,
+                    // but we still need to set the trusted CA certificates here.
+                    .withTrustedCertificateAuthorities(certificates)
+                    .build();
+        } catch (JceException | URISyntaxException e) {
+            throw new RuntimeException("Error building the Web eID auth token validator.", e);
         }
     }
 }

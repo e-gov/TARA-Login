@@ -1,7 +1,7 @@
 {
   "main": "gulpfile.js",
   "devDependencies": {
-    "browser-sync": "^2.18.13",
+    "browser-sync": "^2.27.11",
     "gulp": "^4.0.2",
     "gulp-autoprefixer": "^4.0.0",
     "gulp-concat": "^2.6.1",

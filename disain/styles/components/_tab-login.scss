@@ -17,21 +17,18 @@
   }
   &__nav {
     display: flex;
+    margin: 0 -7.5px;
     @media (max-width: $breakpoint-mobile) {
       flex-direction: column;
     }
   }
   &__nav-item {
     width: 20%;
-    padding-left: 15px;
+    padding: 0 7.5px;
     @media (max-width: $breakpoint-mobile) {
       width: 100%;
-      padding: 0;
       margin-top: 10px;
       position: relative;
-    }
-    &:first-child {
-      padding-left: 0;
     }
     &.is-active {
       .c-tab-login__nav-link {
@@ -47,6 +44,11 @@
         @media (max-width: $breakpoint-mobile) {
           display: block;
         }
+      }
+    }
+    @media (max-width: $breakpoint-mobile) {
+      &.hide-on-mobile {
+        display: none;
       }
     }
   }
@@ -179,7 +181,7 @@
       display: none;
     }
   }
-  &__content-text {
+  &__content-text, &__content-wait {
     flex: 1 1 auto;
     max-width: 100%;
     padding: 40px 40px 40px 0;
@@ -192,7 +194,8 @@
       color: #34394c;
       font-weight: 400;
       @media (max-width: $breakpoint-mobile) {
-        display: none;
+        font-size: 20px;
+        margin-bottom: 20px;
       }
     }
     p {

@@ -23,6 +23,7 @@ import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
 import static ch.qos.logback.classic.Level.ERROR;
+import static ch.qos.logback.classic.Level.INFO;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.matchingJsonPath;
@@ -74,7 +75,7 @@ class SmartIdControllerTest extends BaseTest {
     }
 
     @Test
-    @Tag("CSRF_PROTCTION")
+    @Tag("CSRF_PROTECTION")
     void sidAuthInit_NoCsrf() {
         given()
                 .filter(MockSessionFilter.withoutCsrf().sessionRepository(sessionRepository).build())
@@ -94,7 +95,7 @@ class SmartIdControllerTest extends BaseTest {
 
     @Test
     @Tag("SID_AUTH_CHECKS_SESSION")
-    @Tag("CSRF_PROTCTION")
+    @Tag("CSRF_PROTECTION")
     void sidAuthInit_session_missing() {
         given()
                 .formParam(ID_CODE, ID_CODE_VALUE)
@@ -292,7 +293,7 @@ class SmartIdControllerTest extends BaseTest {
         // assertEquals("1801-01-01", result.getDateOfBirth().toString());
         assertEquals(SMART_ID, result.getAmr());
         assertEquals(LevelOfAssurance.HIGH, result.getAcr());
-        assertStatisticsIsNotLogged();
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=10101010005, firstName=DEMO, lastName=SMART-ID, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, authenticationSessionId=%s, errorCode=null)", taraSession.getSessionId()));
     }
 
     @Test
@@ -323,7 +324,7 @@ class SmartIdControllerTest extends BaseTest {
 
         await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
-        assertStatisticsIsNotLogged();
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=10101010005, firstName=DEMO, lastName=SMART-ID, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, authenticationSessionId=%s, errorCode=null)", sessionFilter.getSession().getId()));
     }
 
     @Test
@@ -357,7 +358,7 @@ class SmartIdControllerTest extends BaseTest {
 
         await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
-        assertStatisticsIsNotLogged();
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=10101010005, firstName=DEMO, lastName=SMART-ID, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, authenticationSessionId=%s, errorCode=null)", sessionFilter.getSession().getId()));
     }
 
     @Test
@@ -394,7 +395,8 @@ class SmartIdControllerTest extends BaseTest {
                 "Smart-ID response: 200",
                 "SID session id de305d54-75b4-431b-adb2-eb6b9e546014 authentication result: OK, document number: PNOEE-10101010005-Z1B2-Q, status: COMPLETE",
                 "State: POLL_SID_STATUS -> NATURAL_PERSON_AUTHENTICATION_COMPLETED");
-        assertStatisticsIsNotLogged();
+        assertStatisticsIsLoggedOnce(INFO, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
+                "Authentication result: EXTERNAL_TRANSACTION", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=10101010005, firstName=DEMO, lastName=SMART-ID, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, authenticationSessionId=%s, errorCode=null)", taraSession.getSessionId()));
     }
 
     @Test
@@ -433,6 +435,10 @@ class SmartIdControllerTest extends BaseTest {
                 "State: POLL_SID_STATUS -> AUTHENTICATION_FAILED",
                 "Smart-ID authentication failed: User pressed cancel in app, Error code: SID_USER_REFUSED",
                 "Authentication result: AUTHENTICATION_FAILED");
+        assertStatisticsIsLoggedOnce(ERROR, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
+                "Authentication result: EXTERNAL_TRANSACTION", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, authenticationSessionId=%s, errorCode=SID_USER_REFUSED)", taraSession.getSessionId()));
+        assertStatisticsIsLoggedOnce(ERROR, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
+                "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=SID_USER_REFUSED)", taraSession.getSessionId()));
     }
 
     @Test
@@ -486,7 +492,7 @@ class SmartIdControllerTest extends BaseTest {
 
         await().atMost(TEN_SECONDS)
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
-        assertStatisticsIsNotLogged();
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=10101010005, firstName=DEMO, lastName=SMART-ID, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, authenticationSessionId=%s, errorCode=null)", sessionFilter.getSession().getId()));
     }
 
     @Test
@@ -517,9 +523,9 @@ class SmartIdControllerTest extends BaseTest {
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
-        assertEquals(ErrorCode.ERROR_GENERAL, taraSession.getAuthenticationResult().getErrorCode());
+        assertEquals(ErrorCode.SID_VALIDATION_ERROR, taraSession.getAuthenticationResult().getErrorCode());
         assertErrorIsLogged("Smart-ID authentication exception: Failed to verify validity of signature returned by Smart-ID");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=ERROR_GENERAL)", taraSession.getSessionId()));
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=10101010005, firstName=DEMO, lastName=SMART-ID, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=SID_VALIDATION_ERROR)", taraSession.getSessionId()));
     }
 
     @Test
@@ -770,6 +776,8 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_WRONG_VC, taraSession.getAuthenticationResult().getErrorCode());
         assertWarningIsLogged("Smart-ID authentication failed: User selected wrong verification code, Error code: SID_WRONG_VC");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, authenticationSessionId=%s, errorCode=SID_WRONG_VC)", taraSession.getSessionId()));
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=SID_WRONG_VC)", taraSession.getSessionId()));
     }
 
     @Test
@@ -826,6 +834,8 @@ class SmartIdControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_USER_REFUSED_CERT_CHOICE, taraSession.getAuthenticationResult().getErrorCode());
         assertWarningIsLogged("Smart-ID authentication failed: User has multiple accounts and pressed Cancel on device choice screen on any device., Error code: SID_USER_REFUSED_CERT_CHOICE");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, authenticationSessionId=%s, errorCode=SID_USER_REFUSED_CERT_CHOICE)", taraSession.getSessionId()));
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=SID_USER_REFUSED_CERT_CHOICE)",taraSession.getSessionId()));
     }
 
     @Test
@@ -909,9 +919,9 @@ class SmartIdControllerTest extends BaseTest {
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
-        assertEquals(ErrorCode.ERROR_GENERAL, taraSession.getAuthenticationResult().getErrorCode());
+        assertEquals(ErrorCode.SID_VALIDATION_ERROR, taraSession.getAuthenticationResult().getErrorCode());
         assertErrorIsLogged("Smart-ID authentication exception: Session status end result is 'UNKNOWN_STATUS'");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
-                format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=ERROR_GENERAL)", taraSession.getSessionId()));
+                format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=SID_VALIDATION_ERROR)", taraSession.getSessionId()));
     }
 }

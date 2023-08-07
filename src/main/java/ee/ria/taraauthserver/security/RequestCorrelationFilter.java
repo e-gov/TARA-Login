@@ -1,5 +1,7 @@
 package ee.ria.taraauthserver.security;
 
+import co.elastic.apm.api.ElasticApm;
+import lombok.NonNull;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
@@ -17,12 +19,12 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
 
     private static final String MDC_ATTRIBUTE_KEY_VERSION = "service.version";
     private static final String MDC_ATTRIBUTE_KEY_CLIENT_IP = "client.ip";
-    public static final String MDC_ATTRIBUTE_KEY_REQUEST_TRACE_ID = "trace.id";
-    private static final String REQUEST_ATTRIBUTE_NAME_REQUEST_ID = "requestId";
+    private static final String MDC_ATTRIBUTE_KEY_REQUEST_TRACE_ID = "trace.id";
+    public static final String REQUEST_ATTRIBUTE_NAME_REQUEST_ID = "requestId";
 
     private final String version;
 
-    public RequestCorrelationFilter(BuildProperties buildProperties, GitProperties gitProperties) {
+    public RequestCorrelationFilter(@NonNull BuildProperties buildProperties, @NonNull GitProperties gitProperties) {
         version = getVersion(buildProperties, gitProperties);
         logger.info("Application version: " + version);
     }
@@ -31,13 +33,16 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        String requestTraceId = MDC.get(MDC_ATTRIBUTE_KEY_REQUEST_TRACE_ID);
+        String requestTraceId = ElasticApm.currentTransaction().getTraceId();
         if (StringUtils.isEmpty(requestTraceId)) {
             requestTraceId = RandomStringUtils.random(32, "0123456789abcdef");
             MDC.put(MDC_ATTRIBUTE_KEY_REQUEST_TRACE_ID, requestTraceId);
         }
 
-        // NB! Set traceId also as HttpServletRequest attribute to make it accessible for Tomcat's AccessLogValve
+        // NB! Set traceId also as HttpServletRequest attribute to make it accessible for Tomcat's AccessLogValve.
+        // Also used as incident number in ErrorAttributes. Tracing ID-s from MDC cannot be used because Elastic APM
+        // agent adds tracing ID-s to MDC right before the logging event is created and removes it right after the event
+        // is logged. At other times, tracing ID-s are missing from MDC, when Elastic APM agent is enabled.
         request.setAttribute(REQUEST_ATTRIBUTE_NAME_REQUEST_ID, requestTraceId);
 
         if (version != null) {

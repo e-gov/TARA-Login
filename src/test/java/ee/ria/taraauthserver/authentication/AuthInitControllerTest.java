@@ -37,7 +37,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
@@ -70,7 +69,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authInit.loginChallenge: only characters and numbers allowed"))
                 .body("error", equalTo("Bad Request"))
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
@@ -88,7 +87,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Required request parameter 'login_challenge' for method parameter type String is not present"))
                 .body("error", equalTo("Bad Request"))
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
@@ -108,7 +107,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authInit.loginChallenge: only characters and numbers allowed"))
                 .body("error", equalTo("Bad Request"))
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
@@ -128,7 +127,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authInit.loginChallenge: size must be between 0 and 50"))
                 .body("error", equalTo("Bad Request"))
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
@@ -149,7 +148,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Multiple request parameters with the same name not allowed"))
                 .body("error", equalTo("Bad Request"))
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
@@ -169,7 +168,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("authInit.language: supported values are: 'et', 'en', 'ru'"))
                 .body("error", equalTo("Bad Request"))
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
@@ -300,7 +299,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(502)
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("reportable", equalTo(true));
     }
@@ -321,7 +320,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("reportable", equalTo(true));
     }
@@ -342,7 +341,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("reportable", equalTo(true));
 
@@ -641,7 +640,7 @@ class AuthInitControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8)
                 .body("message", equalTo("Autentimispäring ei ole korrektne. Soovitud autentimistasemele vastavaid autentimisvahendeid pole antud infosüsteemile lubatud."))
                 .body("error", equalTo("Bad Request"))
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(true));
 
         assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
@@ -665,7 +664,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("reportable", equalTo(true));
 
@@ -691,7 +690,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("message", equalTo("Vigane päring. Päringu volituskood ei ole korrektne."))
                 .body("reportable", equalTo(false));
 
@@ -712,7 +711,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("message", equalTo("Vigane päring. Päringu volituskood ei ole korrektne."))
                 .body("reportable", equalTo(false));
 
@@ -735,7 +734,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(502)
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("reportable", equalTo(true));
 
@@ -762,7 +761,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("message", equalTo("Vigane päring. GovSSO päringu volituskood ei ole korrektne."))
                 .body("reportable", equalTo(false));
 
@@ -791,7 +790,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("message", equalTo("Vigane päring. GovSSO päringu volituskood ei ole korrektne."))
                 .body("reportable", equalTo(false));
 
@@ -820,7 +819,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(502)
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("reportable", equalTo(true));
 
@@ -845,7 +844,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("message", equalTo("Päringus puudub scope parameeter."))
                 .body("reportable", equalTo(true));
 
@@ -870,7 +869,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(500)
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("reportable", equalTo(true));
 
@@ -1011,7 +1010,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Vigane päring. GovSSO päringu volituskood ei ole korrektne."))
                 .body("error", equalTo("Bad Request"))
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
@@ -1037,7 +1036,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Vigane päring. GovSSO päringu volituskood ei ole korrektne."))
                 .body("error", equalTo("Bad Request"))
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
@@ -1063,7 +1062,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Vigane päring. GovSSO päringu volituskood ei ole korrektne."))
                 .body("error", equalTo("Bad Request"))
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
@@ -1089,7 +1088,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(400)
                 .body("message", equalTo("Vigane päring. GovSSO päringu volituskood ei ole korrektne."))
                 .body("error", equalTo("Bad Request"))
-                .body("incident_nr", notNullValue())
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 

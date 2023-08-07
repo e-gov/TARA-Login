@@ -7,7 +7,9 @@ import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
+import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.TaraSession;
+import ee.ria.taraauthserver.session.TaraSession.SidAuthenticationResult;
 import ee.sk.mid.MidNationalIdentificationCodeValidator;
 import ee.sk.smartid.AuthenticationHash;
 import ee.sk.smartid.AuthenticationIdentity;
@@ -16,6 +18,8 @@ import ee.sk.smartid.AuthenticationResponseValidator;
 import ee.sk.smartid.HashType;
 import ee.sk.smartid.SmartIdAuthenticationResponse;
 import ee.sk.smartid.SmartIdClient;
+import ee.sk.smartid.exception.UnprocessableSmartIdResponseException;
+import ee.sk.smartid.exception.useraccount.CertificateLevelMismatchException;
 import ee.sk.smartid.exception.useraccount.DocumentUnusableException;
 import ee.sk.smartid.exception.useraccount.RequiredInteractionNotSupportedByAppException;
 import ee.sk.smartid.exception.useraccount.UserAccountNotFoundException;
@@ -61,6 +65,7 @@ import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_CONFIRMATIO
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_DISAPLAYTEXTANDPIN;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_VC_CHOICE;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_VALIDATION_ERROR;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_WRONG_VC;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_SID;
@@ -99,6 +104,8 @@ public class AuthSidService {
         errorMap.put(UserRefusedConfirmationMessageException.class, SID_USER_REFUSED_CONFIRMATIONMESSAGE);
         errorMap.put(UserRefusedConfirmationMessageWithVerificationChoiceException.class, SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE);
         errorMap.put(ServiceNotAvailableException.class, SID_INTERNAL_ERROR);
+        errorMap.put(UnprocessableSmartIdResponseException.class, SID_VALIDATION_ERROR);
+        errorMap.put(CertificateLevelMismatchException.class, SID_VALIDATION_ERROR);
     }
 
     @Autowired
@@ -115,6 +122,9 @@ public class AuthSidService {
 
     @Autowired
     private Executor taskExecutor;
+
+    @Autowired
+    private StatisticsLogger statisticsLogger;
 
     public AuthenticationHash startSidAuthSession(TaraSession taraSession, String countryCode, String idCode) {
         AuthenticationHash authenticationHash = getAuthenticationHash();
@@ -155,18 +165,18 @@ public class AuthSidService {
         } catch (Exception e) {
             createAuthenticationResult(taraSession, null);
             handleSidAuthenticationException(taraSession, e);
+            handleStatisticsLogging(taraSession, e);
         } finally {
+            updateSession(taraSession);
             span.end();
         }
         return null;
     }
 
     private void createAuthenticationResult(TaraSession taraSession, String sidSessionId) {
-        TaraSession.SidAuthenticationResult sidAuthenticationResult = new TaraSession.SidAuthenticationResult(sidSessionId);
+        SidAuthenticationResult sidAuthenticationResult = new SidAuthenticationResult(sidSessionId);
         sidAuthenticationResult.setAmr(AuthenticationType.SMART_ID);
         taraSession.setAuthenticationResult(sidAuthenticationResult);
-
-        updateSession(taraSession);
     }
 
     private void updateSession(TaraSession taraSession) {
@@ -198,16 +208,20 @@ public class AuthSidService {
                 log.info("Starting Smart-ID session status polling with id: {}", value("tara.session.sid_authentication_result.sid_session_id", sidSessionId));
                 SessionStatus sessionStatus = sessionStatusPoller.fetchFinalSessionStatus(sidSessionId);
                 handleSidAuthenticationResult(taraSession, sessionStatus, requestBuilder);
+                statisticsLogger.logExternalTransaction(taraSession);
             } catch (Exception ex) {
                 handleSidAuthenticationException(taraSession, ex);
+                handleStatisticsLogging(taraSession, ex);
             } finally {
+                updateSession(taraSession);
                 span.end();
             }
         }
     }
 
     private void handleSidAuthenticationResult(TaraSession taraSession, SessionStatus sessionStatus, AuthenticationRequestBuilder requestBuilder) {
-        String sidSessionId = ((TaraSession.SidAuthenticationResult) taraSession.getAuthenticationResult()).getSidSessionId();
+        SidAuthenticationResult taraAuthResult = (SidAuthenticationResult) taraSession.getAuthenticationResult();
+        String sidSessionId = taraAuthResult.getSidSessionId();
         log.info("SID session id {} authentication result: {}, document number: {}, status: {}",
                 value("tara.session.authentication_result.sid_session_id", sidSessionId),
                 value("tara.session.authentication_result.sid_end_result", sessionStatus.getResult().getEndResult()),
@@ -215,22 +229,18 @@ public class AuthSidService {
                 value("tara.session.authentication_result.sid_state", sessionStatus.getState()));
 
         SmartIdAuthenticationResponse response = requestBuilder.createSmartIdAuthenticationResponse(sessionStatus);
-        AuthenticationIdentity authIdentity = authenticationResponseValidator.validate(response);
-        taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
-
-        TaraSession.SidAuthenticationResult taraAuthResult = (TaraSession.SidAuthenticationResult) taraSession.getAuthenticationResult();
-        if (authIdentity != null) {
-            taraAuthResult.setIdCode(authIdentity.getIdentityNumber());
-            taraAuthResult.setCountry(authIdentity.getCountry());
-            taraAuthResult.setFirstName(authIdentity.getGivenName());
-            taraAuthResult.setLastName(authIdentity.getSurname());
-            taraAuthResult.setSubject(authIdentity.getCountry() + authIdentity.getIdentityNumber());
-            // taraAuthResult.setDateOfBirth(MidNationalIdentificationCodeValidator.getBirthDate(authIdentity.getIdentityNumber()));
-        }
+        AuthenticationIdentity authIdentity = AuthenticationResponseValidator.constructAuthenticationIdentity(response.getCertificate());
+        taraAuthResult.setIdCode(authIdentity.getIdentityNumber());
+        taraAuthResult.setCountry(authIdentity.getCountry());
+        taraAuthResult.setFirstName(authIdentity.getGivenName());
+        taraAuthResult.setLastName(authIdentity.getSurname());
+        taraAuthResult.setSubject(authIdentity.getCountry() + authIdentity.getIdentityNumber());
+        // taraAuthResult.setDateOfBirth(MidNationalIdentificationCodeValidator.getBirthDate(authIdentity.getIdentityNumber()));
         taraAuthResult.setAmr(AuthenticationType.SMART_ID);
         taraAuthResult.setAcr(smartIdConfigurationProperties.getLevelOfAssurance());
 
-        updateSession(taraSession);
+        authenticationResponseValidator.validate(response); // NOTE: Validation throws exception. Populate SidAuthenticationResult fields before this.
+        taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
     }
 
     private void handleSidAuthenticationException(TaraSession taraSession, Exception ex) {
@@ -238,7 +248,7 @@ public class AuthSidService {
         ErrorCode errorCode = translateExceptionToErrorCode(ex);
         taraSession.getAuthenticationResult().setErrorCode(errorCode);
 
-        if (errorCode == ERROR_GENERAL || errorCode == SID_INTERNAL_ERROR) {
+        if (ERROR_GENERAL == errorCode || SID_INTERNAL_ERROR == errorCode || SID_VALIDATION_ERROR == errorCode) {
             log.error(append("error.code", errorCode.name()), "Smart-ID authentication exception: {}", ex.getMessage(), ex);
         } else {
             log.warn("Smart-ID authentication failed: {}, Error code: {}", value("error.message", ex.getMessage()), value("error.code", errorCode.name()));
@@ -249,6 +259,15 @@ public class AuthSidService {
         Span span = ElasticApm.currentSpan();
         span.setOutcome(FAILURE);
         span.captureException(ex);
+    }
+
+    private void handleStatisticsLogging(TaraSession taraSession, Exception ex) {
+        ErrorCode errorCode = taraSession.getAuthenticationResult().getErrorCode();
+        if (ERROR_GENERAL == errorCode || SID_INTERNAL_ERROR == errorCode || SID_VALIDATION_ERROR == errorCode) {
+            statisticsLogger.logExternalTransaction(taraSession, ex);
+        } else {
+            statisticsLogger.logExternalTransaction(taraSession);
+        }
     }
 
     private ErrorCode translateExceptionToErrorCode(Throwable ex) {

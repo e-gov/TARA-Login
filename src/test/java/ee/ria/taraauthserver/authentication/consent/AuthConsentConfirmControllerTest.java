@@ -48,7 +48,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     public static final String URL = "https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c80393c7-6666-4dd2-b890-0ada47161cfa&nonce=fa97f828-eda3-4975-bca2-4bfbb9b24d28&ui_locales=et";
 
     @Test
-    @Tag("CSRF_PROTCTION")
+    @Tag("CSRF_PROTECTION")
     void authConsent_NoCsrf() {
         given()
                 .filter(MockSessionFilter.withoutCsrf().sessionRepository(sessionRepository).build())
@@ -107,7 +107,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
 
     @Test
     @Tag("USER_CONSENT_CONFIRM_ENDPOINT")
-    @Tag("CSRF_PROTCTION")
+    @Tag("CSRF_PROTECTION")
     void authConsent_session_missing() {
         given()
                 .queryParam("consent_given", "true")

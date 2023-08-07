@@ -6,12 +6,12 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <!-- TODO GSSO-534 Upgrade to Spring Boot 3.x -->
-        <version>2.7.8</version>
+        <version>2.7.12</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>ee.ria.tara</groupId>
     <artifactId>tara-login-server</artifactId>
-    <version>1.4.5</version>
+    <version>1.5.3</version>
     <packaging>war</packaging>
     <name>tara-login-server</name>
     <description>TARA login server</description>
@@ -25,11 +25,40 @@
 
     <properties>
         <maven.compiler.release>11</maven.compiler.release>
+
+        <bouncycastle.version>1.73</bouncycastle.version>
+        <elastic-apm.version>1.39.0</elastic-apm.version>
+        <ignite.version>2.13.0</ignite.version><!-- TODO AUT-1086 Upgrade to >=2.14.0 when the following issue is
+                                                     resolved:
+                                                     https://www.mail-archive.com/user@ignite.apache.org/msg33644.html -->
+        <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
+        <logstash-logback-encoder.version>7.3</logstash-logback-encoder.version>
+        <mid-rest.version>1.4</mid-rest.version><!-- TODO AUT-925 Upgrade dependency. -->
+        <smart-id.version>2.1.4</smart-id.version><!-- TODO AUT-925 Upgrade dependency. -->
+        <spring-cloud.version>2022.0.3</spring-cloud.version><!-- Spring Cloud 2021.0.x release train is compatible with
+                                                                   Spring Boot 2.7.x -->
+        <webeid.version>2.1.1</webeid.version>
+        <wiremock.version>2.35.0</wiremock.version>
         <logback.version>1.2.6</logback.version>
-        <spring-cloud.version>2022.0.1</spring-cloud.version>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.webeid.security</groupId>
+            <artifactId>authtoken-validation</artifactId>
+            <version>${webeid.version}</version>
+            <exclusions>
+                <!-- bcprov-jdk18on and bcpkix-jdk18on are used instead.-->
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>bcpkix-jdk15on</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>bcprov-jdk15on</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -57,13 +86,12 @@
         <dependency>
             <groupId>co.elastic.apm</groupId>
             <artifactId>apm-agent-api</artifactId>
-            <!-- TODO AUT-953 Elastic APM Agent 1.30.x and 1.31.0 clear "trace.id" from org.slf4j.MDC before error page is rendered. -->
-            <version>1.29.0</version>
+            <version>${elastic-apm.version}</version>
         </dependency>
         <dependency>
             <groupId>co.elastic.apm</groupId>
-            <artifactId>elastic-apm-agent</artifactId>
-            <version>1.29.0</version>
+            <artifactId>apm-agent-attach</artifactId>
+            <version>${elastic-apm.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -86,19 +114,17 @@
         <dependency>
             <groupId>org.apache.ignite</groupId>
             <artifactId>ignite-core</artifactId>
-            <!-- TODO AUT-1086 Upgrade to >=2.14.0 when the following issue is resolved:
-                  https://www.mail-archive.com/user@ignite.apache.org/msg33644.html -->
-            <version>2.13.0</version>
+            <version>${ignite.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.ignite</groupId>
             <artifactId>ignite-slf4j</artifactId>
-            <version>2.13.0</version>
+            <version>${ignite.version}</version>
         </dependency>
         <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
-            <version>7.2</version>
+            <version>${logstash-logback-encoder.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -126,12 +152,12 @@
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
-            <version>1.72</version>
+            <version>${bouncycastle.version}</version>
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk18on</artifactId>
-            <version>1.72</version>
+            <version>${bouncycastle.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -145,14 +171,26 @@
         <dependency>
             <groupId>ee.sk.mid</groupId>
             <artifactId>mid-rest-java-client</artifactId>
-            <!-- TODO AUT-925 Upgrade dependency. -->
-            <version>1.4</version>
+            <version>${mid-rest.version}</version>
+            <exclusions>
+                <!-- bcprov-jdk18on is used instead.-->
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>bcprov-jdk15on</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>ee.sk.smartid</groupId>
             <artifactId>smart-id-java-client</artifactId>
-            <!-- TODO AUT-925 Upgrade dependency. -->
-            <version>2.1.4</version>
+            <version>${smart-id.version}</version>
+            <exclusions>
+                <!-- bcprov-jdk18on is used instead.-->
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>bcprov-jdk15on</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.freemarker</groupId>
@@ -187,7 +225,7 @@
         <dependency>
             <groupId>com.github.tomakehurst</groupId>
             <artifactId>wiremock-jre8</artifactId>
-            <version>2.35.0</version>
+            <version>${wiremock.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -214,6 +252,13 @@
         </dependencies>
     </dependencyManagement>
 
+    <repositories>
+        <repository>
+            <id>gitlab</id>
+            <url>https://gitlab.com/api/v4/projects/19948337/packages/maven</url>
+        </repository>
+    </repositories>
+
     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>
@@ -227,6 +272,33 @@
                     -->
                     <target>${maven.compiler.release}</target>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <!-- Allow only single edition (currently latest is jdk18on) of Bouncy Castle libraries.
+                                     Other libraries may reference different editions of the same Bouncy Castle library
+                                     (bcprov-jdk15on vs bcprov-jdk18on), but duplicate classes on classpath must be
+                                     avoided. -->
+                                <bannedDependencies>
+                                    <excludes>
+                                        <exclude>org.bouncycastle:*</exclude>
+                                    </excludes>
+                                    <includes>
+                                        <include>org.bouncycastle:*-jdk18on</include>
+                                    </includes>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -258,7 +330,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.8</version>
+                <version>${jacoco-maven-plugin.version}</version>
                 <executions>
                     <execution>
                         <goals>
@@ -275,10 +347,12 @@
                 </executions>
             </plugin>
             <plugin>
+                <!-- TODO GSSO-534 Replace with io.github.git-commit-id:git-commit-id-maven-plugin and remove
+                      offline=true after upgrading to Spring Boot 3. Starting from 5.0.0 offline=true is default. -->
                 <groupId>pl.project13.maven</groupId>
                 <artifactId>git-commit-id-plugin</artifactId>
                 <configuration>
-                    <offline>true</offline><!-- TODO GSSO-534 Remove when >= 5.0.0 is used (with Spring Boot 3.x), there offline=true is default. -->
+                    <offline>true</offline>
                 </configuration>
             </plugin>
         </plugins>

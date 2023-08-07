@@ -1,3 +1,7 @@
+<div th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).ID_CARD)}">
+    <div id="id-card-error" th:insert="~{fragments/error}" th:class="hidden"/>
+    <div id="id-card-wait" th:insert="~{fragments/wait}" th:class="hidden"/>
+</div>
 <div class="container" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
     <noscript>
         <div class="alert alert-error" role="alert">
@@ -83,29 +87,6 @@
                     <button role="button" type="button" class="back c-btn c-btn--cancel hidden" th:text="#{label.common.cancel}">
                         Cancel
                     </button>
-                    <div class="alert alert-error alert-popup" aria-hidden="true">
-                        <div>
-                            <strong>
-                                <span id="error-message-title" th:text="#{message.idc.certificate-failed}"/>
-                            </strong>
-                        </div>
-                        <span id="error-message" th:text="#{message.idc.does-id-card-exist}"/>
-                        <div id="error-incident-number-wrapper">
-                            <label th:text="#{label.error.incident-number('')}" for="error-incident-number"></label>
-                            <span id="error-incident-number"></span>
-                        </div>
-                        <div>
-                            <a id="error-report-url"
-                               th:href="#{label.error.error-report-content(${@thymeleafSupport.getErrorReportEmail()})}"
-                               th:text="#{label.error.error-report-link}">Edasta veakirjeldus</a>
-                        </div>
-                        <div>
-                            <span id="error-report-notification" class="hidden"
-                                  th:utext="#{label.error.error-report-notification(${@thymeleafSupport.getErrorReportEmail()})}"/>
-                        </div>
-                        <button role="button" class="close" th:aria-label="#{label.alert.close}" data-dismiss="alert">
-                            <span aria-hidden="true">&times;</span></button>
-                    </div>
                 </form>
             </div>
 

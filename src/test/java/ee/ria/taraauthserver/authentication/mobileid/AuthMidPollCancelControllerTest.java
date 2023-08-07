@@ -31,7 +31,7 @@ class AuthMidPollCancelControllerTest extends BaseTest {
     private SessionRepository<Session> sessionRepository;
 
     @Test
-    @Tag("CSRF_PROTCTION")
+    @Tag("CSRF_PROTECTION")
     void authMidPoll_NoCsrf() {
         given()
                 .filter(MockSessionFilter.withoutCsrf().sessionRepository(sessionRepository).build())
@@ -51,7 +51,7 @@ class AuthMidPollCancelControllerTest extends BaseTest {
 
     @Test
     @Tag("MID_AUTH_STATUS_CHECK_VALID_SESSION")
-    @Tag("CSRF_PROTCTION")
+    @Tag("CSRF_PROTECTION")
     void authMidPoll_session_missing() {
         given()
                 .when()

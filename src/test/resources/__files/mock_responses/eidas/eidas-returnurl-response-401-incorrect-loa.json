@@ -1,0 +1,5 @@
+{
+  "error": "Unauthorized",
+  "message": "202019 - Incorrect Level of Assurance in IdP response",
+  "status": "urn:oasis:names:tc:SAML:2.0:status:Responder"
+}

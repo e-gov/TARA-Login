@@ -32,7 +32,7 @@ import static java.lang.String.format;
 public class AuthAcceptControllerTest extends BaseTest {
 
     @Test
-    @Tag("CSRF_PROTCTION")
+    @Tag("CSRF_PROTECTION")
     void authAccept_NoCsrf() {
         given()
                 .filter(MockSessionFilter.withoutCsrf().sessionRepository(sessionRepository).build())
@@ -49,9 +49,10 @@ public class AuthAcceptControllerTest extends BaseTest {
         assertErrorIsLogged("Access denied: Invalid CSRF token.");
         assertStatisticsIsNotLogged();
     }
+
     @Test
     @Tag("ACCEPT_LOGIN")
-    @Tag("CSRF_PROTCTION")
+    @Tag("CSRF_PROTECTION")
     void authAccept_session_missing() {
         given()
                 .when()

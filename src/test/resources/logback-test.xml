@@ -7,7 +7,7 @@
 
     <springProperty scope="context" name="springAppName" source="spring.application.name"/>
     <property name="log.console.pattern"
-              value="${LOG_CONSOLE_PATTERN:-%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z',GMT} [${springAppName}] [%15.15t] %highlight(%-5level) %-40.40logger{39} %marker [%X{traceId},%X{spanId}] -%X{sessionId} -%X{remoteHost} -%msg%n}"/>
+              value="${LOG_CONSOLE_PATTERN:-%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z',GMT} [${springAppName}] [%15.15t] %highlight(%-5level) %-40.40logger{39} [%X{trace.id},%X{labels.tara_trace_id}] -%msg %green(%marker){}%n}"/>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
