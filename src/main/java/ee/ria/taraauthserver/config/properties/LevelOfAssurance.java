@@ -5,9 +5,9 @@ import java.util.Map;
 
 public enum LevelOfAssurance {
 
-    LOW("http://eidas.europa.eu/LoA/low", "low", 1),
-    SUBSTANTIAL("http://eidas.europa.eu/LoA/substantial", "substantial", 2),
-    HIGH("http://eidas.europa.eu/LoA/high", "high", 3);
+    LOW("low", "low", 1),
+    SUBSTANTIAL("substantial", "substantial", 2),
+    HIGH("high", "high", 3);
 
     private final String formalName;
     private final String acrName;

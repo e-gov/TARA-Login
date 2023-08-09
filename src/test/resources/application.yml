@@ -60,6 +60,11 @@ tara:
     request-timeout-in-seconds: 1
     max-connections-total: 3
 
+  eeid-service:
+    webauthn-login-url: https://localhost:9877/webauthn/credential_authentication/new
+    webauthn-register-url: https://localhost:9877/webauthn/credentials/new
+    accept-consent-url: https://localhost:9877/webauthn/consent
+
   default-locale: et
   error-report-email: help@example.com
 
@@ -68,6 +73,10 @@ tara:
     host-url: https://localhost:9877/alerts
 
   auth-methods:
+    webauthn:
+      enabled: true
+      level-of-assurance: HIGH
+      client-url: https://localhost:9877
     id-card:
       enabled: true
       ocsp-enabled: true
@@ -127,6 +136,7 @@ tara:
     eidas:
       enabled: true
       client-url: https://localhost:9877
+      environment: TEST
       refresh-countries-interval-in-milliseconds: 300000
       request-timeout-in-seconds: 1
       read-timeout-in-seconds: 1

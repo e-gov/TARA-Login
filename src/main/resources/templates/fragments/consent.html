@@ -3,8 +3,8 @@
         <h2 th:utext="#{label.consent.header}"></h2>
         <table class="consent-table">
             <tr>
-                <th class="consent-table-row"><b th:utext="#{label.natural-person.id-code}"></b></th>
-                <td id="natural-person-id-code" th:text="${idCode}">Personal ID-code</td>
+                <th class="consent-table-row"><b th:utext="#{label.natural-person.subject}"></b></th>
+                <td id="natural-person-subject" th:text="${subject}">Person Identifier</td>
             </tr>
             <tr>
                 <th class="consent-table-row"><b th:utext="#{label.natural-person.surname}"></b></th>
@@ -14,7 +14,7 @@
                 <th class="consent-table-row"><b th:utext="#{label.natural-person.given-name}"></b></th>
                 <td id="natural-person-given-name" th:text="${firstName}">Givenname</td>
             </tr>
-            <tr>
+            <tr th:if="${dateOfBirth != null}">
                 <th class="consent-table-row"><b th:utext="#{label.natural-person.date-of-birth}"></b></th>
                 <td id="natural-person-date-of-birth" th:text="${#temporals.format(dateOfBirth, 'dd.MM.yyyy')}">Date of
                     birth

@@ -10,6 +10,7 @@ import static java.util.List.of;
 @Getter
 @AllArgsConstructor
 public enum TaraScope {
+    WEBAUTHN("webauthn"),
     OPENID("openid"),
     IDCARD("idcard"),
     MID("mid"),

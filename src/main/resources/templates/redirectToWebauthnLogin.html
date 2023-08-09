@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.w3.org/1999/xhtml" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}" th:with="hideHeaderLanguageSelection=true">
+<head th:replace="~{fragments/head}"></head>
+<body>
+<div layout:fragment="content" th:with="hideHeaderLanguageSelection=true" th:remove="tag">
+    <div class="container">
+
+        Redirecting, please wait...
+        <form id="webauthnLoginRedirectForm" role="form" method="post" th:action="@{/auth/webauthn/login}">
+            <noscript>
+                <div>
+                    <input type="submit" value="Continue"/>
+                </div>
+            </noscript>
+        </form>
+    </div>
+    <script th:src="@{/scripts/webauthn-login-submit.js}" defer></script>
+</div>
+</body>
+</html>

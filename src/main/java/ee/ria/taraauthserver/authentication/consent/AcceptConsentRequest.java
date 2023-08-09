@@ -37,7 +37,10 @@ public class AcceptConsentRequest {
 
         profileAttributes.setGivenName(taraSession.getAuthenticationResult().getFirstName());
         profileAttributes.setFamilyName(taraSession.getAuthenticationResult().getLastName());
-        // profileAttributes.setDateOfBirth(taraSession.getAuthenticationResult().getDateOfBirth().toString());
+        profileAttributes.setSubject(taraSession.getAuthenticationResult().getSubject());
+        profileAttributes.setAuthenticationType(taraSession.getAuthenticationResult().getAmr());
+        if (taraSession.getAuthenticationResult().getDateOfBirth() != null)
+            profileAttributes.setDateOfBirth(taraSession.getAuthenticationResult().getDateOfBirth().toString());
 
         if (phoneNumberIsRequested(taraSession) && taraSession.getAuthenticationResult().getAmr().equals(AuthenticationType.MOBILE_ID)) {
             idToken.setPhoneNr(taraSession.getAuthenticationResult().getPhoneNumber());
@@ -139,6 +142,10 @@ public class AcceptConsentRequest {
         private String familyName;
         @JsonProperty("given_name")
         private String givenName;
+        @JsonProperty("subject")
+        private String subject;
+        @JsonProperty("authentication_type")
+        private AuthenticationType authenticationType;
         @JsonProperty("date_of_birth")
         private String dateOfBirth;
         @JsonProperty("represents_legal_person")

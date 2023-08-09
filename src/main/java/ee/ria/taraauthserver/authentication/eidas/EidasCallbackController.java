@@ -23,7 +23,7 @@ import org.springframework.session.SessionRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
@@ -65,8 +65,8 @@ import static net.logstash.logback.argument.StructuredArguments.value;
 public class EidasCallbackController {
     public static final String EIDAS_CALLBACK_REQUEST_MAPPING = "/auth/eidas/callback";
     public static final Pattern VALID_PERSON_IDENTIFIER_PATTERN = Pattern.compile("^([A-Z]{2,2})\\/([A-Z]{2,2})\\/(.*)$");
-    public static final String REQUEST_DENIED = "urn:oasis:names:tc:SAML:2.0:status:RequestDenied";
-    public static final String AUTHN_FAILED = "urn:oasis:names:tc:SAML:2.0:status:AuthnFailed";
+    public static final String REQUEST_DENIED = "Request denied";
+    public static final String AUTHN_FAILED = "Authentication failed";
     public static final String INCORRECT_LOA = "202019";
     private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.EIDAS, this.getClass());
 
@@ -85,8 +85,9 @@ public class EidasCallbackController {
     @Autowired
     private Validator validator;
 
-    @PostMapping(value = EIDAS_CALLBACK_REQUEST_MAPPING)
-    public ModelAndView eidasCallback(@RequestParam(name = "SAMLResponse") String samlResponse, @RequestParam(name = "RelayState") String relayState) {
+    @GetMapping(value = EIDAS_CALLBACK_REQUEST_MAPPING)
+    public ModelAndView eidasCallback(@RequestParam(name = "code") String code,
+                                      @RequestParam(name = "relay_state") String relayState) {
         log.info("Handling EIDAS authentication callback for relay state: {}", value("tara.session.eidas.relay_state", relayState));
         if (!eidasRelayStateCache.containsKey(relayState))
             throw new BadRequestException(INVALID_REQUEST, "relayState not found in relayState map");
@@ -95,13 +96,14 @@ public class EidasCallbackController {
         validateSession(session);
 
         try {
-            String requestUrl = eidasConfigurationProperties.getClientUrl() + "/returnUrl";
+            String requestUrl = eidasConfigurationProperties.getClientUrl() + "/auth/eidas/return";
+            TaraSession taraSession = requireNonNull(session.getAttribute(TARA_SESSION));
 
-            requestLogger.logRequest(requestUrl, HttpMethod.POST, Map.of("SAMLResponse", samlResponse));
+            requestLogger.logRequest(requestUrl, HttpMethod.POST, Map.of("code", code));
             var response = eidasRestTemplate.exchange(
                     requestUrl,
                     HttpMethod.POST,
-                    createRequestEntity(samlResponse),
+                    createRequestEntity(code, taraSession),
                     EidasClientResponse.class);
             requestLogger.logResponse(response);
 
@@ -135,19 +137,22 @@ public class EidasCallbackController {
         }
 
         String personIdentifier = response.getAttributes().getPersonIdentifier();
-        Matcher personIdentifierMatcher = validatePersonIdentifier(personIdentifier);
-
+        String dateOfBirth = response.getAttributes().getDateOfBirth();
         TaraSession taraSession = requireNonNull(session.getAttribute(TARA_SESSION));
         taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
         TaraSession.AuthenticationResult authenticationResult = taraSession.getAuthenticationResult();
+        if (authenticationResult.getCountry() == "EE") {
+          Matcher personIdentifierMatcher = validatePersonIdentifier(personIdentifier);
+          authenticationResult.setIdCode(getIdCodeFromPersonIdentifier(personIdentifierMatcher));
+        }
         authenticationResult.setFirstName(response.getAttributes().getFirstName());
         authenticationResult.setLastName(response.getAttributes().getFamilyName());
-        authenticationResult.setIdCode(getIdCodeFromPersonIdentifier(personIdentifierMatcher));
-        authenticationResult.setDateOfBirth(LocalDate.parse(response.getAttributes().getDateOfBirth()));
+        authenticationResult.setPhoneNumber(response.getAttributes().getPhoneNumber());
+        authenticationResult.setEmail(response.getAttributes().getEmail());
+        if (dateOfBirth != null)
+            authenticationResult.setDateOfBirth(LocalDate.parse(dateOfBirth));
         authenticationResult.setAcr(LevelOfAssurance.findByFormalName(response.getLevelOfAssurance()));
-        authenticationResult.setAmr(AuthenticationType.EIDAS);
-        authenticationResult.setSubject(getCountryCodeFromPersonIdentifier(personIdentifierMatcher) +
-                getIdCodeFromPersonIdentifier(personIdentifierMatcher));
+        authenticationResult.setSubject(personIdentifier);
         taraSession.setAuthenticationResult(authenticationResult);
         session.setAttribute(TARA_SESSION, taraSession);
         sessionRepository.save(session);
@@ -182,11 +187,14 @@ public class EidasCallbackController {
         return personIdentifierMatcher.group(1);
     }
 
-    private HttpEntity<MultiValueMap<String, String>> createRequestEntity(String samlResponse) {
+    private HttpEntity<MultiValueMap<String, String>> createRequestEntity(String code, TaraSession taraSession) {
+        TaraSession.EidasAuthenticationResult authenticationResult = (TaraSession.EidasAuthenticationResult) taraSession.getAuthenticationResult();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add("SAMLResponse", samlResponse);
+        map.add("code", code);
+        map.add("country", authenticationResult.getCountry());
+        map.add("method", authenticationResult.getAmr().getAmrName());
         return new HttpEntity<>(map, headers);
     }
 
@@ -204,7 +212,7 @@ public class EidasCallbackController {
     @Data
     private static class EidasClientResponse implements Serializable {
         @NotBlank
-        @JsonProperty("levelOfAssurance")
+        @JsonProperty("acr")
         private String levelOfAssurance;
         @NotNull
         @Valid
@@ -216,17 +224,20 @@ public class EidasCallbackController {
     @Data
     private static class Attributes implements Serializable {
         @NotBlank
-        @JsonProperty("FirstName")
+        @JsonProperty("given_name")
         private String FirstName;
         @NotBlank
-        @JsonProperty("FamilyName")
+        @JsonProperty("family_name")
         private String FamilyName;
         @NotBlank
-        @JsonProperty("PersonIdentifier")
+        @JsonProperty("subject")
         private String PersonIdentifier;
-        @NotBlank
-        @JsonProperty("DateOfBirth")
+        @JsonProperty("date_of_birth")
         private String DateOfBirth;
+        @JsonProperty("phone_number")
+        private String PhoneNumber;
+        @JsonProperty("email")
+        private String Email;
     }
 
 }

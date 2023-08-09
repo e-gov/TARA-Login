@@ -126,6 +126,7 @@ public class StatisticsLogger {
             sessionStatisticsBuilder
                     .country(authenticationResult.getCountry())
                     .idCode(idCode)
+                    .subject(authenticationResult.getSubject())
                     .authenticationType(authenticationResult.getAmr())
                     .authenticationSessionId(taraSession.getSessionId())
                     .firstName(authenticationResult.getFirstName())
@@ -184,6 +185,9 @@ public class StatisticsLogger {
 
         @JsonProperty("authentication.id_code")
         private String idCode;
+
+        @JsonProperty("authentication.subject")
+        private String subject;
 
         @JsonProperty("authentication.first_name")
         private String firstName;

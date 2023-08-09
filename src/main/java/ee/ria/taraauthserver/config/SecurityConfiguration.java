@@ -20,6 +20,7 @@ import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 
@@ -30,6 +31,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 import static ee.ria.taraauthserver.authentication.eidas.EidasCallbackController.EIDAS_CALLBACK_REQUEST_MAPPING;
+import static ee.ria.taraauthserver.authentication.webauthn.WebauthnCallbackController.WEBAUTHN_LOGIN_CALLBACK_REQUEST_MAPPING;
+import static ee.ria.taraauthserver.authentication.webauthn.WebauthnCallbackController.WEBAUTHN_REGISTER_CALLBACK_REQUEST_MAPPING;
+import static ee.ria.taraauthserver.authentication.webauthn.WebauthnCancelController.WEBAUTHN_LOGIN_CANCEL_REQUEST_MAPPING;
+import static ee.ria.taraauthserver.authentication.webauthn.WebauthnCancelController.WEBAUTHN_REGISTRATION_CANCEL_REQUEST_MAPPING;
+import static ee.ria.taraauthserver.authentication.AuthInitController.AUTH_INIT_REQUEST_MAPPING;
 
 @Slf4j
 @EnableWebSecurity
@@ -67,7 +73,13 @@ public class SecurityConfiguration {
         csrf.csrfTokenRepository(csrfTokenRepository())
                 .requireCsrfProtectionMatcher(new AndRequestMatcher(
                         CsrfFilter.DEFAULT_CSRF_MATCHER,
-                        new NegatedRequestMatcher(new AntPathRequestMatcher(EIDAS_CALLBACK_REQUEST_MAPPING))));
+                        new NegatedRequestMatcher(new OrRequestMatcher(
+                        new AntPathRequestMatcher(EIDAS_CALLBACK_REQUEST_MAPPING),
+                        new AntPathRequestMatcher(WEBAUTHN_LOGIN_CALLBACK_REQUEST_MAPPING),
+                        new AntPathRequestMatcher(WEBAUTHN_REGISTER_CALLBACK_REQUEST_MAPPING),
+                        new AntPathRequestMatcher(WEBAUTHN_LOGIN_CANCEL_REQUEST_MAPPING),
+                        new AntPathRequestMatcher(WEBAUTHN_REGISTRATION_CANCEL_REQUEST_MAPPING)
+                    ))));
     }
 
     @Bean

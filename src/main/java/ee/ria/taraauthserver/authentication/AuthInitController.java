@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
@@ -70,6 +71,7 @@ public class AuthInitController {
             @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed") String loginChallenge,
             @RequestParam(name = "lang", required = false)
             @Pattern(regexp = "(et|en|ru)", message = "supported values are: 'et', 'en', 'ru'") String language,
+            @RequestParam(name = "cancel_webauthn", required = false) Boolean cancelWebauthn,
             @SessionAttribute(value = TARA_SESSION) TaraSession newTaraSession, Model model) {
         log.info(append("http.request.locale", RequestUtils.getLocale()), "New authentication session");
 
@@ -100,10 +102,13 @@ public class AuthInitController {
 
         if (language == null)
             RequestUtils.setLocale(getDefaultOrRequestedLocale(newTaraSession));
+
         if (eidasOnlyWithCountryRequested(loginRequestInfo)) {
             model.addAttribute("country", getAllowedEidasCountryCode(loginRequestInfo));
             return "redirectToEidasInit";
-        } else {
+        } else if (webauthnRequested(loginRequestInfo) && cancelWebauthn == null) { 
+            return "redirectToWebauthnLogin";
+        } else { 
             return "loginView";
         }
     }
@@ -171,6 +176,10 @@ public class AuthInitController {
 
     public boolean eidasOnlyWithCountryRequested(TaraSession.LoginRequestInfo loginRequestInfo) {
         return loginRequestInfo.getRequestedScopes().contains("eidasonly") && getAllowedEidasCountryCode(loginRequestInfo) != null;
+    }
+
+    public boolean webauthnRequested(TaraSession.LoginRequestInfo loginRequestInfo) {
+        return loginRequestInfo.getRequestedScopes().contains("webauthn");
     }
 
     private String getAllowedEidasCountryCode(TaraSession.LoginRequestInfo loginRequestInfo) {

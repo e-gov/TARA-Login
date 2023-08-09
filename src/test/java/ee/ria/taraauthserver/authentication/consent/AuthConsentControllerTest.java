@@ -166,7 +166,7 @@ class AuthConsentControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [AUTHENTICATION_SUCCESS]");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=null, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=true, country=EE, idCode=identifier123, firstName=firstname, lastName=lastname, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=SESSION_STATE_INVALID)", session.getId()));
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=null, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=true, country=EE, idCode=identifier123, subject=abc123idcode, firstName=firstname, lastName=lastname, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=SESSION_STATE_INVALID)", session.getId()));
     }
 
     @Test
@@ -224,7 +224,7 @@ class AuthConsentControllerTest extends BaseTest {
         assertInfoIsLogged("Session is removed from cache: " + session.getId());
         assertWarningIsLogged("Session has been invalidated: " + session.getId());
         assertNull(sessionRepository.findById(session.getId()));
-        assertMessageWithMarkerIsLoggedOnce(AuthConsentController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"grant_scope\":[\"openid\"],\"remember\":false,\"session\":{\"id_token\":{\"profile_attributes\":{\"family_name\":\"lastname\",\"given_name\":\"firstname\",\"represents_legal_person\":{\"name\":\"legalName\",\"registry_code\":\"identifier123\"}},\"state\":\"c80393c7-6666-4dd2-b890-0ada47161cfa\"}}}");
+        assertMessageWithMarkerIsLoggedOnce(AuthConsentController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"grant_scope\":[\"openid\"],\"remember\":false,\"session\":{\"id_token\":{\"profile_attributes\":{\"authentication_type\":\"MOBILE_ID\",\"date_of_birth\":\"1992-12-17\",\"family_name\":\"lastname\",\"given_name\":\"firstname\",\"represents_legal_person\":{\"name\":\"legalName\",\"registry_code\":\"identifier123\"},\"subject\":\"abc123idcode\"},\"state\":\"c80393c7-6666-4dd2-b890-0ada47161cfa\"}}}");
         assertMessageWithMarkerIsLoggedOnce(AuthConsentController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
         assertStatisticsIsNotLogged();
     }
@@ -247,6 +247,7 @@ class AuthConsentControllerTest extends BaseTest {
         authSession.setLoginRequestInfo(lri);
         TaraSession.AuthenticationResult ar = new TaraSession.AuthenticationResult();
         ar.setIdCode("abc123idcode");
+        ar.setSubject("abc123idcode");
         ar.setFirstName("firstname");
         ar.setLastName("lastname");
         ar.setDateOfBirth(LocalDate.of(1992, 12, 17));
