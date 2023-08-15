@@ -41,13 +41,14 @@ public class AcceptConsentRequest {
         profileAttributes.setAuthenticationType(taraSession.getAuthenticationResult().getAmr());
         if (taraSession.getAuthenticationResult().getDateOfBirth() != null)
             profileAttributes.setDateOfBirth(taraSession.getAuthenticationResult().getDateOfBirth().toString());
-
-        if (phoneNumberIsRequested(taraSession) && taraSession.getAuthenticationResult().getAmr().equals(AuthenticationType.MOBILE_ID)) {
+        if (taraSession.getAuthenticationResult().getPhoneNumber() != null) {
             idToken.setPhoneNr(taraSession.getAuthenticationResult().getPhoneNumber());
-            idToken.setPhoneNrVerified(true);
+            if (taraSession.getAuthenticationResult().getAmr().equals(AuthenticationType.MOBILE_ID))
+                idToken.setPhoneNrVerified(true);
+            else
+                idToken.setPhoneNrVerified(false);
         }
-
-        if (emailIsRequested(taraSession) && taraSession.getAuthenticationResult().getAmr().equals(AuthenticationType.ID_CARD)) {
+        if (taraSession.getAuthenticationResult().getEmail() != null) {
             idToken.setEmail(taraSession.getAuthenticationResult().getEmail());
             idToken.setEmailVerified(false);
         }
