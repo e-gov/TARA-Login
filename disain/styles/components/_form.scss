@@ -109,7 +109,7 @@
     left: 20px;
   }
   &.is-hidden {
-	display: none;
+    display: none;
   }
 }
 
@@ -169,4 +169,27 @@
 }
 .alert-neutral {
   background-color: #fff;
+}
+.data-table {
+  width: 100%;
+  margin-bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+}
+.personal-info {
+  width: 50%;
+}
+@media (max-width: $breakpoint-mobile) {
+  .personal-info {
+    width: 100%;
+  }
+}
+.personal-info-value {
+  margin-bottom: 8px;
+  font-size: 18px;
+}
+.personal-info-label {
+  font-size: 14px;
+  line-height: 16px;
+  color: #5D6071;
 }

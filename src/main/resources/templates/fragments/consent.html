@@ -1,54 +1,65 @@
 <div class="container" xmlns:th="http://www.w3.org/1999/xhtml">
-    <div class="alert alert-neutral">
-        <h2 th:utext="#{label.consent.header}"></h2>
-        <table class="consent-table">
-            <tr>
-                <th class="consent-table-row"><b th:utext="#{label.natural-person.id-code}"></b></th>
-                <td translate="no" id="natural-person-id-code" th:text="${idCode}">Personal ID-code</td>
-            </tr>
-            <tr>
-                <th class="consent-table-row"><b th:utext="#{label.natural-person.surname}"></b></th>
-                <td translate="no" id="natural-person-surname" th:text="${lastName}">Surname</td>
-            </tr>
-            <tr>
-                <th class="consent-table-row"><b th:utext="#{label.natural-person.given-name}"></b></th>
-                <td translate="no" id="natural-person-given-name" th:text="${firstName}">Givenname</td>
-            </tr>
-            <tr>
-                <th class="consent-table-row"><b th:utext="#{label.natural-person.date-of-birth}"></b></th>
-                <td translate="no" id="natural-person-date-of-birth" th:text="${#temporals.format(dateOfBirth, 'dd.MM.yyyy')}">Date of
-                    birth
-                </td>
-            </tr>
-            <tr th:if="${email != null}">
-                <th class="consent-table-row"><b th:utext="#{label.natural-person.email}"></b></th>
-                <td translate="no" id="email" th:text="${email}">E-Mail</td>
-            </tr>
-            <tr th:if="${phoneNumber != null}">
-                <th class="consent-table-row"><b th:utext="#{label.natural-person.phone}"></b></th>
-                <td translate="no" id="phone-number" th:text="${phoneNumber}">Phone number</td>
-            </tr>
-            <tr th:if="${legalPersonName != null}">
-                <th class="consent-table-row"><b th:utext="#{label.legal-person.legal-person-name}"></b></th>
-                <td translate="no" id="legal-person-name" th:text="${legalPersonName}">Legal person name</td>
-            </tr>
-            <tr class="consent-table-row" th:if="${legalPersonRegistryCode != null}">
-                <th class="consent-table-row"><b th:utext="#{label.legal-person.legal-person-identifier}"></b></th>
-                <td translate="no" id="legal-person-identifier" th:text="${legalPersonRegistryCode}">Legal person registry code</td>
-            </tr>
-        </table>
-        <br>
-        <p th:utext="${#messages.msg('label.consent.information', @thymeleafSupport.getServiceName())}"></p>
-        <br>
-        <form method="POST" th:action="@{/auth/consent/confirm(consent_given=true)}" class="consent-button c-form">
-            <button th:text="#{label.consent.accept}" type="submit" name="submit" value="value"
-                    class="c-btn c-btn--primary">ACCEPT
-            </button>
-        </form>
-        <form method="POST" th:action="@{/auth/consent/confirm(consent_given=false)}" class="consent-button c-form">
-            <button th:text="#{label.consent.reject}" type="submit" name="submit" value="value"
-                    class="c-btn c-btn--cancel">REJECT
-            </button>
-        </form>
+    <div class="c-tab-login__content-wrap">
+        <div class="c-tab-login__content-icon">
+            <!-- Left side icon space -->
+        </div>
+        <div class="c-tab-login__content-text">
+            <div aria-level="2" role="heading">
+                <h2 th:utext="#{label.consent.header}"></h2>
+            </div>
+            <div class="row data-table">
+                <div class="personal-info">
+                    <div class="personal-info-label" th:utext="#{label.natural-person.given-name}"></div>
+                    <div class="personal-info-value" id="natural-person-given-name" th:text="${firstName}"
+                         translate="no"></div>
+                    <div class="personal-info-label" th:utext="#{label.natural-person.surname}"></div>
+                    <div class="personal-info-value" id="natural-person-surname" th:text="${lastName}"
+                         translate="no"></div>
+                </div>
+                <div class="personal-info">
+                    <div class="personal-info-label" th:utext="#{label.natural-person.id-code}"></div>
+                    <div class="personal-info-value" id="natural-person-id-code" th:text="${idCode}"
+                         translate="no"></div>
+                    <div class="personal-info-label" th:utext="#{label.natural-person.date-of-birth}"></div>
+                    <div class="personal-info-value" id="natural-person-date-of-birth"
+                         th:text="${#temporals.format(dateOfBirth, 'dd.MM.yyyy')}" translate="no"></div>
+                </div>
+
+                <div class="personal-info" th:if="${email != null}">
+                    <div class="personal-info-label" th:utext="#{label.natural-person.email}"></div>
+                    <div class="personal-info-value" id="email" th:text="${email}" translate="no"></div>
+                </div>
+                <div class="personal-info" th:if="${phoneNumber != null}">
+                    <div class="personal-info-label" th:utext="#{label.natural-person.phone}"></div>
+                    <div class="personal-info-value" id="phone-number" th:text="${phoneNumber}"
+                         translate="no"></div>
+                </div>
+
+                <div class="personal-info" th:if="${legalPersonName != null}">
+                    <div class="personal-info-label" th:utext="#{label.legal-person.legal-person-name}"></div>
+                    <div class="personal-info-value" id="legal-person-name" th:text="${legalPersonName}"
+                         translate="no"></div>
+                </div>
+                <div class="personal-info" th:if="${legalPersonRegistryCode != null}">
+                    <div class="personal-info-label" th:utext="#{label.legal-person.legal-person-identifier}"></div>
+                    <div class="personal-info-value" id="legal-person-identifier"
+                         th:text="${legalPersonRegistryCode}"
+                         translate="no"></div>
+                </div>
+            </div>
+            <p th:utext="${#messages.msg('label.consent.information', @thymeleafSupport.getServiceName())}"></p>
+            <form class="consent-button c-form" method="POST"
+                  th:action="@{/auth/consent/confirm(consent_given=true)}">
+                <button class="c-btn c-btn--primary" name="submit" th:text="#{label.consent.accept}" type="submit"
+                        value="value">ACCEPT
+                </button>
+            </form>
+            <form class="consent-button c-form" method="POST"
+                  th:action="@{/auth/consent/confirm(consent_given=false)}">
+                <button class="c-btn c-btn--cancel" name="submit" th:text="#{label.consent.reject}" type="submit"
+                        value="value">REJECT
+                </button>
+            </form>
+        </div>
     </div>
 </div>
