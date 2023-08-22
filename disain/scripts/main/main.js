@@ -359,11 +359,11 @@ jQuery(function ($) {
 			const browserInfo = navigator.appCodeName + '/' + navigator.appVersion;
 			const hostName = location.hostname;
 			const errorReportUrl = $('#error-report-url').attr('href')
-				.replace('{1}', plainTextMessage)
-				.replace('{2}', responseJson.incident_nr)
-				.replace('{3}', os)
-				.replace('{4}', browserInfo)
-				.replace('{5}', hostName);
+				.replace('(1)', plainTextMessage)
+				.replace('(2)', responseJson.incident_nr)
+				.replace('(3)', os)
+				.replace('(4)', browserInfo)
+				.replace('(5)', hostName);
 			$('#error-report-url').attr('href', errorReportUrl);
 
 			const errorReportNotificationMessage = $('#error-report-notification').text()
@@ -705,6 +705,6 @@ jQuery(function ($) {
   }
 
 	function isProbablyMobileDevice() {
-		return /Mobi|Android/i.test(navigator.userAgent);
+		return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 	}
 });

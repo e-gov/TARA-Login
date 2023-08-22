@@ -8,18 +8,18 @@
     <div class="container">
         <div class="c-tab-login">
             <div class="c-tab-login__header hide-in-desktop">
-                <ul class="c-tab-login__nav">
+                <ul class="c-tab-login__nav" role="tablist">
                     <li th:replace="~{fragments/logintabs :: nav_default(tab_id = 'mobile-id', static = true)}"></li>
                 </ul>
             </div>
             <div class="c-tab-login__main">
                 <div layout:insert="~{fragments/logintabs :: content(tab_id = 'mobile-id', instruction = 'instruction-check', static = true)}"
                      th:remove="tag">
-                    <form role="form" id="midAuthenticationCheckForm" method="post" th:action="@{/auth/mid/poll/cancel}"
+                    <form id="midAuthenticationCheckForm" method="post" th:action="@{/auth/mid/poll/cancel}"
                           class="c-form" layout:fragment="login-form-content">
                         <p th:text="#{label.common.control-code}">Control code:</p>
                         <p class="control-code" th:text="${mobileIdVerificationCode}"></p>
-                        <button role="button" type="submit" class="c-btn c-btn--cancel"
+                        <button type="submit" class="c-btn c-btn--cancel"
                                 th:text="#{label.common.cancel}">Cancel
                         </button>
                     </form>

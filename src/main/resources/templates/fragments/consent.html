@@ -4,37 +4,37 @@
         <table class="consent-table">
             <tr>
                 <th class="consent-table-row"><b th:utext="#{label.natural-person.subject}"></b></th>
-                <td id="natural-person-subject" th:text="${subject}">Person Identifier</td>
+                <td translate="no" id="natural-person-subject" th:text="${subject}">Person Identifier</td>
             </tr>
             <tr>
                 <th class="consent-table-row"><b th:utext="#{label.natural-person.surname}"></b></th>
-                <td id="natural-person-surname" th:text="${lastName}">Surname</td>
+                <td translate="no" id="natural-person-surname" th:text="${lastName}">Surname</td>
             </tr>
             <tr>
                 <th class="consent-table-row"><b th:utext="#{label.natural-person.given-name}"></b></th>
-                <td id="natural-person-given-name" th:text="${firstName}">Givenname</td>
+                <td translate="no" id="natural-person-given-name" th:text="${firstName}">Givenname</td>
             </tr>
             <tr th:if="${dateOfBirth != null}">
                 <th class="consent-table-row"><b th:utext="#{label.natural-person.date-of-birth}"></b></th>
-                <td id="natural-person-date-of-birth" th:text="${#temporals.format(dateOfBirth, 'dd.MM.yyyy')}">Date of
+                <td translate="no" id="natural-person-date-of-birth" th:text="${#temporals.format(dateOfBirth, 'dd.MM.yyyy')}">Date of
                     birth
                 </td>
             </tr>
             <tr th:if="${email != null}">
                 <th class="consent-table-row"><b th:utext="#{label.natural-person.email}"></b></th>
-                <td id="email" th:text="${email}">E-Mail</td>
+                <td translate="no" id="email" th:text="${email}">E-Mail</td>
             </tr>
             <tr th:if="${phoneNumber != null}">
                 <th class="consent-table-row"><b th:utext="#{label.natural-person.phone}"></b></th>
-                <td id="phone-number" th:text="${phoneNumber}">Phone number</td>
+                <td translate="no" id="phone-number" th:text="${phoneNumber}">Phone number</td>
             </tr>
             <tr th:if="${legalPersonName != null}">
                 <th class="consent-table-row"><b th:utext="#{label.legal-person.legal-person-name}"></b></th>
-                <td id="legal-person-name" th:text="${legalPersonName}">Legal person name</td>
+                <td translate="no" id="legal-person-name" th:text="${legalPersonName}">Legal person name</td>
             </tr>
             <tr class="consent-table-row" th:if="${legalPersonRegistryCode != null}">
                 <th class="consent-table-row"><b th:utext="#{label.legal-person.legal-person-identifier}"></b></th>
-                <td id="legal-person-identifier" th:text="${legalPersonRegistryCode}">Legal person registry code</td>
+                <td translate="no" id="legal-person-identifier" th:text="${legalPersonRegistryCode}">Legal person registry code</td>
             </tr>
         </table>
         <br>

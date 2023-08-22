@@ -106,5 +106,4 @@ class ThymeleafSupportTest {
         buildMockHttpSession(mockLoginRequestInfo);
         assertEquals("/auth/reject?error_code=user_cancel", thymeleafSupport.getHomeUrl());
     }
-
 }

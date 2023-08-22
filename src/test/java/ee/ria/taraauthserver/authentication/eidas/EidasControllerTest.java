@@ -197,7 +197,7 @@ public class EidasControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Antud riigikood ei ole lubatud. Lubatud riigikoodid on: IT"))
+                .body("message", equalTo("Antud riigikood ei ole lubatud. Lubatud riigikoodid on:<span translate=\"no\"> IT</span>"))
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 

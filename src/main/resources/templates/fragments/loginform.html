@@ -5,7 +5,7 @@
 <div class="container" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
     <noscript>
         <div class="alert alert-error" role="alert">
-            <p><strong th:utext="#{message.warning.noscript}"></strong></p>
+            <div class="text"><strong th:utext="#{message.warning.noscript}"></strong></div>
         </div>
         <br>
     </noscript>
@@ -51,9 +51,9 @@
     </div>
 
     <div class="c-tab-login">
-        <nav role="navigation" class="c-tab-login__header"
+        <nav class="c-tab-login__header"
              th:aria-label="#{label.aria.authentication-method.navigation}">
-            <ul class="c-tab-login__nav">
+            <ul class="c-tab-login__nav" role="tablist">
                 <th:block
                         th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).ID_CARD) && 
                             !@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).EIDAS)}">
@@ -75,11 +75,11 @@
                 </th:block>
             </ul>
         </nav>
-        <main role="main" class="c-tab-login__main">
+        <main class="c-tab-login__main">
             <div th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).ID_CARD)}"
                  layout:insert="~{fragments/logintabs :: content('id-card')}" th:remove="tag"
                  aria-hidden="true" aria-labelledby="id-card">
-                <form role="form" th:action="@{/auth/accept}" method="post" id="idCardForm" class="c-form"
+                <form th:action="@{/auth/accept}" method="post" id="idCardForm" class="c-form"
                       layout:fragment="login-form-content">
                     <button role="button" type="button" class="submit c-btn c-btn--primary" th:text="#{label.common.login}">
                         Login
@@ -93,9 +93,9 @@
             <div th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).MOBILE_ID)}"
                  layout:insert="~{fragments/logintabs :: content('mobile-id')}" th:remove="tag"
                  aria-hidden="true" aria-labelledby="mobile-id">
-                <form role="form" th:action="@{/auth/mid/init}" method="post" id="mobileIdForm" class="c-form"
+                <form th:action="@{/auth/mid/init}" method="post" id="mobileIdForm" class="c-form"
                       layout:fragment="login-form-content">
-                    <table>
+                    <table role="presentation">
                         <tbody>
                         <tr>
                             <td class="col-label">
@@ -108,8 +108,8 @@
                                         <span class="personal-code-prefix input-group-text"
                                               th:text="#{label.mobile-id.personal-code-prefix}"></span>
                                     </div>
-                                    <input type="number" inputmode="decimal" id="mid-personal-code" class="form-control"
-                                           name="idCode">
+                                    <input type="text" inputmode="numeric" id="mid-personal-code" class="form-control"
+                                           name="idCode" autocomplete="username">
                                 </div>
                                 <div class="invalid-feedback is-hidden"
                                      th:text="#{message.common.personal-code-missing}"></div>
@@ -129,7 +129,7 @@
                                               th:text="#{label.mobile-id.phone-number-prefix}"></span>
                                     </div>
                                     <input type="tel" maxlength="15" id="mid-phone-number" class="form-control"
-                                           name="telephoneNumber">
+                                           name="telephoneNumber" autocomplete="tel">
                                 </div>
                                 <input type="hidden" id="mid-country-code"
                                        class="country-code" name="countryCode" th:value="#{label.mobile-id.personal-code-prefix}"/>
@@ -160,9 +160,9 @@
             <div th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).SMART_ID)}"
                  layout:insert="~{fragments/logintabs :: content('smart-id')}" th:remove="tag"
                  aria-hidden="true" aria-labelledby="smart-id">
-                <form role="form" th:action="@{/auth/sid/init}" method="post" id="smartIdForm" class="c-form"
+                <form th:action="@{/auth/sid/init}" method="post" id="smartIdForm" class="c-form"
                       layout:fragment="login-form-content">
-                    <table>
+                    <table role="presentation">
                         <tbody>
                         <tr>
                             <td class="col-label">

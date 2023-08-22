@@ -3,11 +3,11 @@ package ee.ria.taraauthserver.utils;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
+import org.bouncycastle.asn1.ASN1IA5String;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1TaggedObject;
-import org.bouncycastle.asn1.DERIA5String;
 import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
@@ -111,8 +111,8 @@ public class X509Utils {
             if (accessDescription.getAccessMethod().equals(X509ObjectIdentifiers.ocspAccessMethod)
                     && accessDescription.getAccessLocation().getTagNo() == GeneralName.uniformResourceIdentifier) {
 
-                DERIA5String derStr = DERIA5String.getInstance((ASN1TaggedObject) accessDescription.getAccessLocation().toASN1Primitive(), false);
-                return derStr.getString();
+                ASN1IA5String asn1Str = ASN1IA5String.getInstance((ASN1TaggedObject) accessDescription.getAccessLocation().toASN1Primitive(), false);
+                return asn1Str.getString();
             }
         }
 

@@ -1,13 +1,13 @@
 <div class="container" xmlns:th="http://www.w3.org/1999/xhtml">
     <div class="c-tab-login__content-wrap">
         <div class="c-tab-login__content-icon" aria-hidden="true">
-            <img id="client-logo-wait" th:if="${@thymeleafSupport.getServiceLogo() != null}" class="icon">
+            <img id="client-logo-wait" th:if="${@thymeleafSupport.getServiceLogo() != null}" class="icon" th:alt="#{label.logo.client}">
         </div>
         <div class="c-tab-login__content-wait">
             <div role="heading" aria-level="2">
                 <h2 th:text="${#messages.msg('label.id-card.title')}"></h2>
             </div>
-            <p id="id-card-wait-popup" th:text="${#messages.msg('label.id-card.wait-popup')}" class="hidden" aria-hidden="true"></p>
+            <p id="id-card-wait-popup" th:utext="${#messages.msg('label.id-card.wait-popup')}" class="hidden" aria-hidden="true"></p>
             <p id="id-card-wait-login" th:text="${#messages.msg('label.id-card.wait-login')}" class="hidden" aria-hidden="true"></p>
         </div>
     </div>
