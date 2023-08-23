@@ -27,3 +27,7 @@ management:
 ignite:
   ignite-instance-name: tara-ignite
   metrics-log-frequency: 300000
+
+tara:
+  govsso:
+    self-service-url: https://enduserselfservice.localhost:25443/

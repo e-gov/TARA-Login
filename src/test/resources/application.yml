@@ -59,6 +59,8 @@ tara:
     health-url: https://localhost:9877/health/ready
     request-timeout-in-seconds: 1
     max-connections-total: 3
+  govsso:
+    self-service-url: https://enduserselfservice.localhost:25443/
 
   default-locale: et
   error-report-email: help@example.com

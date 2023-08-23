@@ -55,6 +55,9 @@ public class AuthInitController {
     @Autowired
     private AuthConfigurationProperties.GovSsoHydraConfigurationProperties govSsoHydraConfigurationProperties;
 
+    @Autowired
+    private AuthConfigurationProperties.GovSsoConfigurationProperties govSsoConfigurationProperties;
+
     @Autowired(required = false)
     private EidasConfigurationProperties eidasConfigurationProperties;
 
@@ -104,6 +107,7 @@ public class AuthInitController {
             model.addAttribute("country", getAllowedEidasCountryCode(loginRequestInfo));
             return "redirectToEidasInit";
         } else {
+            model.addAttribute("selfServiceAuthUrl", govSsoConfigurationProperties.getSelfServiceUrl());
             return "loginView";
         }
     }

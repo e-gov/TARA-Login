@@ -41,7 +41,9 @@
         <div class="logo-separator-mobile"></div>
         <div class="c-tab-login__content-wrap">
             <div class="c-tab-login__content-icon" aria-hidden="true">
-                <img id="client-logo" class="icon" th:if="${@thymeleafSupport.getServiceLogo() != null}" th:src="${'data:image/svg+xml;base64,' + @thymeleafSupport.getServiceLogo()}" th:alt="#{label.logo.client}">
+                <img id="client-logo" class="icon" th:if="${@thymeleafSupport.getServiceLogo() != null}"
+                     th:src="${'data:image/svg+xml;base64,' + @thymeleafSupport.getServiceLogo()}"
+                     th:alt="#{label.logo.client}">
             </div>
             <div class="c-tab-login__content-text">
                 <div role="heading" aria-level="2">
@@ -51,8 +53,17 @@
                 <form layout:fragment="login-form-content"></form>
             </div>
         </div>
+        <div class="detailed-instruction-block"
+             th:if="${@thymeleafSupport.getGovSsoLoginRequestInfo()} != null">
+            <div class="detailed-instruction">
+                <p class="detailed-instruction-line detailed-session-management"
+                   th:utext="#{label.sso.detailed_session_management(${selfServiceAuthUrl})}">
+                </p>
+            </div>
+        </div>
         <div class="c-tab-login__footer">
-            <div class="text"><a th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a></div>
+            <div class="text"><a th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a>
+            </div>
             <div class="text" th:if="${#messages.msgOrNull('label.' + tab_id + '.help') != null}">
                 <a th:href="${#messages.msg('link.' + tab_id + '.help')}"
                    th:utext="${#messages.msg('label.' + tab_id + '.help')}" target="_blank" rel="noopener">Help</a>

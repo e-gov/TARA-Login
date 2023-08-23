@@ -61,6 +61,15 @@ public class AuthConfigurationProperties {
 
     @Data
     @Validated
+    @ConfigurationProperties(prefix = "tara.govsso")
+    public static class GovSsoConfigurationProperties {
+
+        @NotEmpty
+        String selfServiceUrl;
+    }
+
+    @Data
+    @Validated
     @ConfigurationProperties(prefix = "tara.hydra-service")
     public static class HydraConfigurationProperties {
 

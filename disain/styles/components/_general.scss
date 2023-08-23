@@ -192,13 +192,51 @@ body.is-mobile-subview {
     -webkit-animation: spin 1s linear infinite;
     animation: spin 1s linear infinite;
     border-top: 3px solid #555;
-    border-radius: 50%;
-    width: 18px;
-    height: 18px;
-    float: left;
-    margin: 5px 5px auto auto
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  float: left;
+  margin: 5px 5px auto auto
 }
+
 @keyframes spin {
-  0% {transform: rotate(0deg);}
-  100% {transform: rotate(360deg);}
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.detailed-instruction-block {
+  background-color: #fff;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+@media (max-width: 800px) {
+  .detailed-instruction-block {
+    margin-left: -15px;
+    margin-right: -15px;
+    border-radius: 0
+  }
+}
+
+.detailed-instruction {
+  line-height: 24px;
+  padding: 17px 40px 36px 190px;
+  color: #5d6071;
+}
+
+.detailed-session-management {
+  margin-top: 24px;
+}
+
+@media (max-width: $breakpoint-mobile) {
+  .detailed-instruction {
+    padding: 16px;
+  }
+  .detailed-session-management {
+    margin-top: 0px;
+  }
 }

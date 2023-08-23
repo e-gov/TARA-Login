@@ -72,6 +72,15 @@ public class ThymeleafSupport {
         return loginRequestInfo.getClientLogo();
     }
 
+    public TaraSession.LoginRequestInfo getGovSsoLoginRequestInfo() {
+        TaraSession taraSession = SessionUtils.getAuthSession();
+        if (taraSession == null) {
+            return null;
+        }
+
+        return taraSession.getGovSsoLoginRequestInfo();
+    }
+
     public String getLocaleUrl(String locale) {
         UriComponents uriComponents = ServletUriComponentsBuilder.fromCurrentRequest().replaceQueryParam("lang", locale).build();
         return uriComponents.getPath() + "?" + uriComponents.getQuery();

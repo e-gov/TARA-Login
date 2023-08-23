@@ -195,6 +195,7 @@ class AuthInitControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_LANGUAGE, "et")
                 .body(containsString("Sisestage ID-kaart kaardilugejasse ja vajutage \"Jätka\""))
                 .body(not(containsString("src=\"data:image/svg+xml;base64")))
+                .body(not(containsString("class=\"detailed-instruction-line detailed-session-management\"")))
                 .cookie("SESSION", matchesPattern("[A-Za-z0-9,-]{36,36}"))
                 .extract().cookie("SESSION");
 
@@ -248,6 +249,7 @@ class AuthInitControllerTest extends BaseTest {
                 .body(containsString("Sisestage ID-kaart kaardilugejasse ja vajutage \"Jätka\""))
                 .body(containsString("src=\"data:image/svg+xml;base64,testLogo\""))
                 .body(containsString("govsso test client et"))
+                .body(containsString("class=\"detailed-instruction-line detailed-session-management\""))
                 .cookie("SESSION", matchesPattern("[A-Za-z0-9,-]{36,36}"))
                 .extract().cookie("SESSION");
 
