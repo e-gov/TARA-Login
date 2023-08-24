@@ -27,7 +27,9 @@
     <div class="container">
         <div class="c-header__logo">
             <div class="c-header__logo-link">
-                <img th:src="#{logo.header.tara}" aria-hidden="true" th:alt="#{label.header.tara}">
+                <h1 th:aria-label="#{label.header.tara}">
+                    <img th:src="#{logo.header.tara}" aria-hidden="true" th:alt="#{label.header.tara}">
+                </h1>
             </div>
         </div>
     </div>
