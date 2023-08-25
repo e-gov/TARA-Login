@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.authentication.consent;
 
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.SessionUtils;
@@ -25,11 +26,12 @@ import org.springframework.web.servlet.view.RedirectView;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.util.Map;
+import java.util.EnumSet;
 import javax.cache.Cache;
 
 import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_CONSENT_PROCESS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.WEBAUTHN_AUTHENTICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 
 @Validated
@@ -38,6 +40,7 @@ public class AuthConsentController {
     private static final String REDIRECT_URL = "redirect_to";
     public static final String WEBAUTHN_USER_ID = "webauthn_user_id";
     private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.TARA_HYDRA, this.getClass());
+    private static final EnumSet<TaraAuthenticationState> ALLOWED_STATES = EnumSet.of(AUTHENTICATION_SUCCESS, WEBAUTHN_AUTHENTICATION_SUCCESS);
 
     @Autowired
     private AuthConfigurationProperties authConfigurationProperties;
@@ -52,16 +55,15 @@ public class AuthConsentController {
     public String authConsent(@RequestParam(name = "consent_challenge") @Size(max = 50)
                               @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed") String consentChallenge, Model model,
                               @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
-        SessionUtils.assertSessionInState(taraSession, AUTHENTICATION_SUCCESS);
+        SessionUtils.assertSessionInState(taraSession, ALLOWED_STATES);
         taraSession.setConsentChallenge(consentChallenge);
         if (taraSession.getLoginRequestInfo().getClient().getMetaData().isDisplayUserConsent()) {
-            taraSession.setState(INIT_CONSENT_PROCESS);
             return createConsentView(model, taraSession);
         } else {
-            taraSession.setState(TaraAuthenticationState.CONSENT_NOT_REQUIRED);
-            String acceptConsentUrl = webauthnRequested(taraSession.getLoginRequestInfo()) 
+            String acceptConsentUrl = isWebauthnRequested(taraSession) 
                                     ? authConfigurationProperties.getEeidService().getAcceptConsentUrl() 
                                     : authConfigurationProperties.getHydraService().getAcceptConsentUrl() + "?consent_challenge=" + consentChallenge;
+            taraSession.setState(TaraAuthenticationState.CONSENT_NOT_REQUIRED);
             return acceptConsent(consentChallenge, taraSession, acceptConsentUrl, model);
         }
     }
@@ -71,7 +73,8 @@ public class AuthConsentController {
         model.addAttribute("subject", taraSession.getAuthenticationResult().getSubject());
         model.addAttribute("firstName", taraSession.getAuthenticationResult().getFirstName());
         model.addAttribute("lastName", taraSession.getAuthenticationResult().getLastName());
-        model.addAttribute("dateOfBirth", taraSession.getAuthenticationResult().getDateOfBirth());
+        if (shouldDateOfBirthBeDisplayed(taraSession))
+            model.addAttribute("dateOfBirth", taraSession.getAuthenticationResult().getDateOfBirth());
         TaraSession.LegalPerson legalPerson = taraSession.getSelectedLegalPerson();
         if (legalPerson != null) {
             model.addAttribute("legalPersonName", legalPerson.getLegalName());
@@ -85,11 +88,15 @@ public class AuthConsentController {
     }
 
     private boolean shouldEmailBeDisplayed(TaraSession taraSession) {
-        return taraSession.isEmailScopeRequested() && taraSession.getAuthenticationResult().getEmail() != null;
+        return taraSession.getAuthenticationResult().getEmail() != null;
     }
 
     private boolean shouldPhoneNumberBeDisplayed(TaraSession taraSession) {
-        return taraSession.isPhoneNumberScopeRequested() && taraSession.getAuthenticationResult().getPhoneNumber() != null;
+        return taraSession.getAuthenticationResult().getPhoneNumber() != null;
+    }
+
+    private boolean shouldDateOfBirthBeDisplayed(TaraSession taraSession) {
+        return taraSession.getAuthenticationResult().getDateOfBirth() != null;
     }
 
     @NotNull
@@ -109,9 +116,6 @@ public class AuthConsentController {
             statisticsLogger.log(taraSession);
             SessionUtils.invalidateSession();
             return "redirect:" + response.getBody().get(REDIRECT_URL);
-        } else if (response.getStatusCode() == HttpStatus.ACCEPTED) {
-            String acceptConsentUrl = authConfigurationProperties.getHydraService().getAcceptConsentUrl();
-            return acceptConsent(consentChallenge, taraSession, acceptConsentUrl + "?consent_challenge=" + consentChallenge, model);
         } else if (response.getStatusCode() == HttpStatus.CREATED && response.getBody() != null && response.getBody().get(WEBAUTHN_USER_ID) != null) {
             return createWebauthnRegisterView(model, taraSession, response.getBody().get(WEBAUTHN_USER_ID));
         } else {
@@ -126,7 +130,7 @@ public class AuthConsentController {
     }
 
     @NotNull
-    private boolean webauthnRequested(TaraSession.LoginRequestInfo loginRequestInfo) {
-        return loginRequestInfo.getRequestedScopes().contains("webauthn");
+    private boolean isWebauthnRequested(TaraSession taraSession) {
+        return taraSession.getState() == AUTHENTICATION_SUCCESS && taraSession.getLoginRequestInfo().getRequestedScopes().contains(TaraScope.WEBAUTHN.getFormalName());
     }
 }

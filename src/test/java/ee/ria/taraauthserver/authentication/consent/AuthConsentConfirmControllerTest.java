@@ -33,7 +33,7 @@ import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_
 import static ee.ria.taraauthserver.security.NoSessionCreatingHttpSessionCsrfTokenRepository.CSRF_HEADER_NAME;
 import static ee.ria.taraauthserver.security.NoSessionCreatingHttpSessionCsrfTokenRepository.CSRF_PARAMETER_NAME;
 import static ee.ria.taraauthserver.security.NoSessionCreatingHttpSessionCsrfTokenRepository.CSRF_TOKEN_ATTR_NAME;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_CONSENT_PROCESS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_MID;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
@@ -142,7 +142,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .body("message", equalTo("Ebakorrektne päring. Vale seansi staatus."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [INIT_CONSENT_PROCESS]");
+        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [AUTHENTICATION_SUCCESS, WEBAUTHN_AUTHENTICATION_SUCCESS]");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, subject=null, firstName=null, lastName=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=SESSION_STATE_INVALID)", sessionFilter.getSession().getId()));
     }
 
@@ -167,8 +167,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .statusCode(302)
                 .header("Location", Matchers.endsWith("some/test/url"));
 
-        assertInfoIsLogged("State: NOT_SET -> INIT_CONSENT_PROCESS");
-        assertInfoIsLogged("State: INIT_CONSENT_PROCESS -> CONSENT_GIVEN");
+        assertInfoIsLogged("State: AUTHENTICATION_SUCCESS -> CONSENT_GIVEN");
         assertWarningIsLogged("Session has been invalidated: " + session.getId());
         assertInfoIsLogged("Session is removed from cache: " + session.getId());
         assertNull(sessionRepository.findById(session.getId()));
@@ -252,9 +251,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(302);
 
-        assertInfoIsLogged("State: NOT_SET -> INIT_CONSENT_PROCESS");
-        assertInfoIsLogged("State: NOT_SET -> INIT_CONSENT_PROCESS");
-        assertInfoIsLogged("State: INIT_CONSENT_PROCESS -> CONSENT_GIVEN");
+        assertInfoIsLogged("State: AUTHENTICATION_SUCCESS -> CONSENT_GIVEN");
         assertWarningIsLogged("Session has been invalidated: " + session.getId());
         assertInfoIsLogged("Session is removed from cache: " + session.getId());
         assertNull(sessionRepository.findById(session.getId()));
@@ -283,8 +280,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(302);
 
-        assertInfoIsLogged("State: NOT_SET -> INIT_CONSENT_PROCESS");
-        assertInfoIsLogged("State: INIT_CONSENT_PROCESS -> CONSENT_GIVEN");
+        assertInfoIsLogged("State: AUTHENTICATION_SUCCESS -> CONSENT_GIVEN");
         assertWarningIsLogged("Session has been invalidated: " + session.getId());
         assertInfoIsLogged("Session is removed from cache: " + session.getId());
         assertNull(sessionRepository.findById(session.getId()));
@@ -314,8 +310,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .statusCode(302)
                 .header("Location", Matchers.endsWith("some/test/url"));
 
-        assertInfoIsLogged("State: NOT_SET -> INIT_CONSENT_PROCESS");
-        assertInfoIsLogged("State: INIT_CONSENT_PROCESS -> CONSENT_GIVEN");
+        assertInfoIsLogged("State: AUTHENTICATION_SUCCESS -> CONSENT_GIVEN");
         assertWarningIsLogged("Session has been invalidated: " + session.getId());
         assertInfoIsLogged("Session is removed from cache: " + session.getId());
         assertNull(sessionRepository.findById(session.getId()));
@@ -345,7 +340,6 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("error", equalTo("Internal Server Error"));
 
-        assertInfoIsLogged("State: NOT_SET -> INIT_CONSENT_PROCESS");
         assertWarningIsLogged("Session has been invalidated: " + session.getId());
         assertInfoIsLogged("Session is removed from cache: " + session.getId());
         assertNull(sessionRepository.findById(session.getId()));
@@ -376,8 +370,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .header("Location", Matchers.endsWith("some/test/url"));
 
         assertNull(sessionRepository.findById(session.getId()));
-        assertInfoIsLogged("State: NOT_SET -> INIT_CONSENT_PROCESS");
-        assertInfoIsLogged("State: INIT_CONSENT_PROCESS -> CONSENT_NOT_GIVEN");
+        assertInfoIsLogged("State: AUTHENTICATION_SUCCESS -> CONSENT_NOT_GIVEN");
         assertWarningIsLogged("Session has been invalidated: " + session.getId());
         assertInfoIsLogged("Session is removed from cache: " + session.getId());
         assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/consent/reject?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"error\":\"user_cancel\",\"error_debug\":\"Consent not given. User canceled the authentication process.\",\"error_description\":\"Consent not given. User canceled the authentication process.\"}");
@@ -406,7 +399,6 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("error", equalTo("Internal Server Error"));
 
-        assertInfoIsLogged("State: NOT_SET -> INIT_CONSENT_PROCESS");
         assertErrorIsLogged("Server encountered an unexpected error: Invalid OIDC server response. Redirect URL missing from response.");
         assertWarningIsLogged("Session has been invalidated: " + session.getId());
         assertInfoIsLogged("Session is removed from cache: " + session.getId());
@@ -424,7 +416,8 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     private Session createSession(AuthenticationType authenticationType, List<String> requestedScopes, String url, boolean hasGovSsoLoginRequestInfo) {
         Session session = sessionRepository.createSession();
         TaraSession authSession = new TaraSession(session.getId());
-        authSession.setState(INIT_CONSENT_PROCESS);
+        // authSession.setState(INIT_CONSENT_PROCESS);
+        authSession.setState(AUTHENTICATION_SUCCESS);
         TaraSession.LoginRequestInfo lri = new TaraSession.LoginRequestInfo();
         TaraSession.MetaData md = new TaraSession.MetaData();
         TaraSession.Client client = new TaraSession.Client();

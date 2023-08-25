@@ -28,8 +28,10 @@ import java.util.List;
 import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
 import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.WEBAUTHN_AUTHENTICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.WEBAUTHN_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_MID_STATUS_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_STATUS_CANCELED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
@@ -39,8 +41,8 @@ import static java.util.EnumSet.of;
 @Validated
 @Controller
 class AuthAcceptController {
-    private static final EnumSet<TaraAuthenticationState> ALLOWED_STATES = of(AUTHENTICATION_SUCCESS, NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED);
-    private static final EnumSet<TaraAuthenticationState> OIDC_AUTH_ACCEPT_STATES = of(NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED);
+    private static final EnumSet<TaraAuthenticationState> ALLOWED_STATES = of(AUTHENTICATION_SUCCESS, WEBAUTHN_AUTHENTICATION_COMPLETED, NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED);
+    private static final EnumSet<TaraAuthenticationState> OIDC_AUTH_ACCEPT_STATES = of(WEBAUTHN_AUTHENTICATION_COMPLETED, NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED);
     private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.TARA_HYDRA, this.getClass());
 
     @Autowired
@@ -62,8 +64,9 @@ class AuthAcceptController {
         if (OIDC_AUTH_ACCEPT_STATES.contains(taraSession.getState())) {
             if (isLegalPersonAttributesRequested(taraSession)) {
                 return new RedirectView("/auth/legalperson/init");
+            } else {
+                return acceptLoginRequest(taraSession);
             }
-            return acceptLoginRequest(taraSession);
         } else if (taraSession.getState() == AUTHENTICATION_SUCCESS && taraSession.getLoginRequestInfo().getLoginVerifierRedirectUrl() != null) {
             return new RedirectView(taraSession.getLoginRequestInfo().getLoginVerifierRedirectUrl());
         } else {
@@ -85,7 +88,11 @@ class AuthAcceptController {
         requestLogger.logResponse(response);
 
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && response.getBody().getRedirectUrl() != null) {
-            taraSession.setState(AUTHENTICATION_SUCCESS);
+            if (taraSession.getState().equals(WEBAUTHN_AUTHENTICATION_COMPLETED)) {
+                taraSession.setState(WEBAUTHN_AUTHENTICATION_SUCCESS);
+            } else {
+                taraSession.setState(AUTHENTICATION_SUCCESS);
+            }
             String loginVerifierRedirectUrl = response.getBody().getRedirectUrl();
             loginRequestInfo.setLoginVerifierRedirectUrl(loginVerifierRedirectUrl);
             loginRequestInfo.setLoginChallengeExpired(true);
