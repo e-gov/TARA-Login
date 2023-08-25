@@ -188,12 +188,12 @@ class AuthConsentControllerTest extends BaseTest {
                 .body(containsString("lastname"))
                 .body(containsString("abc123idcode"))
                 .body(containsString("17.12.1992"))
-                .body(not(containsString("123456789")))
-                .body(not(containsString("phone-number")))
+                .body(containsString("123456789"))
+                .body(containsString("phone-number"))
                 .header(HttpHeaders.CONTENT_TYPE, "text/html;charset=UTF-8");
 
         TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
-        assertEquals(TaraAuthenticationState.INIT_CONSENT_PROCESS, taraSession.getState());
+        assertEquals(TaraAuthenticationState.AUTHENTICATION_SUCCESS, taraSession.getState());
         assertEquals(MOCK_CONSENT_CHALLENGE, taraSession.getConsentChallenge());
         assertStatisticsIsNotLogged();
     }

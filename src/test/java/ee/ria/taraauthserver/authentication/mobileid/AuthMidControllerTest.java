@@ -639,7 +639,6 @@ class AuthMidControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(200);
 
-        String sessionId = sessionFilter.getSession().getId();
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
