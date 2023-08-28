@@ -57,7 +57,7 @@ import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
 import static ee.ria.taraauthserver.error.ErrorCode.ERROR_GENERAL;
 import static ee.ria.taraauthserver.error.ErrorCode.WEBAUTHN_INTERNAL_ERROR;
 import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.WEBAUTHN_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.security.NoSessionCreatingHttpSessionCsrfTokenRepository.CSRF_TOKEN_ATTR_NAME;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
@@ -193,7 +193,7 @@ public class WebauthnCallbackController {
             throw new IllegalStateException("Response body from Webauthn client is null.");
         }
         TaraSession taraSession = requireNonNull(session.getAttribute(TARA_SESSION));
-        taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
+        taraSession.setState(WEBAUTHN_AUTHENTICATION_COMPLETED);
         TaraSession.WebauthnAuthenticationResult authenticationResult = new TaraSession.WebauthnAuthenticationResult();
         String dateOfBirth = response.getAttributes().getDateOfBirth();
         authenticationResult.setFirstName(response.getAttributes().getFirstName());

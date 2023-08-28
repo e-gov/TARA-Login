@@ -165,7 +165,7 @@ class AuthConsentControllerTest extends BaseTest {
                 .body("message", equalTo("Ebakorrektne päring. Vale seansi staatus."))
                 .body("error", equalTo("Bad Request"));
 
-        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [AUTHENTICATION_SUCCESS]");
+        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [AUTHENTICATION_SUCCESS, WEBAUTHN_AUTHENTICATION_SUCCESS]");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", format("StatisticsLogger.SessionStatistics(service=null, clientId=null, clientNotifyUrl=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=true, country=EE, idCode=identifier123, subject=abc123idcode, firstName=firstname, lastName=lastname, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, authenticationSessionId=%s, errorCode=SESSION_STATE_INVALID)", session.getId()));
     }
 
@@ -188,12 +188,12 @@ class AuthConsentControllerTest extends BaseTest {
                 .body(containsString("lastname"))
                 .body(containsString("abc123idcode"))
                 .body(containsString("17.12.1992"))
-                .body(not(containsString("123456789")))
-                .body(not(containsString("phone-number")))
+                .body(containsString("123456789"))
+                .body(containsString("phone-number"))
                 .header(HttpHeaders.CONTENT_TYPE, "text/html;charset=UTF-8");
 
         TaraSession taraSession = sessionRepository.findById(session.getId()).getAttribute(TARA_SESSION);
-        assertEquals(TaraAuthenticationState.INIT_CONSENT_PROCESS, taraSession.getState());
+        assertEquals(TaraAuthenticationState.AUTHENTICATION_SUCCESS, taraSession.getState());
         assertEquals(MOCK_CONSENT_CHALLENGE, taraSession.getConsentChallenge());
         assertStatisticsIsNotLogged();
     }
