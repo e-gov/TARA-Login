@@ -22,8 +22,10 @@ import java.util.Optional;
 
 import static ee.ria.taraauthserver.error.ErrorCode.INTERNAL_ERROR;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_CANCELED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.WEBAUTHN_AUTHENTICATION_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.WEBAUTHN_AUTHENTICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.EXTERNAL_TRANSACTION;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_MID_STATUS_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_STATUS_CANCELED;
@@ -146,9 +148,11 @@ public class StatisticsLogger {
 
     private Optional<TaraAuthenticationState> getStateToLog(TaraSession taraSession) {
         TaraAuthenticationState state = taraSession.getState();
-        if (AUTHENTICATION_SUCCESS == state || AUTHENTICATION_FAILED == state) {
+        if (AUTHENTICATION_SUCCESS == state || WEBAUTHN_AUTHENTICATION_SUCCESS == state) {
+            return of(AUTHENTICATION_SUCCESS);
+        } else if (AUTHENTICATION_FAILED == state) {
             return of(state);
-        } else if (AUTHENTICATION_CANCELED == state || POLL_MID_STATUS_CANCELED == state || POLL_SID_STATUS_CANCELED == state) {
+        } else if (AUTHENTICATION_CANCELED == state || WEBAUTHN_AUTHENTICATION_CANCELED == state || POLL_MID_STATUS_CANCELED == state || POLL_SID_STATUS_CANCELED == state) {
             return of(AUTHENTICATION_CANCELED);
         } else {
             return empty();
