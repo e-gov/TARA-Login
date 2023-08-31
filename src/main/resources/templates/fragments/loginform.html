@@ -104,11 +104,15 @@
                                     </div>
                                     <input type="text" inputmode="numeric" id="mid-personal-code" class="form-control"
                                            name="idCode" autocomplete="username">
+                                    <div class="input-group-append d-flex">
+                                        <img src="/assets/warning.svg" class="invalid-feedback-warning is-hidden"
+                                             alt="warning">
+                                    </div>
                                 </div>
-                                <div class="invalid-feedback is-hidden"
-                                     th:text="#{message.common.personal-code-missing}"></div>
-                                <div class="invalid-feedback is-hidden"
-                                     th:text="#{message.common.personal-code-invalid}"></div>
+                                <div class="invalid-feedback is-hidden personal-code-short"
+                                     th:utext="#{message.common.personal-code-short}"></div>
+                                <div class="invalid-feedback is-hidden personal-code-invalid"
+                                     th:utext="#{message.common.personal-code-invalid}"></div>
                             </td>
                         </tr>
                         <tr>
@@ -124,11 +128,15 @@
                                     </div>
                                     <input type="tel" maxlength="15" id="mid-phone-number" class="form-control"
                                            name="telephoneNumber" autocomplete="tel">
+                                    <div class="input-group-append d-flex">
+                                        <img src="/assets/warning.svg" class="invalid-feedback-warning is-hidden"
+                                             alt="warning">
+                                    </div>
                                 </div>
-                                <div class="invalid-feedback is-hidden"
-                                     th:text="#{message.common.phone-number-missing}"></div>
-                                <div class="invalid-feedback is-hidden"
-                                     th:text="#{message.common.phone-number-invalid}"></div>
+                                <div class="invalid-feedback is-hidden phone-number-short"
+                                     th:utext="#{message.common.phone-number-short}"></div>
+                                <div class="invalid-feedback is-hidden phone-number-invalid"
+                                     th:utext="#{message.common.phone-number-invalid}"></div>
                             </td>
                         </tr>
                         <tr>
@@ -164,11 +172,15 @@
                                     </div>
                                     <input type="text" inputmode="numeric" id="sid-personal-code"
                                            class="form-control" name="idCode" autocomplete="username">
+                                    <div class="input-group-append d-flex">
+                                        <img src="/assets/warning.svg" class="invalid-feedback-warning is-hidden"
+                                             alt="warning">
+                                    </div>
                                 </div>
-                                <div class="invalid-feedback is-hidden"
-                                     th:text="#{message.common.personal-code-missing}"></div>
-                                <div class="invalid-feedback is-hidden"
-                                     th:text="#{message.common.personal-code-invalid}"></div>
+                                <div class="invalid-feedback is-hidden personal-code-short"
+                                     th:utext="#{message.common.personal-code-short}"></div>
+                                <div class="invalid-feedback is-hidden personal-code-invalid"
+                                     th:utext="#{message.common.personal-code-invalid}"></div>
                             </td>
                         </tr>
                         <tr>
@@ -201,7 +213,7 @@
                                             th:text="${#messages.msg('label.countries.' + country)}"></option>
                                 </select>
                                 <div class="invalid-feedback is-hidden"
-                                     th:text="#{message.eu-citizen.select-country}"></div>
+                                     th:utext="#{message.eu-citizen.select-country}"></div>
                             </td>
                         </tr>
                         <tr>

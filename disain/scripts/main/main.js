@@ -49,8 +49,9 @@ jQuery(function ($) {
 		// Clear alert and feedback messages
 		hideAlert($('.c-tab-login__content[data-tab="' + active + '"] [role="alert"]'));
 		hideFeedback($('.c-tab-login__content[data-tab="' + active + '"] .invalid-feedback'));
+		hideFeedback($('.c-tab-login__content[data-tab="' + active + '"] .invalid-feedback-warning'));
 		$('.c-tab-login__content[data-tab="' + active + '"] .input-group').removeClass('is-invalid');
-		$('.c-tab-login__content[data-tab="' + active + '"] .selectize-input').removeClass('is-invalid');
+		$('.c-tab-login__content[data-tab="' + active + '"] .ts-input').removeClass('is-invalid');
 
 		$('.c-tab-login__nav-item').removeClass('is-active');
 		deActivateTab($('.c-tab-login__nav-link'), $('.c-tab-login__content'), $('.c-tab-login__warning'));
@@ -122,56 +123,72 @@ jQuery(function ($) {
         });
 	}
 	
-	function validateEstonianIdCode(value){
-		return value && /^[0-9]{11}$/.test(value);
-	}
-	
-	function validateEstonianPhoneNumber(value){
-		return value && /^[0-9]{3,15}$/.test(value);
-	}
-	
-	function validateFormFieldValue(field, testFunc){
-		if (testFunc(field.val())) {
-			field.removeClass('is-invalid');
-			field.parent('div.input-group').removeClass('is-invalid');
-			hideFeedback(field.parents('td').children('div.invalid-feedback'));
-			return true;
-		} else {
-			field.addClass('is-invalid');
-			field.parent('div.input-group').addClass('is-invalid');
-			
-			var errorIndex = field.val() ? 1 : 0;
-			field.parents('td').children('div.invalid-feedback').each(function(index){
-				if (index === errorIndex) {
-				    showFeedback($(this));
-				    // Refresh text for screen reader to read out message
-				    $(this).text($(this).text());
-				} else {
-				    hideFeedback($(this));
-				}
-			});
-			
+	function validateEstonianIdCode(field) {
+		let value = field.val();
+		if (value.length < 11) {
+			displayFormFieldError(field, "personal-code-short");
+			return false;
+		} else if (!(/^[0-9]{11}$/.test(value))) {
+			displayFormFieldError(field, "personal-code-invalid");
 			return false;
 		}
+		clearFormFieldErrors(field)
+		return true;
 	}
 	
-	function validateSelectizeValue(selection, testFunc){
+	function validateEstonianPhoneNumber(field) {
+		let value = field.val();
+		if (value.length < 3) {
+			displayFormFieldError(field, "phone-number-short");
+			return false;
+		} else if (!(/^[0-9]{3,15}$/.test(value))) {
+			displayFormFieldError(field, "phone-number-invalid");
+			return false;
+		}
+		clearFormFieldErrors(field)
+		return true;
+	}
+
+	function clearFormFieldErrors(field) {
+		field.removeClass('is-invalid');
+		field.parent('.input-group').removeClass('is-invalid');
+		hideFeedback(field.parents('td').children('.invalid-feedback'));
+		hideFeedback(field.siblings('.input-group-append').children('.invalid-feedback-warning'));
+	}
+
+	function displayFormFieldError(field, errorElementClass) {
+		field.addClass('is-invalid');
+		field.parent('.input-group').addClass('is-invalid');
+
+		field.parents('td').children('.invalid-feedback').each(function() {
+			if ($(this).hasClass(errorElementClass)) {
+				showFeedback($(this));
+				showFeedback(field.siblings('.input-group-append').children('.invalid-feedback-warning'));
+				// Refresh text for screen reader to read out message
+				$(this).html($(this).html());
+			} else {
+				hideFeedback($(this));
+			}
+		});
+	}
+	
+	function validateSelectizeValue(selection, testFunc) {
 		if (testFunc(selection.val())) {
-			selection.parent('td').find('.selectize-input').removeClass('is-invalid');
+			selection.parent('td').find('.ts-input').removeClass('is-invalid');
 			hideFeedback(selection.parent('td').children('div.invalid-feedback'));
 			return true;
 		} else {
-			selection.parent('td').find('.selectize-input').addClass('is-invalid');
+			selection.parent('td').find('.ts-input').addClass('is-invalid');
 			var feedbackDiv = selection.parent('td').children('div.invalid-feedback');
 			showFeedback(feedbackDiv);
 			// Refresh text for screen reader to read out message
-            feedbackDiv.text(feedbackDiv.text());
+            feedbackDiv.html(feedbackDiv.html());
 			return false;
 		}
 	}
 
 	// ID-card form submit
-	$('#idCardForm button.c-btn--primary').on('click', async function(event){
+	$('#idCardForm button.c-btn--primary').on('click', async function(event) {
 		const csrfToken = document.querySelector("input[name='_csrf']").getAttribute('value');
 
 		activateIdCardView('waitPopup');
@@ -329,8 +346,8 @@ jQuery(function ($) {
 		$(this).prop('disabled', true);
 		
 		var valid = true;
-		valid = validateFormFieldValue($('#mid-personal-code'), validateEstonianIdCode) && valid;
-		valid = validateFormFieldValue($('#mid-phone-number'), validateEstonianPhoneNumber) && valid;
+		valid = validateEstonianIdCode($('#mid-personal-code')) && valid;
+		valid = validateEstonianPhoneNumber($('#mid-phone-number')) && valid;
 		
 		if (valid) {
 			$('#mobileIdForm').submit();
@@ -346,11 +363,7 @@ jQuery(function ($) {
 			event.preventDefault();
 		}
 	});
-	
-	// Mobile-ID fields validate on focus
-	$('#mobileIdForm input.form-control').on('focus', function(){
-		validateFormFieldValue($(this), function(){return true;});
-	});
+
 
 	// Smart-ID limit max length
 	$('#smartIdForm input#sid-personal-code.form-control').on('keypress change input', function(event) {
@@ -366,7 +379,7 @@ jQuery(function ($) {
 		if ($(this).prop('disabled')) return;
 		$(this).prop('disabled', true);
 		
-		if (validateFormFieldValue($('#sid-personal-code'), validateEstonianIdCode)) {
+		if (validateEstonianIdCode($('#sid-personal-code'))) {
 			$('#smartIdForm').submit();
 		} else {
 			$(this).prop('disabled', false);
@@ -380,11 +393,7 @@ jQuery(function ($) {
 			event.preventDefault();
 		}
 	});
-	
-	// Smart-ID fields validate on focus
-	$('#smartIdForm input.form-control').on('focus', function(){
-		validateFormFieldValue($(this), function(){return true;});
-	});
+
 
 	// Smart-ID status polling form - submit cancel
     $('#authenticationCheckForm a.c-btn--from-link').on('click', function(event){

@@ -63,7 +63,7 @@
   border: 2px solid #5d6071;
   border-radius: 10px;
   &.is-invalid {
-    border-color: #fc7376;
+    border-color: #d73e3e;
   }
 }
 .input-group {
@@ -78,7 +78,7 @@
     border: 0;
   }
   &.is-invalid {
-    border-color: #fc7376;
+    border-color: #d73e3e;
   }
 }
 .input-group-prepend {
@@ -90,24 +90,23 @@
   border-radius: 10px 0 0 10px;
 }
 .invalid-feedback {
-  margin-top: 17px;
-  padding: 12px 20px;
-  color: #34394c;
-  background-color: #ffb9b6;
-  box-shadow: 0 5px 8px 1px rgba(57, 68, 77, 0.35);
-  border-radius: 10px;
+  margin-top: 10px;
+  color: #d73e3e;
   position: relative;
-  &:before {
-    content: "";
-    width: 0;
-    height: 0;
-    border-left: 12px solid transparent;
-    border-right: 12px solid transparent;
-    border-bottom: 12px solid #ffb9b6;
-    position: absolute;
-    top: -12px;
-    left: 20px;
+  font-size: 16px;
+  &.is-hidden {
+    display: none;
   }
+}
+
+.input-group-append {
+  align-items: center;
+}
+
+.invalid-feedback-warning {
+  height: 25px;
+  margin-right: 10px;
+  color: #d73e3e;
   &.is-hidden {
     display: none;
   }
