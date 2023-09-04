@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static ee.ria.taraauthserver.error.ErrorCode.EIDAS_INCORRECT_LOA;
 import static ee.ria.taraauthserver.error.ErrorCode.EIDAS_USER_CONSENT_NOT_GIVEN;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_EXPIRED;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_REVOKED;
@@ -44,6 +45,7 @@ import static ee.ria.taraauthserver.error.ErrorCode.MID_SIM_ERROR;
 import static ee.ria.taraauthserver.error.ErrorCode.MID_TRANSACTION_EXPIRED;
 import static ee.ria.taraauthserver.error.ErrorCode.MID_USER_CANCEL;
 import static ee.ria.taraauthserver.error.ErrorCode.NOT_MID_CLIENT;
+import static ee.ria.taraauthserver.error.ErrorCode.NO_VALID_AUTHMETHODS_AVAILABLE;
 import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
 import static ee.ria.taraauthserver.error.ErrorCode.SESSION_STATE_INVALID;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_DOCUMENT_UNUSABLE;
@@ -101,7 +103,9 @@ public class ErrorAttributes extends DefaultErrorAttributes {
             INVALID_REQUEST,
             INVALID_CSRF_TOKEN,
             INVALID_LOGIN_CHALLENGE,
-            INVALID_GOVSSO_LOGIN_CHALLENGE
+            INVALID_GOVSSO_LOGIN_CHALLENGE,
+            NO_VALID_AUTHMETHODS_AVAILABLE,
+            EIDAS_INCORRECT_LOA
     );
 
     @Override
