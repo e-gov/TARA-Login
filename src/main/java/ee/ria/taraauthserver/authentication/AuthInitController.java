@@ -101,13 +101,16 @@ public class AuthInitController {
 
         newTaraSession.setAllowedAuthMethods(allowedAuthenticationMethodsList);
 
-        if (language == null)
-            RequestUtils.setLocale(getDefaultOrRequestedLocale(newTaraSession));
+        if (language == null) {
+            language = getDefaultOrRequestedLocale(newTaraSession);
+            RequestUtils.setLocale(language);
+        }
         if (eidasOnlyWithCountryRequested(loginRequestInfo)) {
             model.addAttribute("country", getAllowedEidasCountryCode(loginRequestInfo));
             return "redirectToEidasInit";
         } else {
-            model.addAttribute("selfServiceAuthUrl", govSsoConfigurationProperties.getSelfServiceUrl());
+            model.addAttribute("selfServiceAuthUrl",
+                    govSsoConfigurationProperties.getSelfServiceUrl() + "?lang=" + language);
             return "loginView";
         }
     }

@@ -13,6 +13,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -55,6 +57,9 @@ class AuthInitControllerTest extends BaseTest {
 
     @Autowired
     private EidasConfigurationProperties eidasConfigurationProperties;
+
+    @Autowired
+    private AuthConfigurationProperties.GovSsoConfigurationProperties govSsoConfigurationProperties;
 
     @Test
     @Tag(value = "AUTH_INIT_ENDPOINT")
@@ -277,6 +282,37 @@ class AuthInitControllerTest extends BaseTest {
         assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"govSsoClientId\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"},\"smartid_settings\":{\"relying_party_UUID\":\"testRelyingPartyId123\",\"relying_party_name\":\"testRelyingPartyName\",\"should_use_additional_verification_code_check\":false}}},\"scope\":\"idcard mid\"},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"low\"],\"ui_locales\":[]},\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&govsso_login_challenge=abcdeff098aadfccabcdeff098aadfcc&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"idcard\",\"mid\"]}");
         assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "GOVSSO_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdeff098aadfccabcdeff098aadfcc\",\"client\":{\"client_id\":\"govSsoDemo\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"logo\":\"[8] chars\",\"name_translations\":{\"en\":\"govsso test client en\",\"et\":\"govsso test client et\",\"ru\":\"govsso test client ru\"},\"short_name_translations\":{\"en\":\"govsso short test client en\",\"et\":\"govsso short test client et\",\"ru\":\"govsso short test client ru\"}}},\"scope\":\"mid idcard eidas\"},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"high\"],\"ui_locales\":[\"zu\",\"fi\",\"Ru\",\"ET\",\"en\"]},\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"openid\",\"mid\",\"idcard\",\"eidas\"]}");
         assertStatisticsIsNotLogged();
+    }
+
+    @SneakyThrows
+    @ParameterizedTest
+    @ValueSource(strings = {"et","en","ru"})
+    @Tag(value = "AUTH_INIT_GOVSSO_GET_OIDC_REQUEST")
+    @Tag(value = "AUTH_INIT_GOVSSO_VIEW")
+    void authInit_Ok_requestMadeFromGovSsoClient_allLanguages( String language) {
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_with_govsso_hydra_parameters.json")));
+
+        govSsoWireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_GOVSSO_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/govsso_mock_response.json")));
+
+        given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init?lang=" + language)
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
+                .header(HttpHeaders.CONTENT_LANGUAGE, language)
+                .body(containsString("class=\"detailed-instruction-line detailed-session-management\""))
+                .body(containsString(govSsoConfigurationProperties.getSelfServiceUrl() + "?lang=" + language));
     }
 
     @Test
