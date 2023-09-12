@@ -79,11 +79,6 @@ tara:
       truststore-type: PKCS12
       truststore-password: changeit
       ocsp:
-        - issuer-cn: TEST of ESTEID-SK 2011
-          url: http://aia.sk.ee/esteid2011
-          accepted-clock-skew: 5
-          response-lifetime: 60
-          responder-certificate-cn: TEST_of_ESTEID-SK_2011.crt
 
         - issuer-cn: TEST of ESTEID-SK 2015
           url: https://localhost:9877/esteid2015
@@ -97,7 +92,7 @@ tara:
 
       fallback-ocsp:
         - url: https://localhost:9877/ocsp
-          issuer-cn: TEST of ESTEID-SK 2011, TEST of ESTEID-SK 2015, TEST of ESTEID2018
+          issuer-cn: TEST of ESTEID-SK 2015, TEST of ESTEID2018
     mobile-id:
       enabled: true
       level-of-assurance: HIGH

@@ -220,7 +220,7 @@ Each OCSP configuration can contain the following set of properties:
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `tara.auth-methods.id-card.ocsp[0].issuer-cn` | Yes | Required issuer CN. Example `TEST of ESTEID-SK 2011, TEST of ESTEID-SK 2015` |
+| `tara.auth-methods.id-card.ocsp[0].issuer-cn` | Yes | Required issuer CN. Example `TEST of ESTEID-SK 2015` |
 | `tara.auth-methods.id-card.ocsp[0].url` | Yes | Ocsp url. Example `http://aia.demo.sk.ee/esteid2018` |
 | `tara.auth-methods.id-card.ocsp[0].nonce-disabled` | No | Determines whether the Ocsp nonce extension is enabled. When enabled a random nonce is sent with the OCSP request and verified in response. Default `false` |
 | `tara.auth-methods.id-card.ocsp[0].accepted-clock-skew-in-seconds` | No | Max clock skew when checking Ocsp response age. Default `2` |
@@ -244,11 +244,6 @@ tara:
       truststore-type: PKCS12
       truststore-password: changeit
       ocsp:
-        - issuer-cn: TEST of ESTEID-SK 2011
-          url: http://aia.sk.ee/esteid2011
-          nonce-disabled: true          
-          responder-certificate-cn: TEST_of_ESTEID-SK_2011.crt
-
         - issuer-cn: TEST of ESTEID-SK 2015        
           url: https://localhost:9877/esteid2015
           nonce-disabled: true
@@ -271,9 +266,9 @@ tara:
       truststore-type: PKCS12
       truststore-password: changeit
       ocsp:
-        - issuer-cn: ESTEID-SK 2011, ESTEID-SK 2015, ESTEID2018
+        - issuer-cn: ESTEID-SK 2015, ESTEID2018
           url: http://ocsp.sk.ee/          
-          responder-certificate-cn: SK OCSP RESPONDER 2011       
+          responder-certificate-cn: SK OCSP RESPONDER 2015       
 ````
 
 Table 1.5.5 - Configuring fallback OCSP service(s)
@@ -308,14 +303,6 @@ tara:
       truststore-type: PKCS12
       truststore-password: changeit
       ocsp:
-        - issuer-cn: TEST of ESTEID-SK 2011
-          url: http://aia.demo.sk.ee/esteid2011
-          nonce-disabled: true
-        - issuer-cn: ESTEID-SK 2011
-          url: http://aia.demo.sk.ee/esteid2011
-          nonce-disabled: true
-          responder-certificate-cn: TEST of KLASS3-SK 2010
-
         - issuer-cn: TEST of ESTEID-SK 2015        
           url: https://aia.demo.sk.ee/esteid2015
           nonce-disabled: true
@@ -332,9 +319,9 @@ tara:
           responder-certificate-cn: TEST of KLASS3-SK 2010
           
       fallback-ocsp:
-        - issuer-cn: TEST of ESTEID-SK 2011, TEST of ESTEID-SK 2015, TEST of ESTEID2018, ESTEID-SK 2011, ESTEID-SK 2015, ESTEID2018
+        - issuer-cn: TEST of ESTEID-SK 2015, TEST of ESTEID2018, ESTEID-SK 2015, ESTEID2018
           url: http://ocsp.sk.ee/          
-          responder-certificate-cn: SK OCSP RESPONDER 2011  
+          responder-certificate-cn: SK OCSP RESPONDER 2015  
 ````
 
 <a name="eidas_conf"></a>

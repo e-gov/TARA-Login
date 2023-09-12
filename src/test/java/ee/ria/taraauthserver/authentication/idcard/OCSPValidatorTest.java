@@ -120,11 +120,9 @@ public class OCSPValidatorTest {
             WireMockConfiguration.wireMockConfig().dynamicPort().extensions(ocspResponseTransformer)
     );
 
-    private static final String MOCK_ISSUER_CERT_2011_PATH = "file:src/test/resources/ocsp/TEST_of_ESTEID-SK_2011.crt";
     private static final String MOCK_ISSUER_CERT_2015_PATH = "file:src/test/resources/ocsp/TEST_of_ESTEID-SK_2015.crt";
     private static final String MOCK_ISSUER_CERT_2018_PATH = "file:src/test/resources/ocsp/TEST_of_ESTEID2018.crt";
 
-    private static final String MOCK_USER_CERT_2011_PATH = "file:src/test/resources/id-card/48812040138(TEST_of_ESTEID-SK_2011).pem";
     private static final String MOCK_USER_CERT_2015_PATH = "file:src/test/resources/id-card/37101010021(TEST_of_ESTEID-SK_2015).pem";
     private static final String MOCK_USER_CERT_2018_PATH = "file:src/test/resources/id-card/38001085718(TEST_of_ESTEID2018).pem";
 
@@ -176,7 +174,6 @@ public class OCSPValidatorTest {
 
         Mockito.when(trustedCertificates.get("TEST of ESTEID2018")).thenReturn(loadCertificateFromResource(MOCK_ISSUER_CERT_2018_PATH));
         Mockito.when(trustedCertificates.get("TEST of ESTEID-SK 2015")).thenReturn(loadCertificateFromResource(MOCK_ISSUER_CERT_2015_PATH));
-        Mockito.when(trustedCertificates.get("TEST of ESTEID-SK 2011")).thenReturn(loadCertificateFromResource(MOCK_ISSUER_CERT_2011_PATH));
 
         responderCert = generateOcspResponderCertificate(
                 "C=EE,O=AS Sertifitseerimiskeskus,OU=OCSP,CN=ESTEID2018 AIA OCSP RESPONDER 201903,E=pki@sk.ee",
@@ -595,7 +592,7 @@ public class OCSPValidatorTest {
 
         KeyPair certKeys = KeyPairGenerator.getInstance("RSA", BouncyCastleProvider.PROVIDER_NAME).generateKeyPair();
         X509Certificate ocspResponseSignCert = generateOcspResponderCertificate("C=EE,O=AS Sertifitseerimiskeskus,OU=OCSP,CN=ESTEID2018 AIA OCSP RESPONDER 201903,E=pki@sk.ee", certKeys, responderKeys, "CN=MOCK CA").getCertificate();
-        Mockito.when(trustedCertificates.get("MOCK CA")).thenReturn(loadCertificateFromResource(MOCK_ISSUER_CERT_2011_PATH));
+        Mockito.when(trustedCertificates.get("MOCK CA")).thenReturn(loadCertificateFromResource(MOCK_ISSUER_CERT_2015_PATH));
 
         setUpMockOcspResponse(MockOcspResponseParams.builder()
                 .ocspServer(mockOcspServer)
@@ -617,7 +614,7 @@ public class OCSPValidatorTest {
                     "must be issued by the authority that issued the user certificate. " +
                     "Expected issuer: 'CN=TEST of ESTEID2018, OID.2.5.4.97=NTREE-10747013, O=SK ID Solutions AS, C=EE', " +
                     "but the OCSP responder signing certificate " +
-                    "was issued by 'EMAILADDRESS=pki@sk.ee, CN=TEST of ESTEID-SK 2011, O=AS Sertifitseerimiskeskus, C=EE'"));
+                    "was issued by 'CN=TEST of ESTEID-SK 2015, OID.2.5.4.97=NTREE-10747013, O=AS Sertifitseerimiskeskus, C=EE'"));
         }
 
     }
@@ -648,7 +645,7 @@ public class OCSPValidatorTest {
     @Test
     @Tag(value = "OCSP_CONFIGURATION")
     public void checkCertShouldThrowExceptionWhenNoOcspConfigurationCouldBeResolved() throws Exception {
-        X509Certificate userCert = loadCertificateFromResource(MOCK_USER_CERT_2011_PATH);
+        X509Certificate userCert = loadCertificateFromResource(MOCK_USER_CERT_2015_PATH);
 
         Mockito.when(ocspConfigurationResolver.resolve(Mockito.any())).thenReturn(null);
 
@@ -686,7 +683,7 @@ public class OCSPValidatorTest {
     @Test
     @Tag(value = "OCSP_RESPONSE_VALID_SIG")
     public void checkCertShouldThrowExceptionWhenUserCertNotSignedByTrustedCa() throws Exception {
-        Mockito.when(trustedCertificates.get("MOCK CA")).thenReturn(loadCertificateFromResource(MOCK_ISSUER_CERT_2011_PATH));
+        Mockito.when(trustedCertificates.get("MOCK CA")).thenReturn(loadCertificateFromResource(MOCK_ISSUER_CERT_2015_PATH));
         Exception expectedEx = assertThrows(OCSPIllegalStateException.class, () -> {
             ocspValidator.checkCert(generateOcspResponderCertificate("CN=\"TEST\"", responderKeys, responderKeys, "CN=MOCK CA").getCertificate());
         });

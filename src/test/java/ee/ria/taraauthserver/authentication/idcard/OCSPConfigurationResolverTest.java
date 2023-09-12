@@ -192,7 +192,7 @@ public class OCSPConfigurationResolverTest {
     public void resolveShouldSucceedWithASingleFallbackOcsp() {
         Mockito.when(idCardConfigurationProperties.getFallbackOcsp()).thenReturn(of(
                 getMockOcspConfiguration(
-                        of("TEST of ESTEID-SK 2011", "TEST of ESTEID-SK 2015", "TEST of ESTEID2018"),
+                        of( "TEST of ESTEID-SK 2015", "TEST of ESTEID2018"),
                         "http://localhost:1234/ocsp",
                         false, 3, 901, 1111, 2222,
                         "TEST_of_SK_OCSP_RESPONDER_2011.pem")
@@ -211,7 +211,7 @@ public class OCSPConfigurationResolverTest {
         assertEquals(DEFAULT_CONNECT_TIMEOUT_IN_MILLISECONDS, conf.get(0).getConnectTimeoutInMilliseconds());
         assertEquals(DEFAULT_READ_TIMEOUT_IN_MILLISECONDS, conf.get(0).getReadTimeoutInMilliseconds());
         assertEquals("http://localhost:1234/ocsp", conf.get(1).getUrl());
-        assertEquals(of("TEST of ESTEID-SK 2011", "TEST of ESTEID-SK 2015", "TEST of ESTEID2018"), conf.get(1).getIssuerCn());
+        assertEquals(of("TEST of ESTEID-SK 2015", "TEST of ESTEID2018"), conf.get(1).getIssuerCn());
         assertFalse(conf.get(1).isNonceDisabled());
         assertEquals("TEST_of_SK_OCSP_RESPONDER_2011.pem", conf.get(1).getResponderCertificateCn());
         assertEquals(3, conf.get(1).getAcceptedClockSkewInSeconds());
@@ -225,11 +225,6 @@ public class OCSPConfigurationResolverTest {
     @Tag(value = "OCSP_FAILOVER_CONF")
     public void resolveShouldSucceedWithMultipleFallbackOcspsAndSelectSingleRelevantConf() {
         Mockito.when(idCardConfigurationProperties.getFallbackOcsp()).thenReturn(of(
-                getMockOcspConfiguration(
-                        of("TEST of ESTEID-SK 2011"),
-                        "http://localhost:1234/ocsp",
-                        false, 3, 901, 1111, 2222,
-                        "TEST_of_SK_OCSP_RESPONDER_2011.pem"),
                 getMockOcspConfiguration(
                         of("TEST of ESTEID-SK 2015"),
                         "http://localhost:1234/ocsp",
