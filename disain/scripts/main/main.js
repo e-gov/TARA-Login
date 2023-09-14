@@ -424,11 +424,13 @@ jQuery(function ($) {
     function showFeedback(feedback) {
         feedback.attr('role', 'alert');
         feedback.removeClass('is-hidden');
+		feedback.removeAttr('aria-hidden');
     }
 
     function hideFeedback(feedback) {
         feedback.removeAttr('role');
         feedback.addClass('is-hidden');
+		feedback.attr('aria-hidden', true);
     }
 
 	async function detectWebEid() {
