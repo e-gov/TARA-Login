@@ -642,7 +642,7 @@ class AuthInitControllerTest extends BaseTest {
                 .body("message", equalTo("Autentimispäring ei ole korrektne. Soovitud autentimistasemele vastavaid autentimisvahendeid pole antud infosüsteemile lubatud."))
                 .body("error", equalTo("Bad Request"))
                 .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
-                .body("reportable", equalTo(true));
+                .body("reportable", equalTo(false));
 
         assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
         assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"openIdDemo\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"}}},\"scope\":\"idcard mid banklink\"},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"high\"],\"ui_locales\":[]},\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"idcard\",\"ldap\",\"banklink\"]}");
