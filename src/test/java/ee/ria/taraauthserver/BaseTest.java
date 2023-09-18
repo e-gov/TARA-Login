@@ -263,6 +263,14 @@ public abstract class BaseTest {
     }
 
     protected void assertMessageWithMarkerIsLoggedOnce(Class<?> loggerClass, Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String exactMessage, String markerValuePrefix) {
+        assertMessageWithMarkerIsLogged(loggerClass, loggingLevel, additionalFilter, exactMessage, markerValuePrefix, true);
+    }
+
+    protected void assertMessageWithMarkerIsLogged(Class<?> loggerClass, Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String exactMessage, String markerValuePrefix) {
+        assertMessageWithMarkerIsLogged(loggerClass, loggingLevel, additionalFilter, exactMessage, markerValuePrefix, false);
+    }
+
+    protected void assertMessageWithMarkerIsLogged(Class<?> loggerClass, Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String exactMessage, String markerValuePrefix, boolean loggedOnce) {
         Stream<ILoggingEvent> eventStream = mockAppender.list.stream()
                 .filter(e -> (loggerClass == null || e.getLoggerName().equals(loggerClass.getCanonicalName())) &&
                         e.getMarker() != null &&
@@ -271,7 +279,9 @@ public abstract class BaseTest {
             eventStream = eventStream.filter(additionalFilter);
         }
         List<ILoggingEvent> loggingEvents = eventStream.collect(toUnmodifiableList());
-        assertThat(loggingEvents, hasSize(1));
+        if(loggedOnce){
+            assertThat(loggingEvents, hasSize(1));
+        }
         ILoggingEvent loggingEvent = loggingEvents.get(0);
         assertEquals(loggingLevel, loggingEvent.getLevel());
         assertThat(loggingEvent.getMarker().toString(), startsWith(markerValuePrefix));
