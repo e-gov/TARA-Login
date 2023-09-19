@@ -54,10 +54,10 @@
             </div>
         </div>
         <div class="detailed-instruction-block"
-             th:if="${@thymeleafSupport.getGovSsoLoginRequestInfo()} != null">
+             th:if="${@thymeleafSupport.getGovSsoLoginRequestInfo() != null && selfServiceUrl != null}">
             <div class="detailed-instruction">
                 <p class="detailed-instruction-line detailed-session-management"
-                   th:utext="#{label.sso.detailed_session_management(${selfServiceAuthUrl})}">
+                   th:utext="#{label.sso.detailed_session_management(${selfServiceUrl})}">
                 </p>
             </div>
         </div>

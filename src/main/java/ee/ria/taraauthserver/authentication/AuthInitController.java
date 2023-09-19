@@ -14,6 +14,7 @@ import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.RequestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.client.utils.URIBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -30,6 +31,7 @@ import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -109,9 +111,22 @@ public class AuthInitController {
             model.addAttribute("country", getAllowedEidasCountryCode(loginRequestInfo));
             return "redirectToEidasInit";
         } else {
-            model.addAttribute("selfServiceAuthUrl",
-                    govSsoConfigurationProperties.getSelfServiceUrl() + "?lang=" + language);
+            addSelfServiceUrlToModel(model, govSsoConfigurationProperties.getSelfServiceUrl(), language);
             return "loginView";
+        }
+    }
+
+    public void addSelfServiceUrlToModel(Model model, String selfServiceUrl, String language) {
+        try {
+            if(StringUtils.isNotBlank(selfServiceUrl)) {
+                model.addAttribute("selfServiceUrl",
+                        new URIBuilder(selfServiceUrl)
+                                .addParameter("lang", language)
+                                .build()
+                                .toString());
+            }
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Failed to build self service URL: " + e.getMessage(), e);
         }
     }
 

@@ -64,7 +64,6 @@ public class AuthConfigurationProperties {
     @ConfigurationProperties(prefix = "tara.govsso")
     public static class GovSsoConfigurationProperties {
 
-        @NotEmpty
         String selfServiceUrl;
     }
 
