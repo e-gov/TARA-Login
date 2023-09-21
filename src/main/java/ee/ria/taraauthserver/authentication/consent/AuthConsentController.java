@@ -6,6 +6,7 @@ import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
+import ee.ria.taraauthserver.utils.ThymeleafSupport;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
@@ -45,6 +46,9 @@ public class AuthConsentController {
     @Autowired
     private StatisticsLogger statisticsLogger;
 
+    @Autowired
+    private ThymeleafSupport thymeleafSupport;
+
     @GetMapping(value = "/auth/consent", produces = MediaType.TEXT_HTML_VALUE)
     public String authConsent(@RequestParam(name = "consent_challenge") @Size(max = 50)
                               @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed") String consentChallenge, Model model,
@@ -72,10 +76,13 @@ public class AuthConsentController {
             model.addAttribute("legalPersonName", legalPerson.getLegalName());
             model.addAttribute("legalPersonRegistryCode", legalPerson.getLegalPersonIdentifier());
         }
-        if (shouldEmailBeDisplayed(taraSession))
+        if (shouldEmailBeDisplayed(taraSession)) {
             model.addAttribute("email", taraSession.getAuthenticationResult().getEmail());
-        if (shouldPhoneNumberBeDisplayed(taraSession))
+        }
+        if (shouldPhoneNumberBeDisplayed(taraSession)) {
             model.addAttribute("phoneNumber", taraSession.getAuthenticationResult().getPhoneNumber());
+        }
+        model.addAttribute("serviceName", thymeleafSupport.getServiceName());
         return "consentView";
     }
 

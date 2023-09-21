@@ -5,8 +5,9 @@
         </div>
         <div class="c-tab-login__content-text">
             <div aria-level="2" role="heading">
-                <h2 th:utext="#{label.consent.header}"></h2>
+                <h2 th:utext="${#strings.isEmpty(serviceName) ? #messages.msg('label.consent.header') : #messages.msg('label.consent.header-with-short-name', serviceName)}"></h2>
             </div>
+            <p th:utext="${#strings.isEmpty(serviceName) ? #messages.msg('label.consent.information') : #messages.msg('label.consent.information-with-short-name', serviceName)}"></p>
             <div class="row data-table">
                 <div class="personal-info">
                     <div class="personal-info-label" th:utext="#{label.natural-person.given-name}"></div>
@@ -47,7 +48,6 @@
                          translate="no"></div>
                 </div>
             </div>
-            <p th:utext="${#messages.msg('label.consent.information', @thymeleafSupport.getServiceName())}"></p>
             <form class="consent-button c-form" method="POST"
                   th:action="@{/auth/consent/confirm(consent_given=true)}">
                 <button class="c-btn c-btn--primary" name="submit" th:text="#{label.consent.accept}" type="submit"
