@@ -13,12 +13,18 @@ public class PrettyDatesExpression {
 
     private static final String DATETIME_FORMAT_KEY = "format.datetime";
 
+    private static final String DATE_TEXT_FORMAT_KEY = "format.date.text";
+
     private static final String DATE_FORMAT_KEY = "format.date";
 
     private final MessageSource messageSource;
 
     public String dateTime(TemporalAccessor dateTime) {
         return getFormatter(DATETIME_FORMAT_KEY).format(dateTime);
+    }
+
+    public String dateText(TemporalAccessor dateText) {
+        return getFormatter(DATE_TEXT_FORMAT_KEY).format(dateText);
     }
 
     public String date(TemporalAccessor date) {
