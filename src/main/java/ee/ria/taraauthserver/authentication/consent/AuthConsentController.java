@@ -67,7 +67,7 @@ public class AuthConsentController {
 
     @NotNull
     private String createConsentView(Model model, TaraSession taraSession) {
-        model.addAttribute("idCode", taraSession.getAuthenticationResult().getIdCode());
+        model.addAttribute("subject", taraSession.getAuthenticationResult().getSubject());
         model.addAttribute("firstName", taraSession.getAuthenticationResult().getFirstName());
         model.addAttribute("lastName", taraSession.getAuthenticationResult().getLastName());
         model.addAttribute("dateOfBirth", taraSession.getAuthenticationResult().getDateOfBirth());
