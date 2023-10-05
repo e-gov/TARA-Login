@@ -185,7 +185,7 @@ class AuthConsentControllerTest extends BaseTest {
                 .statusCode(200)
                 .body(containsString("firstname"))
                 .body(containsString("lastname"))
-                .body(containsString("abc123idcode"))
+                .body(containsString("EEabc123subject"))
                 .body(containsString("17.12.1992"))
                 .body(not(containsString("123456789")))
                 .body(not(containsString("phone-number")))
@@ -246,6 +246,7 @@ class AuthConsentControllerTest extends BaseTest {
         authSession.setLoginRequestInfo(lri);
         TaraSession.AuthenticationResult ar = new TaraSession.AuthenticationResult();
         ar.setIdCode("abc123idcode");
+        ar.setSubject("EEabc123subject");
         ar.setFirstName("firstname");
         ar.setLastName("lastname");
         ar.setDateOfBirth(LocalDate.of(1992, 12, 17));
