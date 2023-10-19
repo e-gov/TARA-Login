@@ -48,6 +48,12 @@
                 layout:insert="~{fragments/logintabs :: warning('eu-citizen', ${activeAlerts.?[isValidFor(T(ee.ria.taraauthserver.config.properties.AuthenticationType).EIDAS)]})}"
                 aria-hidden="true" aria-labelledby="eu-citizen">
         </th:block>
+        <th:block
+                th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).VERIFF)}"
+                th:remove="tag"
+                layout:insert="~{fragments/logintabs :: warning('veriff', ${activeAlerts.?[isValidFor(T(ee.ria.taraauthserver.config.properties.AuthenticationType).VERIFF)]})}"
+                aria-hidden="true" aria-labelledby="veriff">
+        </th:block>
     </div>
 
     <div class="c-tab-login">
@@ -72,6 +78,10 @@
                 <th:block
                         th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).EIDAS)}">
                     <li th:replace="~{fragments/logintabs :: nav_default('eu-citizen')}"></li>
+                </th:block>
+                <th:block
+                        th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).VERIFF)}">
+                    <li th:replace="~{fragments/logintabs :: nav_default('veriff')}"></li>
                 </th:block>
             </ul>
         </nav>
@@ -226,6 +236,56 @@
                         <tr>
                             <td id="login-form-methods"></td>
                         </tr>
+                        </tbody>
+                    </table>
+                </form>
+            </div>
+
+            <div th:if="${@thymeleafSupport.isAuthMethodAllowed(T(ee.ria.taraauthserver.config.properties.AuthenticationType).VERIFF)}"
+                 layout:insert="~{fragments/logintabs :: content(tab_id = 'veriff', title = 'title-long')}"
+                 th:remove="tag"
+                 aria-hidden="true" aria-labelledby="veriff">
+                <form role="form" method="post" id="veriffForm" th:action="@{/auth/veriff/create}" class="c-form"
+                      layout:fragment="login-form-content">
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td class="col-label">
+                                    <label for="veriff-given-name" class="form-label"
+                                           th:text="#{label.common.given-name}"></label>
+                                </td>
+                                <td>
+                                    <div class="input-group">
+                                        <input type="text" inputmode="text" id="veriff-given-name"
+                                           class="form-control" name="givenName"/>
+                                    </div>
+                                    <div class="invalid-feedback is-hidden"
+                                         th:text="#{message.common.given-name-missing}"></div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="col-label">
+                                    <label for="veriff-last-name" class="form-label"
+                                           th:text="#{label.common.last-name}"></label>
+                                </td>
+                                <td>
+                                    <div class="input-group">
+                                        <input type="text" inputmode="text" id="veriff-last-name"
+                                           class="form-control" name="lastName"/>
+                                        <input type="hidden" id="veriff-lang"
+                                           name="lang" th:value="${#locale.language}"/>
+                                    </div>
+                                    <div class="invalid-feedback is-hidden"
+                                         th:text="#{message.common.last-name-missing}"></div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <button role="button" type="button" class="submit c-btn c-btn--primary"
+                                            th:text="#{label.common.login}">Login
+                                    </button>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </form>

@@ -68,10 +68,10 @@ public class EidasCallbackController {
     public static final String REQUEST_DENIED = "Request denied";
     public static final String AUTHN_FAILED = "Authentication failed";
     public static final String INCORRECT_LOA = "202019";
-    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.EIDAS, this.getClass());
+    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.EEID, this.getClass());
 
     @Autowired
-    private RestTemplate eidasRestTemplate;
+    private RestTemplate eeidRestTemplate;
 
     @Autowired
     private EidasConfigurationProperties eidasConfigurationProperties;
@@ -92,7 +92,7 @@ public class EidasCallbackController {
         if (!eidasRelayStateCache.containsKey(relayState))
             throw new BadRequestException(INVALID_REQUEST, "relayState not found in relayState map");
 
-        Session session = sessionRepository.findById(eidasRelayStateCache.getAndRemove(relayState)); // TODO AUT-854
+        Session session = sessionRepository.findById(eidasRelayStateCache.getAndRemove(relayState));
         validateSession(session);
 
         try {
@@ -100,7 +100,7 @@ public class EidasCallbackController {
             TaraSession taraSession = requireNonNull(session.getAttribute(TARA_SESSION));
 
             requestLogger.logRequest(requestUrl, HttpMethod.POST, Map.of("code", code));
-            var response = eidasRestTemplate.exchange(
+            var response = eeidRestTemplate.exchange(
                     requestUrl,
                     HttpMethod.POST,
                     createRequestEntity(code, taraSession),

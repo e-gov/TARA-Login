@@ -23,7 +23,7 @@ import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpHeaders;  
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
@@ -74,7 +74,7 @@ public class WebauthnCallbackController {
     public static final String WEBAUTHN_REGISTER_CALLBACK_REQUEST_MAPPING = "/auth/webauthn/register_callback";
     public static final String VERIFICATION_FAILED = "Verification failed";
     public static final String REDIRECT_TO = "redirect_to";
-    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.WEBAUTHN, this.getClass());
+    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.EEID, this.getClass());
 
     @Autowired
     private WebauthnConfigurationProperties webauthnConfigurationProperties;
@@ -83,7 +83,7 @@ public class WebauthnCallbackController {
     private AuthConfigurationProperties authConfigurationProperties;
 
     @Autowired
-    private RestTemplate hydraRestTemplate;
+    private RestTemplate eeidRestTemplate;
 
     @Autowired
     private SessionRepository<Session> sessionRepository;
@@ -100,7 +100,7 @@ public class WebauthnCallbackController {
     @PostMapping(value = WEBAUTHN_LOGIN_CALLBACK_REQUEST_MAPPING)
     public ModelAndView webauthnLoginCallback(@RequestParam(name = "WebauthnResponse") String webauthnResponse,
                                               @RequestParam(name = "RelayState") String relayState) {
-        log.info("Handling Webauthn authentication callback for relay state: {}", value("tara.session.eidas.relay_state", relayState));
+        log.info("Handling Webauthn authentication callback for relay state: {}", value("tara.session.webauthn.relay_state", relayState));
         if (!webauthnRelayStateCache.containsKey(relayState))
             throw new BadRequestException(INVALID_REQUEST, "relayState not found in relayState map");
 
@@ -111,7 +111,7 @@ public class WebauthnCallbackController {
             String requestUrl = webauthnConfigurationProperties.getClientUrl() + "/webauthn/credential_authentication/return";
 
             requestLogger.logRequest(requestUrl, HttpMethod.POST, Map.of("webauthn_response", webauthnResponse));
-            var response = hydraRestTemplate.exchange(
+            var response = eeidRestTemplate.exchange(
                     requestUrl,
                     HttpMethod.POST,
                     createRequestEntity(webauthnResponse),
@@ -133,7 +133,7 @@ public class WebauthnCallbackController {
     @PostMapping(value = WEBAUTHN_REGISTER_CALLBACK_REQUEST_MAPPING)
     public String webauthnRegisterCallback(@RequestParam(name = "WebauthnResponse") String webauthnResponse,
                                            @RequestParam(name = "RelayState") String relayState) {
-        log.info("Handling Webauthn registration callback for relay state: {}", value("tara.session.eidas.relay_state", relayState));
+        log.info("Handling Webauthn registration callback for relay state: {}", value("tara.session.webauthn.relay_state", relayState));
         if (!webauthnRelayStateCache.containsKey(relayState))
             throw new BadRequestException(INVALID_REQUEST, "relayState not found in relayState map");
 
@@ -151,7 +151,7 @@ public class WebauthnCallbackController {
 
     private String getRedirectView(TaraSession taraSession, String requestUrl, Object requestBody) {
         requestLogger.logRequest(requestUrl, HttpMethod.PUT, requestBody);
-        var response = hydraRestTemplate.exchange(
+        var response = eeidRestTemplate.exchange(
                 requestUrl,
                 HttpMethod.PUT,
                 new HttpEntity<>(requestBody),

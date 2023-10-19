@@ -1,3 +1,74 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            4b:14:48:0f:b1:68:21:a3:4d:74:d8:41:7a:e7:0b:bc
+        Signature Algorithm: sha1WithRSAEncryption
+        Issuer: C = EE, O = AS Sertifitseerimiskeskus, CN = TEST of EE Certification Centre Root CA, emailAddress = pki@sk.ee
+        Validity
+            Not Before: Mar  7 13:06:09 2011 GMT
+            Not After : Sep  7 12:06:09 2023 GMT
+        Subject: C = EE, O = AS Sertifitseerimiskeskus, CN = TEST of ESTEID-SK 2011, emailAddress = pki@sk.ee
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                RSA Public-Key: (2048 bit)
+                Modulus:
+                    00:d1:23:2b:f8:0d:90:18:c2:6e:36:9b:ba:d0:c8:
+                    2a:28:6d:32:2c:be:c9:7e:f8:cd:b6:0b:36:86:a5:
+                    80:0c:39:f5:01:07:83:ef:da:3e:f2:be:12:45:8a:
+                    7d:92:8c:12:14:0f:04:d6:fd:fc:5d:74:c7:46:ad:
+                    e7:49:97:93:a0:e0:b9:0c:c0:16:8e:c2:a5:9b:8c:
+                    7c:87:0c:29:df:50:57:0a:cf:c7:ae:5f:55:9a:29:
+                    08:80:09:5a:1e:fb:f7:67:e3:33:4b:aa:9e:2d:dc:
+                    f2:62:2f:e0:94:f5:6b:63:8d:80:eb:f9:01:02:93:
+                    89:94:e5:4b:bc:01:5d:c9:23:66:16:46:3e:2b:2e:
+                    cc:67:d8:db:06:bf:8d:c7:8a:72:fd:5e:f1:9b:d5:
+                    43:eb:63:9e:d6:59:2e:e1:2e:2a:77:e5:58:71:0e:
+                    63:7e:d6:eb:e0:e1:63:06:9f:4d:9f:9f:3f:e6:cb:
+                    d0:c6:b2:e3:bf:70:7a:ee:2d:7d:77:bb:0d:87:b5:
+                    0f:9c:c8:8e:e8:17:81:6f:ac:9b:dc:fd:65:a9:d1:
+                    e8:7c:4d:65:12:54:ad:20:f5:62:26:5c:e3:3c:e8:
+                    78:a6:ec:56:69:d1:c3:bd:56:14:08:98:16:d9:a3:
+                    39:f2:64:df:8c:58:59:6d:57:dc:ad:59:f9:3b:22:
+                    22:4d
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: critical
+                CA:TRUE
+            X509v3 Key Usage: critical
+                Certificate Sign, CRL Sign
+            X509v3 Certificate Policies: 
+                Policy: 1.3.6.1.4.1.10015.3.1.1
+                  User Notice:
+                    Explicit Text: 
+                  CPS: https://www.sk.ee/CPS
+
+            X509v3 Subject Key Identifier: 
+                41:B6:FE:C5:B1:B1:B4:53:13:8C:FA:FA:62:D0:34:6D:6D:22:34:0A
+            X509v3 Authority Key Identifier: 
+                keyid:B5:34:0A:9D:A5:2F:10:C5:E7:21:0E:BE:C4:B1:65:47:1B:03:76:FE
+
+            X509v3 CRL Distribution Points: 
+
+                Full Name:
+                  URI:https://www.sk.ee/repository/crls/test_eeccrca.crl
+
+    Signature Algorithm: sha1WithRSAEncryption
+         5d:87:94:76:dc:ae:ea:92:b3:bb:f2:3e:75:c4:de:82:47:6a:
+         b0:c5:47:0a:fd:c8:1c:4c:b5:af:d2:86:cf:98:9e:e3:45:ac:
+         77:3d:7d:29:16:16:94:13:a1:21:01:1d:1d:81:2e:2e:e9:76:
+         6b:8c:f8:15:ae:df:e6:c2:ad:61:f2:52:4f:d4:c1:76:b9:e0:
+         07:2b:24:b4:48:68:fb:68:52:e4:70:2f:94:2f:0b:b5:93:ac:
+         a2:a2:bb:45:27:40:ec:e3:d6:46:03:e8:a8:1b:36:16:3d:0f:
+         a0:d5:99:78:c1:20:c8:cf:9d:a8:b7:47:07:52:28:e7:7f:7f:
+         52:ce:ae:c4:db:3e:cc:0d:f6:64:62:0f:07:65:e1:eb:3b:8f:
+         77:10:58:21:5d:c9:d2:1f:b2:7b:cf:8e:dc:80:fd:c6:58:53:
+         54:2a:fd:55:d9:cd:1e:54:4e:0e:c5:1b:a5:67:72:a6:04:b3:
+         d6:6c:92:99:d1:3c:86:6b:f0:28:a1:cf:93:a2:b1:23:c7:3f:
+         ff:5b:37:05:fd:29:25:a7:81:5e:0f:43:14:df:d5:14:44:89:
+         60:ec:b7:c4:72:6f:37:d9:b3:f3:67:35:46:15:de:1d:ac:17:
+         79:0f:2d:14:aa:eb:ba:de:45:bb:44:3a:ab:fb:04:05:4b:12:
+         ab:f4:32:07
 -----BEGIN CERTIFICATE-----
 MIIEuzCCA6OgAwIBAgIQSxRID7FoIaNNdNhBeucLvDANBgkqhkiG9w0BAQUFADB9
 MQswCQYDVQQGEwJFRTEiMCAGA1UECgwZQVMgU2VydGlmaXRzZWVyaW1pc2tlc2t1

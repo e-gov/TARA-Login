@@ -28,10 +28,13 @@ import java.util.List;
 import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
 import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.VERIFICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.WEBAUTHN_AUTHENTICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.WEBAUTHN_AUTHENTICATION_COMPLETED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.VERIFICATION_COMPLETED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.VERIFICATION_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_MID_STATUS_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_STATUS_CANCELED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
@@ -41,8 +44,8 @@ import static java.util.EnumSet.of;
 @Validated
 @Controller
 class AuthAcceptController {
-    private static final EnumSet<TaraAuthenticationState> ALLOWED_STATES = of(AUTHENTICATION_SUCCESS, WEBAUTHN_AUTHENTICATION_COMPLETED, NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED);
-    private static final EnumSet<TaraAuthenticationState> OIDC_AUTH_ACCEPT_STATES = of(WEBAUTHN_AUTHENTICATION_COMPLETED, NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED);
+    private static final EnumSet<TaraAuthenticationState> ALLOWED_STATES = of(AUTHENTICATION_SUCCESS, WEBAUTHN_AUTHENTICATION_COMPLETED, NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED, VERIFICATION_COMPLETED);
+    private static final EnumSet<TaraAuthenticationState> OIDC_AUTH_ACCEPT_STATES = of(WEBAUTHN_AUTHENTICATION_COMPLETED, NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED, VERIFICATION_COMPLETED);
     private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.TARA_HYDRA, this.getClass());
 
     @Autowired
@@ -55,7 +58,7 @@ class AuthAcceptController {
     public RedirectView authAccept(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         if (taraSession == null) {
             throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
-        } else if (taraSession.getState().equals(POLL_MID_STATUS_CANCELED) || taraSession.getState().equals(POLL_SID_STATUS_CANCELED)) {
+        } else if (taraSession.getState().equals(POLL_MID_STATUS_CANCELED) || taraSession.getState().equals(POLL_SID_STATUS_CANCELED) || taraSession.getState().equals(VERIFICATION_CANCELED)) {
             return new RedirectView("/auth/init?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge());
         } else if (!ALLOWED_STATES.contains(taraSession.getState())) {
             throw new BadRequestException(ErrorCode.SESSION_STATE_INVALID, format("Invalid authentication state: '%s', expected one of: %s", taraSession.getState(), ALLOWED_STATES));
@@ -90,6 +93,8 @@ class AuthAcceptController {
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && response.getBody().getRedirectUrl() != null) {
             if (taraSession.getState().equals(WEBAUTHN_AUTHENTICATION_COMPLETED)) {
                 taraSession.setState(WEBAUTHN_AUTHENTICATION_SUCCESS);
+            } else if (taraSession.getState().equals(VERIFICATION_COMPLETED)) {
+                taraSession.setState(VERIFICATION_SUCCESS);
             } else {
                 taraSession.setState(AUTHENTICATION_SUCCESS);
             }

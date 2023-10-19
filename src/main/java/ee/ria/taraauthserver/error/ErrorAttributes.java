@@ -56,6 +56,10 @@ import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_CONFIRMATIO
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_DISAPLAYTEXTANDPIN;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_VC_CHOICE;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_WRONG_VC;
+import static ee.ria.taraauthserver.error.ErrorCode.VERIFF_ABANDONED;
+import static ee.ria.taraauthserver.error.ErrorCode.VERIFF_EXPIRED;
+import static ee.ria.taraauthserver.error.ErrorCode.VERIFF_DECLINED;
+import static ee.ria.taraauthserver.error.ErrorCode.VERIFF_RESUBMISSION_REQUESTED;
 import static ee.ria.taraauthserver.security.RequestCorrelationFilter.REQUEST_ATTRIBUTE_NAME_REQUEST_ID;
 import static java.lang.String.format;
 import static java.lang.String.join;
@@ -101,7 +105,11 @@ public class ErrorAttributes extends DefaultErrorAttributes {
             INVALID_REQUEST,
             INVALID_CSRF_TOKEN,
             INVALID_LOGIN_CHALLENGE,
-            INVALID_GOVSSO_LOGIN_CHALLENGE
+            INVALID_GOVSSO_LOGIN_CHALLENGE,
+            VERIFF_ABANDONED,
+            VERIFF_EXPIRED,
+            VERIFF_DECLINED,
+            VERIFF_RESUBMISSION_REQUESTED
     );
 
     @Override

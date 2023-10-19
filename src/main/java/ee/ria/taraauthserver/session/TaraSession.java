@@ -106,6 +106,7 @@ public class TaraSession implements Serializable {
         private AuthenticationType amr;
         private LevelOfAssurance acr; //TODO acr vs LevelOfAssurance vs loa, choose one
         private ErrorCode errorCode;
+        private String[] reason;
     }
 
 
@@ -142,6 +143,14 @@ public class TaraSession implements Serializable {
     @RequiredArgsConstructor
     public static class WebauthnAuthenticationResult extends AuthenticationResult {
         private String relayState;
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = true)
+    @RequiredArgsConstructor
+    public static class VeriffAuthenticationResult extends AuthenticationResult {
+        private String veriffSessionUrl;
+        private String veriffSessionId;
     }
 
     @Data

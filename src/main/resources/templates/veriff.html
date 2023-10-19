@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.w3.org/1999/xhtml" th:lang="${#locale.language}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}" th:with="hideHeaderLanguageSelection=true">
+<head th:replace="~{fragments/head}"></head>
+<body class="is-mobile-subview"
+      th:attr="data-check-form-refresh-rate=${@environment.getProperty('tara.auth-methods.veriff.interval-between-session-status-queries-in-milliseconds')}">
+<div layout:fragment="content" th:with="hideHeaderLanguageSelection=true" th:remove="tag">
+    <div class="container">
+        <div class="c-tab-login">
+            <div class="c-tab-login__header hide-in-desktop">
+                <ul class="c-tab-login__nav" role="tablist">
+                    <li th:replace="~{fragments/logintabs :: nav_default(tab_id = 'veriff', static = true)}"></li>
+                </ul>
+            </div>
+            <div class="c-tab-login__main">
+                <div layout:insert="~{fragments/logintabs :: content(tab_id = 'veriff', instruction = 'wait-popup', static = true)}"
+                     th:remove="tag">
+                    <form id="veriffCheckForm" method="post" th:action="@{/auth/veriff/cancel}"
+                          class="c-form" layout:fragment="login-form-content">
+                        <p id="veriff-wait-decision" th:text="${#messages.msg('label.veriff.wait-decision')}" class="hidden" aria-hidden="true"></p>
+                        <button type="submit" class="c-btn c-btn--cancel"
+                                th:text="#{label.common.cancel}">Cancel
+                        </button>
+                    </form>
+                </div>
+                <div id="session-url" th:text="${sessionUrl}" th:class="hidden"/>
+                <div id="session-id" th:text="${sessionId}" th:class="hidden"/>
+            </div>
+        </div>
+    </div>
+    <div id="veriff-error" th:insert="~{fragments/error}" th:class="hidden"/>
+    <p class="link-back-mobile" xmlns:th="http://www.w3.org/1999/xhtml">
+        <a th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a>
+    </p>
+    <script th:src="@{/scripts/main.js}" defer></script>
+    <script th:src="@{/scripts/veriff-form-check.js}" defer></script>
+</div>
+</body>
+</html>

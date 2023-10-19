@@ -54,7 +54,7 @@ jQuery(function ($) {
   if ($('.c-tab-login__nav-link').length < 2) {
       $('body').addClass('is-mobile-subview');
       $('.c-tab-login__nav-item').addClass('is-active');
-      $('.c-tab-login__header').addClass('hide-in-desktop');
+      // $('.c-tab-login__header').addClass('hide-in-desktop');
       if ($('.c-tab-login__nav-link').data('tab') === "eu-citizen")
           eidasOnlyMode = true; 
   } 
@@ -164,8 +164,8 @@ jQuery(function ($) {
     $('.c-tab-login__content[data-tab="' + active + '"]').find(".c-tab-login__content-wrap").first().attr("tabindex",-1).focus();
   }
  
-  function getValidateFunction(country_code_field){
-    switch(country_code_field.val()) {
+  function getValidateFunction(field){
+    switch(field.val()) {
       case "EE":
         return validateEstonianIdCode;
       case "LV":
@@ -191,6 +191,10 @@ jQuery(function ($) {
 	
 	function validatePhoneNumber(value){
 		return value && /^[0-9]{3,15}$/.test(value);
+	}
+
+  function validateEmptyValue(value){
+		return value && value.trim() !== '';
 	}
 	
 	function validateFormFieldValue(field, testFunc){
@@ -359,11 +363,11 @@ jQuery(function ($) {
 			const browserInfo = navigator.appCodeName + '/' + navigator.appVersion;
 			const hostName = location.hostname;
 			const errorReportUrl = $('#error-report-url').attr('href')
-				.replace('(1)', plainTextMessage)
-				.replace('(2)', responseJson.incident_nr)
-				.replace('(3)', os)
-				.replace('(4)', browserInfo)
-				.replace('(5)', hostName);
+				.replace('{1}', plainTextMessage)
+				.replace('{2}', responseJson.incident_nr)
+				.replace('{3}', os)
+				.replace('{4}', browserInfo)
+				.replace('{5}', hostName);
 			$('#error-report-url').attr('href', errorReportUrl);
 
 			const errorReportNotificationMessage = $('#error-report-notification').text()
@@ -510,6 +514,24 @@ jQuery(function ($) {
         }
       }
     }
+	});
+
+  // Veriff form submit
+  $('#veriffForm button.submit').on('click', function(event){
+    event.preventDefault();
+
+		if ($(this).prop('disabled')) return;
+		$(this).prop('disabled', true);
+
+    var valid = true;
+		valid = validateFormFieldValue($('#veriff-given-name'), validateEmptyValue) && valid;
+		valid = validateFormFieldValue($('#veriff-last-name'), validateEmptyValue) && valid;
+		
+		if (valid) {
+			$('#veriffForm').submit();
+		} else {
+			$(this).prop('disabled', false);
+		}
 	});
 
   function activateMethodContent(country, method){
@@ -666,6 +688,7 @@ jQuery(function ($) {
             $('#country-select-tomselected').css({"width":"100%"});
           }
         }
+        break;
     }    
     content.attr("aria-hidden", false);
     content.addClass('is-active');
@@ -683,17 +706,17 @@ jQuery(function ($) {
   }
 
   function hideElements(elements) {
-    for (const element of elements) {
-      element.attr('aria-hidden', 'true');
-      element.addClass('hidden');
-		}
+      for (const element of elements) {
+          element.attr('aria-hidden', 'true');
+          element.addClass('hidden');
+      }
 	}
 
   function unhideElements(elements) {
-    for (const element of elements) {
-			element.attr('aria-hidden', 'false');
-			element.removeClass('hidden');
-		}
+      for (const element of elements) {
+          element.attr('aria-hidden', 'false');
+          element.removeClass('hidden');
+      }
 	}
 
   function getCurrentBrowser() {

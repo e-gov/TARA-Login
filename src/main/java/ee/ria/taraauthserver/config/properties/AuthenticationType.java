@@ -13,6 +13,7 @@ import static java.util.Arrays.stream;
 @Getter
 @AllArgsConstructor
 public enum AuthenticationType {
+    VERIFF("veriff", "veriff", TaraScope.WEBAUTHN),
     WEBAUTHN("webauthn", "webauthn", TaraScope.WEBAUTHN),
     ID_CARD("idcard", "id-card", TaraScope.IDCARD),
     MOBILE_ID("mID", "mobile-id", TaraScope.MID),

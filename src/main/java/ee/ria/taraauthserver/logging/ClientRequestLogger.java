@@ -27,9 +27,8 @@ public class ClientRequestLogger {
 
     public enum Service {
         ALERTS,
-        EIDAS,
+        EEID,
         TARA_HYDRA,
-        WEBAUTHN,
         GOVSSO_HYDRA,
         OCSP,
         X_ROAD

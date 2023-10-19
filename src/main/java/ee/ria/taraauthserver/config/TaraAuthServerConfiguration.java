@@ -113,6 +113,28 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
     }
 
     @Bean
+    public RestTemplate eeidRestTemplate(RestTemplateBuilder builder, SSLContext sslContext, AuthConfigurationProperties authConfigurationProperties) {
+        HttpClient client = HttpClients.custom()
+                .setSSLContext(sslContext)
+                .setMaxConnPerRoute(authConfigurationProperties.getEeidService().getMaxConnectionsTotal())
+                .setMaxConnTotal(authConfigurationProperties.getEeidService().getMaxConnectionsTotal())
+                .build();
+
+        List<HttpMessageConverter<?>> converters = new ArrayList<>();
+        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+        converter.setSupportedMediaTypes(Collections.singletonList(MediaType.TEXT_HTML));
+        converters.add(converter);
+
+        return builder
+                .additionalMessageConverters(converters)
+                .setConnectTimeout(Duration.ofSeconds(authConfigurationProperties.getEeidService().getRequestTimeoutInSeconds()))
+                .setReadTimeout(Duration.ofSeconds(authConfigurationProperties.getEeidService().getRequestTimeoutInSeconds()))
+                .requestFactory(() -> new HttpComponentsClientHttpRequestFactory(client))
+                .errorHandler(new RestTemplateErrorLogger(Service.EEID))
+                .build();
+    }
+
+    @Bean
     public Validator defaultValidator(MessageSource messageSource) {
         LocalValidatorFactoryBean bean = new LocalValidatorFactoryBean();
         bean.setValidationMessageSource(messageSource);
