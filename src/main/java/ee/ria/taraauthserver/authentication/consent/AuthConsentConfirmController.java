@@ -68,10 +68,10 @@ public class AuthConsentConfirmController {
             String acceptConsentUrl;
             if (isWebauthnRequested(taraSession)) {
                 acceptConsentUrl = authConfigurationProperties.getEeidService().getWebauthnAcceptConsentUrl();
-                return webauthnAcceptConsent(taraSession, acceptConsentUrl + "?consent_challenge=" + taraSession.getConsentChallenge(), model);
+                return webauthnAcceptConsent(taraSession, acceptConsentUrl, model);
             } else {
-                acceptConsentUrl = authConfigurationProperties.getHydraService().getAcceptConsentUrl();
-                return acceptConsent(taraSession, acceptConsentUrl + "?consent_challenge=" + taraSession.getConsentChallenge(), model);
+                acceptConsentUrl = authConfigurationProperties.getHydraService().getAcceptConsentUrl() + "?consent_challenge=" + taraSession.getConsentChallenge();
+                return acceptConsent(taraSession, acceptConsentUrl, model);
             }
         } else {
             return rejectConsent(taraSession);
@@ -110,8 +110,6 @@ public class AuthConsentConfirmController {
             statisticsLogger.log(taraSession);
             SessionUtils.invalidateSession();
             return "redirect:" + response.getBody().get(REDIRECT_TO);
-        } else if (response.getStatusCode() == HttpStatus.CREATED && response.getBody() != null && response.getBody().get(WEBAUTHN_USER_ID) != null) {
-            return createWebauthnRegisterView(model, taraSession, response.getBody().get(WEBAUTHN_USER_ID));
         } else {
             throw new IllegalStateException("Invalid OIDC server response. Redirect URL missing from response.");
         }
@@ -120,6 +118,7 @@ public class AuthConsentConfirmController {
     @NotNull
     private String webauthnAcceptConsent(TaraSession taraSession, String requestUrl, Model model) {
         AcceptConsentRequest acceptConsentRequest = AcceptConsentRequest.buildWithTaraSession(taraSession);
+        
         requestLogger.logRequest(requestUrl, HttpMethod.PUT, acceptConsentRequest);
         var response = eeidRestTemplate.exchange(
                 requestUrl,

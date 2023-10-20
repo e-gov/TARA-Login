@@ -31,6 +31,7 @@ import java.util.EnumSet;
 import javax.cache.Cache;
 
 import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.CONSENT_NOT_REQUIRED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.VERIFICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.WEBAUTHN_AUTHENTICATION_SUCCESS;
@@ -66,13 +67,12 @@ public class AuthConsentController {
             return createConsentView(model, taraSession);
         } else {
             String acceptConsentUrl;
-            taraSession.setState(TaraAuthenticationState.CONSENT_NOT_REQUIRED);
             if (isWebauthnRequested(taraSession)) {
                 acceptConsentUrl = authConfigurationProperties.getEeidService().getWebauthnAcceptConsentUrl();
-                return webauthnAcceptConsent(consentChallenge, taraSession, acceptConsentUrl, model);
+                return webauthnAcceptConsent(taraSession, acceptConsentUrl, model);
             } else {
                 acceptConsentUrl = authConfigurationProperties.getHydraService().getAcceptConsentUrl() + "?consent_challenge=" + consentChallenge;
-                return acceptConsent(consentChallenge, taraSession, acceptConsentUrl, model);
+                return acceptConsent(taraSession, acceptConsentUrl, model);
             }
         }
     }
@@ -109,7 +109,7 @@ public class AuthConsentController {
     }
 
     @NotNull
-    private String acceptConsent(String consentChallenge, TaraSession taraSession, String url, Model model) {
+    private String acceptConsent(TaraSession taraSession, String url, Model model) {
         AcceptConsentRequest acceptConsentRequest = AcceptConsentRequest.buildWithTaraSession(taraSession);
 
         requestLogger.logRequest(url, HttpMethod.PUT, acceptConsentRequest);
@@ -121,19 +121,19 @@ public class AuthConsentController {
                 });
         requestLogger.logResponse(response);
 
+        taraSession.setState(CONSENT_NOT_REQUIRED);
+
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && response.getBody().get(REDIRECT_URL) != null) {
             statisticsLogger.log(taraSession);
             SessionUtils.invalidateSession();
             return "redirect:" + response.getBody().get(REDIRECT_URL);
-        } else if (response.getStatusCode() == HttpStatus.CREATED && response.getBody() != null && response.getBody().get(WEBAUTHN_USER_ID) != null) {
-            return createWebauthnRegisterView(model, taraSession, response.getBody().get(WEBAUTHN_USER_ID));
         } else {
             throw new IllegalStateException("Invalid OIDC server response. Redirect URL missing from response.");
         }
     }
 
     @NotNull
-    private String webauthnAcceptConsent(String consentChallenge, TaraSession taraSession, String url, Model model) {
+    private String webauthnAcceptConsent(TaraSession taraSession, String url, Model model) {
         AcceptConsentRequest acceptConsentRequest = AcceptConsentRequest.buildWithTaraSession(taraSession);
 
         requestLogger.logRequest(url, HttpMethod.PUT, acceptConsentRequest);
@@ -144,6 +144,8 @@ public class AuthConsentController {
                 new ParameterizedTypeReference<Map<String, String>>() {
                 });
         requestLogger.logResponse(response);
+
+        taraSession.setState(CONSENT_NOT_REQUIRED);
 
         if (response.getStatusCode() == HttpStatus.CREATED && response.getBody() != null && response.getBody().get(WEBAUTHN_USER_ID) != null) {
             return createWebauthnRegisterView(model, taraSession, response.getBody().get(WEBAUTHN_USER_ID));
