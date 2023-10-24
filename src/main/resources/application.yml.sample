@@ -58,14 +58,14 @@ tara:
     max-connections-total: 5
 
   eeid-service:
+    api-token: 123345
     webauthn-login-url: http://localhost:3000/webauthn/credential_authentication/new
     webauthn-register-url: http://localhost:3000/webauthn/credentials/new
-    webauthn-accept-consent-url: http://manager:3000/webauthn/consent
     request-timeout-in-seconds: 1
     max-connections-total: 10
 
   default-locale: et
-  error-report-email: noreply@internet.ee
+  error-report-email: info@internet.ee
 
   alerts:
     enabled: false

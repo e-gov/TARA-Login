@@ -93,7 +93,7 @@ public class VeriffService {
     private StatisticsLogger statisticsLogger;
 
     @Autowired
-    private RestTemplate hydraRestTemplate;
+    private RestTemplate eeidRestTemplate;
 
     public void startVeriffSession(TaraSession taraSession, String sessionId, String sessionUrl) {
         taraSession.setState(INIT_VERIFF);
@@ -153,10 +153,10 @@ public class VeriffService {
             if (!validateSession(taraSession))
                 return null;
 
-            String requestUrl = veriffConfigurationProperties.getClientUrl() + "/veriff/sessions/" + sessionId;
+            String requestUrl = veriffConfigurationProperties.getClientUrl() + "/api/v1/veriff/sessions/" + sessionId;
             
             try {
-                var response = hydraRestTemplate.exchange(
+                var response = eeidRestTemplate.exchange(
                     requestUrl,
                     HttpMethod.GET,
                     null,

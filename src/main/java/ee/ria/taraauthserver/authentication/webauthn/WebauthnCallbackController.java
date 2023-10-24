@@ -74,13 +74,15 @@ public class WebauthnCallbackController {
     public static final String WEBAUTHN_REGISTER_CALLBACK_REQUEST_MAPPING = "/auth/webauthn/register_callback";
     public static final String VERIFICATION_FAILED = "Verification failed";
     public static final String REDIRECT_TO = "redirect_to";
-    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.EEID, this.getClass());
 
     @Autowired
     private WebauthnConfigurationProperties webauthnConfigurationProperties;
 
     @Autowired
     private AuthConfigurationProperties authConfigurationProperties;
+
+    @Autowired
+    private RestTemplate hydraRestTemplate;
 
     @Autowired
     private RestTemplate eeidRestTemplate;
@@ -108,7 +110,8 @@ public class WebauthnCallbackController {
         validateSession(session);
 
         try {
-            String requestUrl = webauthnConfigurationProperties.getClientUrl() + "/webauthn/credential_authentication/return";
+            String requestUrl = webauthnConfigurationProperties.getClientUrl() + "/api/v1/webauthn/return";
+            ClientRequestLogger requestLogger = new ClientRequestLogger(Service.EEID, this.getClass());
 
             requestLogger.logRequest(requestUrl, HttpMethod.POST, Map.of("webauthn_response", webauthnResponse));
             var response = eeidRestTemplate.exchange(
@@ -150,8 +153,9 @@ public class WebauthnCallbackController {
     }
 
     private String getRedirectView(TaraSession taraSession, String requestUrl, Object requestBody) {
+        ClientRequestLogger requestLogger = new ClientRequestLogger(Service.TARA_HYDRA, this.getClass());
         requestLogger.logRequest(requestUrl, HttpMethod.PUT, requestBody);
-        var response = eeidRestTemplate.exchange(
+        var response = hydraRestTemplate.exchange(
                 requestUrl,
                 HttpMethod.PUT,
                 new HttpEntity<>(requestBody),

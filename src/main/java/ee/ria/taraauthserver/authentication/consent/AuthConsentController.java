@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.authentication.consent;
 
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.WebauthnConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
@@ -42,11 +43,13 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 public class AuthConsentController {
     private static final String REDIRECT_URL = "redirect_to";
     public static final String WEBAUTHN_USER_ID = "webauthn_user_id";
-    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.TARA_HYDRA, this.getClass());
     private static final EnumSet<TaraAuthenticationState> ALLOWED_STATES = EnumSet.of(AUTHENTICATION_SUCCESS, WEBAUTHN_AUTHENTICATION_SUCCESS, VERIFICATION_SUCCESS);
 
     @Autowired
     private AuthConfigurationProperties authConfigurationProperties;
+
+    @Autowired
+    private WebauthnConfigurationProperties webauthnConfigurationProperties;
 
     @Autowired
     private RestTemplate hydraRestTemplate;
@@ -68,7 +71,7 @@ public class AuthConsentController {
         } else {
             String acceptConsentUrl;
             if (isWebauthnRequested(taraSession)) {
-                acceptConsentUrl = authConfigurationProperties.getEeidService().getWebauthnAcceptConsentUrl();
+                acceptConsentUrl = webauthnConfigurationProperties.getClientUrl() + "/api/v1/webauthn/consent";
                 return webauthnAcceptConsent(taraSession, acceptConsentUrl, model);
             } else {
                 acceptConsentUrl = authConfigurationProperties.getHydraService().getAcceptConsentUrl() + "?consent_challenge=" + consentChallenge;
@@ -112,6 +115,7 @@ public class AuthConsentController {
     private String acceptConsent(TaraSession taraSession, String url, Model model) {
         AcceptConsentRequest acceptConsentRequest = AcceptConsentRequest.buildWithTaraSession(taraSession);
 
+        ClientRequestLogger requestLogger = new ClientRequestLogger(Service.TARA_HYDRA, this.getClass());
         requestLogger.logRequest(url, HttpMethod.PUT, acceptConsentRequest);
         var response = hydraRestTemplate.exchange(
                 url,
@@ -136,6 +140,7 @@ public class AuthConsentController {
     private String webauthnAcceptConsent(TaraSession taraSession, String url, Model model) {
         AcceptConsentRequest acceptConsentRequest = AcceptConsentRequest.buildWithTaraSession(taraSession);
 
+        ClientRequestLogger requestLogger = new ClientRequestLogger(Service.EEID, this.getClass());
         requestLogger.logRequest(url, HttpMethod.PUT, acceptConsentRequest);
         var response = eeidRestTemplate.exchange(
                 url,
@@ -162,6 +167,6 @@ public class AuthConsentController {
 
     @NotNull
     private boolean isWebauthnRequested(TaraSession taraSession) {
-        return taraSession.getLoginRequestInfo().getRequestedScopes().contains(TaraScope.WEBAUTHN.getFormalName());
+        return taraSession.getState() != WEBAUTHN_AUTHENTICATION_SUCCESS && taraSession.getLoginRequestInfo().getRequestedScopes().contains(TaraScope.WEBAUTHN.getFormalName());
     }
 }

@@ -96,7 +96,7 @@ public class AuthConfigurationProperties {
     public static class EeidServiceConfigurationProperties {
 
         @NotBlank
-        private String webauthnAcceptConsentUrl;
+        private String apiToken;
 
         @NotBlank
         private String webauthnLoginUrl;

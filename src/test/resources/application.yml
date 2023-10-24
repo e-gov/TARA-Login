@@ -61,9 +61,9 @@ tara:
     max-connections-total: 3
 
   eeid-service:
+    api-token: 123345
     webauthn-login-url: https://localhost:9877/webauthn/credential_authentication/new
     webauthn-register-url: https://localhost:9877/webauthn/credentials/new
-    webauthn-accept-consent-url: https://localhost:9877/webauthn/consent
     request-timeout-in-seconds: 1
     max-connections-total: 10
 

@@ -11,6 +11,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.ignite.ssl.SSLContextWrapper;
+import org.springframework.http.HttpHeaders;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.MessageSource;
@@ -122,16 +123,30 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
 
         List<HttpMessageConverter<?>> converters = new ArrayList<>();
         MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
-        converter.setSupportedMediaTypes(Collections.singletonList(MediaType.TEXT_HTML));
+        converter.setSupportedMediaTypes(Collections.singletonList(MediaType.APPLICATION_JSON));
         converters.add(converter);
 
-        return builder
+        RestTemplate restTemplate = builder
                 .additionalMessageConverters(converters)
                 .setConnectTimeout(Duration.ofSeconds(authConfigurationProperties.getEeidService().getRequestTimeoutInSeconds()))
                 .setReadTimeout(Duration.ofSeconds(authConfigurationProperties.getEeidService().getRequestTimeoutInSeconds()))
                 .requestFactory(() -> new HttpComponentsClientHttpRequestFactory(client))
                 .errorHandler(new RestTemplateErrorLogger(Service.EEID))
                 .build();
+    
+        // Adding Interceptor for Token Header
+        restTemplate.setInterceptors(Collections.singletonList((request, body, execution) -> {
+            HttpHeaders headers = request.getHeaders();
+
+            // Set Bearer Token
+            String token = authConfigurationProperties.getEeidService().getApiToken();
+            String authHeader = "Bearer " + token;
+            headers.set("Authorization", authHeader);
+
+            return execution.execute(request, body);
+        }));
+
+        return restTemplate;
     }
 
     @Bean

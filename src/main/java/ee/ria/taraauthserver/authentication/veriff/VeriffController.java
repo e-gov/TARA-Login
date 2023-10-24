@@ -81,7 +81,7 @@ public class VeriffController {
         validateSession(taraSession, EnumSet.of(INIT_AUTH_PROCESS));
 
         try {
-          String requestUrl = veriffConfigurationProperties.getClientUrl() + "/veriff/sessions";
+          String requestUrl = veriffConfigurationProperties.getClientUrl() + "/api/v1/veriff/sessions";
 
           requestLogger.logRequest(requestUrl, HttpMethod.POST, Map.of("givenName", veriffRequest.givenName, "lastName", veriffRequest.lastName));
           var response = eeidRestTemplate.exchange(
