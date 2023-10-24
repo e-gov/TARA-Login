@@ -162,7 +162,6 @@ public class AuthConsentController {
 
     @NotNull
     private boolean isWebauthnRequested(TaraSession taraSession) {
-        return (taraSession.getState().equals(AUTHENTICATION_SUCCESS) || taraSession.getState().equals(VERIFICATION_SUCCESS))
-            && taraSession.getLoginRequestInfo().getRequestedScopes().contains(TaraScope.WEBAUTHN.getFormalName());
+        return taraSession.getLoginRequestInfo().getRequestedScopes().contains(TaraScope.WEBAUTHN.getFormalName());
     }
 }

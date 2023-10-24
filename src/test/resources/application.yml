@@ -63,7 +63,9 @@ tara:
   eeid-service:
     webauthn-login-url: https://localhost:9877/webauthn/credential_authentication/new
     webauthn-register-url: https://localhost:9877/webauthn/credentials/new
-    accept-consent-url: https://localhost:9877/webauthn/consent
+    webauthn-accept-consent-url: https://localhost:9877/webauthn/consent
+    request-timeout-in-seconds: 1
+    max-connections-total: 10
 
   default-locale: et
   error-report-email: help@example.com
@@ -73,6 +75,12 @@ tara:
     host-url: https://localhost:9877/alerts
 
   auth-methods:
+    veriff:
+      enabled: true
+      level-of-assurance: HIGH
+      client-url: http://manager:3000
+      interval-between-session-status-queries-in-seconds: 5
+      max-session-status-queries: 100
     webauthn:
       enabled: true
       level-of-assurance: HIGH

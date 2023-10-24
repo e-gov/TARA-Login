@@ -33,6 +33,9 @@ import static ee.ria.taraauthserver.logging.StatisticsLogger.SERVICE_GOVSSO;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.VERIFICATION_CANCELED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.VERIFICATION_FAILED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.VERIFICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_MID_STATUS_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_STATUS_CANCELED;
 import static java.lang.String.format;
@@ -47,7 +50,7 @@ class StatisticsLoggerTest extends BaseTest {
     @ParameterizedTest
     @EnumSource(
             value = TaraAuthenticationState.class,
-            names = {"AUTHENTICATION_SUCCESS", "AUTHENTICATION_FAILED", "AUTHENTICATION_CANCELED", "POLL_MID_STATUS_CANCELED", "POLL_SID_STATUS_CANCELED"},
+            names = {"AUTHENTICATION_SUCCESS", "AUTHENTICATION_FAILED", "AUTHENTICATION_CANCELED", "POLL_MID_STATUS_CANCELED", "POLL_SID_STATUS_CANCELED", "VERIFICATION_SUCCESS", "VERIFICATION_CANCELED", "VERIFICATION_FAILED"},
             mode = EnumSource.Mode.EXCLUDE)
     void eventNotLoggedWhen_InvalidState(TaraAuthenticationState state) {
         TaraSession taraSession = buildValidSessionWithoutState();
