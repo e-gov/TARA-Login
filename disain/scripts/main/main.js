@@ -54,7 +54,7 @@ jQuery(function ($) {
   if ($('.c-tab-login__nav-link').length < 2) {
       $('body').addClass('is-mobile-subview');
       $('.c-tab-login__nav-item').addClass('is-active');
-      // $('.c-tab-login__header').addClass('hide-in-desktop');
+      $('.c-tab-login__header').addClass('hide-in-desktop');
       if ($('.c-tab-login__nav-link').data('tab') === "eu-citizen")
           eidasOnlyMode = true; 
   } 
@@ -64,7 +64,7 @@ jQuery(function ($) {
     // In some cases exception could be thrown while accessing localStorage, see https://github.com/Modernizr/Modernizr/blob/v3.11.6/feature-detects/storage/localstorage.js
     var active = localStorage.getItem('active-tab', active);
 
-    if (!active || !/^[a-z]{2,10}-[a-z]{2,10}$/.test(active)) throw 2;
+    if (!active) throw 2;
 
     if ($('.c-tab-login__nav-link[data-tab="' + active + '"]').length !== 1)
         throw 3;
@@ -153,6 +153,7 @@ jQuery(function ($) {
         // In some cases exception could be thrown while accessing localStorage, see https://github.com/Modernizr/Modernizr/blob/v3.11.6/feature-detects/storage/localstorage.js
         localStorage.setItem('active-tab', active);
     } catch (e) {
+      console.log(e);
     }
 
     $('body').removeClass('is-mobile-subview');
