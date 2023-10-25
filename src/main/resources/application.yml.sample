@@ -58,12 +58,14 @@ tara:
     max-connections-total: 5
 
   eeid-service:
+    api-token: 123345
     webauthn-login-url: http://localhost:3000/webauthn/credential_authentication/new
     webauthn-register-url: http://localhost:3000/webauthn/credentials/new
-    accept-consent-url: http://manager:3000/webauthn/consent
+    request-timeout-in-seconds: 1
+    max-connections-total: 10
 
   default-locale: et
-  error-report-email: noreply@internet.ee
+  error-report-email: info@internet.ee
 
   alerts:
     enabled: false
@@ -80,6 +82,12 @@ tara:
         locale: ru
 
   auth-methods:
+    veriff:
+      enabled: true
+      level-of-assurance: HIGH
+      client-url: http://manager:3000
+      interval-between-session-status-queries-in-seconds: 5
+      max-session-status-queries: 100
     webauthn:
       enabled: true
       level-of-assurance: HIGH
@@ -179,3 +187,5 @@ tara:
       - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
       - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
       - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+
+  content-security-policy: "default-src 'self' *.veriff.me *.veriff.com; script-src 'self' *.veriff.me *.veriff.com *.hotjar.com *.probity.io; img-src 'self' blob: 'self' *.probity.io data:; frame-src 'self' *.veriff.me *.veriff.com *.hotjar.com; connect-src 'self' *.veriff.com *.veriff.me *.probity.io; style-src 'self' *.veriff.com *.veriff.me; font-src 'self' *.veriff.me *.veriff.com data:; base-uri 'none'; frame-ancestors 'none'; block-all-mixed-content"

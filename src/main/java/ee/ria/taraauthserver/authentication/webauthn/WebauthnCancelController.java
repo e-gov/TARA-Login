@@ -28,8 +28,6 @@ import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.error.ErrorCode.ERROR_GENERAL;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.WEBAUTHN_AUTHENTICATION_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.WEBAUTHN_REGISTRATION_CANCELED;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_COMPLETED;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.WAITING_WEBAUTHN_RESPONSE;
 import static java.lang.String.format;
@@ -42,7 +40,7 @@ import static net.logstash.logback.argument.StructuredArguments.value;
 @ConditionalOnProperty(value = "tara.auth-methods.webauthn.enabled")
 public class WebauthnCancelController {
     public static final String WEBAUTHN_LOGIN_CANCEL_REQUEST_MAPPING = "/auth/webauthn/login_cancel";
-    public static final String WEBAUTHN_REGISTRATION_CANCEL_REQUEST_MAPPING = "/auth/webauthn/registration_cancel";
+    public static final String WEBAUTHN_REGISTRATION_CANCEL_REQUEST_MAPPING = "/auth/webauthn/register_cancel";
 
     @Autowired
     StatisticsLogger statisticsLogger;
@@ -55,7 +53,7 @@ public class WebauthnCancelController {
 
     @PostMapping(value = WEBAUTHN_LOGIN_CANCEL_REQUEST_MAPPING, produces = MediaType.TEXT_HTML_VALUE)
     public RedirectView webauthnLoginCancel(@RequestParam(name = "RelayState") String relayState) {
-        log.info("Handling Webauthn authentication cancel for relay state: {}", value("tara.session.eidas.relay_state", relayState));
+        log.info("Handling Webauthn authentication cancel for relay state: {}", value("tara.session.webauthn.relay_state", relayState));
         if (!webauthnRelayStateCache.containsKey(relayState))
             throw new BadRequestException(INVALID_REQUEST, "relayState not found in relayState map");
 
@@ -70,7 +68,7 @@ public class WebauthnCancelController {
 
     @PostMapping(value = WEBAUTHN_REGISTRATION_CANCEL_REQUEST_MAPPING, produces = MediaType.TEXT_HTML_VALUE)
     public RedirectView webauthnRegistrationCancel(@RequestParam(name = "RelayState") String relayState) {
-        log.info("Handling Webauthn registration cancel for relay state: {}", value("tara.session.eidas.relay_state", relayState));
+        log.info("Handling Webauthn registration cancel for relay state: {}", value("tara.session.webauthn.relay_state", relayState));
         if (!webauthnRelayStateCache.containsKey(relayState))
             throw new BadRequestException(INVALID_REQUEST, "relayState not found in relayState map");
 

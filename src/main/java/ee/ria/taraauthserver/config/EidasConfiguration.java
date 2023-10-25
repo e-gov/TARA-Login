@@ -46,7 +46,7 @@ public class EidasConfiguration {
     private EidasConfigurationProperties eidasConfigurationProperties;
 
     @Autowired
-    private RestTemplate hydraRestTemplate;
+    private RestTemplate eeidRestTemplate;
 
     @Scheduled(fixedRateString = "${tara.auth-methods.eidas.refresh-countries-interval-in-milliseconds:300000}")
     public void scheduleFixedDelayTask() {
@@ -63,7 +63,7 @@ public class EidasConfiguration {
         headers.set("ENVIRONMENT", eidasConfigurationProperties.getEnvironment());
         HttpEntity<String> entity = new HttpEntity<String>("parameters", headers);
         requestLogger.logRequest(url, HttpMethod.GET);
-        var response = hydraRestTemplate.exchange(
+        var response = eeidRestTemplate.exchange(
                 url,
                 HttpMethod.GET,
                 entity,
@@ -79,27 +79,5 @@ public class EidasConfiguration {
         // Collections.sort(countries.get(SPType.PUBLIC));
         eidasConfigurationProperties.setAvailableCountries(countries);
         log.info("Updated countries configuration to: {}", value("tara.conf.auth-methods.eidas.available_countries", countries));
-    }
-
-    @Bean
-    public RestTemplate eidasRestTemplate(RestTemplateBuilder builder, SSLContext sslContext, EidasConfigurationProperties eidasConfigurationProperties) {
-        HttpClient client = HttpClients.custom()
-                .setSSLContext(sslContext)
-                .setMaxConnPerRoute(eidasConfigurationProperties.getMaxConnectionsTotal())
-                .setMaxConnTotal(eidasConfigurationProperties.getMaxConnectionsTotal())
-                .build();
-
-        List<HttpMessageConverter<?>> converters = new ArrayList<>();
-        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
-        converter.setSupportedMediaTypes(Collections.singletonList(MediaType.TEXT_HTML));
-        converters.add(converter);
-
-        return builder
-                .additionalMessageConverters(converters)
-                .setConnectTimeout(Duration.ofSeconds(eidasConfigurationProperties.getRequestTimeoutInSeconds()))
-                .setReadTimeout(Duration.ofSeconds(eidasConfigurationProperties.getReadTimeoutInSeconds()))
-                .requestFactory(() -> new HttpComponentsClientHttpRequestFactory(client))
-                .errorHandler(new RestTemplateErrorLogger(Service.EIDAS))
-                .build();
     }
 }

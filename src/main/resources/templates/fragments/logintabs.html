@@ -11,6 +11,8 @@
         </th:block>
         <th:block th:case="eu-citizen"><a th:replace="~{fragments/logintabs :: nav_default_link(${tab_id}, 'en')}"/>
         </th:block>
+        <th:block th:case="veriff"><a th:replace="~{fragments/logintabs :: nav_default_link(${tab_id}, 'en')}"/>
+        </th:block>
     </th:block>
 </li>
 
@@ -47,7 +49,7 @@
                 <div role="heading" aria-level="2">
                     <h2 th:utext="${#messages.msg('label.' + tab_id + '.' + (title ?: 'title'))}"></h2>
                 </div>
-                <p th:utext="${#strings.isEmpty(instruction) ? #messages.msg('label.' + tab_id + '.' + (#strings.isEmpty(@thymeleafSupport.getServiceName()) ? 'instruction' : 'instruction-with-short-name'), @thymeleafSupport.getServiceName()) : #messages.msg('label.' + tab_id + '.' + instruction)}"></p>
+                <p id="instruction" th:utext="${#strings.isEmpty(instruction) ? #messages.msg('label.' + tab_id + '.' + (#strings.isEmpty(@thymeleafSupport.getServiceName()) ? 'instruction' : 'instruction-with-short-name'), @thymeleafSupport.getServiceName()) : #messages.msg('label.' + tab_id + '.' + instruction)}"></p>
                 <form layout:fragment="login-form-content"></form>
             </div>
         </div>

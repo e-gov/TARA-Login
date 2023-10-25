@@ -1,8 +1,10 @@
 package ee.ria.taraauthserver.authentication.consent;
 
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.WebauthnConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.logging.ClientRequestLogger;
+import ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
@@ -32,6 +34,7 @@ import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.CONSENT_GIVEN;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.CONSENT_NOT_GIVEN;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.VERIFICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.WEBAUTHN_AUTHENTICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 
@@ -40,14 +43,19 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 public class AuthConsentConfirmController {
     public static final String REDIRECT_TO = "redirect_to";
     public static final String WEBAUTHN_USER_ID = "webauthn_user_id";
-    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.TARA_HYDRA, this.getClass());
-    private static final EnumSet<TaraAuthenticationState> ALLOWED_STATES = EnumSet.of(AUTHENTICATION_SUCCESS, WEBAUTHN_AUTHENTICATION_SUCCESS);
+    private static final EnumSet<TaraAuthenticationState> ALLOWED_STATES = EnumSet.of(AUTHENTICATION_SUCCESS, WEBAUTHN_AUTHENTICATION_SUCCESS, VERIFICATION_SUCCESS);
 
     @Autowired
     private AuthConfigurationProperties authConfigurationProperties;
 
     @Autowired
+    private WebauthnConfigurationProperties webauthnConfigurationProperties;
+
+    @Autowired
     private RestTemplate hydraRestTemplate;
+
+    @Autowired
+    private RestTemplate eeidRestTemplate;
 
     @Autowired
     private StatisticsLogger statisticsLogger;
@@ -60,10 +68,14 @@ public class AuthConsentConfirmController {
             @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, ALLOWED_STATES);
         if (consentGiven.equals("true")) {
-            String acceptConsentUrl = isWebauthnRequested(taraSession) 
-                                    ? authConfigurationProperties.getEeidService().getAcceptConsentUrl() 
-                                    : authConfigurationProperties.getHydraService().getAcceptConsentUrl();
-            return acceptConsent(taraSession, acceptConsentUrl + "?consent_challenge=" + taraSession.getConsentChallenge(), model);
+            String acceptConsentUrl;
+            if (isWebauthnRequested(taraSession)) {
+                acceptConsentUrl = webauthnConfigurationProperties.getClientUrl() + "/api/v1/webauthn/consent";
+                return webauthnAcceptConsent(taraSession, acceptConsentUrl, model);
+            } else {
+                acceptConsentUrl = authConfigurationProperties.getHydraService().getAcceptConsentUrl() + "?consent_challenge=" + taraSession.getConsentChallenge();
+                return acceptConsent(taraSession, acceptConsentUrl, model);
+            }
         } else {
             return rejectConsent(taraSession);
         }
@@ -86,6 +98,7 @@ public class AuthConsentConfirmController {
     }
 
     private String getRedirectView(TaraSession taraSession, TaraAuthenticationState taraSessionState, String requestUrl, Object requestBody, Model model) {
+        ClientRequestLogger requestLogger = new ClientRequestLogger(Service.TARA_HYDRA, this.getClass());
         requestLogger.logRequest(requestUrl, HttpMethod.PUT, requestBody);
         var response = hydraRestTemplate.exchange(
                 requestUrl,
@@ -95,15 +108,37 @@ public class AuthConsentConfirmController {
                 });
         requestLogger.logResponse(response);
 
+        taraSession.setState(taraSessionState);
+
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && response.getBody().get(REDIRECT_TO) != null) {
-            taraSession.setState(taraSessionState);
             statisticsLogger.log(taraSession);
             SessionUtils.invalidateSession();
             return "redirect:" + response.getBody().get(REDIRECT_TO);
-        } else if (response.getStatusCode() == HttpStatus.CREATED && response.getBody() != null && response.getBody().get(WEBAUTHN_USER_ID) != null) {
-            return createWebauthnRegisterView(model, taraSession, response.getBody().get(WEBAUTHN_USER_ID));
         } else {
             throw new IllegalStateException("Invalid OIDC server response. Redirect URL missing from response.");
+        }
+    }
+
+    @NotNull
+    private String webauthnAcceptConsent(TaraSession taraSession, String requestUrl, Model model) {
+        AcceptConsentRequest acceptConsentRequest = AcceptConsentRequest.buildWithTaraSession(taraSession);
+        
+        ClientRequestLogger requestLogger = new ClientRequestLogger(Service.EEID, this.getClass());
+        requestLogger.logRequest(requestUrl, HttpMethod.PUT, acceptConsentRequest);
+        var response = eeidRestTemplate.exchange(
+                requestUrl,
+                HttpMethod.PUT,
+                new HttpEntity<>(acceptConsentRequest),
+                new ParameterizedTypeReference<Map<String, String>>() {
+                });
+        requestLogger.logResponse(response);
+
+        taraSession.setState(CONSENT_GIVEN);
+
+        if (response.getStatusCode() == HttpStatus.CREATED && response.getBody() != null && response.getBody().get(WEBAUTHN_USER_ID) != null) {
+            return createWebauthnRegisterView(model, taraSession, response.getBody().get(WEBAUTHN_USER_ID));
+        } else {
+            throw new IllegalStateException("Invalid EEID server response.");
         }
     }
 
@@ -113,6 +148,6 @@ public class AuthConsentConfirmController {
     }
 
     private boolean isWebauthnRequested(TaraSession taraSession) {
-        return taraSession.getState() == AUTHENTICATION_SUCCESS && taraSession.getLoginRequestInfo().getRequestedScopes().contains(TaraScope.WEBAUTHN.getFormalName());
+        return taraSession.getState() != WEBAUTHN_AUTHENTICATION_SUCCESS && taraSession.getLoginRequestInfo().getRequestedScopes().contains(TaraScope.WEBAUTHN.getFormalName());
     }
 }

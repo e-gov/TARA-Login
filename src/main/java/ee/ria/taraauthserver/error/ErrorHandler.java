@@ -27,6 +27,7 @@ import java.io.IOException;
 import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_LOGIN_CHALLENGE;
 import static ee.ria.taraauthserver.error.ErrorCode.INTERNAL_ERROR;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.VERIFICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.util.Objects.requireNonNull;
 import static net.logstash.logback.marker.Markers.append;
@@ -43,7 +44,7 @@ public class ErrorHandler {
         if (session != null) {
             TaraSession taraSession = (TaraSession) requireNonNull(session.getAttribute(TARA_SESSION));
             setErrorCode(taraSession, ex);
-            if (!AUTHENTICATION_FAILED.equals(taraSession.getState())) {
+            if (!AUTHENTICATION_FAILED.equals(taraSession.getState()) && !VERIFICATION_FAILED.equals(taraSession.getState())) {
                 taraSession.setState(AUTHENTICATION_FAILED);
                 statisticsLogger.log(taraSession, ex);
             }

@@ -6,6 +6,7 @@ import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.logging.ClientRequestLogger;
+import ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraSession.OidcClient;
@@ -49,10 +50,7 @@ import static net.logstash.logback.argument.StructuredArguments.value;
 @RestController
 @ConditionalOnProperty(value = "tara.auth-methods.webauthn.enabled")
 public class WebauthnController {
-    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.TARA_HYDRA, this.getClass());
-
-    @Autowired
-    private AuthConfigurationProperties authConfigurationProperties;
+    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.EEID, this.getClass());
 
     @Autowired
     private AuthConfigurationProperties taraProperties;
@@ -63,7 +61,7 @@ public class WebauthnController {
     @PostMapping(value = "/auth/webauthn/login", produces = MediaType.TEXT_HTML_VALUE)
     public RedirectView webauthnLogin(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         String relayState = UUID.randomUUID().toString();
-        log.info("Initiating Webauthn authentication session with relay state: {}", value("tara.session.eidas.relay_state", relayState));
+        log.info("Initiating Webauthn authentication session with relay state: {}", value("tara.session.webauthn.relay_state", relayState));
         validateSession(taraSession, EnumSet.of(INIT_AUTH_PROCESS));
         webauthnRelayStateCache.put(relayState, taraSession.getSessionId());
 
@@ -75,7 +73,7 @@ public class WebauthnController {
     public RedirectView webauthnRegister(@RequestParam(name = "WebauthnUserId") String webauthnUserId,
                                          @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         String relayState = UUID.randomUUID().toString();
-        log.info("Initiating Webauthn registration session with relay state: {}", value("tara.session.eidas.relay_state", relayState));
+        log.info("Initiating Webauthn registration session with relay state: {}", value("tara.session.webauthn.relay_state", relayState));
         validateSession(taraSession, EnumSet.of(CONSENT_GIVEN, CONSENT_NOT_REQUIRED));
         webauthnRelayStateCache.put(relayState, taraSession.getSessionId());
 
@@ -103,5 +101,4 @@ public class WebauthnController {
     private List<String> getAllowedRequestedScopes(TaraSession.LoginRequestInfo loginRequestInfo) {
         return Arrays.asList(loginRequestInfo.getClient().getScope().split(" "));
     }
-
 }

@@ -50,7 +50,7 @@ public class AuthConfigurationProperties {
 
     private HydraConfigurationProperties hydraService = new HydraConfigurationProperties();
 
-    private EeidConfigurationProperties eeidService = new EeidConfigurationProperties();
+    private EeidServiceConfigurationProperties eeidService = new EeidServiceConfigurationProperties();
 
     private TlsConfigurationProperties tls = new TlsConfigurationProperties();
 
@@ -93,16 +93,20 @@ public class AuthConfigurationProperties {
     @Data
     @Validated
     @ConfigurationProperties(prefix = "tara.eeid-service")
-    public static class EeidConfigurationProperties {
+    public static class EeidServiceConfigurationProperties {
 
         @NotBlank
-        private String acceptConsentUrl;
+        private String apiToken;
 
         @NotBlank
         private String webauthnLoginUrl;
 
         @NotBlank
         private String webauthnRegisterUrl;
+
+        private int requestTimeoutInSeconds = 3;
+
+        private int maxConnectionsTotal = 50;
 
     }
 
@@ -143,6 +147,22 @@ public class AuthConfigurationProperties {
         LevelOfAssurance levelOfAssurance;
 
         boolean enabled = false;
+    }
+
+    @Data
+    @Validated
+    @EqualsAndHashCode(callSuper = true)
+    @ConfigurationProperties(prefix = "tara.auth-methods.veriff")
+    public static class VeriffConfigurationProperties extends AuthMethodProperties {
+
+        @NotNull
+        private String clientUrl;
+
+        private int intervalBetweenSessionStatusQueriesInSeconds = 5;
+
+        private int maxSessionStatusQueries = 10;
+
+        private int delayStatusPollingStartInMilliseconds = 500;
     }
 
     @Data

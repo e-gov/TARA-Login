@@ -9,7 +9,7 @@
             <span id="error-incident-number"></span>
         </div>
         <div><a id="error-report-url"
-              th:href="#{label.error.error-report-content(${@thymeleafSupport.getErrorReportEmail()},'(1)','(2)','(3)','(4)','(5)')}"
+              th:href="#{label.error.error-report-content(${@thymeleafSupport.getErrorReportEmail()},'{1}','{2}','{3}','{4}','{5}')}"
               th:text="#{label.error.error-report-link}">Send error report</a>
         </div>
         <div>

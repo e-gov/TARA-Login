@@ -107,7 +107,6 @@ public class ThymeleafSupport {
     }
 
     private List<String> toPropertyNames(List<AuthenticationType> allowedAuthMethods) {
-        System.out.println(allowedAuthMethods);
         if (allowedAuthMethods.isEmpty())
             return emptyList();
 
@@ -122,16 +121,6 @@ public class ThymeleafSupport {
         }
         return new JSONObject(methods);
     }
-
-    //   public List<String> getListOfCountries_legacy() {
-    //     TaraSession taraSession = SessionUtils.getAuthSession();
-    //     if (eidasConfigurationProperties == null || taraSession == null) {
-    //         return emptyList();
-    //     }
-    //     Map<SPType, Map<String, List<String>>> availableCountries = eidasConfigurationProperties.getAvailableCountries();
-    //     SPType spType = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getInstitution().getSector();
-    //     return new ArrayList<>(availableCountries.get(spType).keySet());
-    // }
 
     public String getBackUrl() {
         TaraSession taraSession = SessionUtils.getAuthSession();

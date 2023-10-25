@@ -45,13 +45,13 @@ import static net.logstash.logback.argument.StructuredArguments.value;
 @RestController
 @ConditionalOnProperty(value = "tara.auth-methods.eidas.enabled")
 public class EidasController {
-    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.EIDAS, this.getClass());
+    private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.EEID, this.getClass());
 
     @Autowired
     private EidasConfigurationProperties eidasConfigurationProperties;
 
     @Autowired
-    private RestTemplate eidasRestTemplate;
+    private RestTemplate eeidRestTemplate;
 
     @Autowired
     private Cache<String, String> eidasRelayStateCache;
@@ -61,7 +61,7 @@ public class EidasController {
         String relayState = UUID.randomUUID().toString();
         log.info("Initiating EIDAS authentication session with relay state: {}", value("tara.session.eidas.relay_state", relayState));
         validateSession(taraSession);
-        eidasRelayStateCache.put(relayState, taraSession.getSessionId()); // TODO AUT-854
+        eidasRelayStateCache.put(relayState, taraSession.getSessionId());
         SPType spType = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient().getInstitution().getSector();
 
         if (!eidasConfigurationProperties.getAvailableCountries().get(spType).containsKey(country)) {
@@ -72,7 +72,7 @@ public class EidasController {
         String requestUrl = createRequestUrl(country, method, taraSession, relayState);
 
         requestLogger.logRequest(requestUrl, HttpMethod.GET);
-        var response = eidasRestTemplate.exchange(
+        var response = eeidRestTemplate.exchange(
                 requestUrl,
                 HttpMethod.GET,
                 null,
