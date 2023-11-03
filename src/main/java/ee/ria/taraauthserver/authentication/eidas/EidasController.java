@@ -8,7 +8,7 @@ import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
-import ee.ria.taraauthserver.session.TaraSession.OidcClient;
+// import ee.ria.taraauthserver.session.TaraSession.OidcClient;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.ArrayList;
 
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
@@ -100,7 +99,7 @@ public class EidasController {
 
     private String createRequestUrl(String country, String method, TaraSession taraSession, String relayState) {
         String url = eidasConfigurationProperties.getClientUrl() + "/auth/eidas/login";
-        OidcClient oidcClient = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient();
+        // OidcClient oidcClient = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient();
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
                 .queryParam("country", country)
                 .queryParam("method", method)

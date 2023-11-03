@@ -1,7 +1,6 @@
 package ee.ria.taraauthserver.authentication.eidas;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
@@ -96,7 +95,7 @@ public class EidasCallbackController {
         validateSession(session);
 
         try {
-            String requestUrl = eidasConfigurationProperties.getClientUrl() + "/auth/eidas/return";
+            String requestUrl = eidasConfigurationProperties.getClientUrl() + "/api/v1/eidas/return";
             TaraSession taraSession = requireNonNull(session.getAttribute(TARA_SESSION));
 
             requestLogger.logRequest(requestUrl, HttpMethod.POST, Map.of("code", code));
@@ -183,9 +182,9 @@ public class EidasCallbackController {
         return personIdentifierMatcher.group(3);
     }
 
-    private String getCountryCodeFromPersonIdentifier(Matcher personIdentifierMatcher) {
-        return personIdentifierMatcher.group(1);
-    }
+    // private String getCountryCodeFromPersonIdentifier(Matcher personIdentifierMatcher) {
+    //     return personIdentifierMatcher.group(1);
+    // }
 
     private HttpEntity<MultiValueMap<String, String>> createRequestEntity(String code, TaraSession taraSession) {
         TaraSession.EidasAuthenticationResult authenticationResult = (TaraSession.EidasAuthenticationResult) taraSession.getAuthenticationResult();
