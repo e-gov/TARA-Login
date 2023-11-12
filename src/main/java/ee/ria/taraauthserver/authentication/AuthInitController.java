@@ -6,6 +6,7 @@ import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.error.ErrorCode;
+import ee.ria.taraauthserver.error.exceptions.AuthFlowTimeoutException;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.security.SessionManagementFilter;
@@ -32,6 +33,8 @@ import javax.validation.Validator;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.net.URISyntaxException;
+import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -82,6 +85,15 @@ public class AuthInitController {
         newTaraSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
         newTaraSession.setLoginRequestInfo(loginRequestInfo);
 
+        Duration authFlowTimeout = null;
+        if(loginRequestInfo.getRequestedAt() != null){
+            OffsetDateTime timeoutDatetime = loginRequestInfo.getRequestedAt().plusSeconds(taraProperties.getAuthFlowTimeout().getSeconds());
+            if (timeoutDatetime.isBefore(OffsetDateTime.now())) {
+                throw new AuthFlowTimeoutException("User did not authenticate before the login session timeout");
+            }
+            authFlowTimeout = Duration.between(OffsetDateTime.now(), timeoutDatetime);
+        }
+
         if (StringUtils.isNotBlank(govSsoHydraConfigurationProperties.getClientId()) && govSsoHydraConfigurationProperties.getClientId().equals(loginRequestInfo.getClientId())) {
             String govSsoLoginChallenge = loginRequestInfo.getGovSsoChallenge();
             if (govSsoLoginChallenge != null && govSsoLoginChallenge.matches("^[a-f0-9]{32}$")) {
@@ -112,6 +124,9 @@ public class AuthInitController {
             return "redirectToEidasInit";
         } else {
             addSelfServiceUrlToModel(model, govSsoConfigurationProperties.getSelfServiceUrl(), language);
+            if (authFlowTimeout != null){
+                model.addAttribute("secondsToAuthFlowTimeout", authFlowTimeout.getSeconds());
+            }
             return "loginView";
         }
     }

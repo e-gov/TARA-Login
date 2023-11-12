@@ -23,6 +23,7 @@ import org.springframework.session.SessionRepository;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URL;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -49,6 +50,8 @@ class AuthInitControllerTest extends BaseTest {
             SPType.PRIVATE, List.of("IT")
     );
 
+    private static final String MOCK_RESPONSE_AUTH_FLOW_TIMEOUT = "{\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"dev-local-mock-cl ient\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"eidas_requester_id\":\"urn:uuid:99dc4792-cba5-11ec-a957-571ea9ac2691\",\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations \":{\"en\":\"Service name (dev-local)\",\"et\":\"Teenusenimi (dev-local)\",\"ru\":\"название службы (dev-local)\"},\"short_name_translations\":{\"en\":\"string_en\",\"et\":\"string_et\",\"ru\":\"string_ru\"},\"smartid_settings\":{\"should_u se_additional_verification_code_check\":true}}},\"scope\":\"openid eidas eidasonly eidas:country:* idcard mid smartid email phone legalperson\"},\"login_challenge_expired\":false,\"oidc_context\":{\"ui_locales\":[\"et\"]},\" request_url\":\"https://oidc-service.dev-local.riaint.ee:8443/oidc/authorize?scope=openid&response_type=code&client_id=dev-local-mock-client&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=1801fd6 8-ec16-4e98-9c98-6928806d08ee&nonce=c1214a17-de2d-4aab-be0a-480b261013e8&ui_locales=et\",\"requested_at\":%s,\"requested_scope\":[\"openid\"]}";
+
     @Autowired
     private SessionRepository<Session> sessionRepository;
 
@@ -60,6 +63,7 @@ class AuthInitControllerTest extends BaseTest {
 
     @Autowired
     private AuthConfigurationProperties.GovSsoConfigurationProperties govSsoConfigurationProperties;
+
 
     @Test
     @Tag(value = "AUTH_INIT_ENDPOINT")
@@ -1130,5 +1134,69 @@ class AuthInitControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: Incorrect GovSSO login challenge format.");
+    }
+
+
+    @ParameterizedTest
+    @ValueSource(strings = {"now", "20"})
+    @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
+    void authInit_ok_before_auth_flow_timeout(String secondsToTimeout) {
+        OffsetDateTime formattedTimeout = OffsetDateTime.now();
+        if (!secondsToTimeout.equals("now")) {
+            formattedTimeout = OffsetDateTime.now().minus(authConfigurationProperties.getAuthFlowTimeout()).plusSeconds(Long.parseLong(secondsToTimeout));
+        }
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBody(getFormattedAuthFlowTimeoutBody(formattedTimeout))));
+
+        String sessionId = given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
+                .header(HttpHeaders.CONTENT_LANGUAGE, "et")
+                .body(containsString("Sisestage ID-kaart kaardilugejasse ja vajutage \"Jätka\""))
+                .cookie(TARA_SESSION_COOKIE_NAME, matchesPattern("[A-Za-z0-9,-]{36,36}"))
+                .extract().cookie(TARA_SESSION_COOKIE_NAME);
+
+        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
+    void authInit_after_auth_flow_timeout() {
+        OffsetDateTime formattedTimeout = OffsetDateTime.now().minus(authConfigurationProperties.getAuthFlowTimeout()).minusSeconds(1);
+        wireMockServer.stubFor(get(urlEqualTo("/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBody(getFormattedAuthFlowTimeoutBody(formattedTimeout))));
+
+        String sessionId = given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .statusCode(401)
+                .body("message", equalTo("Sessioon aegus."))
+                .body("error", equalTo("Unauthorized"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
+                .body("reportable", equalTo(false))
+                .cookie(TARA_SESSION_COOKIE_NAME, matchesPattern("[A-Za-z0-9,-]{36,36}"))
+                .extract().cookie(TARA_SESSION_COOKIE_NAME);
+
+        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
+    }
+
+    private static String getFormattedAuthFlowTimeoutBody(OffsetDateTime offsetDateTime){
+        return String.format(MOCK_RESPONSE_AUTH_FLOW_TIMEOUT, offsetDateTime.toInstant().getEpochSecond());
     }
 }

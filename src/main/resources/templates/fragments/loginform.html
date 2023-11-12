@@ -233,5 +233,26 @@
 <p class="link-back-mobile" xmlns:th="http://www.w3.org/1999/xhtml">
     <a th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a>
 </p>
-<script th:src="@{/scripts/main.js}" defer></script>
 
+<!-- Session Timeout Notification Modal -->
+<div class="modal" id="auth-flow-timeout" tabindex="-1" role="dialog" aria-labelledby="auth-flow-timeout-label" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <a type="button" class="close" data-dismiss="modal" aria-label="Close" tabindex="0">
+            <span aria-hidden="true">&times;</span>
+        </a>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="auth-flow-timeout-label" th:text="#{label.auth-flow-timeout.header}">Sessioni aegumine</h3>
+            </div>
+            <div class="modal-body">
+                <p th:utext="#{label.auth-flow-timeout.body}">Sinu sessioon hakkab aeguma varsti.</p>
+            </div>
+            <div class="modal-footer">
+                <span id="auth-flow-timeout-timer" th:data-seconds-to-timeout="${secondsToAuthFlowTimeout}" aria-live="polite">05:00</span>
+                <button type="button" class="accept c-btn c-btn--primary" th:text="#{label.common.understood}" tabindex="0">Sain aru</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/scripts/main.js}" defer></script>

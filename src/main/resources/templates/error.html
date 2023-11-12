@@ -19,6 +19,9 @@
         <div th:if="${login_challenge != null}" class="link-back">
             <a th:href="'/auth/init?login_challenge=' + ${login_challenge}" th:text="#{label.common.back}">Back</a>
         </div>
+        <div th:if="${redirect_to_service_provider}" class="link-back">
+            <a th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a>
+        </div>
     </div>
     <script th:src="@{/scripts/main.js}" defer></script>
 </div>

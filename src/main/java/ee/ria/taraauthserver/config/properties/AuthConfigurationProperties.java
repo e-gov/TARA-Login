@@ -18,6 +18,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.net.URL;
+import java.time.Duration;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
@@ -53,6 +54,9 @@ public class AuthConfigurationProperties {
     private TlsConfigurationProperties tls = new TlsConfigurationProperties();
 
     private EnumMap<AuthenticationType, AuthMethodProperties> authMethods = new EnumMap<>(AuthenticationType.class);
+
+    @NotNull
+    private Duration authFlowTimeout;
 
     @Value("${tara.masked_field_names:session_id}")
     public void setMaskedFieldNames(Set<String> maskedFieldNames) {

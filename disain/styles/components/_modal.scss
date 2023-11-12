@@ -1,0 +1,95 @@
+/* The Modal (background) */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  align-items: center;
+  justify-content: center;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+
+  /* Add animation */
+  -webkit-animation-name: fadeIn; /* Fade in the background */
+  -webkit-animation-duration: 0.4s;
+  animation-name: fadeIn;
+  animation-duration: 0.4s;
+
+  &.show {
+    display: flex;
+  }
+
+  .modal-dialog {
+    flex: 0 1 auto;
+    width: 600px;
+    margin: 10px;
+    min-width: 250px;
+  }
+
+  /* Modal Content */
+  .modal-content {
+    padding: 5% 10%;
+    background-color: #fefefe;
+    width: 100%;
+    -webkit-animation-name: slideIn;
+    -webkit-animation-duration: 0.4s;
+    animation-name: slideIn;
+    animation-duration: 0.4s;
+    border-radius: 0.4rem;
+  }
+
+  /* The Close Button */
+  .close {
+    color: #005f87;
+    float: right;
+    font-size: 28px;
+    text-decoration: none;
+    margin: 10px 20px;
+
+    &:hover,
+    &:focus {
+      color: #000;
+      text-decoration: none;
+      cursor: pointer;
+    }
+  }
+
+  h3 {
+    margin-bottom: 10px;
+    font-size: 24px;
+    color: #003168;
+    font-weight: 400
+  }
+
+  #auth-flow-timeout-timer {
+    color: #005f87;
+    margin: 12px 0px;
+    display: block;
+    font-size: 2em;
+    font-weight: bold;
+  }
+
+}
+
+/* Animations */
+@-webkit-keyframes slideIn {
+  from {bottom: -300px; opacity: 0;}
+  to {bottom: 0; opacity: 1;}
+}
+
+@keyframes slideIn {
+  from {bottom: -300px; opacity: 0;}
+  to {bottom: 0; opacity: 1;}
+}
+
+@-webkit-keyframes fadeIn {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+
+@keyframes fadeIn {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}

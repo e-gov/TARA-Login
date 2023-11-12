@@ -31,6 +31,7 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -154,6 +155,8 @@ public class TaraSession implements Serializable {
         private URL url;
         @JsonIgnore
         private String loginVerifierRedirectUrl;
+        @JsonProperty("requested_at") //TODO AUT-1576 Add @NotNull and remove unnecessary check in AuthInitController
+        private OffsetDateTime requestedAt;
 
         @JsonIgnore
         public String getOidcState() {

@@ -31,3 +31,4 @@ ignite:
 tara:
   govsso:
     self-service-url: https://enduserselfservice.localhost:25443/
+  auth-flow-timeout: 1800s

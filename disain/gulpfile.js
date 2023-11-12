@@ -18,7 +18,8 @@ config = {
     JS_MAIN: './scripts/main/**/*.js',
     JS_FORM: './scripts/form/**/*.js',
     JS_GENERAL: './scripts/general/**/*.js',
-    JS_LEGALPERSON: './scripts/legalperson/**/*.js'
+    JS_LEGALPERSON: './scripts/legalperson/**/*.js',
+    JS_MODAL: './scripts/timeout/timeout-modal.js'
   },
   DEST: {
     ICO: '../src/main/resources/static/',
@@ -71,7 +72,7 @@ gulp.task('build:css', function() {
 // Build js
 gulp.task('build:js_main', function(cb) {
   pump([
-    gulp.src([config.SRC.JS_GENERAL, config.SRC.JS_MAIN]),
+    gulp.src([config.SRC.JS_GENERAL, config.SRC.JS_MAIN, config.SRC.JS_MODAL]),
     uglify(),
     concat('main.js'),
     gulp.dest(config.DEST.JS),

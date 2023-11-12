@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static ee.ria.taraauthserver.error.ErrorCode.AUTH_FLOW_TIMEOUT;
 import static ee.ria.taraauthserver.error.ErrorCode.EIDAS_INCORRECT_LOA;
 import static ee.ria.taraauthserver.error.ErrorCode.EIDAS_USER_CONSENT_NOT_GIVEN;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_EXPIRED;
@@ -72,6 +73,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
     public static final String ERROR_ATTR_MESSAGE = "message";
     public static final String ERROR_ATTR_LOCALE = "locale";
     public static final String ERROR_ATTR_LOGIN_CHALLENGE = "login_challenge";
+    public static final String ERROR_ATTR_REDIRECT_TO_SERVICE_PROVIDER = "redirect_to_service_provider";
     public static final String ERROR_ATTR_INCIDENT_NR = "incident_nr";
     public static final String ERROR_ATTR_REPORTABLE = "reportable";
     private final MessageSource messageSource;
@@ -99,6 +101,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
             EIDAS_USER_CONSENT_NOT_GIVEN,
             SID_DOCUMENT_UNUSABLE,
             SESSION_NOT_FOUND,
+            AUTH_FLOW_TIMEOUT,
             SESSION_STATE_INVALID,
             INVALID_REQUEST,
             INVALID_CSRF_TOKEN,
@@ -123,6 +126,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
         Locale locale = RequestUtils.getLocale();
         attr.put(ERROR_ATTR_LOCALE, locale);
         attr.put(ERROR_ATTR_LOGIN_CHALLENGE, webRequest.getAttribute(ERROR_ATTR_LOGIN_CHALLENGE, SCOPE_REQUEST));
+        attr.put(ERROR_ATTR_REDIRECT_TO_SERVICE_PROVIDER, webRequest.getAttribute(ERROR_ATTR_REDIRECT_TO_SERVICE_PROVIDER, SCOPE_REQUEST));
         attr.put(ERROR_ATTR_INCIDENT_NR, webRequest.getAttribute(REQUEST_ATTRIBUTE_NAME_REQUEST_ID, SCOPE_REQUEST));
         attr.put(ERROR_ATTR_REPORTABLE, isReportable(error, status));
         attr.remove("errors");

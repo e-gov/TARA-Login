@@ -61,6 +61,7 @@ tara:
     max-connections-total: 3
   govsso:
     self-service-url: https://enduserselfservice.localhost:25443/
+  auth-flow-timeout: 1800s
 
   default-locale: et
   error-report-email: help@example.com
