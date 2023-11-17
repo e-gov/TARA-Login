@@ -4,6 +4,9 @@
 <head>
 </head>
 <body>
+<th:block th:if="${hideHeaderLanguageSelection != true}">
+    <a href="#main-content" class="skip-link" th:text="#{label.header.skip-link}">Skip to main content</a>
+</th:block>
 <div class="c-layout">
     <div class="c-layout--full">
         <div th:replace="fragments/taraheader">Header</div>
