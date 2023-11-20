@@ -1,11 +1,15 @@
 <div class="c-header-bar" xmlns:th="http://www.w3.org/1999/xhtml">
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center">
+        <div class="c-header-bar__content d-flex justify-content-between align-items-center">
             <header th:attr="aria-hidden=${ariaHideLogoHeader} ? 'true' : 'false'">
                 <div class="text" th:text="#{label.header.title}"/>
             </header>
-            <nav th:aria-label="#{label.aria.language-selection.navigation}">
-                <ul class="c-lang-list" th:if="not ${hideHeaderLanguageSelection}">
+            <nav class="d-flex">
+                <div class="accessibility">
+                    <a class="accessibility__link" th:href="#{link.header.accessibility}"
+                       th:text="#{label.header.accessibility}">ACCESSIBILITY</a>
+                </div>
+                <ul class="c-lang-list" th:if="not ${hideHeaderLanguageSelection}" th:aria-label="#{label.aria.language-selection.navigation}">
                     <li class="c-lang-list__item" th:if="${@thymeleafSupport.isNotLocale('et', #locale)}">
                         <a class="c-lang-list__link" th:href="${@thymeleafSupport.getLocaleUrl('et')}"
                            th:text="#{label.header.et}" th:hreflang="et" th:lang="et">EESTI</a>

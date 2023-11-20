@@ -12,4 +12,10 @@
 	  padding: 10px 0;
     }
   }
+  &__content.d-flex {
+    @media (max-width: $breakpoint-mobile) {
+      flex-direction: column; /* Stack children vertically */
+    }
+  }
 }
+

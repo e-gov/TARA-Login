@@ -1,11 +1,12 @@
-.c-lang-list {
+.c-lang-list, .accessibility {
   display: flex;
+  padding: 0 20px;
   @media (max-width: $breakpoint-mobile) {
-    padding-left: 20px;
+    padding: 0 10px;
   }
   &__link {
     display: block;
-    padding: 0 17px;
+    padding: 5px 10px;
     color: #344255;
     font-weight: 500;
     text-transform: uppercase;
@@ -15,8 +16,11 @@
       text-decoration: underline;
     }
     @media (max-width: $breakpoint-mobile) {
-      padding: 0 10px;
+      padding: 5px 5px;
       font-size: 14px;
     }
   }
+}
+.accessibility {
+  border-right: 1px solid #696969;
 }
