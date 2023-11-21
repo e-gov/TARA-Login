@@ -431,6 +431,9 @@ jQuery(function ($) {
     }
 
     function showFeedback(feedback) {
+		if (!feedback.hasClass('is-hidden')){
+			hideFeedback(feedback);
+		}
         feedback.attr('role', 'alert');
         feedback.removeClass('is-hidden');
 		feedback.removeAttr('aria-hidden');
