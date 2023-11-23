@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.w3.org/1999/xhtml" th:lang="${#locale.language}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout}" th:with="hideHeaderLanguageSelection=true">
+      layout:decorate="~{layout}" th:with="hideHeaderLanguageSelection=true, ariaHideLogoHeader=true">
 <head th:replace="~{fragments/head}"></head>
 <body class="is-mobile-subview"
       th:attr="data-check-form-refresh-rate=${@environment.getProperty('tara.auth-methods.mobile-id.interval-between-session-status-queries-in-milliseconds')}">
