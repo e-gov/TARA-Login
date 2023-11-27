@@ -23,7 +23,9 @@
                          translate="no"></div>
                     <div class="personal-info-label" th:utext="#{label.natural-person.date-of-birth}"></div>
                     <div class="personal-info-value" id="natural-person-date-of-birth"
-                         th:text="${#prettyDates.date(dateOfBirth)}" th:aria-label="${#prettyDates.dateText(dateOfBirth)}" translate="no"></div>
+                         th:aria-label="${#prettyDates.dateText(dateOfBirth)}">
+                        <span th:text="${#prettyDates.date(dateOfBirth)}" translate="no" aria-hidden="true"></span>
+                    </div>
                 </div>
 
                 <div class="personal-info" th:if="${email != null}">
