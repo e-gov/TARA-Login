@@ -1185,7 +1185,7 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(401)
-                .body("message", equalTo("Sessioon aegus."))
+                .body("message", equalTo("Autentimiseks ettenähtud aeg lõppes. Peate autentimisprotsessi teenusepakkuja juurest uuesti alustama."))
                 .body("error", equalTo("Unauthorized"))
                 .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false))
