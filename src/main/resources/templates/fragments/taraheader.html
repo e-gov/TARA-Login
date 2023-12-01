@@ -4,12 +4,12 @@
             <header th:attr="aria-hidden=${ariaHideLogoHeader} ? 'true' : 'false'">
                 <div class="text" th:text="#{label.header.title}"/>
             </header>
-            <nav class="d-flex">
+            <nav class="d-flex" th:if="not ${hideHeaderLanguageSelection}">
                 <div class="accessibility">
                     <a class="accessibility__link" th:href="#{link.header.accessibility}"
                        th:text="#{label.header.accessibility}">ACCESSIBILITY</a>
                 </div>
-                <ul class="c-lang-list" th:if="not ${hideHeaderLanguageSelection}" th:aria-label="#{label.aria.language-selection.navigation}">
+                <ul class="c-lang-list" th:aria-label="#{label.aria.language-selection.navigation}">
                     <li class="c-lang-list__item" th:if="${@thymeleafSupport.isNotLocale('et', #locale)}">
                         <a class="c-lang-list__link" th:href="${@thymeleafSupport.getLocaleUrl('et')}"
                            th:text="#{label.header.et}" th:hreflang="et" th:lang="et">EESTI</a>
