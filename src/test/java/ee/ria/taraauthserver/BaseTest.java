@@ -60,6 +60,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @Slf4j
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public abstract class BaseTest {
+    public static final String TARA_SESSION_COOKIE_NAME = "__Host-SESSION";
     public static final String CHARSET_UTF_8 = ";charset=UTF-8";
 
     protected static final Map<String, Object> EXPECTED_RESPONSE_HEADERS = new HashMap<>() {{
@@ -118,7 +119,7 @@ public abstract class BaseTest {
         RestAssured.filters(new RequestLoggingFilter(), new ResponseLoggingFilter());
         config = config()
                 .redirect(redirectConfig().followRedirects(false))
-                .sessionConfig(new SessionConfig().sessionIdName("SESSION"));
+                .sessionConfig(new SessionConfig().sessionIdName(TARA_SESSION_COOKIE_NAME));
     }
 
     protected static void createMidApiAuthenticationStub(String response, int status) {

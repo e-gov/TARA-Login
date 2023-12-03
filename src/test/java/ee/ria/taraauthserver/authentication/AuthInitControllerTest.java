@@ -201,8 +201,8 @@ class AuthInitControllerTest extends BaseTest {
                 .body(containsString("Sisestage ID-kaart kaardilugejasse ja vajutage \"Jätka\""))
                 .body(not(containsString("src=\"data:image/svg+xml;base64")))
                 .body(not(containsString("class=\"detailed-instruction-line detailed-session-management\"")))
-                .cookie("SESSION", matchesPattern("[A-Za-z0-9,-]{36,36}"))
-                .extract().cookie("SESSION");
+                .cookie(TARA_SESSION_COOKIE_NAME, matchesPattern("[A-Za-z0-9,-]{36,36}"))
+                .extract().cookie(TARA_SESSION_COOKIE_NAME);
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
@@ -255,8 +255,8 @@ class AuthInitControllerTest extends BaseTest {
                 .body(containsString("src=\"data:image/svg+xml;base64,testLogo\""))
                 .body(containsString("govsso test client et"))
                 .body(containsString("class=\"detailed-instruction-line detailed-session-management\""))
-                .cookie("SESSION", matchesPattern("[A-Za-z0-9,-]{36,36}"))
-                .extract().cookie("SESSION");
+                .cookie(TARA_SESSION_COOKIE_NAME, matchesPattern("[A-Za-z0-9,-]{36,36}"))
+                .extract().cookie(TARA_SESSION_COOKIE_NAME);
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
@@ -400,18 +400,18 @@ class AuthInitControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .cookie("SESSION", matchesPattern("[A-Za-z0-9,-]{36,36}"))
-                .extract().cookie("SESSION");
+                .cookie(TARA_SESSION_COOKIE_NAME, matchesPattern("[A-Za-z0-9,-]{36,36}"))
+                .extract().cookie(TARA_SESSION_COOKIE_NAME);
 
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
-                .cookie("SESSION", cookie)
+                .cookie(TARA_SESSION_COOKIE_NAME, cookie)
                 .when()
                 .get("/auth/init")
                 .then()
                 .assertThat()
                 .statusCode(200)
-                .cookie("SESSION", not(equalTo(cookie)));
+                .cookie(TARA_SESSION_COOKIE_NAME, not(equalTo(cookie)));
 
     }
 
@@ -935,7 +935,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(200)
                 .body(containsString("<input type=\"hidden\" name=\"country\" value=\"CA\"/>"))
                 .body(containsString("Redirecting, please wait..."))
-                .extract().cookie("SESSION");
+                .extract().cookie(TARA_SESSION_COOKIE_NAME);
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
@@ -963,7 +963,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(200)
                 .body(containsString("European Union member state's eID"))
                 .body(containsString("<option value=\"CA\">Test (CA)</option>"))
-                .extract().cookie("SESSION");
+                .extract().cookie(TARA_SESSION_COOKIE_NAME);
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
@@ -992,7 +992,7 @@ class AuthInitControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
                 .statusCode(200)
                 .body(matchesPattern(expectedCountriesPattern))
-                .extract().cookie("SESSION");
+                .extract().cookie(TARA_SESSION_COOKIE_NAME);
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());
@@ -1021,7 +1021,7 @@ class AuthInitControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
                 .statusCode(200)
                 .body(matchesPattern(expectedCountriesPattern))
-                .extract().cookie("SESSION");
+                .extract().cookie(TARA_SESSION_COOKIE_NAME);
 
         TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.INIT_AUTH_PROCESS, taraSession.getState());

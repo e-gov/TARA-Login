@@ -56,7 +56,7 @@ paths:
               schema:
                 type: string
             "\0Set-Cookie":
-              description: LOGIN_LOCALE=et; Path=/
+              description: __Host-LOCALE=et; Path=/
               schema:
                 type: string
           content:

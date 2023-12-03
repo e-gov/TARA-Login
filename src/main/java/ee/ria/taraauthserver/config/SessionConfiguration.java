@@ -27,7 +27,7 @@ import static java.util.List.of;
 @Configuration
 @EnableSpringHttpSession
 public class SessionConfiguration {
-    public static final String TARA_SESSION_COOKIE_NAME = "SESSION";
+    public static final String TARA_SESSION_COOKIE_NAME = "__Host-SESSION";
 
     @Bean
     public CookieSerializer cookieSerializer() {

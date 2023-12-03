@@ -124,7 +124,8 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
         CookieLocaleResolver bean = new CookieLocaleResolver();
         String locale = configurationProperties.getDefaultLocale();
         log.info("Setting default locale to [{}]", value("tara.conf.default_locale", locale));
-        bean.setCookieName("LOGIN_LOCALE");
+        bean.setCookieName("__Host-LOCALE");
+        //TODO AUT-1564 after spring boot migration to 3.x add bean.setCookieSameSite("Lax");
         bean.setCookieSecure(true);
         bean.setCookieMaxAge(365 * 24 * 60 * 60);
 

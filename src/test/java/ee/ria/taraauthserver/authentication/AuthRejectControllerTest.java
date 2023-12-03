@@ -97,7 +97,7 @@ class AuthRejectControllerTest extends BaseTest {
 
         given()
                 .when()
-                .sessionId("SESSION", sessionId)
+                .sessionId(TARA_SESSION_COOKIE_NAME, sessionId)
                 .param("error_code", "user_cancel")
                 .get("/auth/reject")
                 .then()
@@ -126,7 +126,7 @@ class AuthRejectControllerTest extends BaseTest {
 
         given()
                 .when()
-                .sessionId("SESSION", sessionId)
+                .sessionId(TARA_SESSION_COOKIE_NAME, sessionId)
                 .param("error_code", "user_cancel")
                 .get("/auth/reject")
                 .then()
@@ -153,7 +153,7 @@ class AuthRejectControllerTest extends BaseTest {
 
         given()
                 .when()
-                .sessionId("SESSION", sessionId)
+                .sessionId(TARA_SESSION_COOKIE_NAME, sessionId)
                 .param("error_code", "user_cancel")
                 .get("/auth/reject")
                 .then()

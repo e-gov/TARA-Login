@@ -155,7 +155,7 @@ class AuthConsentControllerTest extends BaseTest {
 
         given()
                 .when()
-                .sessionId("SESSION", session.getId())
+                .sessionId(TARA_SESSION_COOKIE_NAME, session.getId())
                 .queryParam("consent_challenge", MOCK_CONSENT_CHALLENGE)
                 .get("/auth/consent")
                 .then()
@@ -177,7 +177,7 @@ class AuthConsentControllerTest extends BaseTest {
 
         given()
                 .when()
-                .sessionId("SESSION", session.getId())
+                .sessionId(TARA_SESSION_COOKIE_NAME, session.getId())
                 .queryParam("consent_challenge", MOCK_CONSENT_CHALLENGE)
                 .get("/auth/consent")
                 .then()
@@ -211,7 +211,7 @@ class AuthConsentControllerTest extends BaseTest {
 
         given()
                 .when()
-                .sessionId("SESSION", session.getId())
+                .sessionId(TARA_SESSION_COOKIE_NAME, session.getId())
                 .queryParam("consent_challenge", MOCK_CONSENT_CHALLENGE)
                 .get("/auth/consent")
                 .then()
