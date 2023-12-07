@@ -5,6 +5,7 @@
 </head>
 <body>
 <th:block th:if="${hideHeaderLanguageSelection != true}">
+    <span id="jumpToMainContentInvisibleElement" tabindex="-1">&nbsp;</span>
     <a href="#main-content" class="skip-link" th:text="#{label.header.skip-link}">Skip to main content</a>
 </th:block>
 <div class="c-layout">

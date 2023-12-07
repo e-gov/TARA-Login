@@ -241,12 +241,18 @@ body.is-mobile-subview {
   }
 }
 
-.skip-link{
+.skip-link {
   position: absolute;
   top: -100px;
 }
 
-.skip-link:focus{
+.skip-link:focus {
   position: relative;
   top: 0;
+}
+
+#jumpToMainContentInvisibleElement{
+  position: absolute;
+  opacity: 0;
+  z-index: -1;
 }
