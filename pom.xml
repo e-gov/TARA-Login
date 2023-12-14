@@ -321,6 +321,7 @@
                                 --add-opens=java.base/java.time=ALL-UNNAMED
                                 --add-opens=java.base/java.net=ALL-UNNAMED
                             </BPE_APPEND_JAVA_TOOL_OPTIONS>
+                            <BP_JVM_VERSION>${maven.compiler.release}.*</BP_JVM_VERSION>
                         </env>
                     </image>
                     <excludes>
@@ -400,6 +401,17 @@
                 <artifactId>git-commit-id-plugin</artifactId>
                 <configuration>
                     <offline>true</offline>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <image>
+                        <env>
+                            <BP_JVM_VERSION>${maven.compiler.release}.*</BP_JVM_VERSION>
+                        </env>
+                    </image>
                 </configuration>
             </plugin>
         </plugins>
