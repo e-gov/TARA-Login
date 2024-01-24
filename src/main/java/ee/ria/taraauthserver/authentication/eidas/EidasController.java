@@ -94,6 +94,7 @@ public class EidasController {
         authenticationResult.setCountry(country);
         taraSession.setState(WAITING_EIDAS_RESPONSE);
         taraSession.setAuthenticationResult(authenticationResult);
+        SessionUtils.getHttpSession().setAttribute(TARA_SESSION, taraSession);
     }
 
     private String createRequestUrl(String country, TaraSession taraSession, String relayState) {

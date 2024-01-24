@@ -23,11 +23,15 @@ import static net.logstash.logback.argument.StructuredArguments.value;
 public class SessionUtils {
 
     public TaraSession getAuthSession() {
+        HttpSession httpSession = getHttpSession();
+        return httpSession == null ? null : (TaraSession) requireNonNull(httpSession.getAttribute(TARA_SESSION));
+    }
+
+    public HttpSession getHttpSession() {
         RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes();
         ServletRequestAttributes attributes = (ServletRequestAttributes) requestAttributes;
         HttpServletRequest request = attributes.getRequest();
-        HttpSession httpSession = request.getSession(false);
-        return httpSession == null ? null : (TaraSession) requireNonNull(httpSession.getAttribute(TARA_SESSION));
+        return request.getSession(false);
     }
 
     public void assertSessionInState(TaraSession taraSession, EnumSet<TaraAuthenticationState> validSessionStates) {
