@@ -8,9 +8,14 @@ import ee.ria.taraauthserver.utils.ThymeleafSupport;
 import jakarta.validation.Validator;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.ssl.SSLContextBuilder;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.io.HttpClientConnectionManager;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactoryBuilder;
+import org.apache.hc.core5.http.io.SocketConfig;
+import org.apache.hc.core5.util.Timeout;
 import org.apache.ignite.ssl.SSLContextWrapper;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -92,10 +97,9 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
 
     @Bean
     public RestTemplate hydraRestTemplate(RestTemplateBuilder builder, SSLContext sslContext, AuthConfigurationProperties authConfigurationProperties) {
+        @SuppressWarnings("resource")
         HttpClient client = HttpClients.custom()
-                .setSSLContext(sslContext)
-                .setMaxConnPerRoute(authConfigurationProperties.getHydraService().getMaxConnectionsTotal())
-                .setMaxConnTotal(authConfigurationProperties.getHydraService().getMaxConnectionsTotal())
+                .setConnectionManager(createConnectionManager(sslContext, authConfigurationProperties))
                 .build();
 
         List<HttpMessageConverter<?>> converters = new ArrayList<>();
@@ -103,10 +107,10 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
         converter.setSupportedMediaTypes(Collections.singletonList(MediaType.TEXT_HTML));
         converters.add(converter);
 
+        //The setReadTimeout() method of this builder is not usable because we are instantiating our own HttpComponentsClientHttpRequestFactory, which does not support it.
         return builder
                 .additionalMessageConverters(converters)
                 .setConnectTimeout(Duration.ofSeconds(authConfigurationProperties.getHydraService().getRequestTimeoutInSeconds()))
-                .setReadTimeout(Duration.ofSeconds(authConfigurationProperties.getHydraService().getRequestTimeoutInSeconds()))
                 .requestFactory(() -> new HttpComponentsClientHttpRequestFactory(client))
                 .errorHandler(new RestTemplateErrorLogger(Service.TARA_HYDRA))
                 .build();
@@ -150,5 +154,18 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(localeChangeInterceptor());
+    }
+
+    private static HttpClientConnectionManager createConnectionManager(SSLContext sslContext, AuthConfigurationProperties authConfigurationProperties) {
+        SocketConfig socketConfig = SocketConfig.custom().setSoTimeout(Timeout.ofSeconds(authConfigurationProperties.getHydraService().getRequestTimeoutInSeconds())).build();
+
+        return PoolingHttpClientConnectionManagerBuilder.create()
+                .setMaxConnPerRoute(authConfigurationProperties.getHydraService().getMaxConnectionsTotal())
+                .setMaxConnTotal(authConfigurationProperties.getHydraService().getMaxConnectionsTotal())
+                .setDefaultSocketConfig(socketConfig)
+                .setSSLSocketFactory(SSLConnectionSocketFactoryBuilder.create()
+                        .setSslContext(sslContext)
+                        .build())
+                .build();
     }
 }

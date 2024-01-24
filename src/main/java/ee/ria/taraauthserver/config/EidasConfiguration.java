@@ -6,8 +6,13 @@ import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import ee.ria.taraauthserver.logging.RestTemplateErrorLogger;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.io.HttpClientConnectionManager;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactoryBuilder;
+import org.apache.hc.core5.http.io.SocketConfig;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -78,10 +83,9 @@ public class EidasConfiguration {
 
     @Bean
     public RestTemplate eidasRestTemplate(RestTemplateBuilder builder, SSLContext sslContext, EidasConfigurationProperties eidasConfigurationProperties) {
+        @SuppressWarnings("resource")
         HttpClient client = HttpClients.custom()
-                .setSSLContext(sslContext)
-                .setMaxConnPerRoute(eidasConfigurationProperties.getMaxConnectionsTotal())
-                .setMaxConnTotal(eidasConfigurationProperties.getMaxConnectionsTotal())
+                .setConnectionManager(createConnectionManager(sslContext, eidasConfigurationProperties))
                 .build();
 
         List<HttpMessageConverter<?>> converters = new ArrayList<>();
@@ -89,12 +93,25 @@ public class EidasConfiguration {
         converter.setSupportedMediaTypes(Collections.singletonList(MediaType.TEXT_HTML));
         converters.add(converter);
 
+        //The setReadTimeout() method of this builder is not usable because we are instantiating our own HttpComponentsClientHttpRequestFactory, which does not support it.
         return builder
                 .additionalMessageConverters(converters)
                 .setConnectTimeout(Duration.ofSeconds(eidasConfigurationProperties.getRequestTimeoutInSeconds()))
-                .setReadTimeout(Duration.ofSeconds(eidasConfigurationProperties.getReadTimeoutInSeconds()))
                 .requestFactory(() -> new HttpComponentsClientHttpRequestFactory(client))
                 .errorHandler(new RestTemplateErrorLogger(Service.EIDAS))
+                .build();
+    }
+
+    private static HttpClientConnectionManager createConnectionManager(SSLContext sslContext, EidasConfigurationProperties eidasConfigurationProperties) {
+        SocketConfig socketConfig = SocketConfig.custom().setSoTimeout(Timeout.ofSeconds(eidasConfigurationProperties.getReadTimeoutInSeconds())).build();
+
+        return PoolingHttpClientConnectionManagerBuilder.create()
+                .setMaxConnPerRoute(eidasConfigurationProperties.getMaxConnectionsTotal())
+                .setMaxConnTotal(eidasConfigurationProperties.getMaxConnectionsTotal())
+                .setDefaultSocketConfig(socketConfig)
+                .setSSLSocketFactory(SSLConnectionSocketFactoryBuilder.create()
+                        .setSslContext(sslContext)
+                        .build())
                 .build();
     }
 }
