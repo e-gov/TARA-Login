@@ -39,6 +39,7 @@ public class IdCardInitController {
         IdCardAuthenticationResult authenticationResult = new IdCardAuthenticationResult();
         authenticationResult.setAmr(AuthenticationType.ID_CARD);
         taraSession.setAuthenticationResult(authenticationResult);
+        SessionUtils.getHttpSession().setAttribute(TARA_SESSION, taraSession);
     }
 
 }

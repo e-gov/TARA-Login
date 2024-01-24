@@ -70,6 +70,7 @@ public class LegalpersonController {
         model.addAttribute("login_challenge", taraSession.getLoginRequestInfo().getChallenge());
 
         taraSession.setState(LEGAL_PERSON_AUTHENTICATION_INIT);
+        SessionUtils.getHttpSession().setAttribute(TARA_SESSION, taraSession);
 
         return new ModelAndView("legalPersonView");
     }
@@ -87,6 +88,7 @@ public class LegalpersonController {
         } else {
             taraSession.setLegalPersonList(legalPersons);
             taraSession.setState(GET_LEGAL_PERSON_LIST);
+            SessionUtils.getHttpSession().setAttribute(TARA_SESSION, taraSession);
             return of("legalPersons", legalPersons);
         }
     }
@@ -107,6 +109,7 @@ public class LegalpersonController {
             log.info("Legal person confirmed");
             taraSession.setSelectedLegalPerson(selectedLegalPerson.get());
             taraSession.setState(LEGAL_PERSON_AUTHENTICATION_COMPLETED);
+            SessionUtils.getHttpSession().setAttribute(TARA_SESSION, taraSession);
             return "forward:/auth/accept";
         } else {
             throw new BadRequestException(INVALID_LEGAL_PERSON, format("Attempted to select invalid legal person with id: '%s'", legalPersonIdentifier));

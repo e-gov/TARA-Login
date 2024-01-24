@@ -12,6 +12,7 @@ import ee.ria.taraauthserver.error.exceptions.NotFoundException;
 import ee.ria.taraauthserver.govsso.GovssoService;
 import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.security.SessionManagementFilter;
+import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.RequestUtils;
@@ -81,6 +82,7 @@ public class AuthInitController {
             @Pattern(regexp = "(et|en|ru)", message = "supported values are: 'et', 'en', 'ru'") String language,
             @SessionAttribute(value = TARA_SESSION) TaraSession newTaraSession, Model model) {
         log.info(append("http.request.locale", RequestUtils.getLocale()), "New authentication session");
+        SessionUtils.getHttpSession().setAttribute(TARA_SESSION, newTaraSession);
 
         TaraSession.LoginRequestInfo loginRequestInfo = fetchLoginRequestInfo(loginChallenge);
         newTaraSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);

@@ -6,6 +6,7 @@ import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.logging.ClientRequestLogger;
+import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.Data;
@@ -86,6 +87,8 @@ class AuthAcceptController {
 
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && response.getBody().getRedirectUrl() != null) {
             taraSession.setState(AUTHENTICATION_SUCCESS);
+            SessionUtils.getHttpSession().setAttribute(TARA_SESSION, taraSession);
+
             String loginVerifierRedirectUrl = response.getBody().getRedirectUrl();
             loginRequestInfo.setLoginVerifierRedirectUrl(loginVerifierRedirectUrl);
             loginRequestInfo.setLoginChallengeExpired(true);

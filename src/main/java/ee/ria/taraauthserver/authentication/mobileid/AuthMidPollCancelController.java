@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.servlet.view.RedirectView;
 
+import java.net.URISyntaxException;
 import java.util.EnumSet;
 
 import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
@@ -38,7 +39,8 @@ public class AuthMidPollCancelController {
     StatisticsLogger statisticsLogger;
 
     @PostMapping(value = "/auth/mid/poll/cancel", produces = MediaType.APPLICATION_JSON_VALUE)
-    public RedirectView authMidPollCancel(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+    public RedirectView authMidPollCancel(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) throws URISyntaxException {
+
         if (taraSession == null) {
             throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
         } else if (taraSession.getState().equals(AUTHENTICATION_SUCCESS)) {
@@ -50,6 +52,8 @@ public class AuthMidPollCancelController {
         }
 
         taraSession.setState(POLL_MID_STATUS_CANCELED);
+        SessionUtils.getHttpSession().setAttribute(TARA_SESSION, taraSession);
+
         log.warn("Mobile-ID authentication process has been canceled");
         return new RedirectView("/auth/init?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge());
     }
