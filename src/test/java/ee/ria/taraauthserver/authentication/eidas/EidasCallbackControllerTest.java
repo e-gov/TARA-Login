@@ -369,7 +369,7 @@ class EidasCallbackControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Gateway"));
 
         assertWarningIsLogged("Session has been invalidated: " + sessionFilter.getSession().getId());
-        assertErrorIsLogged("Service not available: EIDAS service error: I/O error on POST request for \"https://localhost:9877/returnUrl\": Read timed out; nested exception is java.net.SocketTimeoutException: Read timed out");
+        assertErrorIsLogged("Service not available: EIDAS service error: I/O error on POST request for \"https://localhost:9877/returnUrl\": Read timed out");
         assertMessageWithMarkerIsLoggedOnce(EidasCallbackController.class, INFO, "EIDAS request", "http.request.method=POST, url.full=https://localhost:9877/returnUrl, http.request.body.content={\"SAMLResponse\":\"123test\"}");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=EIDAS_INTERNAL_ERROR)");
     }

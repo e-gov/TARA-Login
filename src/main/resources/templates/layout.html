@@ -10,7 +10,7 @@
 </th:block>
 <div class="c-layout">
     <div class="c-layout--full">
-        <div th:replace="fragments/taraheader">Header</div>
+        <div th:replace="~{fragments/taraheader}">Header</div>
         <div id="pagecontent" class="container" layout:fragment="content">content should be here</div>
     </div>
     <footer th:replace="~{fragments/tarafooter}">Footer</footer>
