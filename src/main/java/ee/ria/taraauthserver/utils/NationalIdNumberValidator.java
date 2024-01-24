@@ -1,9 +1,8 @@
 package ee.ria.taraauthserver.utils;
 
 import ee.sk.mid.MidNationalIdentificationCodeValidator;
-
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 
 public class NationalIdNumberValidator implements ConstraintValidator<ValidNationalIdNumber, String> {
 

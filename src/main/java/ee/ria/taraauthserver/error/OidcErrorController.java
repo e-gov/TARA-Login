@@ -1,12 +1,12 @@
 package ee.ria.taraauthserver.error;
 
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import jakarta.validation.constraints.Size;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
-import javax.validation.constraints.Size;
 import java.util.Map;
 
 import static ee.ria.taraauthserver.error.ErrorCode.ERROR_GENERAL;
