@@ -86,6 +86,7 @@ public class IdCardLoginController {
             throw new BadRequestException(INVALID_REQUEST, e.getMessage(), e);
         }
         taraSession.setState(NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT);
+        SessionUtils.getHttpSession().setAttribute(TARA_SESSION, taraSession);
 
         // TARA is using customized OCSP validation instead of AuthTokenValidator's built-in check
         if (configurationProperties.isOcspEnabled()) {
@@ -160,6 +161,7 @@ public class IdCardLoginController {
         authenticationResult.setAcr(configurationProperties.getLevelOfAssurance());
         authenticationResult.setSubject(authenticationResult.getCountry() + authenticationResult.getIdCode());
         taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
+        SessionUtils.getHttpSession().setAttribute(TARA_SESSION, taraSession);
     }
 
     @Data

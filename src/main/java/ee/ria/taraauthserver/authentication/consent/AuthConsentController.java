@@ -57,10 +57,12 @@ public class AuthConsentController {
 
         if (taraSession.getLoginRequestInfo().getClient().getMetaData().isDisplayUserConsent()) {
             taraSession.setState(INIT_CONSENT_PROCESS);
+            SessionUtils.getHttpSession().setAttribute(TARA_SESSION, taraSession);
             taraSession.setConsentChallenge(consentChallenge);
             return createConsentView(model, taraSession);
         } else {
             taraSession.setState(TaraAuthenticationState.CONSENT_NOT_REQUIRED);
+            SessionUtils.getHttpSession().setAttribute(TARA_SESSION, taraSession);
             return acceptConsent(consentChallenge, taraSession);
         }
     }
