@@ -6,6 +6,8 @@ import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.ValidNationalIdNumber;
 import ee.sk.mid.MidAuthenticationHashToSign;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,9 +19,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.SessionAttribute;
-
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;

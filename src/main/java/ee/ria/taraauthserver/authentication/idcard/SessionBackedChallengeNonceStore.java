@@ -3,12 +3,11 @@ package ee.ria.taraauthserver.authentication.idcard;
 import ee.ria.taraauthserver.session.TaraSession;
 import eu.webeid.security.challenge.ChallengeNonce;
 import eu.webeid.security.challenge.ChallengeNonceStore;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-
-import javax.servlet.http.HttpSession;
 
 @ConditionalOnProperty(value = "tara.auth-methods.id-card.enabled")
 @Service

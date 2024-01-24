@@ -13,6 +13,7 @@ import ee.sk.mid.MidClient;
 import ee.sk.mid.MidHashType;
 import ee.sk.mid.exception.MidInternalErrorException;
 import ee.sk.mid.rest.MidConnector;
+import jakarta.ws.rs.ProcessingException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -26,8 +27,6 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
-
-import javax.ws.rs.ProcessingException;
 
 import static ch.qos.logback.classic.Level.ERROR;
 import static ch.qos.logback.classic.Level.INFO;

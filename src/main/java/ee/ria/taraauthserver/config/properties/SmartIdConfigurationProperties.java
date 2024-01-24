@@ -1,16 +1,15 @@
 package ee.ria.taraauthserver.config.properties;
 
 import ee.ria.taraauthserver.authentication.RelyingParty;
+import jakarta.annotation.PostConstruct;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
-
-import javax.annotation.PostConstruct;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 
 @Data
 @Validated

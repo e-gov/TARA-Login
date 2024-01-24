@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.health;
 
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.HealthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
+import jakarta.annotation.PostConstruct;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +13,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;

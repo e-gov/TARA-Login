@@ -6,6 +6,7 @@ import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
+import jakarta.validation.constraints.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
@@ -21,7 +22,6 @@ import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.view.RedirectView;
 
-import javax.validation.constraints.Pattern;
 import java.util.HashMap;
 import java.util.Map;
 

@@ -36,6 +36,8 @@ import ee.sk.smartid.rest.SessionStatusPoller;
 import ee.sk.smartid.rest.dao.Interaction;
 import ee.sk.smartid.rest.dao.SemanticsIdentifier;
 import ee.sk.smartid.rest.dao.SessionStatus;
+import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.ProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -43,8 +45,6 @@ import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 import org.springframework.stereotype.Service;
 
-import javax.ws.rs.InternalServerErrorException;
-import javax.ws.rs.ProcessingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
