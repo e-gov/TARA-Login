@@ -6,6 +6,7 @@ import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
+import jakarta.validation.constraints.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
@@ -19,7 +20,6 @@ import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.view.RedirectView;
 
-import javax.validation.constraints.Pattern;
 import java.util.Map;
 
 import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;

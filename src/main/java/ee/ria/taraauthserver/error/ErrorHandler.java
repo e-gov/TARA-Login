@@ -7,6 +7,10 @@ import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
 import ee.ria.taraauthserver.error.exceptions.TaraException;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.TaraSession;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.BindException;
@@ -19,10 +23,6 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.UnknownContentTypeException;
 import org.springframework.web.client.UnknownHttpStatusCodeException;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import javax.validation.ConstraintViolationException;
 import java.io.IOException;
 
 import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_LOGIN_CHALLENGE;

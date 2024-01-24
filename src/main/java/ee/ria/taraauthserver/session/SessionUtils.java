@@ -2,14 +2,14 @@ package ee.ria.taraauthserver.session;
 
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import java.util.EnumSet;
 
 import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;

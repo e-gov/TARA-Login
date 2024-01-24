@@ -5,6 +5,8 @@ import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.NotFoundException;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +22,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.servlet.ModelAndView;
 
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;

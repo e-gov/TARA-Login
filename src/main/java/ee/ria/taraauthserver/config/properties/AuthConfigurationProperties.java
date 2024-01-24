@@ -1,5 +1,12 @@
 package ee.ria.taraauthserver.config.properties;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -10,13 +17,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 
-import javax.annotation.PostConstruct;
-import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 import java.net.URL;
 import java.time.Duration;
 import java.util.EnumMap;
