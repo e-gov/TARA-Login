@@ -299,7 +299,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .statusCode(502)
                 .body("reportable", equalTo(true));
 
-        assertErrorIsLogged("Service not available: I/O error on PUT request for \"https://localhost:9877/admin/oauth2/auth/requests/login/accept\": Read timed out; nested exception is java.net.SocketTimeoutException: Read timed out");
+        assertErrorIsLogged("Service not available: I/O error on PUT request for \"https://localhost:9877/admin/oauth2/auth/requests/login/accept\": Read timed out");
         assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }

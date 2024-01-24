@@ -6,7 +6,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <!-- TODO GSSO-534 Upgrade to Spring Boot 3.x -->
-        <version>2.7.18</version>
+        <version>3.2.2</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>ee.ria.tara</groupId>
@@ -32,14 +32,13 @@
                                                      resolved:
                                                      https://www.mail-archive.com/user@ignite.apache.org/msg33644.html -->
         <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
-        <logstash-logback-encoder.version>7.3</logstash-logback-encoder.version><!-- TODO Upgrade to >= 7.4 after Spring Boot is upgraded to 3.x which includes Logback >= 1.3 -->
+        <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
         <mid-rest.version>1.4</mid-rest.version><!-- TODO AUT-925 Upgrade dependency. -->
         <smart-id.version>2.1.4</smart-id.version><!-- TODO AUT-925 Upgrade dependency. -->
         <spring-cloud.version>2021.0.9</spring-cloud.version><!-- Spring Cloud 2021.0.x release train is compatible with
                                                                    Spring Boot 2.7.x -->
         <webeid.version>3.1.0</webeid.version>
-        <wiremock.version>2.35.2</wiremock.version> <!-- TODO Upgrade to >=3.0.1 after Spring Boot is upgraded to 3.x which includes jetty >= 11.0.12 -->
-
+        <wiremock.version>3.3.2</wiremock.version>
         <spring-framework.version>5.3.39</spring-framework.version>
     </properties>
 
@@ -94,8 +93,8 @@
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
         </dependency>
         <dependency>
             <groupId>nz.net.ultraq.thymeleaf</groupId>
@@ -198,8 +197,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.github.tomakehurst</groupId>
-            <artifactId>wiremock-jre8</artifactId>
+            <groupId>org.wiremock</groupId>
+            <!-- Regular wiremock is incompatible with Spring Boot 3.2, therefore standalone should be used instead (https://github.com/wiremock/wiremock/issues/2395) -->
+            <artifactId>wiremock-standalone</artifactId>
             <version>${wiremock.version}</version>
             <scope>test</scope>
         </dependency>
@@ -395,13 +395,8 @@
                 </executions>
             </plugin>
             <plugin>
-                <!-- TODO GSSO-534 Replace with io.github.git-commit-id:git-commit-id-maven-plugin and remove
-                      offline=true after upgrading to Spring Boot 3. Starting from 5.0.0 offline=true is default. -->
-                <groupId>pl.project13.maven</groupId>
-                <artifactId>git-commit-id-plugin</artifactId>
-                <configuration>
-                    <offline>true</offline>
-                </configuration>
+                <groupId>io.github.git-commit-id</groupId>
+                <artifactId>git-commit-id-maven-plugin</artifactId>
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
