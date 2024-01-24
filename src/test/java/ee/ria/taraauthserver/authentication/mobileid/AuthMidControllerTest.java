@@ -225,7 +225,7 @@ class AuthMidControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false));
 
-        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+        assertErrorIsLogged("User input exception: Validation failed for argument [0]");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
@@ -245,7 +245,7 @@ class AuthMidControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false));
 
-        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+        assertErrorIsLogged("User input exception: Validation failed for argument [0]");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
@@ -265,7 +265,7 @@ class AuthMidControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false));
 
-        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+        assertErrorIsLogged("User input exception: Validation failed for argument [0]");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
@@ -285,7 +285,7 @@ class AuthMidControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false));
 
-        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 1 errors");
+        assertErrorIsLogged("User input exception: Validation failed for argument [0]");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
@@ -399,7 +399,7 @@ class AuthMidControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false));
 
-        assertErrorIsLogged("User input exception: org.springframework.validation.BeanPropertyBindingResult: 2 errors");
+        assertErrorIsLogged("User input exception: Validation failed for argument [0]");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
