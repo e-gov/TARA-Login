@@ -248,14 +248,13 @@ public class AuthMidService {
         MidAuthenticationResult midAuthResult = midAuthenticationResponseValidator.validate(authentication);
 
         MidAuthenticationIdentity authIdentity = midAuthResult.getAuthenticationIdentity();
-        if (authIdentity != null) {
-            taraAuthResult.setIdCode(authIdentity.getIdentityCode());
-            taraAuthResult.setCountry(authIdentity.getCountry());
-            taraAuthResult.setFirstName(authIdentity.getGivenName());
-            taraAuthResult.setLastName(authIdentity.getSurName());
-            taraAuthResult.setSubject(authIdentity.getCountry() + authIdentity.getIdentityCode());
-            taraAuthResult.setDateOfBirth(MidNationalIdentificationCodeValidator.getBirthDate(authIdentity.getIdentityCode()));
-        }
+        taraAuthResult.setIdCode(authIdentity.getIdentityCode());
+        taraAuthResult.setCountry(authIdentity.getCountry());
+        taraAuthResult.setFirstName(authIdentity.getGivenName());
+        taraAuthResult.setLastName(authIdentity.getSurName());
+        taraAuthResult.setSubject(authIdentity.getCountry() + authIdentity.getIdentityCode());
+        taraAuthResult.setDateOfBirth(MidNationalIdentificationCodeValidator.getBirthDate(authIdentity.getIdentityCode()));
+
         taraAuthResult.setPhoneNumber(telephoneNumber);
         taraAuthResult.setAmr(AuthenticationType.MOBILE_ID);
         taraAuthResult.setAcr(midAuthConfigurationProperties.getLevelOfAssurance());

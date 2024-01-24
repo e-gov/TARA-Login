@@ -780,7 +780,7 @@ class SmartIdControllerTest extends BaseTest {
     @Tag(value = "SID_AUTH_POLL_RESPONSE_COMPLETED_OK")
     void sidAuthInit_signatureAuthentication_fails() {
         AuthenticationHash mockHashToSign = new AuthenticationHash();
-        mockHashToSign.setHashInBase64("mri6grZmsF8wXJgTNzGRsoodshrFsdPTorCaBKsDOGsSGCh64R+tPbu+ULVvKIh9QRVu0pLiPx3cpeX/TgsdyNA==");
+        mockHashToSign.setHashInBase64("mri6grZmsF8wXJgTNzGRsoodshrFsdPTorCaBKsDOGsSGCh64R+tPbu+ULVvKIh9QRVu0pLiPx3cpeX/TgsdyNA=");
         mockHashToSign.setHashType(HashType.SHA512);
         Mockito.doReturn(mockHashToSign).when(authSidService).getAuthenticationHash();
         createSidApiAuthenticationStub("mock_responses/sid/sid_authentication_init_response.json", 200);

@@ -7,6 +7,7 @@ import ee.ria.taraauthserver.session.MockTaraSessionBuilder;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.sk.mid.MidAuthenticationError;
 import ee.sk.mid.MidAuthenticationHashToSign;
+import ee.sk.mid.MidAuthenticationIdentity;
 import ee.sk.mid.MidAuthenticationResponseValidator;
 import ee.sk.mid.MidAuthenticationResult;
 import ee.sk.mid.MidClient;
@@ -224,7 +225,10 @@ public class AuthMidServiceTest extends BaseTest {
     @Tag(value = "MID_AUTH_POLL_AUTHENTICITY")
     void authenticationFailsWhen_MidAuthenticationResultValidationFails(String validationError) {
         MidAuthenticationResult authenticationResult = new MidAuthenticationResult();
+        MidAuthenticationIdentity authenticationIdentity = new MidAuthenticationIdentity();
+        authenticationIdentity.setIdentityCode("60001017716");
         authenticationResult.setValid(false);
+        authenticationResult.setAuthenticationIdentity(authenticationIdentity);
         MidAuthenticationError error = MidAuthenticationError.valueOf(validationError);
         authenticationResult.addError(error);
         Mockito.doReturn(authenticationResult).when(midAuthenticationResponseValidator).validate(ArgumentMatchers.any());
@@ -236,8 +240,8 @@ public class AuthMidServiceTest extends BaseTest {
         assertEquals(MID_VALIDATION_ERROR, taraSession.getAuthenticationResult().getErrorCode());
         assertErrorIsLogged(format("Authentication result validation failed: [%s]", error.getMessage()));
         assertMidApiRequests();
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=MID_VALIDATION_ERROR)");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=MID_VALIDATION_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=null, idCode=60001017716, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=MID_VALIDATION_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=null, idCode=60001017716, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=MID_VALIDATION_ERROR)");
     }
 
     @Test
