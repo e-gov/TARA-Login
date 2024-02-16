@@ -84,15 +84,6 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> {
-            StrictHttpFirewall firewall = new StrictHttpFirewall();
-            firewall.setUnsafeAllowAnyHttpMethod(true);
-            web.httpFirewall(firewall);
-        };
-    }
-
-    @Bean
     public CsrfTokenRepository csrfTokenRepository() {
         return new NoSessionCreatingHttpSessionCsrfTokenRepository();
     }
