@@ -49,7 +49,7 @@ The webapp provides implementation for following authentication methods:
 <a name="build"></a>
 ### Building the webapp:
 
-To build the software, execute the following commands in the current (TARA2-Login) directory:
+To build the software, execute the following commands in the current (TARA-Login) directory:
 
 ```shell
 docker run --rm -v "${PWD}:/data" -w /data/disain -u $(id -u):$(id -g) node:14 sh -c 'npm install && node_modules/.bin/gulp build'
