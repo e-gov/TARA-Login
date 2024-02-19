@@ -450,7 +450,7 @@ Ignite is used for storing user’s session information.
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `spring.session.timeout` | No | Session timeout. If a duration suffix is not specified, seconds will be used. Default value `300s` |
-| `ignite.ignite-instance-name` | No | Ignite instance name. Default value `tara2-ignite` |
+| `ignite.ignite-instance-name` | No | Ignite instance name. Default value `tara-ignite` |
 | `ignite.discovery-spi.ip-finder.addresses` | Yes | Ignite cluster node discovery addresses. Should minimally contain local node ip address. Example value `['192.168.1.1','192.168.1.2']` |
 | `ignite.ssl-context-factory.key-store-type` | Yes | Ignite key store type. Example value `PKCS12` |
 | `ignite.ssl-context-factory.key-store-file-path` | Yes | Ignite key store path. Example value `/test/resources/tls-keystore.p12` |
