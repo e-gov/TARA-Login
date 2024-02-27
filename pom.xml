@@ -27,7 +27,7 @@
         <maven.compiler.release>11</maven.compiler.release>
 
         <bouncycastle.version>1.77</bouncycastle.version>
-        <elastic-apm.version>1.46.0</elastic-apm.version>
+        <elastic-apm.version>1.47.1</elastic-apm.version>
         <ignite.version>2.13.0</ignite.version><!-- TODO AUT-1086 Upgrade to >=2.14.0 when the following issue is
                                                      resolved:
                                                      https://www.mail-archive.com/user@ignite.apache.org/msg33644.html -->
@@ -38,7 +38,7 @@
         <spring-cloud.version>2021.0.9</spring-cloud.version><!-- Spring Cloud 2021.0.x release train is compatible with
                                                                    Spring Boot 2.7.x -->
         <webeid.version>3.0.1</webeid.version>
-        <wiremock.version>2.35.1</wiremock.version> <!-- TODO Upgrade to >=3.0.1 after Spring Boot is upgraded to 3.x which includes jetty >= 11.0.12 -->
+        <wiremock.version>2.35.2</wiremock.version> <!-- TODO Upgrade to >=3.0.1 after Spring Boot is upgraded to 3.x which includes jetty >= 11.0.12 -->
     </properties>
 
     <dependencies>
