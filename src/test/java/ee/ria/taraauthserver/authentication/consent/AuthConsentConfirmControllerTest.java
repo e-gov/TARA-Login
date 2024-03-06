@@ -146,7 +146,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     @Tag(value = "USER_CONSENT_CONFIRM_ENDPOINT")
     @Tag(value = "USER_CONSENT_POST_ACCEPT")
     void authConsent_acceptSuccessful() {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
+        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
@@ -168,7 +168,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
         assertWarningIsLogged("Session has been invalidated: " + session.getId());
         assertInfoIsLogged("Session is removed from cache: " + session.getId());
         assertNull(sessionRepository.findById(session.getId()));
-        assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"grant_scope\":[\"openid\"],\"remember\":false,\"session\":{\"id_token\":{\"profile_attributes\":{\"date_of_birth\":\"1992-12-17\",\"family_name\":\"lastname\",\"given_name\":\"firstname\"},\"state\":\"c80393c7-6666-4dd2-b890-0ada47161cfa\"}}}");
+        assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"grant_scope\":[\"openid\"],\"remember\":false,\"session\":{\"id_token\":{\"profile_attributes\":{\"date_of_birth\":\"1992-12-17\",\"family_name\":\"lastname\",\"given_name\":\"firstname\"},\"state\":\"c80393c7-6666-4dd2-b890-0ada47161cfa\"}}}");
         assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
         assertStatisticsIsNotLogged();
     }
@@ -177,7 +177,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     @Tag(value = "USER_CONSENT_CONFIRM_ENDPOINT")
     @Tag(value = "USER_CONSENT_POST_ACCEPT")
     void authConsent_acceptSuccessful_with_url_missing_lang_parameter() {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
+        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
@@ -194,7 +194,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .statusCode(302)
                 .header("Location", Matchers.endsWith("some/test/url")).extract().response();
 
-        assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"grant_scope\":[\"openid\"],\"remember\":false,\"session\":{\"id_token\":{\"profile_attributes\":{\"date_of_birth\":\"1992-12-17\",\"family_name\":\"lastname\",\"given_name\":\"firstname\"},\"state\":\"c80393c7-6666-4dd2-b890-0ada47161cfa\"}}}");
+        assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"grant_scope\":[\"openid\"],\"remember\":false,\"session\":{\"id_token\":{\"profile_attributes\":{\"date_of_birth\":\"1992-12-17\",\"family_name\":\"lastname\",\"given_name\":\"firstname\"},\"state\":\"c80393c7-6666-4dd2-b890-0ada47161cfa\"}}}");
         assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
         assertStatisticsIsNotLogged();
     }
@@ -203,7 +203,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     @Tag(value = "USER_CONSENT_CONFIRM_ENDPOINT")
     @Tag(value = "USER_CONSENT_POST_ACCEPT")
     void authConsent_acceptSuccessful_with_url_state_parameter_containing_equals_sign() {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
+        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
@@ -220,9 +220,9 @@ class AuthConsentConfirmControllerTest extends BaseTest {
                 .statusCode(302)
                 .header("Location", Matchers.endsWith("some/test/url")).extract().response();
 
-        wireMockServer.verify(putRequestedFor(urlEqualTo("/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC"))
+        wireMockServer.verify(putRequestedFor(urlEqualTo("/admin/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC"))
                 .withRequestBody(containing("c80393c7-6666-4dd2-b890-0ada47161cfa=")));
-        assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"grant_scope\":[\"openid\"],\"remember\":false,\"session\":{\"id_token\":{\"profile_attributes\":{\"date_of_birth\":\"1992-12-17\",\"family_name\":\"lastname\",\"given_name\":\"firstname\"},\"state\":\"c80393c7-6666-4dd2-b890-0ada47161cfa=\"}}}");
+        assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"grant_scope\":[\"openid\"],\"remember\":false,\"session\":{\"id_token\":{\"profile_attributes\":{\"date_of_birth\":\"1992-12-17\",\"family_name\":\"lastname\",\"given_name\":\"firstname\"},\"state\":\"c80393c7-6666-4dd2-b890-0ada47161cfa=\"}}}");
         assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
         assertStatisticsIsNotLogged();
     }
@@ -231,7 +231,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     @Tag(value = "USER_CONSENT_CONFIRM_ENDPOINT")
     @Tag(value = "USER_CONSENT_POST_ACCEPT")
     void authConsent_acceptSuccessful_phone_requested() {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
+        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
@@ -253,7 +253,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
         assertWarningIsLogged("Session has been invalidated: " + session.getId());
         assertInfoIsLogged("Session is removed from cache: " + session.getId());
         assertNull(sessionRepository.findById(session.getId()));
-        assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"grant_scope\":[\"openid\"],\"remember\":false,\"session\":{\"id_token\":{\"phone_number\":\"112233\",\"phone_number_verified\":true,\"profile_attributes\":{\"date_of_birth\":\"1992-12-17\",\"family_name\":\"lastname\",\"given_name\":\"firstname\"},\"state\":\"c80393c7-6666-4dd2-b890-0ada47161cfa\"}}}");
+        assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"grant_scope\":[\"openid\"],\"remember\":false,\"session\":{\"id_token\":{\"phone_number\":\"112233\",\"phone_number_verified\":true,\"profile_attributes\":{\"date_of_birth\":\"1992-12-17\",\"family_name\":\"lastname\",\"given_name\":\"firstname\"},\"state\":\"c80393c7-6666-4dd2-b890-0ada47161cfa\"}}}");
         assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
         assertStatisticsIsNotLogged();
     }
@@ -262,7 +262,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     @Tag(value = "USER_CONSENT_CONFIRM_ENDPOINT")
     @Tag(value = "USER_CONSENT_POST_ACCEPT")
     void authConsent_acceptSuccessful_email_requested() {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
+        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
@@ -283,7 +283,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
         assertWarningIsLogged("Session has been invalidated: " + session.getId());
         assertInfoIsLogged("Session is removed from cache: " + session.getId());
         assertNull(sessionRepository.findById(session.getId()));
-        assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"grant_scope\":[\"openid\"],\"remember\":false,\"session\":{\"id_token\":{\"email\":\"test@test.ee\",\"email_verified\":false,\"profile_attributes\":{\"date_of_birth\":\"1992-12-17\",\"family_name\":\"lastname\",\"given_name\":\"firstname\"},\"state\":\"c80393c7-6666-4dd2-b890-0ada47161cfa\"}}}");
+        assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"grant_scope\":[\"openid\"],\"remember\":false,\"session\":{\"id_token\":{\"email\":\"test@test.ee\",\"email_verified\":false,\"profile_attributes\":{\"date_of_birth\":\"1992-12-17\",\"family_name\":\"lastname\",\"given_name\":\"firstname\"},\"state\":\"c80393c7-6666-4dd2-b890-0ada47161cfa\"}}}");
         assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
         assertStatisticsIsNotLogged();
     }
@@ -292,7 +292,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     @Tag(value = "USER_CONSENT_CONFIRM_ENDPOINT")
     @Tag(value = "USER_CONSENT_POST_ACCEPT")
     void authConsent_acceptSuccessful_withGovSsoLoginChallenge() {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
+        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
@@ -314,7 +314,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
         assertWarningIsLogged("Session has been invalidated: " + session.getId());
         assertInfoIsLogged("Session is removed from cache: " + session.getId());
         assertNull(sessionRepository.findById(session.getId()));
-        assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"grant_scope\":[\"openid\"],\"remember\":false,\"session\":{\"id_token\":{\"govsso_login_challenge\":\"aabbcc\",\"profile_attributes\":{\"date_of_birth\":\"1992-12-17\",\"family_name\":\"lastname\",\"given_name\":\"firstname\"},\"state\":\"c80393c7-6666-4dd2-b890-0ada47161cfa\"}}}");
+        assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"grant_scope\":[\"openid\"],\"remember\":false,\"session\":{\"id_token\":{\"govsso_login_challenge\":\"aabbcc\",\"profile_attributes\":{\"date_of_birth\":\"1992-12-17\",\"family_name\":\"lastname\",\"given_name\":\"firstname\"},\"state\":\"c80393c7-6666-4dd2-b890-0ada47161cfa\"}}}");
         assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
         assertStatisticsIsNotLogged();
     }
@@ -322,7 +322,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     @Test
     @Tag(value = "USER_CONSENT_POST_ACCEPT")
     void authConsent_acceptNoRedirect() {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
+        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
@@ -344,7 +344,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
         assertWarningIsLogged("Session has been invalidated: " + session.getId());
         assertInfoIsLogged("Session is removed from cache: " + session.getId());
         assertNull(sessionRepository.findById(session.getId()));
-        assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"grant_scope\":[\"openid\"],\"remember\":false,\"session\":{\"id_token\":{\"phone_number\":\"112233\",\"phone_number_verified\":true,\"profile_attributes\":{\"date_of_birth\":\"1992-12-17\",\"family_name\":\"lastname\",\"given_name\":\"firstname\"},\"state\":\"c80393c7-6666-4dd2-b890-0ada47161cfa\"}}}");
+        assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"grant_scope\":[\"openid\"],\"remember\":false,\"session\":{\"id_token\":{\"phone_number\":\"112233\",\"phone_number_verified\":true,\"profile_attributes\":{\"date_of_birth\":\"1992-12-17\",\"family_name\":\"lastname\",\"given_name\":\"firstname\"},\"state\":\"c80393c7-6666-4dd2-b890-0ada47161cfa\"}}}");
         assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={}");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=abc123idcode, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
@@ -352,7 +352,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     @Test
     @Tag(value = "USER_CONSENT_POST_REJECT")
     void authConsent_rejectSuccessful() {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/consent/reject?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
+        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/consent/reject?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
@@ -375,7 +375,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
         assertInfoIsLogged("State: INIT_CONSENT_PROCESS -> CONSENT_NOT_GIVEN");
         assertWarningIsLogged("Session has been invalidated: " + session.getId());
         assertInfoIsLogged("Session is removed from cache: " + session.getId());
-        assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/consent/reject?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"error\":\"user_cancel\",\"error_debug\":\"Consent not given. User canceled the authentication process.\",\"error_description\":\"Consent not given. User canceled the authentication process.\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/consent/reject?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"error\":\"user_cancel\",\"error_debug\":\"Consent not given. User canceled the authentication process.\",\"error_description\":\"Consent not given. User canceled the authentication process.\"}");
         assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
         assertStatisticsIsNotLogged();
     }
@@ -383,7 +383,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
     @Test
     @Tag(value = "USER_CONSENT_POST_REJECT")
     void authConsent_rejectNoRedirect() {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/consent/reject?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
+        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/consent/reject?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
@@ -405,7 +405,7 @@ class AuthConsentConfirmControllerTest extends BaseTest {
         assertErrorIsLogged("Server encountered an unexpected error: Invalid OIDC server response. Redirect URL missing from response.");
         assertWarningIsLogged("Session has been invalidated: " + session.getId());
         assertInfoIsLogged("Session is removed from cache: " + session.getId());
-        assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/consent/reject?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"error\":\"user_cancel\",\"error_debug\":\"Consent not given. User canceled the authentication process.\",\"error_description\":\"Consent not given. User canceled the authentication process.\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/consent/reject?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"error\":\"user_cancel\",\"error_debug\":\"Consent not given. User canceled the authentication process.\",\"error_description\":\"Consent not given. User canceled the authentication process.\"}");
         assertMessageWithMarkerIsLoggedOnce(AuthConsentConfirmController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={}");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=EE, idCode=abc123idcode, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }

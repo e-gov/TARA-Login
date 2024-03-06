@@ -93,7 +93,7 @@ public class AuthAcceptControllerTest extends BaseTest {
     @Tag(value = "ACCEPT_LOGIN")
     @Tag(value = "LOG_EVENT_UNIQUE_STATUS")
     void authAccept_OidcServerInvalidResponse_BadRequest() {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
+        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(400)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")));
@@ -113,7 +113,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .body("reportable", equalTo(true));
 
         assertErrorIsLogged("TARA_HYDRA response: 400");
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
         assertMessageWithMarkerIsLoggedOnce(RestTemplateErrorLogger.class, ERROR, "TARA_HYDRA response: 400", "http.response.status_code=400");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
@@ -122,7 +122,7 @@ public class AuthAcceptControllerTest extends BaseTest {
     @Tag(value = "ACCEPT_LOGIN")
     @Tag(value = "LOG_EVENT_UNIQUE_STATUS")
     void authAccept_OidcServerInvalidResponse_MissingRedirectUrl() {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
+        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
@@ -143,7 +143,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .body("reportable", equalTo(true));
 
         assertErrorIsLogged("Server encountered an unexpected error: Invalid OIDC server response. Redirect URL missing from response.");
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
         assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={}");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
@@ -153,7 +153,7 @@ public class AuthAcceptControllerTest extends BaseTest {
     @Tag(value = "AUTH_ACCEPT_LOGIN_ENDPOINT")
     @Tag(value = "LOG_EVENT_UNIQUE_STATUS")
     void authAccept_NaturalPersonAuthenticationComplete_Redirected() {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
+        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader(HttpHeaders.CONNECTION, "close")
@@ -173,7 +173,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .statusCode(302)
                 .header("Location", Matchers.endsWith("some/test/url"));
 
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
         assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null)");
     }
@@ -183,7 +183,7 @@ public class AuthAcceptControllerTest extends BaseTest {
     @Tag(value = "AUTH_ACCEPT_LOGIN_ENDPOINT")
     @Tag(value = "LOG_EVENT_UNIQUE_STATUS")
     void authAccept_AuthenticationSuccess_Redirected() {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
+        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader(HttpHeaders.CONNECTION, "close")
@@ -205,7 +205,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .header("Location", Matchers.endsWith("some/test/url"));
 
         assertInfoIsLogged("State: NATURAL_PERSON_AUTHENTICATION_COMPLETED -> AUTHENTICATION_SUCCESS");
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
         assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null)");
 
@@ -249,7 +249,7 @@ public class AuthAcceptControllerTest extends BaseTest {
     @Tag(value = "ACCEPT_LOGIN")
     @Tag(value = "AUTH_ACCEPT_LOGIN_ENDPOINT")
     void authAccept_legalPersonAuthenticationComplete_Redirected() {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
+        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
@@ -269,7 +269,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .statusCode(302)
                 .header("Location", Matchers.endsWith("some/test/url"));
 
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
         assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null)");
     }
@@ -278,7 +278,7 @@ public class AuthAcceptControllerTest extends BaseTest {
     @Tag(value = "ACCEPT_LOGIN")
     @Tag(value = "LOG_EVENT_UNIQUE_STATUS")
     void authAccept_oidcServerTimeout() {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
+        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withFixedDelay(2000)
@@ -299,8 +299,8 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .statusCode(502)
                 .body("reportable", equalTo(true));
 
-        assertErrorIsLogged("Service not available: I/O error on PUT request for \"https://localhost:9877/oauth2/auth/requests/login/accept\": Read timed out; nested exception is java.net.SocketTimeoutException: Read timed out");
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertErrorIsLogged("Service not available: I/O error on PUT request for \"https://localhost:9877/admin/oauth2/auth/requests/login/accept\": Read timed out; nested exception is java.net.SocketTimeoutException: Read timed out");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 

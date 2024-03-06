@@ -523,7 +523,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Tag(value = "LEGAL_PERSON_SELECTION_CONFIRMED")
     @Tag(value = "LEGAL_PERSON_SELECTION_ENDPOINT")
     void postAuthLegalPersonConfirm_validLegalPersonIdentifier() {
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
+        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/login/accept?login_challenge=" + MOCK_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")

@@ -202,7 +202,7 @@ class AuthConsentControllerTest extends BaseTest {
     @Tag(value = "USER_CONSENT_NOT_REQUIRED")
     void authConsent_redirect() {
         Session session = createSessionAndResetStatisticsLog(TaraAuthenticationState.AUTHENTICATION_SUCCESS, false, List.of("openid"));
-        wireMockServer.stubFor(put(urlEqualTo("/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
+        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/consent/accept?consent_challenge=" + MOCK_CONSENT_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
@@ -223,7 +223,7 @@ class AuthConsentControllerTest extends BaseTest {
         assertInfoIsLogged("Session is removed from cache: " + session.getId());
         assertWarningIsLogged("Session has been invalidated: " + session.getId());
         assertNull(sessionRepository.findById(session.getId()));
-        assertMessageWithMarkerIsLoggedOnce(AuthConsentController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"grant_scope\":[\"openid\"],\"remember\":false,\"session\":{\"id_token\":{\"profile_attributes\":{\"date_of_birth\":\"1992-12-17\",\"family_name\":\"lastname\",\"given_name\":\"firstname\",\"represents_legal_person\":{\"name\":\"legalName\",\"registry_code\":\"identifier123\"}},\"state\":\"c80393c7-6666-4dd2-b890-0ada47161cfa\"}}}");
+        assertMessageWithMarkerIsLoggedOnce(AuthConsentController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/consent/accept?consent_challenge=abcdefg098AAdsCC, http.request.body.content={\"grant_scope\":[\"openid\"],\"remember\":false,\"session\":{\"id_token\":{\"profile_attributes\":{\"date_of_birth\":\"1992-12-17\",\"family_name\":\"lastname\",\"given_name\":\"firstname\",\"represents_legal_person\":{\"name\":\"legalName\",\"registry_code\":\"identifier123\"}},\"state\":\"c80393c7-6666-4dd2-b890-0ada47161cfa\"}}}");
         assertMessageWithMarkerIsLoggedOnce(AuthConsentController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
         assertStatisticsIsNotLogged();
     }
