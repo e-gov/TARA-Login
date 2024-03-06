@@ -22,16 +22,15 @@ public class ErrorController {
     public ModelAndView handleOidcErrors(
             @RequestParam(name = "error", required = false)
             @Size(max = 50) String errorCode,
-            @RequestParam(name = "error_description", required = false) String errorDescription,
-            @RequestParam(name = "error_hint", required = false) String errorHint) {
+            @RequestParam(name = "error_description", required = false) String errorDescription) {
         if (errorCode == null) {
             throw new BadRequestException(ErrorCode.ERROR_GENERAL, "Request parameter 'error' must not be null");
         } else {
             switch (errorCode) {
                 case INVALID_OIDC_CLIENT:
-                    throw new BadRequestException( ErrorCode.INVALID_OIDC_CLIENT, String.format("Oidc server error: code = %s, description = %s, hint = %s", errorCode, errorDescription, errorHint));
+                    throw new BadRequestException( ErrorCode.INVALID_OIDC_CLIENT, String.format("Oidc server error: code = %s, description = %s", errorCode, errorDescription));
                 case INVALID_OIDC_REQUEST:
-                    throw new BadRequestException( ErrorCode.INVALID_OIDC_REQUEST, String.format("Oidc server error: code = %s, description = %s, hint = %s", errorCode, errorDescription, errorHint));
+                    throw new BadRequestException( ErrorCode.INVALID_OIDC_REQUEST, String.format("Oidc server error: code = %s, description = %s", errorCode, errorDescription));
                 default:
                     throw new IllegalStateException("Unknown error code encountered");
             }

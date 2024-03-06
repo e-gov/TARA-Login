@@ -1412,11 +1412,6 @@ paths:
           description: Error description (optional)
           schema:
             type: string
-        - in: query
-          name: error_hint
-          description: More detailed error description (optional)
-          schema:
-            type: string
       responses:
         '400':
           description: Bad request
