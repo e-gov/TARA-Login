@@ -1,0 +1,42 @@
+Certificate: Subject: C = EE, O = AS Sertifitseerimiskeskus, organizationIdentifier = NTREE-10747013, CN = ESTEID-SK 2015
+             Issuer: C = EE, O = AS Sertifitseerimiskeskus, CN = EE Certification Centre Root CA, emailAddress = pki@sk.ee
+             Not Before: Dec 17 12:38:43 2015 GMT
+             Not After: Dec 17 23:59:59 2030 GMT
+             Signature Algorithm: sha384WithRSAEncryption
+Certificate: Subject: C = EE, O = SK ID Solutions AS, organizationIdentifier = NTREE-10747013, CN = ESTEID2018
+             Issuer: C = EE, O = SK ID Solutions AS, organizationIdentifier = NTREE-10747013, CN = EE-GovCA2018
+             Not Before: Sep 20 09:22:28 2018 GMT
+             Not After: Sep 5 09:11:03 2033 GMT
+             EC key ASN1 OID: secp521r1
+             Signature Algorithm: ecdsa-with-SHA512
+Certificate: Subject: C = EE, O = AS Sertifitseerimiskeskus, CN = TEST of EE Certification Centre Root CA, emailAddress = pki@sk.ee
+             Issuer: C = EE, O = AS Sertifitseerimiskeskus, CN = TEST of EE Certification Centre Root CA, emailAddress = pki@sk.ee
+             Not Before: Oct 7 12:34:56 2010 GMT
+             Not After: Dec 17 23:59:59 2030 GMT
+             Signature Algorithm: sha1WithRSAEncryption
+Certificate: Subject: C = EE, O = AS Sertifitseerimiskeskus, organizationIdentifier = NTREE-10747013, CN = TEST of ESTEID-SK 2015
+             Issuer: C = EE, O = AS Sertifitseerimiskeskus, CN = TEST of EE Certification Centre Root CA, emailAddress = pki@sk.ee
+             Not Before: Dec 18 07:13:44 2015 GMT
+             Not After: Dec 17 23:59:59 2030 GMT
+             Signature Algorithm: sha384WithRSAEncryption
+Certificate: Subject: C = EE, O = SK ID Solutions AS, organizationIdentifier = NTREE-10747013, CN = TEST of ESTEID2018
+             Issuer: C = EE, O = SK ID Solutions AS, organizationIdentifier = NTREE-10747013, CN = TEST of EE-GovCA2018
+             Not Before: Sep 6 09:03:52 2018 GMT
+             Not After: Aug 30 12:48:28 2033 GMT
+             EC key ASN1 OID: secp521r1
+             Signature Algorithm: ecdsa-with-SHA512
+Certificate: Subject: C = EE, O = AS Sertifitseerimiskeskus, OU = Sertifitseerimisteenused, CN = TEST of KLASS3-SK 2010
+             Issuer: C = EE, O = AS Sertifitseerimiskeskus, CN = TEST of EE Certification Centre Root CA, emailAddress = pki@sk.ee
+             Not Before: Mar 21 10:58:29 2012 GMT
+             Not After: Mar 21 10:58:29 2025 GMT
+             Signature Algorithm: sha1WithRSAEncryption
+Certificate: Subject: C = EE, O = AS Sertifitseerimiskeskus, OU = OCSP, CN = TEST of SK OCSP RESPONDER 2011, emailAddress = pki@sk.ee
+             Issuer: C = EE, O = AS Sertifitseerimiskeskus, CN = TEST of EE Certification Centre Root CA, emailAddress = pki@sk.ee
+             Not Before: Mar 7 13:22:45 2011 GMT
+             Not After: Sep 7 12:22:45 2024 GMT
+             Signature Algorithm: sha1WithRSAEncryption
+Certificate: Subject: C = EE, O = AS Sertifitseerimiskeskus, OU = OCSP, CN = TEST of SK OCSP RESPONDER 2020, emailAddress = pki@sk.ee
+             Issuer: C = EE, O = AS Sertifitseerimiskeskus, CN = TEST of EE Certification Centre Root CA, emailAddress = pki@sk.ee
+             Not Before: Nov 13 12:33:35 2020 GMT
+             Not After: Jun 13 11:33:35 2024 GMT
+             Signature Algorithm: sha1WithRSAEncryption

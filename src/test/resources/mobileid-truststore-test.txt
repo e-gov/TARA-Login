@@ -1,0 +1,30 @@
+Certificate: Subject: C = EE, O = AS Sertifitseerimiskeskus, CN = ESTEID-SK 2011, emailAddress = pki@sk.ee
+             Issuer: C = EE, O = AS Sertifitseerimiskeskus, CN = EE Certification Centre Root CA, emailAddress = pki@sk.ee
+             Not Before: Mar 18 10:14:59 2011 GMT
+             Not After: Mar 18 10:14:59 2024 GMT
+             Signature Algorithm: sha1WithRSAEncryption
+Certificate: Subject: C = EE, O = AS Sertifitseerimiskeskus, organizationIdentifier = NTREE-10747013, CN = ESTEID-SK 2015
+             Issuer: C = EE, O = AS Sertifitseerimiskeskus, CN = EE Certification Centre Root CA, emailAddress = pki@sk.ee
+             Not Before: Dec 17 12:38:43 2015 GMT
+             Not After: Dec 17 23:59:59 2030 GMT
+             Signature Algorithm: sha384WithRSAEncryption
+Certificate: Subject: C = EE, L = Tallinn, O = SK ID Solutions AS, CN = mid.sk.ee
+             Issuer: C = US, O = DigiCert Inc, CN = DigiCert SHA2 Secure Server CA
+             Not Before: Mar 21 00:00:00 2019 GMT
+             Not After: Mar 25 12:00:00 2021 GMT
+             Signature Algorithm: sha256WithRSAEncryption
+Certificate: Subject: C = EE, O = AS Sertifitseerimiskeskus, CN = TEST of ESTEID-SK 2011, emailAddress = pki@sk.ee
+             Issuer: C = EE, O = AS Sertifitseerimiskeskus, CN = TEST of EE Certification Centre Root CA, emailAddress = pki@sk.ee
+             Not Before: Mar 7 13:06:09 2011 GMT
+             Not After: Sep 7 12:06:09 2023 GMT
+             Signature Algorithm: sha1WithRSAEncryption
+Certificate: Subject: C = EE, O = AS Sertifitseerimiskeskus, organizationIdentifier = NTREE-10747013, CN = TEST of ESTEID-SK 2015
+             Issuer: C = EE, O = AS Sertifitseerimiskeskus, CN = TEST of EE Certification Centre Root CA, emailAddress = pki@sk.ee
+             Not Before: Dec 18 07:13:44 2015 GMT
+             Not After: Dec 17 23:59:59 2030 GMT
+             Signature Algorithm: sha384WithRSAEncryption
+Certificate: Subject: C = EE, L = Tallinn, O = SK ID Solutions AS, CN = tsp.demo.sk.ee
+             Issuer: C = US, O = DigiCert Inc, CN = DigiCert SHA2 Secure Server CA
+             Not Before: Jan 4 00:00:00 2020 GMT
+             Not After: Jan 15 12:00:00 2021 GMT
+             Signature Algorithm: sha256WithRSAEncryption
