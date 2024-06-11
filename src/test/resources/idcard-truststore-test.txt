@@ -35,8 +35,3 @@ Certificate: Subject: C = EE, O = AS Sertifitseerimiskeskus, OU = OCSP, CN = TES
              Not Before: Mar 7 13:22:45 2011 GMT
              Not After: Sep 7 12:22:45 2024 GMT
              Signature Algorithm: sha1WithRSAEncryption
-Certificate: Subject: C = EE, O = AS Sertifitseerimiskeskus, OU = OCSP, CN = TEST of SK OCSP RESPONDER 2020, emailAddress = pki@sk.ee
-             Issuer: C = EE, O = AS Sertifitseerimiskeskus, CN = TEST of EE Certification Centre Root CA, emailAddress = pki@sk.ee
-             Not Before: Nov 13 12:33:35 2020 GMT
-             Not After: Jun 13 11:33:35 2024 GMT
-             Signature Algorithm: sha1WithRSAEncryption
