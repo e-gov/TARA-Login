@@ -5,8 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <!-- TODO GSSO-534 Upgrade to Spring Boot 3.x -->
-        <version>3.2.2</version>
+        <version>3.3.1</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>ee.ria.tara</groupId>
@@ -35,10 +34,9 @@
         <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
         <mid-rest.version>1.5</mid-rest.version>
         <smart-id.version>2.3</smart-id.version>
-        <spring-cloud.version>2021.0.9</spring-cloud.version><!-- Spring Cloud 2021.0.x release train is compatible with
-                                                                   Spring Boot 2.7.x -->
+        <spring-cloud.version>2023.0.2</spring-cloud.version><!-- Spring Cloud 2023.0.x release train is only compatible with Spring Boot 3.2.x and 3.3.x, see table 1 at https://spring.io/projects/spring-cloud -->
         <webeid.version>3.1.0</webeid.version>
-        <wiremock.version>3.3.2</wiremock.version>
+        <wiremock.version>3.7.0</wiremock.version>
         <spring-framework.version>5.3.39</spring-framework.version>
     </properties>
 
