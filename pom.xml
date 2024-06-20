@@ -5,8 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <!-- TODO GSSO-534 Upgrade to Spring Boot 3.x -->
-        <version>3.2.2</version>
+        <version>3.3.1</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>ee.ria.tara</groupId>
@@ -26,19 +25,18 @@
     <properties>
         <maven.compiler.release>17</maven.compiler.release>
 
-        <bouncycastle.version>1.77</bouncycastle.version>
-        <elastic-apm.version>1.47.1</elastic-apm.version>
+        <bouncycastle.version>1.78.1</bouncycastle.version>
+        <elastic-apm.version>1.50.0</elastic-apm.version>
         <ignite.version>2.13.0</ignite.version><!-- TODO AUT-1086 Upgrade to >=2.14.0 when the following issue is
                                                      resolved:
                                                      https://www.mail-archive.com/user@ignite.apache.org/msg33644.html -->
-        <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
         <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
         <mid-rest.version>1.5</mid-rest.version>
         <smart-id.version>2.3</smart-id.version>
-        <spring-cloud.version>2021.0.9</spring-cloud.version><!-- Spring Cloud 2021.0.x release train is compatible with
-                                                                   Spring Boot 2.7.x -->
-        <webeid.version>3.0.1</webeid.version>
-        <wiremock.version>3.3.2</wiremock.version>
+        <spring-cloud.version>2023.0.2</spring-cloud.version><!-- Spring Cloud 2023.0.x release train is only compatible with Spring Boot 3.2.x and 3.3.x, see table 1 at https://spring.io/projects/spring-cloud -->
+        <webeid.version>3.0.1</webeid.version> <!-- TODO Upgrade to 3.1.0 AUT-1875 -->
+        <wiremock.version>3.7.0</wiremock.version>
     </properties>
 
     <dependencies>
