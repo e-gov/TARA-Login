@@ -37,13 +37,13 @@
         <smart-id.version>2.1.4</smart-id.version><!-- TODO AUT-925 Upgrade dependency. -->
         <spring-cloud.version>2021.0.9</spring-cloud.version><!-- Spring Cloud 2021.0.x release train is compatible with
                                                                    Spring Boot 2.7.x -->
-        <webeid.version>3.0.1</webeid.version>
+        <webeid.version>3.1.0</webeid.version>
         <wiremock.version>2.35.2</wiremock.version> <!-- TODO Upgrade to >=3.0.1 after Spring Boot is upgraded to 3.x which includes jetty >= 11.0.12 -->
     </properties>
 
     <dependencies>
         <dependency>
-            <groupId>org.webeid.security</groupId>
+            <groupId>eu.webeid.security</groupId>
             <artifactId>authtoken-validation</artifactId>
             <version>${webeid.version}</version>
         </dependency>
