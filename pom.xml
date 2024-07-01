@@ -35,13 +35,13 @@
         <mid-rest.version>1.5</mid-rest.version>
         <smart-id.version>2.3</smart-id.version>
         <spring-cloud.version>2023.0.2</spring-cloud.version><!-- Spring Cloud 2023.0.x release train is only compatible with Spring Boot 3.2.x and 3.3.x, see table 1 at https://spring.io/projects/spring-cloud -->
-        <webeid.version>3.0.1</webeid.version> <!-- TODO Upgrade to 3.1.0 AUT-1875 -->
+        <webeid.version>3.1.0</webeid.version>
         <wiremock.version>3.7.0</wiremock.version>
     </properties>
 
     <dependencies>
         <dependency>
-            <groupId>org.webeid.security</groupId>
+            <groupId>eu.webeid.security</groupId>
             <artifactId>authtoken-validation</artifactId>
             <version>${webeid.version}</version>
         </dependency>
