@@ -11,7 +11,6 @@
     <groupId>ee.ria.tara</groupId>
     <artifactId>tara-login-server</artifactId>
     <version>1.6.6</version>
-    <packaging>war</packaging>
     <name>tara-login-server</name>
     <description>TARA login server</description>
     <licenses>
@@ -79,11 +78,6 @@
             <groupId>co.elastic.apm</groupId>
             <artifactId>apm-agent-attach</artifactId>
             <version>${elastic-apm.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-tomcat</artifactId>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

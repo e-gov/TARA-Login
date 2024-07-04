@@ -18,9 +18,9 @@ import static freemarker.template.Configuration.VERSION_2_3_28;
 public class LegalPersonConfiguration {
 
     @Bean
-    public freemarker.template.Configuration freemarkerConfiguration(ResourceLoader resourceLoader) throws IOException {
+    public freemarker.template.Configuration freemarkerConfiguration() throws IOException {
         freemarker.template.Configuration freemarkerConfiguration = new freemarker.template.Configuration(VERSION_2_3_28);
-        freemarkerConfiguration.setDirectoryForTemplateLoading(resourceLoader.getResource("classpath:xroad-request-templates").getFile());
+        freemarkerConfiguration.setClassForTemplateLoading(this.getClass(), "/xroad-request-templates");
         freemarkerConfiguration.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
         freemarkerConfiguration.setDefaultEncoding("UTF-8");
         return freemarkerConfiguration;
