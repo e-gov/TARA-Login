@@ -67,20 +67,21 @@ public class AuthConsentController {
 
     @NotNull
     private String createConsentView(Model model, TaraSession taraSession) {
-        model.addAttribute("subject", taraSession.getAuthenticationResult().getSubject());
-        model.addAttribute("firstName", taraSession.getAuthenticationResult().getFirstName());
-        model.addAttribute("lastName", taraSession.getAuthenticationResult().getLastName());
-        model.addAttribute("dateOfBirth", taraSession.getAuthenticationResult().getDateOfBirth());
+        TaraSession.AuthenticationResult authenticationResult = taraSession.getAuthenticationResult();
+        model.addAttribute("subject", authenticationResult.getSubject());
+        model.addAttribute("firstName", authenticationResult.getFirstName());
+        model.addAttribute("lastName", authenticationResult.getLastName());
+        model.addAttribute("dateOfBirth", authenticationResult.getDateOfBirth());
         TaraSession.LegalPerson legalPerson = taraSession.getSelectedLegalPerson();
         if (legalPerson != null) {
             model.addAttribute("legalPersonName", legalPerson.getLegalName());
             model.addAttribute("legalPersonRegistryCode", legalPerson.getLegalPersonIdentifier());
         }
         if (shouldEmailBeDisplayed(taraSession)) {
-            model.addAttribute("email", taraSession.getAuthenticationResult().getEmail());
+            model.addAttribute("email", authenticationResult.getEmail());
         }
         if (shouldPhoneNumberBeDisplayed(taraSession)) {
-            model.addAttribute("phoneNumber", taraSession.getAuthenticationResult().getPhoneNumber());
+            model.addAttribute("phoneNumber", authenticationResult.getPhoneNumber());
         }
         model.addAttribute("serviceName", thymeleafSupport.getServiceName());
         return "consentView";

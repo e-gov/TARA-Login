@@ -8,6 +8,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.extension.responsetemplating.ResponseTemplateTransformer;
 import ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import io.restassured.RestAssured;
@@ -82,7 +83,7 @@ public abstract class BaseTest {
             .keystorePath("src/test/resources/tls-keystore.jks")
             .keystorePassword("changeit")
             .keyManagerPassword("changeit")
-            .extensions(ocspResponseTransformer)
+            .extensions(ocspResponseTransformer, new ResponseTemplateTransformer(true))
             .notifier(new ConsoleNotifier(true))
     );
     protected static final WireMockServer govSsoWireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig()

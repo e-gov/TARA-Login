@@ -35,17 +35,18 @@ public class AcceptConsentRequest {
         AcceptConsentRequest.IdToken idToken = new AcceptConsentRequest.IdToken();
         AcceptConsentRequest.ProfileAttributes profileAttributes = new AcceptConsentRequest.ProfileAttributes();
 
-        profileAttributes.setGivenName(taraSession.getAuthenticationResult().getFirstName());
-        profileAttributes.setFamilyName(taraSession.getAuthenticationResult().getLastName());
-        profileAttributes.setDateOfBirth(taraSession.getAuthenticationResult().getDateOfBirth().toString());
+        TaraSession.AuthenticationResult authenticationResult = taraSession.getAuthenticationResult();
+        profileAttributes.setGivenName(authenticationResult.getFirstName());
+        profileAttributes.setFamilyName(authenticationResult.getLastName());
+        profileAttributes.setDateOfBirth(authenticationResult.getDateOfBirth().toString());
 
-        if (phoneNumberIsRequested(taraSession) && taraSession.getAuthenticationResult().getAmr().equals(AuthenticationType.MOBILE_ID)) {
-            idToken.setPhoneNr(taraSession.getAuthenticationResult().getPhoneNumber());
+        if (phoneNumberIsRequested(taraSession) && authenticationResult.getAmr().equals(AuthenticationType.MOBILE_ID)) {
+            idToken.setPhoneNr(authenticationResult.getPhoneNumber());
             idToken.setPhoneNrVerified(true);
         }
 
-        if (emailIsRequested(taraSession) && taraSession.getAuthenticationResult().getAmr().equals(AuthenticationType.ID_CARD)) {
-            idToken.setEmail(taraSession.getAuthenticationResult().getEmail());
+        if (emailIsRequested(taraSession) && authenticationResult.getAmr().equals(AuthenticationType.ID_CARD)) {
+            idToken.setEmail(authenticationResult.getEmail());
             idToken.setEmailVerified(false);
         }
 

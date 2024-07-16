@@ -62,10 +62,11 @@ public class LegalpersonController {
             throw new BadRequestException(INVALID_REQUEST,
                     format("scope '%s' was not requested in the initial OIDC authentication request", LEGALPERSON.getFormalName()));
 
-        model.addAttribute("idCode", taraSession.getAuthenticationResult().getIdCode());
-        model.addAttribute("firstName", taraSession.getAuthenticationResult().getFirstName());
-        model.addAttribute("lastName", taraSession.getAuthenticationResult().getLastName());
-        model.addAttribute("dateOfBirth", taraSession.getAuthenticationResult().getDateOfBirth());
+        TaraSession.AuthenticationResult authenticationResult = taraSession.getAuthenticationResult();
+        model.addAttribute("idCode", authenticationResult.getIdCode());
+        model.addAttribute("firstName", authenticationResult.getFirstName());
+        model.addAttribute("lastName", authenticationResult.getLastName());
+        model.addAttribute("dateOfBirth", authenticationResult.getDateOfBirth());
         model.addAttribute("login_challenge", taraSession.getLoginRequestInfo().getChallenge());
 
         taraSession.setState(LEGAL_PERSON_AUTHENTICATION_INIT);

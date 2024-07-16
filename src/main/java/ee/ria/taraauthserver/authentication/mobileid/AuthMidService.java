@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.authentication.mobileid;
 import co.elastic.apm.api.ElasticApm;
 import co.elastic.apm.api.Scope;
 import co.elastic.apm.api.Span;
+import ee.ria.taraauthserver.authentication.RelyingParty;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.MidAuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.error.ErrorCode;
@@ -155,7 +156,7 @@ public class AuthMidService {
         span.setStartTimestamp(now().plus(200, MILLIS).minus(midAuthConfigurationProperties.getDelayInitiateMidSessionInMilliseconds(), MILLIS).toEpochMilli() * 1_000);
 
         try (final Scope scope = span.activate()) {
-            String shortName = defaultIfNull(taraSession.getOidcClientTranslatedShortName(), midAuthConfigurationProperties.getDisplayText());
+            String shortName = defaultIfNull(taraSession.getOriginalClient().getTranslatedShortName(), midAuthConfigurationProperties.getDisplayText());
             MidClient midClient = getAppropriateMidClient(taraSession);
             MidAuthenticationRequest midRequest = createMidAuthenticationRequest(idCode, telephoneNumber, authenticationHash, shortName, midClient, midLanguage);
             MidAuthenticationResponse response = midClient.getMobileIdConnector().authenticate(midRequest);
@@ -304,19 +305,18 @@ public class AuthMidService {
     }
 
     private MidClient getAppropriateMidClient(TaraSession taraSession) {
-        String relyingPartyUuid = getRelyingPartyUuidFromClientRequest(taraSession);
-        String relyingPartyName = getRelyingPartyNameFromClientRequest(taraSession);
-        if (relyingPartyUuid == null || relyingPartyName == null)
+        Optional<RelyingParty> clientRelyingParty = taraSession.getMobileIdRelyingParty();
+        if (clientRelyingParty.isEmpty()) {
             return midClient;
-        else
-            return createNewMidClient(relyingPartyUuid, relyingPartyName);
+        }
+        return createNewMidClient(clientRelyingParty.get());
     }
 
-    private MidClient createNewMidClient(String relyingPartyUuid, String relyingPartyName) {
+    private MidClient createNewMidClient(RelyingParty clientRelyingParty) {
         return MidClient.newBuilder()
                 .withHostUrl(midAuthConfigurationProperties.getHostUrl())
-                .withRelyingPartyUUID(relyingPartyUuid)
-                .withRelyingPartyName(relyingPartyName)
+                .withRelyingPartyUUID(clientRelyingParty.getUuid())
+                .withRelyingPartyName(clientRelyingParty.getName())
                 .withTrustSslContext(sslContext)
                 .withNetworkConnectionConfig(createMidClientConfig())
                 .withLongPollingTimeoutSeconds(midAuthConfigurationProperties.getLongPollingTimeoutSeconds())
@@ -331,25 +331,4 @@ public class AuthMidService {
         return clientConfig;
     }
 
-    private String getRelyingPartyUuidFromClientRequest(TaraSession taraSession) {
-        return Optional.of(taraSession)
-                .map(TaraSession::getLoginRequestInfo)
-                .map(TaraSession.LoginRequestInfo::getClient)
-                .map(TaraSession.Client::getMetaData)
-                .map(TaraSession.MetaData::getOidcClient)
-                .map(TaraSession.OidcClient::getMidSettings)
-                .map(TaraSession.MidSettings::getRelyingPartyUuid)
-                .orElse(null);
-    }
-
-    private String getRelyingPartyNameFromClientRequest(TaraSession taraSession) {
-        return Optional.of(taraSession)
-                .map(TaraSession::getLoginRequestInfo)
-                .map(TaraSession.LoginRequestInfo::getClient)
-                .map(TaraSession.Client::getMetaData)
-                .map(TaraSession.MetaData::getOidcClient)
-                .map(TaraSession.OidcClient::getMidSettings)
-                .map(TaraSession.MidSettings::getRelyingPartyName)
-                .orElse(null);
-    }
 }

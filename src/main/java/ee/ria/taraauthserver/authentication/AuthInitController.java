@@ -8,6 +8,8 @@ import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.AuthFlowTimeoutException;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import ee.ria.taraauthserver.error.exceptions.NotFoundException;
+import ee.ria.taraauthserver.govsso.GovssoService;
 import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.security.SessionManagementFilter;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
@@ -52,13 +54,9 @@ public class AuthInitController {
     public static final String AUTH_INIT_REQUEST_MAPPING = "/auth/init";
     private static final Predicate<String> SUPPORTED_LANGUAGES = java.util.regex.Pattern.compile("(?i)(et|en|ru)").asMatchPredicate();
     private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.TARA_HYDRA, this.getClass());
-    private final ClientRequestLogger govSsoRequestLogger = new ClientRequestLogger(Service.GOVSSO_HYDRA, this.getClass());
 
     @Autowired
     private AuthConfigurationProperties taraProperties;
-
-    @Autowired
-    private AuthConfigurationProperties.GovSsoHydraConfigurationProperties govSsoHydraConfigurationProperties;
 
     @Autowired
     private AuthConfigurationProperties.GovSsoConfigurationProperties govSsoConfigurationProperties;
@@ -68,6 +66,9 @@ public class AuthInitController {
 
     @Autowired
     private RestTemplate hydraRestTemplate;
+
+    @Autowired
+    private GovssoService govssoService;
 
     @Autowired
     private Validator validator;
@@ -94,24 +95,25 @@ public class AuthInitController {
             authFlowTimeout = Duration.between(OffsetDateTime.now(), timeoutDatetime);
         }
 
-        if (StringUtils.isNotBlank(govSsoHydraConfigurationProperties.getClientId()) && govSsoHydraConfigurationProperties.getClientId().equals(loginRequestInfo.getClientId())) {
+        if (govssoService.isGovssoClient(loginRequestInfo.getClientId())) {
             String govSsoLoginChallenge = loginRequestInfo.getGovSsoChallenge();
-            if (govSsoLoginChallenge != null && govSsoLoginChallenge.matches("^[a-f0-9]{32}$")) {
-                SessionManagementFilter.setGovSsoFlowTraceId(govSsoLoginChallenge);
-                TaraSession.LoginRequestInfo govSsoLoginRequestInfo = fetchGovSsoLoginRequestInfo(govSsoLoginChallenge);
-                newTaraSession.setGovSsoLoginRequestInfo(govSsoLoginRequestInfo);
-            } else {
+            if (govSsoLoginChallenge == null || !govSsoLoginChallenge.matches("^[a-f0-9]{32}$")) {
                 throw new BadRequestException(ErrorCode.INVALID_GOVSSO_LOGIN_CHALLENGE, "Incorrect GovSSO login challenge format.");
             }
+            SessionManagementFilter.setGovSsoFlowTraceId(govSsoLoginChallenge);
+            TaraSession.LoginRequestInfo govSsoLoginRequestInfo = fetchGovSsoLoginRequestInfo(govSsoLoginChallenge);
+            newTaraSession.setGovSsoLoginRequestInfo(govSsoLoginRequestInfo);
         }
 
-        if (loginRequestInfo.getRequestedScopes().isEmpty())
+        if (loginRequestInfo.getRequestedScopes().isEmpty()) {
             throw new BadRequestException(ErrorCode.MISSING_SCOPE, "No scope is requested");
+        }
 
         List<AuthenticationType> allowedAuthenticationMethodsList = loginRequestInfo.getAllowedAuthenticationMethodsList(taraProperties);
-        if (isEmpty(allowedAuthenticationMethodsList))
+        if (isEmpty(allowedAuthenticationMethodsList)) {
             throw new BadRequestException(ErrorCode.NO_VALID_AUTHMETHODS_AVAILABLE,
                     "No authentication methods match the requested level of assurance. Please check your authorization request");
+        }
 
         newTaraSession.setAllowedAuthMethods(allowedAuthenticationMethodsList);
 
@@ -174,21 +176,9 @@ public class AuthInitController {
     }
 
     private TaraSession.LoginRequestInfo fetchGovSsoLoginRequestInfo(String ssoChallenge) {
-        String requestUrl = govSsoHydraConfigurationProperties.getLoginUrl() + "?login_challenge=" + ssoChallenge;
         try {
-            govSsoRequestLogger.logRequest(requestUrl, HttpMethod.GET);
-            var response = hydraRestTemplate.exchange(
-                    requestUrl,
-                    HttpMethod.GET,
-                    null,
-                    TaraSession.LoginRequestInfo.class);
-            govSsoRequestLogger.logResponse(response);
-
-            if (!response.getBody().getChallenge().equals(ssoChallenge))
-                throw new IllegalStateException("Invalid GovSSO Hydra response: requested login_challenge does not match retrieved login_challenge");
-
-            return response.getBody();
-        } catch (HttpClientErrorException.NotFound | HttpClientErrorException.Gone e) {
+            return govssoService.fetchGovSsoLoginRequestInfo(ssoChallenge);
+        } catch (NotFoundException e) {
             log.error("Unable to fetch SSO login request info!", e);
             throw new BadRequestException(ErrorCode.INVALID_GOVSSO_LOGIN_CHALLENGE, "Login challenge not found.");
         }

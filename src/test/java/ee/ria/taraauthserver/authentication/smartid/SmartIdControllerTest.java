@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.authentication.smartid;
 
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
@@ -10,11 +11,17 @@ import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.sk.smartid.AuthenticationHash;
 import ee.sk.smartid.HashType;
+import ee.sk.smartid.SmartIdClient;
+import ee.sk.smartid.rest.SmartIdConnector;
+import ee.sk.smartid.rest.dao.AuthenticationSessionRequest;
+import ee.sk.smartid.rest.dao.SemanticsIdentifier;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -22,6 +29,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
+
+import java.util.function.Function;
 
 import static ch.qos.logback.classic.Level.ERROR;
 import static ch.qos.logback.classic.Level.INFO;
@@ -45,6 +54,10 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @Slf4j
 class SmartIdControllerTest extends BaseTest {
@@ -53,6 +66,9 @@ class SmartIdControllerTest extends BaseTest {
 
     @SpyBean
     private AuthSidService authSidService;
+
+    @Autowired
+    private SmartIdClient sidClient;
 
     @Autowired
     private SessionRepository<Session> sessionRepository;
@@ -342,6 +358,290 @@ class SmartIdControllerTest extends BaseTest {
         await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=10101010005, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+    }
+
+    @Nested
+    class RelyingPartyTest {
+
+        private SmartIdConnector smartIdConnectorSpy;
+        private final SemanticsIdentifier SEMANTICS_IDENTIFIER = new SemanticsIdentifier(
+                SemanticsIdentifier.IdentityType.PNO,
+                SemanticsIdentifier.CountryCode.EE,
+                ID_CODE_VALUE);
+        private final String CLIENT_RELYING_PARTY_NAME = "client-rp-name";
+        private final String CLIENT_RELYING_PARTY_UUID = "f47d57df-899a-4614-87dd-6fbdc866ef3e";
+
+        @BeforeEach
+        void setUp() {
+            smartIdConnectorSpy = spy(sidClient.getSmartIdConnector());
+            sidClient.setSmartIdConnector(smartIdConnectorSpy);
+        }
+
+        @Test
+        @Tag(value = "SID_AUTH_INIT_REQUEST")
+        @Tag(value = "SID_AUTH_POLL_RESPONSE_COMPLETED_OK")
+        void sidAuthInit_nonGovssoLogin_clientSpecificSidRelyingParty() {
+            createSidApiAuthenticationStub("mock_responses/sid/sid_authentication_init_response.json", 200);
+            createSidApiPollStub("mock_responses/sid/sid_poll_response_ok.json", 200);
+            MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                    .sessionRepository(sessionRepository)
+                    .authenticationTypes(of(SMART_ID))
+                    .authenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS).build();
+            String sessionId = sessionFilter.getSession().getId();
+
+            updateSession(sessionId, session -> {
+                TaraSession.LoginRequestInfo loginRequestInfo = session.getLoginRequestInfo();
+                TaraSession.SmartIdSettings smartIdSettings = new TaraSession.SmartIdSettings();
+                smartIdSettings.setRelyingPartyName(CLIENT_RELYING_PARTY_NAME);
+                smartIdSettings.setRelyingPartyUuid(CLIENT_RELYING_PARTY_UUID);
+                loginRequestInfo.getClient().getMetaData().getOidcClient().setSmartIdSettings(smartIdSettings);
+                return session;
+            });
+
+            given()
+                    .filter(sessionFilter)
+                    .when()
+                    .formParam(ID_CODE, ID_CODE_VALUE)
+                    .post("/auth/sid/init")
+                    .then()
+                    .assertThat()
+                    .statusCode(200);
+
+            await().atMost(FIVE_SECONDS)
+                    .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
+
+            ArgumentCaptor<AuthenticationSessionRequest> authRequestCaptor =
+                    ArgumentCaptor.forClass(AuthenticationSessionRequest.class);
+            verify(smartIdConnectorSpy, times(1)).authenticate(
+                    argThat((SemanticsIdentifier actual) -> SEMANTICS_IDENTIFIER.getIdentifier().equals(actual.getIdentifier())),
+                    authRequestCaptor.capture());
+            AuthenticationSessionRequest authRequest = authRequestCaptor.getValue();
+            assertEquals(CLIENT_RELYING_PARTY_NAME, authRequest.getRelyingPartyName());
+            assertEquals(CLIENT_RELYING_PARTY_UUID, authRequest.getRelyingPartyUUID());
+        }
+
+        @Test
+        @Tag(value = "SID_AUTH_INIT_REQUEST")
+        @Tag(value = "SID_AUTH_POLL_RESPONSE_COMPLETED_OK")
+        void sidAuthInit_nonGovssoLogin_defaultSidRelyingParty() {
+            createSidApiAuthenticationStub("mock_responses/sid/sid_authentication_init_response.json", 200);
+            createSidApiPollStub("mock_responses/sid/sid_poll_response_ok.json", 200);
+            MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                    .sessionRepository(sessionRepository)
+                    .authenticationTypes(of(SMART_ID))
+                    .authenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS).build();
+            String sessionId = sessionFilter.getSession().getId();
+
+            updateSession(sessionId, session -> {
+                TaraSession.LoginRequestInfo loginRequestInfo = session.getLoginRequestInfo();
+                TaraSession.SmartIdSettings smartIdSettings = new TaraSession.SmartIdSettings();
+                loginRequestInfo.getClient().getMetaData().getOidcClient().setSmartIdSettings(smartIdSettings);
+                return session;
+            });
+
+            given()
+                    .filter(sessionFilter)
+                    .when()
+                    .formParam(ID_CODE, ID_CODE_VALUE)
+                    .post("/auth/sid/init")
+                    .then()
+                    .assertThat()
+                    .statusCode(200);
+
+            await().atMost(FIVE_SECONDS)
+                    .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
+
+            ArgumentCaptor<AuthenticationSessionRequest> authRequestCaptor =
+                    ArgumentCaptor.forClass(AuthenticationSessionRequest.class);
+            verify(smartIdConnectorSpy, times(1)).authenticate(
+                    argThat((SemanticsIdentifier actual) -> SEMANTICS_IDENTIFIER.getIdentifier().equals(actual.getIdentifier())),
+                    authRequestCaptor.capture());
+            AuthenticationSessionRequest authRequest = authRequestCaptor.getValue();
+            assertEquals(sidConfigurationProperties.getRelyingPartyName(), authRequest.getRelyingPartyName());
+            assertEquals(sidConfigurationProperties.getRelyingPartyUuid(), authRequest.getRelyingPartyUUID());
+        }
+
+        @Test
+        @Tag(value = "SID_AUTH_INIT_REQUEST")
+        @Tag(value = "SID_AUTH_POLL_RESPONSE_COMPLETED_OK")
+        void sidAuthInit_govssoLogin_clientSpecificSidRelyingParty() {
+            createSidApiAuthenticationStub("mock_responses/sid/sid_authentication_init_response.json", 200);
+            createSidApiPollStub("mock_responses/sid/sid_poll_response_ok.json", 200);
+            MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                    .sessionRepository(sessionRepository)
+                    .authenticationTypes(of(SMART_ID))
+                    .authenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS).build();
+            String sessionId = sessionFilter.getSession().getId();
+
+            updateSession(sessionId, session -> {
+                TaraSession.SmartIdSettings smartIdSettings = new TaraSession.SmartIdSettings();
+                smartIdSettings.setRelyingPartyName(CLIENT_RELYING_PARTY_NAME);
+                smartIdSettings.setRelyingPartyUuid(CLIENT_RELYING_PARTY_UUID);
+                TaraSession.LoginRequestInfo govSsoLoginRequestInfo = createGovSsoLoginRequest(smartIdSettings);
+
+                session.setGovSsoLoginRequestInfo(govSsoLoginRequestInfo);
+                return session;
+            });
+
+            updateSession(sessionId, session -> {
+                TaraSession.LoginRequestInfo loginRequestInfo = session.getLoginRequestInfo();
+                TaraSession.SmartIdSettings smartIdSettings = new TaraSession.SmartIdSettings();
+                smartIdSettings.setRelyingPartyName("ignored");
+                smartIdSettings.setRelyingPartyUuid("ignored");
+                loginRequestInfo.getClient().getMetaData().getOidcClient().setSmartIdSettings(smartIdSettings);
+                return session;
+            });
+
+            given()
+                    .filter(sessionFilter)
+                    .when()
+                    .formParam(ID_CODE, ID_CODE_VALUE)
+                    .post("/auth/sid/init")
+                    .then()
+                    .assertThat()
+                    .statusCode(200);
+
+            await().atMost(FIVE_SECONDS)
+                    .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
+
+            ArgumentCaptor<AuthenticationSessionRequest> authRequestCaptor =
+                    ArgumentCaptor.forClass(AuthenticationSessionRequest.class);
+            verify(smartIdConnectorSpy, times(1)).authenticate(
+                    argThat((SemanticsIdentifier actual) -> SEMANTICS_IDENTIFIER.getIdentifier().equals(actual.getIdentifier())),
+                    authRequestCaptor.capture());
+            AuthenticationSessionRequest authRequest = authRequestCaptor.getValue();
+            assertEquals(CLIENT_RELYING_PARTY_NAME, authRequest.getRelyingPartyName());
+            assertEquals(CLIENT_RELYING_PARTY_UUID, authRequest.getRelyingPartyUUID());
+        }
+
+        @Test
+        @Tag(value = "SID_AUTH_INIT_REQUEST")
+        @Tag(value = "SID_AUTH_POLL_RESPONSE_COMPLETED_OK")
+        void sidAuthInit_govssoLogin_defaultSidRelyingParty() {
+            createSidApiAuthenticationStub("mock_responses/sid/sid_authentication_init_response.json", 200);
+            createSidApiPollStub("mock_responses/sid/sid_poll_response_ok.json", 200);
+            MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                    .sessionRepository(sessionRepository)
+                    .authenticationTypes(of(SMART_ID))
+                    .authenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS).build();
+            String sessionId = sessionFilter.getSession().getId();
+
+            updateSession(sessionId, session -> {
+                TaraSession.SmartIdSettings smartIdSettings = new TaraSession.SmartIdSettings();
+                TaraSession.LoginRequestInfo govSsoLoginRequestInfo = createGovSsoLoginRequest(smartIdSettings);
+
+                session.setGovSsoLoginRequestInfo(govSsoLoginRequestInfo);
+                return session;
+            });
+
+            given()
+                    .filter(sessionFilter)
+                    .when()
+                    .formParam(ID_CODE, ID_CODE_VALUE)
+                    .post("/auth/sid/init")
+                    .then()
+                    .assertThat()
+                    .statusCode(200);
+
+            await().atMost(FIVE_SECONDS)
+                    .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
+
+            ArgumentCaptor<AuthenticationSessionRequest> authRequestCaptor =
+                    ArgumentCaptor.forClass(AuthenticationSessionRequest.class);
+            verify(smartIdConnectorSpy, times(1)).authenticate(
+                    argThat((SemanticsIdentifier actual) -> SEMANTICS_IDENTIFIER.getIdentifier().equals(actual.getIdentifier())),
+                    authRequestCaptor.capture());
+            AuthenticationSessionRequest authRequest = authRequestCaptor.getValue();
+            assertEquals(sidConfigurationProperties.getRelyingPartyName(), authRequest.getRelyingPartyName());
+            assertEquals(sidConfigurationProperties.getRelyingPartyUuid(), authRequest.getRelyingPartyUUID());
+        }
+
+        @Test
+        @Tag(value = "SID_AUTH_INIT_REQUEST")
+        @Tag(value = "SID_AUTH_POLL_RESPONSE_COMPLETED_OK")
+        void sidAuthInit_govssoLogin_taraClientSidRelyingParty() {
+            createSidApiAuthenticationStub("mock_responses/sid/sid_authentication_init_response.json", 200);
+            createSidApiPollStub("mock_responses/sid/sid_poll_response_ok.json", 200);
+            MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                    .sessionRepository(sessionRepository)
+                    .authenticationTypes(of(SMART_ID))
+                    .authenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS).build();
+            String sessionId = sessionFilter.getSession().getId();
+
+            updateSession(sessionId, session -> {
+                TaraSession.SmartIdSettings smartIdSettings = new TaraSession.SmartIdSettings();
+                TaraSession.LoginRequestInfo govSsoLoginRequestInfo = createGovSsoLoginRequest(smartIdSettings);
+
+                session.setGovSsoLoginRequestInfo(govSsoLoginRequestInfo);
+                return session;
+            });
+
+            updateSession(sessionId, session -> {
+                TaraSession.LoginRequestInfo loginRequestInfo = session.getLoginRequestInfo();
+                TaraSession.SmartIdSettings smartIdSettings = new TaraSession.SmartIdSettings();
+                smartIdSettings.setRelyingPartyName(CLIENT_RELYING_PARTY_NAME);
+                smartIdSettings.setRelyingPartyUuid(CLIENT_RELYING_PARTY_UUID);
+                loginRequestInfo.getClient().getMetaData().getOidcClient().setSmartIdSettings(smartIdSettings);
+                return session;
+            });
+
+            given()
+                    .filter(sessionFilter)
+                    .when()
+                    .formParam(ID_CODE, ID_CODE_VALUE)
+                    .post("/auth/sid/init")
+                    .then()
+                    .assertThat()
+                    .statusCode(200);
+
+            await().atMost(FIVE_SECONDS)
+                    .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
+
+            ArgumentCaptor<AuthenticationSessionRequest> authRequestCaptor =
+                    ArgumentCaptor.forClass(AuthenticationSessionRequest.class);
+            verify(smartIdConnectorSpy, times(1)).authenticate(
+                    argThat((SemanticsIdentifier actual) -> SEMANTICS_IDENTIFIER.getIdentifier().equals(actual.getIdentifier())),
+                    authRequestCaptor.capture());
+            AuthenticationSessionRequest authRequest = authRequestCaptor.getValue();
+            assertEquals(CLIENT_RELYING_PARTY_NAME, authRequest.getRelyingPartyName());
+            assertEquals(CLIENT_RELYING_PARTY_UUID, authRequest.getRelyingPartyUUID());
+        }
+
+        private TaraSession.LoginRequestInfo createGovSsoLoginRequest(TaraSession.SmartIdSettings smartIdSettings) {
+            TaraSession.LoginRequestInfo govSsoLoginRequestInfo = new TaraSession.LoginRequestInfo();
+            TaraSession.Client client = new TaraSession.Client();
+            String expectedClientId = "govsso_test_client_id";
+            String expectedRegistryCode = "govsso_test_registry_code";
+            SPType expectedSector = SPType.PUBLIC;
+            client.setClientId(expectedClientId);
+
+            TaraSession.MetaData metaData = new TaraSession.MetaData();
+            TaraSession.OidcClient oidcClient = new TaraSession.OidcClient();
+            TaraSession.Institution institution = new TaraSession.Institution();
+
+            institution.setSector(expectedSector);
+            institution.setRegistryCode(expectedRegistryCode);
+            oidcClient.setInstitution(institution);
+
+            oidcClient.setSmartIdSettings(smartIdSettings);
+
+            metaData.setOidcClient(oidcClient);
+            client.setMetaData(metaData);
+
+            govSsoLoginRequestInfo.setClient(client);
+            govSsoLoginRequestInfo.setChallenge("challenge-ignored");
+
+            return govSsoLoginRequestInfo;
+        }
+
+        void updateSession(String sessionId, Function<TaraSession, TaraSession> fn) {
+            Session session = sessionRepository.findById(sessionId);
+            TaraSession originalTaraSession = session.getAttribute(TARA_SESSION);
+            TaraSession updatedTaraSession = fn.apply(originalTaraSession);
+            session.setAttribute(TARA_SESSION, updatedTaraSession);
+            sessionRepository.save(session);
+        }
+
     }
 
     @Test

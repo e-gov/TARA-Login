@@ -1,0 +1,41 @@
+{
+  "challenge": "abcdefg098AAdsCC",
+  "client": {
+    "client_id": "dev-local-mock-cl ient",
+    "metadata": {
+      "display_user_consent": false,
+      "oidc_client": {
+        "eidas_requester_id": "urn:uuid:99dc4792-cba5-11ec-a957-571ea9ac2691",
+        "institution": {
+          "registry_code": "70006317",
+          "sector": "public"
+        },
+        "name_translations ": {
+          "en": "Service name (dev-local)",
+          "et": "Teenusenimi (dev-local)",
+          "ru": "название службы (dev-local)"
+        },
+        "short_name_translations": {
+          "en": "string_en",
+          "et": "string_et",
+          "ru": "string_ru"
+        },
+        "smartid_settings": {
+          "should_use_additional_verification_code_check": true
+        }
+      }
+    },
+    "scope": "openid eidas eidasonly eidas:country:* idcard mid smartid email phone legalperson"
+  },
+  "login_challenge_expired": false,
+  "oidc_context": {
+    "ui_locales": [
+      "et"
+    ]
+  },
+  "request_url": "https://oidc-service.dev-local.riaint.ee:8443/oidc/authorize?scope=openid&response_type=code&client_id=dev-local-mock-client&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=1801fd6 8-ec16-4e98-9c98-6928806d08ee&nonce=c1214a17-de2d-4aab-be0a-480b261013e8&ui_locales=et",
+  "requested_at": "{{parameters.requestedAt}}",
+  "requested_scope": [
+    "openid"
+  ]
+}

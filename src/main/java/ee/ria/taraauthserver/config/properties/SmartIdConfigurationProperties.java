@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.config.properties;
 
+import ee.ria.taraauthserver.authentication.RelyingParty;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -56,4 +57,9 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
     public void validateConfiguration() {
         Assert.isTrue(readTimeoutMilliseconds >= longPollingTimeoutMilliseconds + 5000, "Smart-ID read timeout must be at least 5 seconds longer than its long polling timeout.");
     }
+
+    public RelyingParty getRelyingParty() {
+        return new RelyingParty(relyingPartyName, relyingPartyUuid);
+    }
+
 }

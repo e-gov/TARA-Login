@@ -3,15 +3,19 @@ package ee.ria.taraauthserver.authentication.mobileid;
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.MidAuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.session.MockSessionFilter;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.sk.mid.MidAuthenticationHashToSign;
+import ee.sk.mid.MidClient;
 import ee.sk.mid.MidHashType;
+import ee.sk.mid.rest.MidConnector;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -21,6 +25,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.function.Function;
 
 import static ch.qos.logback.classic.Level.ERROR;
 import static ch.qos.logback.classic.Level.INFO;
@@ -41,6 +48,7 @@ import static org.awaitility.Durations.TEN_SECONDS;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.spy;
 
 @Slf4j
 class AuthMidControllerTest extends BaseTest {
@@ -50,6 +58,9 @@ class AuthMidControllerTest extends BaseTest {
 
     @SpyBean
     private AuthMidService authMidService;
+
+    @Autowired
+    private MidClient midClient;
 
     @Autowired
     private SessionRepository<Session> sessionRepository;
@@ -528,6 +539,274 @@ class AuthMidControllerTest extends BaseTest {
         TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
         assertAuthenticationResult(result);
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001017716, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+    }
+
+    @Nested
+    class RelyingPartyTest {
+
+        private MidConnector mobileIdConnectorSpy;
+        private final String CLIENT_RELYING_PARTY_NAME = "client-rp-name";
+        private final String CLIENT_RELYING_PARTY_UUID = "f47d57df-899a-4614-87dd-6fbdc866ef3e";
+
+        @BeforeEach
+        void setUp() {
+            mobileIdConnectorSpy = spy(midClient.getMobileIdConnector());
+            ReflectionTestUtils.setField(midClient, "connector", mobileIdConnectorSpy);
+        }
+
+        @Test
+        void midAuthInit_nonGovssoLogin_clientSpecificSidRelyingParty() {
+            createMidApiAuthenticationStub(
+                    "mock_responses/mid/mid_authenticate_response.json",
+                    200,
+                    0,
+                    "EST",
+                    SHORT_NAME_TRANSLATIONS.get("et")
+            );
+            createMidApiPollStub("mock_responses/mid/mid_poll_response.json", 200);
+            MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                    .sessionRepository(sessionRepository)
+                    .authenticationTypes(of(MOBILE_ID))
+                    .shortNameTranslations(SHORT_NAME_TRANSLATIONS)
+                    .build();
+            String sessionId = sessionFilter.getSession().getId();
+
+            updateSession(sessionId, session -> {
+                TaraSession.LoginRequestInfo loginRequestInfo = session.getLoginRequestInfo();
+                TaraSession.MidSettings mobileIdSettings = new TaraSession.MidSettings();
+                mobileIdSettings.setRelyingPartyName(CLIENT_RELYING_PARTY_NAME);
+                mobileIdSettings.setRelyingPartyUuid(CLIENT_RELYING_PARTY_UUID);
+                loginRequestInfo.getClient().getMetaData().getOidcClient().setMidSettings(mobileIdSettings);
+                return session;
+            });
+
+            given()
+                    .filter(sessionFilter)
+                    .formParam("idCode", "60001017716")
+                    .formParam("telephoneNumber", "59100366")
+                    .when()
+                    .post("/auth/mid/init?lang=et")
+                    .then()
+                    .assertThat()
+                    .statusCode(200);
+
+            TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                    .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
+            TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
+            assertAuthenticationResult(result);
+            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001017716, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+        }
+
+        @Test
+        void midAuthInit_nonGovssoLogin_defaultSidRelyingParty() {
+            createMidApiAuthenticationStub(
+                    "mock_responses/mid/mid_authenticate_response.json",
+                    200,
+                    0,
+                    "EST",
+                    SHORT_NAME_TRANSLATIONS.get("et")
+            );
+            createMidApiPollStub("mock_responses/mid/mid_poll_response.json", 200);
+            MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                    .sessionRepository(sessionRepository)
+                    .authenticationTypes(of(MOBILE_ID))
+                    .shortNameTranslations(SHORT_NAME_TRANSLATIONS)
+                    .build();
+            String sessionId = sessionFilter.getSession().getId();
+
+            updateSession(sessionId, session -> {
+                TaraSession.LoginRequestInfo loginRequestInfo = session.getLoginRequestInfo();
+                TaraSession.MidSettings mobileIdSettings = new TaraSession.MidSettings();
+                loginRequestInfo.getClient().getMetaData().getOidcClient().setMidSettings(mobileIdSettings);
+                return session;
+            });
+
+            given()
+                    .filter(sessionFilter)
+                    .formParam("idCode", "60001017716")
+                    .formParam("telephoneNumber", "59100366")
+                    .when()
+                    .post("/auth/mid/init?lang=et")
+                    .then()
+                    .assertThat()
+                    .statusCode(200);
+
+            TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                    .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
+            TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
+            assertAuthenticationResult(result);
+            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001017716, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+        }
+
+        @Test
+        void midAuthInit_govssoLogin_clientSpecificSidRelyingParty() {
+            createMidApiAuthenticationStub(
+                    "mock_responses/mid/mid_authenticate_response.json",
+                    200,
+                    0,
+                    "EST",
+                    midAuthConfigurationProperties.getDisplayText()
+            );
+            createMidApiPollStub("mock_responses/mid/mid_poll_response.json", 200);
+            MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                    .sessionRepository(sessionRepository)
+                    .authenticationTypes(of(MOBILE_ID))
+                    .shortNameTranslations(SHORT_NAME_TRANSLATIONS)
+                    .build();
+            String sessionId = sessionFilter.getSession().getId();
+
+            updateSession(sessionId, session -> {
+                TaraSession.MidSettings mobileIdSettings = new TaraSession.MidSettings();
+                mobileIdSettings.setRelyingPartyName(CLIENT_RELYING_PARTY_NAME);
+                mobileIdSettings.setRelyingPartyUuid(CLIENT_RELYING_PARTY_UUID);
+                TaraSession.LoginRequestInfo govSsoLoginRequestInfo = createGovSsoLoginRequest(mobileIdSettings);
+                session.setGovSsoLoginRequestInfo(govSsoLoginRequestInfo);
+                return session;
+            });
+
+            given()
+                    .filter(sessionFilter)
+                    .formParam("idCode", "60001017716")
+                    .formParam("telephoneNumber", "59100366")
+                    .when()
+                    .post("/auth/mid/init?lang=et")
+                    .then()
+                    .assertThat()
+                    .statusCode(200);
+
+            TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                    .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
+            TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
+            assertAuthenticationResult(result);
+            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=GOVSSO, clientId=govsso_test_client_id, eidasRequesterId=null, sector=public, registryCode=govsso_test_registry_code, legalPerson=false, country=EE, idCode=60001017716, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+        }
+
+        @Test
+        void midAuthInit_govssoLogin_defaultSidRelyingParty() {
+            createMidApiAuthenticationStub(
+                    "mock_responses/mid/mid_authenticate_response.json",
+                    200,
+                    0,
+                    "EST",
+                    midAuthConfigurationProperties.getDisplayText()
+            );
+            createMidApiPollStub("mock_responses/mid/mid_poll_response.json", 200);
+            MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                    .sessionRepository(sessionRepository)
+                    .authenticationTypes(of(MOBILE_ID))
+                    .shortNameTranslations(SHORT_NAME_TRANSLATIONS)
+                    .build();
+            String sessionId = sessionFilter.getSession().getId();
+
+            updateSession(sessionId, session -> {
+                TaraSession.MidSettings mobileIdSettings = new TaraSession.MidSettings();
+                TaraSession.LoginRequestInfo govSsoLoginRequestInfo = createGovSsoLoginRequest(mobileIdSettings);
+                session.setGovSsoLoginRequestInfo(govSsoLoginRequestInfo);
+                return session;
+            });
+
+            given()
+                    .filter(sessionFilter)
+                    .formParam("idCode", "60001017716")
+                    .formParam("telephoneNumber", "59100366")
+                    .when()
+                    .post("/auth/mid/init?lang=et")
+                    .then()
+                    .assertThat()
+                    .statusCode(200);
+
+            TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                    .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
+            TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
+            assertAuthenticationResult(result);
+            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=GOVSSO, clientId=govsso_test_client_id, eidasRequesterId=null, sector=public, registryCode=govsso_test_registry_code, legalPerson=false, country=EE, idCode=60001017716, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+        }
+
+        @Test
+        void midAuthInit_govssoLogin_taraClientSidRelyingParty() {
+            createMidApiAuthenticationStub(
+                    "mock_responses/mid/mid_authenticate_response.json",
+                    200,
+                    0,
+                    "EST",
+                    midAuthConfigurationProperties.getDisplayText()
+            );
+            createMidApiPollStub("mock_responses/mid/mid_poll_response.json", 200);
+            MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                    .sessionRepository(sessionRepository)
+                    .authenticationTypes(of(MOBILE_ID))
+                    .shortNameTranslations(SHORT_NAME_TRANSLATIONS)
+                    .build();
+            String sessionId = sessionFilter.getSession().getId();
+
+            updateSession(sessionId, session -> {
+                TaraSession.MidSettings mobileIdSettings = new TaraSession.MidSettings();
+                TaraSession.LoginRequestInfo govSsoLoginRequestInfo = createGovSsoLoginRequest(mobileIdSettings);
+                session.setGovSsoLoginRequestInfo(govSsoLoginRequestInfo);
+                return session;
+            });
+
+            updateSession(sessionId, session -> {
+                TaraSession.LoginRequestInfo loginRequestInfo = session.getLoginRequestInfo();
+                TaraSession.MidSettings mobileIdSettings = new TaraSession.MidSettings();
+                mobileIdSettings.setRelyingPartyName(CLIENT_RELYING_PARTY_NAME);
+                mobileIdSettings.setRelyingPartyUuid(CLIENT_RELYING_PARTY_UUID);
+                loginRequestInfo.getClient().getMetaData().getOidcClient().setMidSettings(mobileIdSettings);
+                return session;
+            });
+
+            given()
+                    .filter(sessionFilter)
+                    .formParam("idCode", "60001017716")
+                    .formParam("telephoneNumber", "59100366")
+                    .when()
+                    .post("/auth/mid/init?lang=et")
+                    .then()
+                    .assertThat()
+                    .statusCode(200);
+
+            TaraSession taraSession = await().atMost(FIVE_SECONDS)
+                    .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
+            TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
+            assertAuthenticationResult(result);
+            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=GOVSSO, clientId=govsso_test_client_id, eidasRequesterId=null, sector=public, registryCode=govsso_test_registry_code, legalPerson=false, country=EE, idCode=60001017716, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+        }
+
+        private TaraSession.LoginRequestInfo createGovSsoLoginRequest(TaraSession.MidSettings mobileIdSettings) {
+            TaraSession.LoginRequestInfo govSsoLoginRequestInfo = new TaraSession.LoginRequestInfo();
+            TaraSession.Client client = new TaraSession.Client();
+            String expectedClientId = "govsso_test_client_id";
+            String expectedRegistryCode = "govsso_test_registry_code";
+            SPType expectedSector = SPType.PUBLIC;
+            client.setClientId(expectedClientId);
+
+            TaraSession.MetaData metaData = new TaraSession.MetaData();
+            TaraSession.OidcClient oidcClient = new TaraSession.OidcClient();
+            TaraSession.Institution institution = new TaraSession.Institution();
+
+            institution.setSector(expectedSector);
+            institution.setRegistryCode(expectedRegistryCode);
+            oidcClient.setInstitution(institution);
+
+            oidcClient.setMidSettings(mobileIdSettings);
+
+            metaData.setOidcClient(oidcClient);
+            client.setMetaData(metaData);
+
+            govSsoLoginRequestInfo.setClient(client);
+            govSsoLoginRequestInfo.setChallenge("challenge-ignored");
+
+            return govSsoLoginRequestInfo;
+        }
+
+        void updateSession(String sessionId, Function<TaraSession, TaraSession> fn) {
+            Session session = sessionRepository.findById(sessionId);
+            TaraSession originalTaraSession = session.getAttribute(TARA_SESSION);
+            TaraSession updatedTaraSession = fn.apply(originalTaraSession);
+            session.setAttribute(TARA_SESSION, updatedTaraSession);
+            sessionRepository.save(session);
+        }
+
     }
 
     @Test

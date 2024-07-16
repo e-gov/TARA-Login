@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.authentication.smartid;
 import co.elastic.apm.api.ElasticApm;
 import co.elastic.apm.api.Scope;
 import co.elastic.apm.api.Span;
+import ee.ria.taraauthserver.authentication.RelyingParty;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
@@ -86,6 +87,8 @@ import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 @Service
 @ConditionalOnProperty(value = "tara.auth-methods.smart-id.enabled")
 public class AuthSidService {
+
+    private static final String CERTIFICATE_LEVEL_QUALIFIED = "QUALIFIED";
     private static final Map<Class<?>, ErrorCode> errorMap;
 
     static {
@@ -149,11 +152,13 @@ public class AuthSidService {
         span.setStartTimestamp(now().plus(200, MILLIS).minus(smartIdConfigurationProperties.getDelayInitiateSidSessionInMilliseconds(), MILLIS).toEpochMilli() * 1_000);
         try (final Scope scope = span.activate()) {
             SemanticsIdentifier semanticsIdentifier = new SemanticsIdentifier(SemanticsIdentifier.IdentityType.PNO, SemanticsIdentifier.CountryCode.EE, idCode);
+            RelyingParty relyingParty =
+                    taraSession.getSmartIdRelyingParty().orElse(smartIdConfigurationProperties.getRelyingParty());
             requestBuilder
-                    .withRelyingPartyUUID(taraSession.getSmartIdRelyingPartyUuid().orElse(smartIdConfigurationProperties.getRelyingPartyUuid()))
-                    .withRelyingPartyName(taraSession.getSmartIdRelyingPartyName().orElse(smartIdConfigurationProperties.getRelyingPartyName()))
+                    .withRelyingPartyUUID(relyingParty.getUuid())
+                    .withRelyingPartyName(relyingParty.getName())
                     .withSemanticsIdentifier(semanticsIdentifier)
-                    .withCertificateLevel("QUALIFIED")
+                    .withCertificateLevel(CERTIFICATE_LEVEL_QUALIFIED)
                     .withAuthenticationHash(authenticationHash)
                     .withAllowedInteractionsOrder(getAppropriateAllowedInteractions(taraSession));
 
@@ -191,9 +196,12 @@ public class AuthSidService {
 
     private List<Interaction> getAppropriateAllowedInteractions(TaraSession taraSession) {
         List<Interaction> allowedInteractions = new ArrayList<>();
-        String shortName = defaultIfNull(taraSession.getOidcClientTranslatedShortName(), smartIdConfigurationProperties.getDisplayText());
-        if (taraSession.isAdditionalSmartIdVerificationCodeCheckNeeded())
+        String shortName = defaultIfNull(
+                taraSession.getOriginalClient().getTranslatedShortName(),
+                smartIdConfigurationProperties.getDisplayText());
+        if (taraSession.isAdditionalSmartIdVerificationCodeCheckNeeded()) {
             allowedInteractions.add(Interaction.verificationCodeChoice(shortName));
+        }
         allowedInteractions.add(Interaction.displayTextAndPIN(shortName));
         return allowedInteractions;
     }
@@ -208,6 +216,7 @@ public class AuthSidService {
                 log.info("Starting Smart-ID session status polling with id: {}", value("tara.session.sid_authentication_result.sid_session_id", sidSessionId));
                 SessionStatus sessionStatus = sessionStatusPoller.fetchFinalSessionStatus(sidSessionId);
                 handleSidAuthenticationResult(taraSession, sessionStatus, requestBuilder);
+                taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
                 statisticsLogger.logExternalTransaction(taraSession);
             } catch (Exception ex) {
                 handleSidAuthenticationException(taraSession, ex);
@@ -240,7 +249,6 @@ public class AuthSidService {
         taraAuthResult.setAcr(smartIdConfigurationProperties.getLevelOfAssurance());
 
         authenticationResponseValidator.validate(response); // NOTE: Validation throws exception. Populate SidAuthenticationResult fields before this.
-        taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
     }
 
     private void handleSidAuthenticationException(TaraSession taraSession, Exception ex) {
@@ -273,4 +281,5 @@ public class AuthSidService {
     private ErrorCode translateExceptionToErrorCode(Throwable ex) {
         return errorMap.getOrDefault(ex.getClass(), ERROR_GENERAL);
     }
+
 }

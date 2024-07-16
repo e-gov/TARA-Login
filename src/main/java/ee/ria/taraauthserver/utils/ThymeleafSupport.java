@@ -57,19 +57,26 @@ public class ThymeleafSupport {
 
     public String getServiceName() {
         TaraSession taraSession = SessionUtils.getAuthSession();
-        if (taraSession == null || taraSession.getLoginRequestInfo() == null)
+        if (taraSession == null) {
             return null;
-
-        return taraSession.getOidcClientTranslatedName();
+        }
+        TaraSession.Client originalClient = taraSession.getOriginalClient();
+        if (originalClient == null) {
+            return null;
+        }
+        return originalClient.getTranslatedName();
     }
 
     public String getServiceLogo() {
         TaraSession taraSession = SessionUtils.getAuthSession();
-        if (taraSession == null || taraSession.getLoginRequestInfo() == null)
+        if (taraSession == null) {
             return null;
-
-        TaraSession.LoginRequestInfo loginRequestInfo = taraSession.getAppropriateLoginRequestInfo();
-        return loginRequestInfo.getClientLogo();
+        }
+        TaraSession.Client originalClient = taraSession.getOriginalClient();
+        if (originalClient == null) {
+            return null;
+        }
+        return originalClient.getLogo();
     }
 
     public TaraSession.LoginRequestInfo getGovSsoLoginRequestInfo() {
