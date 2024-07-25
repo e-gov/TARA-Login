@@ -15,6 +15,7 @@ import org.springframework.test.context.TestPropertySource;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
@@ -98,7 +99,7 @@ public class ApplicationHealthEndpointTest extends BaseTest {
     @Tag(value = "HEALTH_MONITORING_ENDPOINT")
     @Tag(value = "HEALTH_MONITORING_WARN_KEY_EXPIRATION")
     void applicationHealth_when_certificate_about_to_expire() {
-        Instant expectedTime = Instant.parse("2024-09-01T08:50:00Z");
+        Instant expectedTime = Instant.parse("2025-03-21T00:00:00Z");
         Mockito.when(truststoreHealthIndicator.getSystemClock()).thenReturn(Clock.fixed(expectedTime, of("UTC")));
 
         wireMockServer.stubFor(any(urlPathEqualTo("/health/ready"))
@@ -111,7 +112,7 @@ public class ApplicationHealthEndpointTest extends BaseTest {
                 .assertThat()
                 .statusCode(200)
                 .body("status", equalTo("UP"))
-                .body("warnings[0]", equalTo("Truststore certificate 'EMAILADDRESS=pki@sk.ee, CN=TEST of SK OCSP RESPONDER 2011, OU=OCSP, O=AS Sertifitseerimiskeskus, C=EE' with serial number '138983222239407220571566848351990841243' is expiring at 2024-09-07T12:22:45Z"))
+                .body("warnings[0]", equalTo("Truststore certificate 'CN=TEST of KLASS3-SK 2010, OU=Sertifitseerimisteenused, O=AS Sertifitseerimiskeskus, C=EE' with serial number '46174084079274426180990408274615839251' is expiring at 2025-03-21T10:58:29Z"))
                 .body("dependencies[1].name", equalTo("oidcServer"))
                 .body("dependencies[1].status", equalTo("UP"));
     }
@@ -120,8 +121,8 @@ public class ApplicationHealthEndpointTest extends BaseTest {
     @Tag(value = "HEALTH_MONITORING_ENDPOINT")
     @Tag(value = "HEALTH_MONITORING_STATUS")
     void applicationHealth_when_certificate_has_expired() {
-        Instant expectedTime = Instant.parse("2024-10-01T08:50:00Z");
-        Mockito.when(truststoreHealthIndicator.getSystemClock()).thenReturn(Clock.fixed(expectedTime, of("UTC")));
+        Instant expectedTime = Instant.parse("2025-03-21T23:59:59Z");
+        Mockito.when(truststoreHealthIndicator.getSystemClock()).thenReturn(Clock.fixed(expectedTime, ZoneOffset.UTC));
 
         wireMockServer.stubFor(any(urlPathEqualTo("/health/ready"))
                 .willReturn(aResponse().withStatus(200)));
@@ -133,7 +134,7 @@ public class ApplicationHealthEndpointTest extends BaseTest {
                 .assertThat()
                 .statusCode(200)
                 .body("status", equalTo("UP"))
-                .body("warnings[0]", equalTo("Truststore certificate 'EMAILADDRESS=pki@sk.ee, CN=TEST of SK OCSP RESPONDER 2011, OU=OCSP, O=AS Sertifitseerimiskeskus, C=EE' with serial number '138983222239407220571566848351990841243' is expiring at 2024-09-07T12:22:45Z"))
+                .body("warnings[0]", equalTo("Truststore certificate 'CN=TEST of KLASS3-SK 2010, OU=Sertifitseerimisteenused, O=AS Sertifitseerimiskeskus, C=EE' with serial number '46174084079274426180990408274615839251' is expiring at 2025-03-21T10:58:29Z"))
                 .body("dependencies[2].name", equalTo("truststore"))
                 .body("dependencies[2].status", equalTo("UNKNOWN"));
     }
