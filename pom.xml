@@ -26,12 +26,12 @@
     <properties>
         <maven.compiler.release>11</maven.compiler.release>
 
-        <bouncycastle.version>1.77</bouncycastle.version>
-        <elastic-apm.version>1.47.1</elastic-apm.version>
+        <bouncycastle.version>1.78.1</bouncycastle.version>
+        <elastic-apm.version>1.51.0</elastic-apm.version>
         <ignite.version>2.13.0</ignite.version><!-- TODO AUT-1086 Upgrade to >=2.14.0 when the following issue is
                                                      resolved:
                                                      https://www.mail-archive.com/user@ignite.apache.org/msg33644.html -->
-        <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
         <logstash-logback-encoder.version>7.3</logstash-logback-encoder.version><!-- TODO Upgrade to >= 7.4 after Spring Boot is upgraded to 3.x which includes Logback >= 1.3 -->
         <mid-rest.version>1.4</mid-rest.version><!-- TODO AUT-925 Upgrade dependency. -->
         <smart-id.version>2.1.4</smart-id.version><!-- TODO AUT-925 Upgrade dependency. -->
