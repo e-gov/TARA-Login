@@ -1,5 +1,6 @@
 (function () {
     var timeout = 5000;
+    var isPolling = true;
 
     try {
         var value = document.body.getAttribute("data-check-form-refresh-rate");
@@ -14,19 +15,18 @@
     setTimeout(stopPolling, 360000);
 
     function stopPolling() {
-        clearInterval(interval);
+        isPolling = false;
     }
 
     const csrfToken = document.querySelector("input[name='_csrf']").getAttribute("value");
 
-    const interval = setInterval(function () {
+    function checkAuthenticationStatus() {
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
             if (this.readyState !== 4) return;
             var pollResponse = JSON.parse(this.responseText);
 
             if (this.status === 200 && pollResponse["status"] === 'COMPLETED') {
-                clearInterval(interval);
                 var form = document.createElement("form");
                 form.method = "POST";
                 form.action = "/auth/accept";
@@ -38,10 +38,9 @@
                 form.appendChild(input);
                 document.body.appendChild(form);
                 form.submit();
-            } else if (this.status === 200 && pollResponse["status"] === 'PENDING') {
-                console.log(this.responseText);
+            } else if (this.status === 200 && pollResponse["status"] === 'PENDING' && isPolling) {
+                setTimeout(checkAuthenticationStatus, timeout);
             } else {
-                clearInterval(interval);
                 document.querySelector(".c-tab-login__main").classList.add('hidden');
                 document.querySelector("#mid-error").classList.remove('hidden');
                 document.querySelector("#error-message").innerHTML = pollResponse["message"];
@@ -66,6 +65,7 @@
         xhttp.open('GET', '/auth/mid/poll', true);
         xhttp.setRequestHeader('Accept', 'application/json;charset=UTF-8');
         xhttp.send();
+    }
 
-    }, timeout);
+    setTimeout(checkAuthenticationStatus, timeout);
 })();
