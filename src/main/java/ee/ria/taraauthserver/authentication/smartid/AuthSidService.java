@@ -162,6 +162,7 @@ public class AuthSidService {
                     .withAuthenticationHash(authenticationHash)
                     .withAllowedInteractionsOrder(getAppropriateAllowedInteractions(taraSession));
 
+            // TODO: Use AuthenticationRequestBuilder.authenticate instead
             String sidSessionId = requestBuilder.initiateAuthentication();
             log.info("Initiated Smart-ID session with id: {}", value("tara.session.authentication_result.sid_session_id", sidSessionId));
             taraSession.setState(POLL_SID_STATUS);
@@ -248,6 +249,7 @@ public class AuthSidService {
         taraAuthResult.setAmr(AuthenticationType.SMART_ID);
         taraAuthResult.setAcr(smartIdConfigurationProperties.getLevelOfAssurance());
 
+        // TODO: Why do we need to save personal information if the result is invalid?
         authenticationResponseValidator.validate(response); // NOTE: Validation throws exception. Populate SidAuthenticationResult fields before this.
     }
 

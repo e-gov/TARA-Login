@@ -10,6 +10,8 @@ import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
+import ee.ria.taraauthserver.error.exceptions.InvalidLoginRequestException;
+import ee.ria.taraauthserver.session.update.TaraSessionUpdate;
 import eu.webeid.security.challenge.ChallengeNonce;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -18,6 +20,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +28,6 @@ import net.logstash.logback.util.StringUtils;
 import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.core5.net.URLEncodedUtils;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.util.Assert;
 
 import java.io.Serializable;
 import java.net.URI;
@@ -58,7 +60,8 @@ public class TaraSession implements Serializable {
     private final String sessionId;
 
     // NOTE: All field getters that should not be logged, must be annotated with @JsonIgnore
-    private TaraAuthenticationState state;
+    @NonNull
+    private TaraAuthenticationState state = TaraAuthenticationState.NOT_SET;
     private LoginRequestInfo loginRequestInfo;
     private LoginRequestInfo govSsoLoginRequestInfo;
     private List<AuthenticationType> allowedAuthMethods;
@@ -68,13 +71,18 @@ public class TaraSession implements Serializable {
     private String consentChallenge;
     private ChallengeNonce webEidChallengeNonce;
 
-    public void setState(TaraAuthenticationState newState) {
-        if (state == null || !state.equals(newState)) {
-            log.info("State: {} -> {}",
-                    value("tara.session.old_state", state != null ? state.name() : "NOT_SET"),
-                    value("tara.session.state", newState.name()));
+    public void setState(@NonNull TaraAuthenticationState newState) {
+        if (state.equals(newState)) {
+            return;
         }
+        log.info("State: {} -> {}",
+                value("tara.session.old_state", state.name()),
+                value("tara.session.state", newState.name()));
         this.state = newState;
+    }
+
+    public void accept(TaraSessionUpdate update) {
+        update.apply(this);
     }
 
     @JsonIgnore
@@ -231,8 +239,9 @@ public class TaraSession implements Serializable {
         }
 
         public List<AuthenticationType> getAllowedAuthenticationMethodsList(AuthConfigurationProperties taraProperties) {
-            if (requestedScopes.contains(TaraScope.EIDASONLY.getFormalName()))
+            if (requestedScopes.contains(TaraScope.EIDASONLY.getFormalName())) {
                 return List.of(AuthenticationType.EIDAS);
+            }
 
             List<AuthenticationType> requestedAuthMethods = getRequestedAuthenticationMethodList(taraProperties);
             List<AuthenticationType> allowedAuthenticationMethodsList = requestedAuthMethods.stream()
@@ -304,17 +313,28 @@ public class TaraSession implements Serializable {
 
         private LevelOfAssurance getRequestedAcr() {
             List<String> requestedAcr = getOidcContext().getAcrValues();
-            if (requestedAcr == null || requestedAcr.isEmpty())
+            if (requestedAcr == null || requestedAcr.isEmpty()) {
                 return null;
+            }
             LevelOfAssurance acr = LevelOfAssurance.findByAcrName(requestedAcr.get(0));
-            Assert.notNull(acr, "Unsupported acr value requested by client: '" + requestedAcr.get(0) + "'");
+            // TODO: Validation should be done way before we reach the getter.
+            if (acr == null) {
+                throw new InvalidLoginRequestException(
+                        "Unsupported acr value requested by client: '" + requestedAcr.get(0) + "'",
+                        this);
+            }
             return acr;
         }
 
         private boolean isAllowedByRequestedLoa(LevelOfAssurance requestedLoa, AuthenticationType authenticationMethodType, AuthConfigurationProperties taraProperties) {
             LevelOfAssurance authenticationMethodLoa = taraProperties.getAuthMethods().get(authenticationMethodType).getLevelOfAssurance();
-            if (authenticationMethodLoa == null)
-                throw new IllegalStateException("Level of assurance must be configured for authentication method: " + authenticationMethodType.getPropertyName() + ". Please check the application configuration.");
+            // TODO: This is definitely not the correct place for this validation
+            if (authenticationMethodLoa == null) {
+                throw new InvalidLoginRequestException(
+                        "Level of assurance must be configured for authentication method: " + authenticationMethodType.getPropertyName() + ". Please check the application configuration.",
+                        this
+                );
+            }
 
             boolean isAllowed = authenticationMethodLoa.ordinal() >= requestedLoa.ordinal();
 

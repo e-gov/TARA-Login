@@ -3,10 +3,6 @@ package ee.ria.taraauthserver.config.properties;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.util.List;
-
-import static java.util.List.of;
-
 @Getter
 @AllArgsConstructor
 public enum TaraScope {
@@ -19,8 +15,6 @@ public enum TaraScope {
     PHONE("phone"),
     EMAIL("email"),
     LEGALPERSON("legalperson");
-
-    public static final List<TaraScope> SUPPORTS_AUTHENTICATION_METHOD_SELECTION = of(IDCARD, MID, SMARTID);
 
     private final String formalName;
 

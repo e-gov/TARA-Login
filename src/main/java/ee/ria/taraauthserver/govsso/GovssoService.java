@@ -27,6 +27,8 @@ public class GovssoService {
             new ClientRequestLogger(ClientRequestLogger.Service.GOVSSO_HYDRA, this.getClass());
 
     private final AuthConfigurationProperties.GovSsoHydraConfigurationProperties govSsoHydraConfigurationProperties;
+
+    // TODO: Use RestTemplate specific to GovSSO, hydraRestTemplate logs errors as if they were caused by TARA Hydra.
     private final RestTemplate hydraRestTemplate;
 
     public boolean isGovssoClient(String clientId) {
@@ -58,10 +60,9 @@ public class GovssoService {
             if (!responseBody.getChallenge().equals(ssoChallenge)) {
                 throw new IllegalStateException("Invalid GovSSO Hydra response: requested login_challenge does not match retrieved login_challenge");
             }
-
             return responseBody;
         } catch (HttpClientErrorException.NotFound | HttpClientErrorException.Gone e) {
-            throw new NotFoundException("Login challenge not found.");
+            throw new NotFoundException("GovSSO: Login challenge not found.");
         }
     }
 

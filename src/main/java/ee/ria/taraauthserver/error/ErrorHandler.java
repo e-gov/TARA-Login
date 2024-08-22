@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.error;
 
 import ee.ria.taraauthserver.error.exceptions.AuthFlowTimeoutException;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import ee.ria.taraauthserver.error.exceptions.InvalidLoginRequestException;
 import ee.ria.taraauthserver.error.exceptions.NotFoundException;
 import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
 import ee.ria.taraauthserver.error.exceptions.TaraException;
@@ -121,6 +122,21 @@ public class ErrorHandler {
         }
         request.setAttribute(ERROR_ATTR_REDIRECT_TO_SERVICE_PROVIDER, true);
         response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+    }
+
+    @ExceptionHandler({InvalidLoginRequestException.class})
+    public void handleInvalidLoginRequest(InvalidLoginRequestException ex, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        log.error("Server encountered an unexpected error: {}", ex.getMessage(), ex);
+
+        /* TODO: Since using the login request information from session is so tightly embedded in the code,
+         *       just set the value. The session will be invalidated just after anyway. */
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            TaraSession taraSession = (TaraSession) requireNonNull(session.getAttribute(TARA_SESSION));
+            taraSession.setLoginRequestInfo(ex.getLoginRequestInfo());
+        }
+
+        invalidateSessionAndSendError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ex);
     }
 
     @ExceptionHandler({Exception.class})

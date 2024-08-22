@@ -3,9 +3,11 @@ package ee.ria.taraauthserver.authentication.eidas;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.SPType;
+import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.logging.ClientRequestLogger;
+import ee.ria.taraauthserver.session.update.InitEidasSessionUpdate;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraSession.OidcClient;
@@ -35,7 +37,6 @@ import java.util.UUID;
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.WAITING_EIDAS_RESPONSE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static net.logstash.logback.argument.StructuredArguments.value;
 
@@ -92,8 +93,8 @@ public class EidasController {
         authenticationResult.setAmr(AuthenticationType.EIDAS);
         authenticationResult.setRelayState(relayState);
         authenticationResult.setCountry(country);
-        taraSession.setState(WAITING_EIDAS_RESPONSE);
-        taraSession.setAuthenticationResult(authenticationResult);
+
+        taraSession.accept(new InitEidasSessionUpdate(authenticationResult));
         SessionUtils.getHttpSession().setAttribute(TARA_SESSION, taraSession);
     }
 
@@ -132,7 +133,8 @@ public class EidasController {
     public void validateSession(TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
         List<String> allowedScopes = getAllowedRequestedScopes(taraSession.getLoginRequestInfo());
-        if (!(allowedScopes.contains("eidas") || allowedScopes.contains("eidasonly"))) {
+        if (!allowedScopes.contains(TaraScope.EIDAS.getFormalName()) &&
+                !allowedScopes.contains(TaraScope.EIDASONLY.getFormalName())) {
             throw new BadRequestException(INVALID_REQUEST, "Neither eidas or eidasonly scope is allowed.");
         }
     }

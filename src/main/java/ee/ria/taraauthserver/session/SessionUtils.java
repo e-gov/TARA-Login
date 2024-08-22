@@ -10,7 +10,7 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.util.EnumSet;
+import java.util.Set;
 
 import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
@@ -22,19 +22,20 @@ import static net.logstash.logback.argument.StructuredArguments.value;
 @UtilityClass
 public class SessionUtils {
 
-    public TaraSession getAuthSession() {
+    public static TaraSession getAuthSession() {
         HttpSession httpSession = getHttpSession();
         return httpSession == null ? null : (TaraSession) requireNonNull(httpSession.getAttribute(TARA_SESSION));
     }
 
-    public HttpSession getHttpSession() {
+    public static HttpSession getHttpSession() {
         RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes();
         ServletRequestAttributes attributes = (ServletRequestAttributes) requestAttributes;
         HttpServletRequest request = attributes.getRequest();
         return request.getSession(false);
     }
 
-    public void assertSessionInState(TaraSession taraSession, EnumSet<TaraAuthenticationState> validSessionStates) {
+    //TODO: This class should not throw BadRequestException directly
+    public static void assertSessionInState(TaraSession taraSession, Set<TaraAuthenticationState> validSessionStates) {
         if (taraSession == null) {
             throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
         } else if (!validSessionStates.contains(taraSession.getState())) {
@@ -42,7 +43,8 @@ public class SessionUtils {
         }
     }
 
-    public void assertSessionInState(TaraSession taraSession, TaraAuthenticationState validSessionState) {
+    //TODO: This class should not throw BadRequestException directly
+    public static void assertSessionInState(TaraSession taraSession, TaraAuthenticationState validSessionState) {
         if (taraSession == null) {
             throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
         } else if (validSessionState != taraSession.getState()) {
@@ -50,7 +52,7 @@ public class SessionUtils {
         }
     }
 
-    public void invalidateSession() {
+    public static void invalidateSession() {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         HttpSession session = request.getSession(false);
         if (session != null) {

@@ -13,8 +13,8 @@ import ee.ria.taraauthserver.govsso.GovssoService;
 import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.security.SessionManagementFilter;
 import ee.ria.taraauthserver.session.SessionUtils;
-import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
+import ee.ria.taraauthserver.session.update.InitAuthSessionUpdate;
 import ee.ria.taraauthserver.utils.RequestUtils;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
@@ -85,8 +85,23 @@ public class AuthInitController {
         SessionUtils.getHttpSession().setAttribute(TARA_SESSION, newTaraSession);
 
         TaraSession.LoginRequestInfo loginRequestInfo = fetchLoginRequestInfo(loginChallenge);
-        newTaraSession.setState(TaraAuthenticationState.INIT_AUTH_PROCESS);
-        newTaraSession.setLoginRequestInfo(loginRequestInfo);
+
+        TaraSession.LoginRequestInfo govSsoLoginRequestInfo = null;
+        if (govssoService.isGovssoClient(loginRequestInfo.getClientId())) {
+            String govSsoLoginChallenge = loginRequestInfo.getGovSsoChallenge();
+            if (govSsoLoginChallenge == null || !govSsoLoginChallenge.matches("^[a-f0-9]{32}$")) {
+                throw new BadRequestException(ErrorCode.INVALID_GOVSSO_LOGIN_CHALLENGE, "Incorrect GovSSO login challenge format.");
+            }
+            SessionManagementFilter.setGovSsoFlowTraceId(govSsoLoginChallenge);
+            govSsoLoginRequestInfo = fetchGovSsoLoginRequestInfo(govSsoLoginChallenge);
+        }
+
+        List<AuthenticationType> allowedAuthMethods = loginRequestInfo.getAllowedAuthenticationMethodsList(taraProperties);
+        newTaraSession.accept(new InitAuthSessionUpdate(
+                loginRequestInfo,
+                govSsoLoginRequestInfo,
+                allowedAuthMethods
+        ));
 
         Duration authFlowTimeout = null;
         if(loginRequestInfo.getRequestedAt() != null){
@@ -97,32 +112,20 @@ public class AuthInitController {
             authFlowTimeout = Duration.between(OffsetDateTime.now(), timeoutDatetime);
         }
 
-        if (govssoService.isGovssoClient(loginRequestInfo.getClientId())) {
-            String govSsoLoginChallenge = loginRequestInfo.getGovSsoChallenge();
-            if (govSsoLoginChallenge == null || !govSsoLoginChallenge.matches("^[a-f0-9]{32}$")) {
-                throw new BadRequestException(ErrorCode.INVALID_GOVSSO_LOGIN_CHALLENGE, "Incorrect GovSSO login challenge format.");
-            }
-            SessionManagementFilter.setGovSsoFlowTraceId(govSsoLoginChallenge);
-            TaraSession.LoginRequestInfo govSsoLoginRequestInfo = fetchGovSsoLoginRequestInfo(govSsoLoginChallenge);
-            newTaraSession.setGovSsoLoginRequestInfo(govSsoLoginRequestInfo);
-        }
-
         if (loginRequestInfo.getRequestedScopes().isEmpty()) {
             throw new BadRequestException(ErrorCode.MISSING_SCOPE, "No scope is requested");
         }
 
-        List<AuthenticationType> allowedAuthenticationMethodsList = loginRequestInfo.getAllowedAuthenticationMethodsList(taraProperties);
-        if (isEmpty(allowedAuthenticationMethodsList)) {
+        if (isEmpty(allowedAuthMethods)) {
             throw new BadRequestException(ErrorCode.NO_VALID_AUTHMETHODS_AVAILABLE,
                     "No authentication methods match the requested level of assurance. Please check your authorization request");
         }
-
-        newTaraSession.setAllowedAuthMethods(allowedAuthenticationMethodsList);
 
         if (language == null) {
             language = getDefaultOrRequestedLocale(newTaraSession);
             RequestUtils.setLocale(language);
         }
+
         if (eidasOnlyWithCountryRequested(loginRequestInfo)) {
             model.addAttribute("country", getAllowedEidasCountryCode(loginRequestInfo));
             return "redirectToEidasInit";

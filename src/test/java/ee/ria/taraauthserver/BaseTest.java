@@ -24,6 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Import;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
@@ -59,6 +60,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 @Slf4j
 @SpringBootTest(webEnvironment = RANDOM_PORT)
+@Import(ConfigurationPropertiesReloader.class)
 public abstract class BaseTest {
     public static final String TARA_SESSION_COOKIE_NAME = "__Host-SESSION";
     public static final String CHARSET_UTF_8 = ";charset=UTF-8";
@@ -102,6 +104,9 @@ public abstract class BaseTest {
     private static ListAppender<ILoggingEvent> mockAppender;
     @Autowired
     protected SessionRepository<Session> sessionRepository;
+
+    @Autowired
+    protected ConfigurationPropertiesReloader configurationPropertiesReloader;
 
     @LocalServerPort
     protected int port;

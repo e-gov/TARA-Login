@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.session;
 
 public enum TaraAuthenticationState {
+    NOT_SET,
     INIT_AUTH_PROCESS,
     AUTHENTICATION_SUCCESS,
     AUTHENTICATION_CANCELED,
