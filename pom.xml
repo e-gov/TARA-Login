@@ -39,6 +39,8 @@
                                                                    Spring Boot 2.7.x -->
         <webeid.version>3.1.0</webeid.version>
         <wiremock.version>2.35.2</wiremock.version> <!-- TODO Upgrade to >=3.0.1 after Spring Boot is upgraded to 3.x which includes jetty >= 11.0.12 -->
+
+        <spring-framework.version>5.3.39</spring-framework.version>
     </properties>
 
     <dependencies>
