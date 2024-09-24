@@ -134,6 +134,7 @@ public class AuthMidService {
 
     public MidAuthenticationHashToSign startMidAuthSession(TaraSession taraSession, String idCode, String telephoneNumber) {
         taraSession.setState(INIT_MID);
+        updateSession(taraSession);
         MidAuthenticationHashToSign authenticationHash = getAuthenticationHash();
         MidLanguage midLanguage = getMidLanguage();
 

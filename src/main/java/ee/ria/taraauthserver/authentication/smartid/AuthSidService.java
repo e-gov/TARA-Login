@@ -133,6 +133,7 @@ public class AuthSidService {
         AuthenticationHash authenticationHash = getAuthenticationHash();
         AuthenticationRequestBuilder requestBuilder = sidClient.createAuthentication();
         taraSession.setState(INIT_SID);
+        updateSession(taraSession);
 
         CompletableFuture
                 .supplyAsync(withMdcAndLocale(() -> initAuthentication(idCode, taraSession, authenticationHash, requestBuilder)),
