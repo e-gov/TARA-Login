@@ -174,7 +174,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .header("Location", Matchers.endsWith("some/test/url"));
 
         assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"/some/test/url\"}");
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null)");
     }
 
@@ -206,7 +206,7 @@ public class AuthAcceptControllerTest extends BaseTest {
 
         assertInfoIsLogged("State: NATURAL_PERSON_AUTHENTICATION_COMPLETED -> AUTHENTICATION_SUCCESS");
         assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"/some/test/url\"}");
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null)");
 
         resetMockLogAppender();
@@ -270,7 +270,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .header("Location", Matchers.endsWith("some/test/url"));
 
         assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"some/test/url\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"/some/test/url\"}");
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null)");
     }
 
@@ -324,7 +324,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(302)
-                .header("Location", Matchers.endsWith("http://localhost:" + port + "/auth/init?login_challenge=abcdefg098AAdsCC"));
+                .header("Location", Matchers.endsWith("/auth/init?login_challenge=abcdefg098AAdsCC"));
 
         assertMessageIsNotLogged(AuthAcceptController.class, "TARA_HYDRA request");
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_CANCELED, errorCode=null)");

@@ -106,7 +106,7 @@ class AuthMidPollCancelControllerTest extends BaseTest {
                 .post("/auth/mid/poll/cancel")
                 .then()
                 .assertThat()
-                .header("Location", "http://localhost:" + port + "/auth/init?login_challenge=abcdefg098AAdsCC")
+                .header("Location", "/auth/init?login_challenge=abcdefg098AAdsCC")
                 .statusCode(302);
 
         TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
