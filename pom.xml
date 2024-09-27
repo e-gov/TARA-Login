@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.1</version>
+        <version>3.3.4</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>ee.ria.tara</groupId>
@@ -25,17 +25,17 @@
         <maven.compiler.release>17</maven.compiler.release>
 
         <bouncycastle.version>1.78.1</bouncycastle.version>
-        <elastic-apm.version>1.51.0</elastic-apm.version>
+        <elastic-apm.version>1.52.0</elastic-apm.version>
         <ignite.version>2.13.0</ignite.version><!-- TODO AUT-1086 Upgrade to >=2.14.0 when the following issue is
                                                      resolved:
                                                      https://www.mail-archive.com/user@ignite.apache.org/msg33644.html -->
         <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
-        <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
+        <logstash-logback-encoder.version>8.0</logstash-logback-encoder.version>
         <mid-rest.version>1.5</mid-rest.version>
         <smart-id.version>2.3</smart-id.version>
-        <spring-cloud.version>2023.0.2</spring-cloud.version><!-- Spring Cloud 2023.0.x release train is only compatible with Spring Boot 3.2.x and 3.3.x, see table 1 at https://spring.io/projects/spring-cloud -->
+        <spring-cloud.version>2023.0.3</spring-cloud.version><!-- Spring Cloud 2023.0.x release train is only compatible with Spring Boot 3.2.x and 3.3.x, see table 1 at https://spring.io/projects/spring-cloud -->
         <webeid.version>3.1.0</webeid.version>
-        <wiremock.version>3.7.0</wiremock.version>
+        <wiremock.version>3.9.1</wiremock.version>
     </properties>
 
     <dependencies>
