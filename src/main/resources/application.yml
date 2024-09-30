@@ -35,4 +35,13 @@ tara:
 
 server:
   tomcat:
+    accesslog:
+      enabled: false
+      prefix: localhost_access_log
+      suffix: .txt
+      max-days: 7 # Would save +1 files in folder for rotation
+      rotate: true
+      pattern: "%h %l %u %t \"%r\" %s %b \"%{Referer}i\" \"%{User-Agent}i\" %A %p %D \"%{X-Forwarded-For}i\" %{requestId}r"
+      encoding: UTF-8
+      locale: en
     use-relative-redirects: true
