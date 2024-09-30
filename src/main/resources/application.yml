@@ -34,6 +34,7 @@ tara:
   auth-flow-timeout: 1800s
 
 server:
+  forward-headers-strategy: NATIVE
   tomcat:
     accesslog:
       enabled: false

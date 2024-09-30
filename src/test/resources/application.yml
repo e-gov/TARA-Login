@@ -163,5 +163,6 @@ tara:
       - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 
 server:
+  forward-headers-strategy: NATIVE
   tomcat:
     use-relative-redirects: true
