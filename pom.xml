@@ -10,7 +10,7 @@
     </parent>
     <groupId>ee.ria.tara</groupId>
     <artifactId>tara-login-server</artifactId>
-    <version>1.6.6</version>
+    <version>1.7.0</version>
     <name>tara-login-server</name>
     <description>TARA login server</description>
     <licenses>
