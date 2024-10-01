@@ -26,12 +26,9 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${log.files.dir}/TaraLoginService.%d{yyyy-MM-dd,GMT}.log</file>
-        <!-- Support multiple-JVM writing to the same log file -->
-        <prudent>true</prudent>
         <append>true</append>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${log.files.dir}/TaraLoginService.%d{yyyy-MM-dd,GMT}.log</fileNamePattern>
+            <fileNamePattern>${log.files.dir}/TaraLogin.%d{yyyy-MM-dd,GMT}.log</fileNamePattern>
             <maxHistory>${log.files.max.count}</maxHistory>
         </rollingPolicy>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
@@ -94,12 +91,9 @@
     </appender>
 
     <appender name="FILE_STATISTICS" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${log.files.dir}/TaraLoginServiceStatistics.%d{yyyy-MM-dd,GMT}.log</file>
-        <!-- Support multiple-JVM writing to the same log file -->
-        <prudent>true</prudent>
         <append>true</append>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${log.files.dir}/TaraLoginServiceStatistics.%d{yyyy-MM-dd,GMT}.log</fileNamePattern>
+            <fileNamePattern>${log.files.dir}/TaraLoginStatistics.%d{yyyy-MM-dd,GMT}.log</fileNamePattern>
             <maxHistory>${log.files.max.count}</maxHistory>
         </rollingPolicy>
         <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
