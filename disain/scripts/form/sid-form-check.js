@@ -12,7 +12,7 @@
     } catch (e) {
     }
 
-    setTimeout(stopPolling, 360000);
+    setTimeout(stopPolling, 100000);
 
     function stopPolling() {
         isPolling = false;
@@ -30,7 +30,22 @@
                 return;
             }
 
-            var pollResponse = JSON.parse(this.responseText);
+            var pollResponse;
+            try {
+                pollResponse = JSON.parse(this.responseText);
+            } catch (e) {
+                if (isPolling) {
+                    setTimeout(checkAuthenticationStatus, timeout);
+                    return;
+                } else {
+                    document.querySelector(".c-tab-login__main").classList.add('hidden');
+                    document.querySelector("#sid-error").classList.remove('hidden');
+                    document.querySelector("#error-incident-number-wrapper").classList.add('hidden');
+                    document.querySelector("#error-report-url").classList.add('hidden');
+                    document.querySelector("#default-error-message").classList.remove('hidden');
+                    return;
+                }
+            }
 
             if (this.status === 200 && pollResponse["status"] === 'COMPLETED') {
                 var form = document.createElement("form");

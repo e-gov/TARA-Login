@@ -3,6 +3,7 @@
         <div><strong><span th:class="error-title" th:text="#{message.error.auth.title}" th:remove="tag"></span></strong>
         </div>
         <div id="error-message"></div>
+        <div id="default-error-message" class="hidden aria-hidden" th:utext="#{message.error.general}"></div>
         <div id="idc-ajax-error-message" class="hidden aria-hidden" th:utext="#{message.idc.ajax-error}"></div>
         <div id="error-incident-number-wrapper">
             <span th:utext="#{label.error.incident-number('')}"></span>
