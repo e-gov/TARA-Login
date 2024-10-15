@@ -25,6 +25,8 @@ import org.springframework.web.client.UnknownContentTypeException;
 import org.springframework.web.client.UnknownHttpStatusCodeException;
 
 import java.io.IOException;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_LOGIN_CHALLENGE;
 import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_REDIRECT_TO_SERVICE_PROVIDER;
@@ -137,6 +139,11 @@ public class ErrorHandler {
         }
 
         invalidateSessionAndSendError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ex);
+    }
+
+    @ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class})
+    public void handleNoResourceException(Exception ex, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        invalidateSessionAndSendError(request, response, HttpServletResponse.SC_NOT_FOUND, ex);
     }
 
     @ExceptionHandler({Exception.class})

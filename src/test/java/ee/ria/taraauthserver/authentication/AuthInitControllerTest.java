@@ -92,6 +92,23 @@ class AuthInitControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "AUTH_INIT_ENDPOINT")
+    void nonExistingEndpoint_ReturnsHttp404() {
+        given()
+            .when()
+            .get("/non-existing-endpoint")
+            .then()
+            .assertThat()
+            .statusCode(404)
+            .body("error", equalTo("Not Found"))
+            .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
+            .body("reportable", equalTo(false))
+            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
+
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_ENDPOINT")
     void authInit_loginChallenge_ParamMissing() {
         given()
                 .when()
