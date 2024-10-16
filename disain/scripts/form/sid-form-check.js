@@ -12,7 +12,7 @@
     } catch (e) {
     }
 
-    setTimeout(stopPolling, 100000);
+    setTimeout(stopPolling, 120000);
 
     function stopPolling() {
         isPolling = false;
