@@ -41,8 +41,11 @@
         <div class="logo-separator-mobile"></div>
         <div class="c-tab-login__content-wrap">
             <div class="c-tab-login__content-icon" aria-hidden="true">
-                <img id="client-logo" class="icon" th:if="${@thymeleafSupport.getServiceLogo() != null}"
-                     th:src="${'data:image/svg+xml;base64,' + @thymeleafSupport.getServiceLogo()}"
+                <!--/* Fixing too long base64 string. Solution based on https://stackoverflow.com/a/76221681 */-->
+                <img id="client-logo" class="icon"
+                     th:if="${@thymeleafSupport.getServiceLogo() != null}"
+                     src="data:image/svg+xml;base64,"
+                     th:attrappend="src=${@thymeleafSupport.getServiceLogo()}"
                      th:alt="#{label.logo.client}">
             </div>
             <div class="c-tab-login__content-text">
