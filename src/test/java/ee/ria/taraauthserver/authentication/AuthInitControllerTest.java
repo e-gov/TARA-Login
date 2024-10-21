@@ -10,6 +10,9 @@ import ee.ria.taraauthserver.govsso.GovssoService;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import io.restassured.RestAssured;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Base64;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
@@ -250,6 +253,44 @@ class AuthInitControllerTest extends BaseTest {
         assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/admin/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
         assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"openIdDemo\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"},\"smartid_settings\":{\"relying_party_UUID\":\"testRelyingPartyId123\",\"relying_party_name\":\"testRelyingPartyName\",\"should_use_additional_verification_code_check\":false}}},\"scope\":\"idcard mid\"},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"low\"],\"ui_locales\":[]},\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"idcard\",\"mid\"]}");
         assertStatisticsIsNotLogged();
+    }
+
+
+    @SneakyThrows
+    @Test
+    @Tag(value = "AUTH_INIT_GOVSSO_VIEW")
+    void authInit_Ok_veryLongBase64Icon() {
+        wireMockServer.stubFor(get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+            .willReturn(aResponse()
+                .withStatus(200)
+                .withHeader("Content-Type", "application/json; charset=UTF-8")
+                .withBodyFile("mock_responses/oidc/mock_response-ok_with_govsso_hydra_parameters.json")));
+
+        govSsoWireMockServer.stubFor(get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_GOVSSO_LOGIN_CHALLENGE))
+            .willReturn(aResponse()
+                .withStatus(200)
+                .withHeader("Content-Type", "application/json; charset=UTF-8")
+                .withBodyFile("mock_responses/oidc/govsso_mock_response_longBase64Icon.json")));
+
+        Path path = Path.of("src/test/resources/svg/mockLongIcon.svg");
+        String originalString = Files.readString(path);
+        String base64 =  Base64.getEncoder().encodeToString(originalString.getBytes());
+
+        System.out.println("#####");
+        System.out.println(base64);
+        System.out.println("#####");
+
+        given()
+            .param("login_challenge", TEST_LOGIN_CHALLENGE)
+            .when()
+            .get("/auth/init")
+            .then()
+            .assertThat()
+            .statusCode(200)
+            .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")
+            .header(HttpHeaders.CONTENT_LANGUAGE, "et")
+            .body(containsString("src=\"data:image/svg+xml;base64,"+ base64 +"\""))
+            .extract().cookie(TARA_SESSION_COOKIE_NAME);
     }
 
     @SneakyThrows
