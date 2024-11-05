@@ -1,6 +1,8 @@
 spring:
   application:
     name: tara-login-service
+  main:
+    banner-mode: off
   session:
     timeout: 300s
     servlet:
