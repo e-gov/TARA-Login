@@ -205,6 +205,10 @@
                     <table role="presentation">
                         <tbody>
                         <tr>
+                            <td class="col-label">
+                                <label for="country-select" class="form-label"
+                                       th:text="#{label.common.country}"></label>
+                            </td>
                             <td>
                                 <select id="country-select" name="country">
                                     <option value="" th:text="#{label.eu-citizen.select-country}">Select</option>
@@ -217,6 +221,7 @@
                             </td>
                         </tr>
                         <tr>
+                            <td></td>
                             <td>
                                 <button id="confirmCountryChoice" type="button" class="c-btn c-btn--primary"
                                         th:text="#{label.common.login}">Login
