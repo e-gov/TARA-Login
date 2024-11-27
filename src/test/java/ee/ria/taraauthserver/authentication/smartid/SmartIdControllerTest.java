@@ -186,7 +186,7 @@ class SmartIdControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Isikukood ei ole korrektne."))
+                .body("message", equalTo("Teie poolt sisestatud isikukood ei olnud korrektne. Palun pöörduge tagasi autentimismeetodite valiku juurde ja veenduge, et sisestate korrektse isikukoodi."))
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
@@ -209,7 +209,7 @@ class SmartIdControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Isikukood ei ole korrektne."))
+                .body("message", equalTo("Teie poolt sisestatud isikukood ei olnud korrektne. Palun pöörduge tagasi autentimismeetodite valiku juurde ja veenduge, et sisestate korrektse isikukoodi."))
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
@@ -232,7 +232,7 @@ class SmartIdControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Isikukood ei ole korrektne."))
+                .body("message", equalTo("Teie poolt sisestatud isikukood ei olnud korrektne. Palun pöörduge tagasi autentimismeetodite valiku juurde ja veenduge, et sisestate korrektse isikukoodi."))
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
@@ -255,7 +255,7 @@ class SmartIdControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Isikukood ei ole korrektne."))
+                .body("message", equalTo("Teie poolt sisestatud isikukood ei olnud korrektne. Palun pöörduge tagasi autentimismeetodite valiku juurde ja veenduge, et sisestate korrektse isikukoodi."))
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);

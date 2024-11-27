@@ -233,7 +233,7 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Isikukood ei ole korrektne."))
+                .body("message", equalTo("Teie poolt sisestatud isikukood ei olnud korrektne. Palun pöörduge tagasi autentimismeetodite valiku juurde ja veenduge, et sisestate korrektse isikukoodi."))
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false));
 
@@ -253,7 +253,7 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Isikukood ei ole korrektne."))
+                .body("message", equalTo("Teie poolt sisestatud isikukood ei olnud korrektne. Palun pöörduge tagasi autentimismeetodite valiku juurde ja veenduge, et sisestate korrektse isikukoodi."))
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false));
 
@@ -273,7 +273,7 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Isikukood ei ole korrektne."))
+                .body("message", equalTo("Teie poolt sisestatud isikukood ei olnud korrektne. Palun pöörduge tagasi autentimismeetodite valiku juurde ja veenduge, et sisestate korrektse isikukoodi."))
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false));
 
@@ -293,7 +293,7 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Isikukood ei ole korrektne."))
+                .body("message", equalTo("Teie poolt sisestatud isikukood ei olnud korrektne. Palun pöörduge tagasi autentimismeetodite valiku juurde ja veenduge, et sisestate korrektse isikukoodi."))
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false));
 
@@ -407,7 +407,7 @@ class AuthMidControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", equalTo("Isikukood ei ole korrektne.; Telefoninumber ei ole korrektne."))
+                .body("message", equalTo("Teie poolt sisestatud isikukood ei olnud korrektne. Palun pöörduge tagasi autentimismeetodite valiku juurde ja veenduge, et sisestate korrektse isikukoodi.; Telefoninumber ei ole korrektne."))
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false));
 
