@@ -299,7 +299,7 @@ public abstract class BaseTest {
             eventStream = eventStream.filter(additionalFilter);
         }
         List<ILoggingEvent> loggingEvents = eventStream.collect(toUnmodifiableList());
-        if(loggedOnce){
+        if (loggedOnce){
             assertThat(loggingEvents, hasSize(1));
         }
         ILoggingEvent loggingEvent = loggingEvents.get(0);

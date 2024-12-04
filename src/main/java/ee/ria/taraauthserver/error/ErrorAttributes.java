@@ -74,6 +74,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
     public static final String ERROR_ATTR_LOCALE = "locale";
     public static final String ERROR_ATTR_LOGIN_CHALLENGE = "login_challenge";
     public static final String ERROR_ATTR_REDIRECT_TO_SERVICE_PROVIDER = "redirect_to_service_provider";
+    public static final String ERROR_ATTR_REDIRECT_TO_SERVICE_PROVIDER_URL = "redirect_to_service_provider_url";
     public static final String ERROR_ATTR_INCIDENT_NR = "incident_nr";
     public static final String ERROR_ATTR_REPORTABLE = "reportable";
     private final MessageSource messageSource;
@@ -127,6 +128,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
         attr.put(ERROR_ATTR_LOCALE, locale);
         attr.put(ERROR_ATTR_LOGIN_CHALLENGE, webRequest.getAttribute(ERROR_ATTR_LOGIN_CHALLENGE, SCOPE_REQUEST));
         attr.put(ERROR_ATTR_REDIRECT_TO_SERVICE_PROVIDER, webRequest.getAttribute(ERROR_ATTR_REDIRECT_TO_SERVICE_PROVIDER, SCOPE_REQUEST));
+        attr.put(ERROR_ATTR_REDIRECT_TO_SERVICE_PROVIDER_URL, webRequest.getAttribute(ERROR_ATTR_REDIRECT_TO_SERVICE_PROVIDER_URL, SCOPE_REQUEST));
         attr.put(ERROR_ATTR_INCIDENT_NR, webRequest.getAttribute(REQUEST_ATTRIBUTE_NAME_REQUEST_ID, SCOPE_REQUEST));
         attr.put(ERROR_ATTR_REPORTABLE, isReportable(error, status));
         attr.remove("errors");

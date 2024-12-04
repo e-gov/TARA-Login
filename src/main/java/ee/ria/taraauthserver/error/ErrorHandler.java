@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.error;
 
+import ee.ria.taraauthserver.authentication.HydraService;
 import ee.ria.taraauthserver.error.exceptions.AuthFlowTimeoutException;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.InvalidLoginRequestException;
@@ -30,6 +31,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_LOGIN_CHALLENGE;
 import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_REDIRECT_TO_SERVICE_PROVIDER;
+import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_REDIRECT_TO_SERVICE_PROVIDER_URL;
 import static ee.ria.taraauthserver.error.ErrorCode.INTERNAL_ERROR;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
@@ -42,6 +44,8 @@ import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 @RequiredArgsConstructor
 public class ErrorHandler {
     private final StatisticsLogger statisticsLogger;
+
+    private final HydraService hydraService;
 
     private void invalidateSessionAndSendError(HttpServletRequest request, HttpServletResponse response, int status, Exception ex) throws IOException {
         HttpSession session = request.getSession(false);
@@ -117,13 +121,15 @@ public class ErrorHandler {
         HttpSession session = request.getSession(false);
         if (session != null) {
             TaraSession taraSession = (TaraSession) requireNonNull(session.getAttribute(TARA_SESSION));
+            String redirectUrl = hydraService.rejectLogin("user_cancel", taraSession);
+            request.setAttribute(ERROR_ATTR_REDIRECT_TO_SERVICE_PROVIDER_URL, redirectUrl);
             if (!AUTHENTICATION_FAILED.equals(taraSession.getState())) {
                 taraSession.setState(AUTHENTICATION_FAILED);
                 statisticsLogger.log(taraSession, ex);
             }
         }
         request.setAttribute(ERROR_ATTR_REDIRECT_TO_SERVICE_PROVIDER, true);
-        response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+        invalidateSessionAndSendError(request, response, HttpServletResponse.SC_UNAUTHORIZED, ex);
     }
 
     @ExceptionHandler({InvalidLoginRequestException.class})

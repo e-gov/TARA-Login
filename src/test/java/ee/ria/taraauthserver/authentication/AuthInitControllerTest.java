@@ -37,7 +37,9 @@ import static ch.qos.logback.classic.Level.ERROR;
 import static ch.qos.logback.classic.Level.INFO;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.put;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.MOCK_LOGIN_CHALLENGE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
@@ -45,6 +47,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @Slf4j
 class AuthInitControllerTest extends BaseTest {
@@ -1237,31 +1240,68 @@ class AuthInitControllerTest extends BaseTest {
     @Test
     @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
     void authInit_after_auth_flow_timeout() {
-        OffsetDateTime formattedTimeout = OffsetDateTime.now().minus(authConfigurationProperties.getAuthFlowTimeout()).minusSeconds(1);
-        wireMockServer.stubFor(get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+        OffsetDateTime formattedTimeout = OffsetDateTime.now().minus(authConfigurationProperties.getAuthFlowTimeout())
+            .minusSeconds(1);
+        wireMockServer.stubFor(
+            get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/oidc/mock_response_requested_at_param.json")
-                        .withTransformers("response-template")
-                        .withTransformerParameter("requestedAt", formattedTimeout.toInstant().getEpochSecond())));
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json; charset=UTF-8")
+                    .withBodyFile("mock_responses/oidc/mock_response_requested_at_param.json")
+                    .withTransformers("response-template")
+                    .withTransformerParameter("requestedAt", formattedTimeout.toInstant().getEpochSecond())));
 
-        String sessionId = given()
-                .param("login_challenge", TEST_LOGIN_CHALLENGE)
-                .when()
-                .get("/auth/init")
-                .then()
-                .assertThat()
-                .statusCode(401)
-                .body("message", equalTo("Autentimiseks ettenähtud aeg lõppes. Peate autentimisprotsessi teenusepakkuja juurest uuesti alustama."))
-                .body("error", equalTo("Unauthorized"))
-                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
-                .body("reportable", equalTo(false))
-                .cookie(TARA_SESSION_COOKIE_NAME, matchesPattern("[A-Za-z0-9,-]{36,36}"))
-                .extract().cookie(TARA_SESSION_COOKIE_NAME);
+        wireMockServer.stubFor(
+            put(urlEqualTo("/admin/oauth2/auth/requests/login/reject?login_challenge=" + MOCK_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json; charset=UTF-8")
+                    .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
 
-        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
-        assertEquals(TaraAuthenticationState.AUTHENTICATION_FAILED, taraSession.getState());
+        given()
+            .param("login_challenge", TEST_LOGIN_CHALLENGE)
+            .when()
+            .get("/auth/init")
+            .then()
+            .assertThat()
+            .statusCode(401)
+            .body("message", equalTo(
+                "Autentimiseks ettenähtud aeg lõppes. Peate autentimisprotsessi teenusepakkuja juurest uuesti alustama."))
+            .body("error", equalTo("Unauthorized"))
+            .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
+            .body("reportable", equalTo(false))
+            .body("redirect_to_service_provider", equalTo(true))
+            .body("redirect_to_service_provider_url", equalTo("/some/test/url"));
     }
 
+    @Test
+    @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
+    void authInit_after_auth_flow_timeout_with_oidc_error() {
+        OffsetDateTime formattedTimeout = OffsetDateTime.now().minus(authConfigurationProperties.getAuthFlowTimeout()).minusSeconds(1);
+        wireMockServer.stubFor(get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+            .willReturn(aResponse()
+                .withStatus(200)
+                .withHeader("Content-Type", "application/json; charset=UTF-8")
+                .withBodyFile("mock_responses/oidc/mock_response_requested_at_param.json")
+                .withTransformers("response-template")
+                .withTransformerParameter("requestedAt", formattedTimeout.toInstant().getEpochSecond())));
+
+        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/login/reject?login_challenge=" + MOCK_LOGIN_CHALLENGE))
+            .willReturn(aResponse()
+                .withStatus(200)
+                .withHeader("Content-Type", "application/json; charset=UTF-8")
+                .withBodyFile("mock_responses/incorrectMockLoginAcceptResponse.json")));
+
+        given()
+            .param("login_challenge", TEST_LOGIN_CHALLENGE)
+            .when()
+            .get("/auth/init")
+            .then()
+            .assertThat()
+            .statusCode(500)
+            .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
+            .body("error", equalTo("Internal Server Error"))
+            .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
+            .body("reportable", equalTo(true));
+    }
 }

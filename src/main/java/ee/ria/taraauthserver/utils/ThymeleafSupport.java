@@ -45,14 +45,16 @@ public class ThymeleafSupport {
 
     public String getHomeUrl() {
         TaraSession taraSession = SessionUtils.getAuthSession();
-        if (taraSession == null || taraSession.getLoginRequestInfo() == null)
+        if (taraSession == null || taraSession.getLoginRequestInfo() == null) {
             return "#";
+        }
 
         TaraSession.OidcClient oidcClient = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient();
-        if (oidcClient.getLegacyReturnUrl() != null)
+        if (oidcClient.getLegacyReturnUrl() != null) {
             return oidcClient.getLegacyReturnUrl();
-        else
+        } else {
             return "/auth/reject?error_code=user_cancel";
+        }
     }
 
     public String getServiceName() {

@@ -8,7 +8,8 @@ import lombok.Value;
 import java.util.List;
 
 import static ee.ria.taraauthserver.session.SessionUtils.assertSessionInState;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.*;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.NOT_SET;
 
 @Value
 public class InitAuthSessionUpdate implements TaraSessionUpdate {
