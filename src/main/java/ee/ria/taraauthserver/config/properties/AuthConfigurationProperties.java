@@ -122,6 +122,20 @@ public class AuthConfigurationProperties {
 
         private String trustStoreType = "PKCS12";
 
+        @NotBlank
+        private String xRoadTruststoreLocation;
+
+        @NotBlank
+        private String xRoadTruststorePassword;
+
+        @NotBlank
+        private String xRoadKeystoreLocation;
+
+        @NotBlank
+        private String xRoadKeystorePassword;
+
+        private String xRoadStoreType = "PKCS12";
+
         private String defaultProtocol;
 
         List<@NotBlank String> enabledProtocols;

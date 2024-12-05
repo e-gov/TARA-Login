@@ -36,13 +36,13 @@ public class SmartIdConfiguration {
     private ResourceLoader resourceLoader;
 
     @Bean
-    public SmartIdClient smartIdClient(SSLContext tlsTrustStore) {
+    public SmartIdClient smartIdClient(SSLContext trustContext) {
         SmartIdClient smartIdClient = new SmartIdClient();
         smartIdClient.setHostUrl(smartIdConfigurationProperties.getHostUrl());
         smartIdClient.setRelyingPartyName(smartIdConfigurationProperties.getRelyingPartyName());
         smartIdClient.setRelyingPartyUUID(smartIdConfigurationProperties.getRelyingPartyUuid());
         smartIdClient.setSessionStatusResponseSocketOpenTime(TimeUnit.MILLISECONDS, smartIdConfigurationProperties.getLongPollingTimeoutMilliseconds());
-        smartIdClient.setTrustSslContext(tlsTrustStore);
+        smartIdClient.setTrustSslContext(trustContext);
         smartIdClient.setNetworkConnectionConfig(clientConfig());
 
         return smartIdClient;

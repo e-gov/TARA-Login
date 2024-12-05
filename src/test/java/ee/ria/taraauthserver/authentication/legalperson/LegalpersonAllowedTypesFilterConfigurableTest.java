@@ -35,7 +35,7 @@ public class LegalpersonAllowedTypesFilterConfigurableTest extends BaseTest {
     @Tag(value = "LEGAL_PERSON_BUSINESSREGISTER_RESPONSE")
     @Tag(value = "LEGAL_PERSON_AUTH_START_ENDPOINT")
     void getAuthLegalPerson_validLegalPersons_singleLegalPersonFound() {
-        wireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
+        xroadWireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/xml; charset=UTF-8")
@@ -57,7 +57,7 @@ public class LegalpersonAllowedTypesFilterConfigurableTest extends BaseTest {
 
         assertThat(response.getString("legalPersons[0].legalName")).isEqualTo("Acme INC OÜ 1");
         assertThat(response.getString("legalPersons[0].legalPersonIdentifier")).isEqualTo("11111111");
-        assertMessageWithMarkerIsLoggedOnce(BusinessRegistryService.class, INFO, "X_ROAD request", "http.request.method=POST, url.full=https://localhost:9877/cgi-bin/consumer_proxy, http.request.body.content=\"<soapenv:Envelope xmlns:soapenv=\\\"http://schemas.xmlsoap.org/soap/envelope/\\\"");
+        assertMessageWithMarkerIsLoggedOnce(BusinessRegistryService.class, INFO, "X_ROAD request", "http.request.method=POST, url.full=https://localhost:7877/cgi-bin/consumer_proxy, http.request.body.content=\"<soapenv:Envelope xmlns:soapenv=\\\"http://schemas.xmlsoap.org/soap/envelope/\\\"");
         assertMessageWithMarkerIsLoggedOnce(BusinessRegistryService.class, INFO, "X_ROAD response: 200", "http.response.status_code=200, http.response.body.content=<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         assertStatisticsIsNotLogged();
     }

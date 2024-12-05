@@ -1,0 +1,5 @@
+Certificate: Subject: CN=localhost
+             Issuer: C=EE, L=Tallinn, O=tara-local, CN=tara-ca.localhost
+             Not Before: Nov 18 13:24:42 2024 GMT
+             Not After : Nov 15 13:24:42 2034 GMT
+             Signature Algorithm: ecdsa-with-SHA512

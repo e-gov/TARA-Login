@@ -81,7 +81,7 @@ public abstract class BaseTest {
     protected static final WireMockServer wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig()
             .httpDisabled(true)
             .httpsPort(9877)
-            .keystorePath("src/test/resources/tls-keystore.jks")
+            .keystorePath("src/test/resources/localhost.keystore.p12")
             .keystorePassword("changeit")
             .keyManagerPassword("changeit")
             .extensions(ocspResponseTransformer)
@@ -91,10 +91,21 @@ public abstract class BaseTest {
     protected static final WireMockServer govSsoWireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig()
             .httpDisabled(true)
             .httpsPort(8877)
-            .keystorePath("src/test/resources/tls-keystore.jks")
+            .keystorePath("src/test/resources/localhost.keystore.p12")
             .keystorePassword("changeit")
             .keyManagerPassword("changeit")
             .notifier(new ConsoleNotifier(true))
+    );
+    protected static final WireMockServer xroadWireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig()
+        .httpDisabled(true)
+        .httpsPort(7877)
+        .needClientAuth(true)
+        .trustStorePath("src/test/resources/localhost.truststore.p12")
+        .trustStorePassword("changeit")
+        .keystorePath("src/test/resources/localhost.keystore.p12")
+        .keystorePassword("changeit")
+        .keyManagerPassword("changeit")
+        .notifier(new ConsoleNotifier(true))
     );
     protected static final Map<String, String> SHORT_NAME_TRANSLATIONS = Map.of(
             "et", "short name et",
@@ -119,6 +130,7 @@ public abstract class BaseTest {
         System.setProperty("java.net.preferIPv4Stack", "true");
         wireMockServer.start();
         govSsoWireMockServer.start();
+        xroadWireMockServer.start();
     }
 
     private static void configureRestAssured() {
@@ -193,6 +205,7 @@ public abstract class BaseTest {
         resetMockLogAppender();
         wireMockServer.resetAll();
         govSsoWireMockServer.resetAll();
+        xroadWireMockServer.resetAll();
     }
 
     @AfterEach

@@ -6,6 +6,8 @@ import ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import ee.ria.taraauthserver.logging.RestTemplateErrorLogger;
 import ee.ria.taraauthserver.utils.ThymeleafSupport;
 import jakarta.validation.Validator;
+import java.security.UnrecoverableKeyException;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.HttpClient;
@@ -58,31 +60,68 @@ import static org.springframework.util.ResourceUtils.getFile;
 public class TaraAuthServerConfiguration implements WebMvcConfigurer {
 
     @Bean
-    public SSLContext trustContext(AuthConfigurationProperties authConfigurationProperties) throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
-        AuthConfigurationProperties.TlsConfigurationProperties tlsProperties = authConfigurationProperties.getTls();
+    public SSLContext xRoadTrustContext(AuthConfigurationProperties authConfigurationProperties)
+        throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, UnrecoverableKeyException {
+        return createXRoadSSLContext(authConfigurationProperties);
+    }
 
-        SSLContextBuilder sslContextBuilder = SSLContextBuilder.create()
-                .setKeyStoreType(authConfigurationProperties.getTls().getTrustStoreType())
-                .loadTrustMaterial(
-                        getFile(authConfigurationProperties.getTls().getTruststoreLocation()),
-                        authConfigurationProperties.getTls().getTruststorePassword().toCharArray()
-                );
-        if (StringUtils.isNotBlank(tlsProperties.getDefaultProtocol())) {
-            sslContextBuilder.setProtocol(tlsProperties.getDefaultProtocol());
-        }
+    @Bean
+    public SSLContext trustContext(AuthConfigurationProperties authConfigurationProperties)
+        throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+        return createTrustSSLContext(authConfigurationProperties);
+    }
+
+    private SSLContext createXRoadSSLContext(AuthConfigurationProperties authConfigurationProperties)
+        throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, UnrecoverableKeyException {
+        AuthConfigurationProperties.TlsConfigurationProperties tlsProperties = authConfigurationProperties.getTls();
+        SSLContextBuilder sslContextBuilder = SSLContextBuilder.create().setKeyStoreType(tlsProperties.getXRoadStoreType());
+
+        sslContextBuilder
+            .loadKeyMaterial(
+                getFile(tlsProperties.getXRoadKeystoreLocation()),
+                tlsProperties.getXRoadKeystorePassword().toCharArray(),
+                tlsProperties.getXRoadKeystorePassword().toCharArray()
+            )
+            .loadTrustMaterial(
+                getFile(tlsProperties.getXRoadTruststoreLocation()),
+                tlsProperties.getXRoadTruststorePassword().toCharArray()
+            );
+        return finalizeSSLContext(sslContextBuilder, tlsProperties);
+    }
+
+    private SSLContext createTrustSSLContext(AuthConfigurationProperties authConfigurationProperties)
+        throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+        AuthConfigurationProperties.TlsConfigurationProperties tlsProperties = authConfigurationProperties.getTls();
+        SSLContextBuilder sslContextBuilder = SSLContextBuilder.create().setKeyStoreType(tlsProperties.getTrustStoreType());
+
+        sslContextBuilder.loadTrustMaterial(
+            getFile(tlsProperties.getTruststoreLocation()),
+            tlsProperties.getTruststorePassword().toCharArray()
+        );
+
+        return finalizeSSLContext(sslContextBuilder, tlsProperties);
+    }
+
+    private SSLContext finalizeSSLContext(SSLContextBuilder sslContextBuilder, AuthConfigurationProperties.TlsConfigurationProperties tlsProperties)
+        throws NoSuchAlgorithmException, KeyManagementException {
+        Optional.ofNullable(tlsProperties.getDefaultProtocol())
+            .filter(StringUtils::isNotBlank)
+            .ifPresent(sslContextBuilder::setProtocol);
+
         SSLContext sslContext = sslContextBuilder.build();
 
-        if (!CollectionUtils.isEmpty(tlsProperties.getEnabledProtocols()) || !CollectionUtils.isEmpty(tlsProperties.getEnabledCipherSuites())) {
+        boolean hasProtocols = !CollectionUtils.isEmpty(tlsProperties.getEnabledProtocols());
+        boolean hasCipherSuites = !CollectionUtils.isEmpty(tlsProperties.getEnabledCipherSuites());
+
+        if (hasProtocols || hasCipherSuites) {
             SSLParameters sslParameters = new SSLParameters();
-            if (!CollectionUtils.isEmpty(tlsProperties.getEnabledProtocols())) {
+            if (hasProtocols) {
                 sslParameters.setProtocols(tlsProperties.getEnabledProtocols().toArray(new String[0]));
             }
-            if (!CollectionUtils.isEmpty(tlsProperties.getEnabledCipherSuites())) {
+            if (hasCipherSuites) {
                 sslParameters.setCipherSuites(tlsProperties.getEnabledCipherSuites().toArray(new String[0]));
             }
-            // Use Ignite's SSLContext wrapper to apply enabled protocols and enabled cipher suites lists
-            // to the SSL sockets that will be created by this SSLContext.
-            sslContext = new SSLContextWrapper(sslContext, sslParameters);
+            return new SSLContextWrapper(sslContext, sslParameters);
         }
 
         return sslContext;
@@ -96,10 +135,10 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
     }
 
     @Bean
-    public RestTemplate hydraRestTemplate(RestTemplateBuilder builder, SSLContext sslContext, AuthConfigurationProperties authConfigurationProperties) {
+    public RestTemplate hydraRestTemplate(RestTemplateBuilder builder, SSLContext trustContext, AuthConfigurationProperties authConfigurationProperties) {
         @SuppressWarnings("resource")
         HttpClient client = HttpClients.custom()
-                .setConnectionManager(createConnectionManager(sslContext, authConfigurationProperties))
+                .setConnectionManager(createConnectionManager(trustContext, authConfigurationProperties))
                 .build();
 
         List<HttpMessageConverter<?>> converters = new ArrayList<>();

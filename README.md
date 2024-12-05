@@ -1,4 +1,4 @@
-<img src="disain/assets/eu_regional_development_fund_horizontal.jpg" width="350" height="200">
+<img src="disain/assets/eu_regional_development_fund_horizontal.jpg" width="354" height="205" alt="European Union European Regional Development Fund logo">
 
 # TARA login service
 
@@ -17,7 +17,7 @@
     * [Monitoring](#monitoring_conf)
         * [Custom application health endpoint configuration](#monitoring_heartbeat_conf)
     * [Legal person attributes](#legalperson_conf)
-    * [Security and session managment](#session_and_sec_conf)
+    * [Security and session management](#session_and_sec_conf)
         * [Ignite integration](#ignite_conf)
         * [Security and session management](#sec_conf)
     * [Logging](#logging_conf)
@@ -112,6 +112,11 @@ Example: to deploy the webapp to a standalone Tomcat server
 | `tara.tls.trust-store-location` | Yes | Location of the truststore. Path to the location of the trusted CA certificates. In case the certificate files are to be loaded from classpath, this path should be prefixed with `classpath:` (example: `classpath:tls-truststore.p12`). In case the certificate files are to be loaded from disk, this path should be prefixed with `file:` (exaple ``file:/etc/tara/tls-truststore.p12``).  |
 | `tara.tls.trust-store-password` | Yes | Truststore password |
 | `tara.tls.trust-store-type` | No | Truststore type (jks, pkcs12). Defaults to PKCS12 if not specified |
+| `tara.tls.x-road-trust-store-location` | Yes | Location of the X-road truststore. Path to the location of the trusted CA certificates. In case the certificate files are to be loaded from classpath, this path should be prefixed with `classpath:` (example: `classpath:tls-truststore.p12`). In case the certificate files are to be loaded from disk, this path should be prefixed with `file:` (exaple ``file:/etc/tara/tls-truststore.p12``).  |
+| `tara.tls.x-road-trust-store-password` | Yes | Truststore password |
+| `tara.tls.x-road-key-store-location` | Yes | Location of the X-road keystore. In case the key files are to be loaded from classpath, this path should be prefixed with `classpath:` (example: `classpath:tls-keystore.p12`). In case the key files are to be loaded from disk, this path should be prefixed with `file:` (exaple ``file:/etc/tara/tls-keystore.p12``).  |
+| `tara.tls.x-road-key-store-password` | Yes | Keystore password |
+| `tara.tls.x-road-store-type` | No | Truststore type (jks, pkcs12). Defaults to PKCS12 if not specified |
 | `tara.tls.default-protocol` | No | Default protocol (see the list of supported [values](https://docs.oracle.com/en/java/javase/17/docs/specs/security/standard-names.html#sslcontext-algorithms)). Defaults to `TLS` if not specified |
 | `tara.tls.enabled-protocols` | No | List of enabled protocols (see the list of [standard names for protocols](https://docs.oracle.com/en/java/javase/17/docs/specs/security/standard-names.html#additional-jsse-standard-names)). Defaults to JVM specific configuration if not specified |
 | `tara.tls.enabled-cipher-suites` | No | List of enabled cipher suites (see the list of [standard names for cipher suites](https://docs.oracle.com/en/java/javase/11/docs/specs/security/standard-names.html#jsse-cipher-suite-names)). Defaults to JVM specific configuration if not specified |
@@ -125,7 +130,7 @@ Table 1.3.1 - Enabling Mobile-ID authentication
 | :---------------- | :---------- | :----------------|
 | `tara.auth-methods.mobile-id.enabled` | No | Enable or disable Mobile-ID authentication method. Default `false` |
 
-Table 1.3.2 - Assignig the Level of assurance to authentication method
+Table 1.3.2 - Assigning the Level of assurance to authentication method
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
@@ -160,7 +165,7 @@ Table 1.4.1 - Enabling Smart-ID authentication
 | :---------------- | :---------- | :----------------|
 | `tara.auth-methods.smart-id.enabled` | No | Enable or disable Smart-ID authentication method. Default `false` |
 
-Table 1.4.2 - Assignig the Level of assurance to authentication method
+Table 1.4.2 - Assigning the Level of assurance to authentication method
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
@@ -334,7 +339,7 @@ Table 1.6.1 - Enabling Eidas authentication
 | :---------------- | :---------- | :----------------|
 | `tara.auth-methods.eidas.enabled` | No | Enable or disable Eidas authentication method. Default `false` |
 
-Table 1.6.2 - Assignig the Level of assurance to authentication method
+Table 1.6.2 - Assigning the Level of assurance to authentication method
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|

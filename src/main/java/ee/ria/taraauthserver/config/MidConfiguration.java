@@ -39,12 +39,12 @@ public class MidConfiguration {
     }
 
     @Bean
-    public MidClient midClient(SSLContext tlsTrustStore, MidAuthConfigurationProperties properties) {
+    public MidClient midClient(SSLContext trustContext, MidAuthConfigurationProperties properties) {
         return MidClient.newBuilder()
                 .withHostUrl(properties.getHostUrl())
                 .withRelyingPartyUUID(properties.getRelyingPartyUuid())
                 .withRelyingPartyName(properties.getRelyingPartyName())
-                .withTrustSslContext(tlsTrustStore)
+                .withTrustSslContext(trustContext)
                 .withNetworkConnectionConfig(midClientConfig(properties))
                 .withLongPollingTimeoutSeconds(properties.getLongPollingTimeoutSeconds())
                 .build();

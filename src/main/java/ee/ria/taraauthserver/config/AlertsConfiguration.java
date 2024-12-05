@@ -29,10 +29,10 @@ import java.time.Duration;
 public class AlertsConfiguration {
 
     @Bean
-    public RestTemplate alertsRestTemplate(RestTemplateBuilder builder, SSLContext sslContext, AlertsConfigurationProperties alertsConfigurationProperties) {
+    public RestTemplate alertsRestTemplate(RestTemplateBuilder builder, SSLContext trustContext, AlertsConfigurationProperties alertsConfigurationProperties) {
         @SuppressWarnings("resource")
         HttpClient client = HttpClients.custom()
-                .setConnectionManager(createConnectionManager(sslContext, alertsConfigurationProperties))
+                .setConnectionManager(createConnectionManager(trustContext, alertsConfigurationProperties))
                 .build();
 
         //The setReadTimeout() method of this builder is not usable because we are instantiating our own HttpComponentsClientHttpRequestFactory, which does not support it.

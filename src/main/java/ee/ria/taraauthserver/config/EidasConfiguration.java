@@ -82,10 +82,10 @@ public class EidasConfiguration {
     }
 
     @Bean
-    public RestTemplate eidasRestTemplate(RestTemplateBuilder builder, SSLContext sslContext, EidasConfigurationProperties eidasConfigurationProperties) {
+    public RestTemplate eidasRestTemplate(RestTemplateBuilder builder, SSLContext trustContext, EidasConfigurationProperties eidasConfigurationProperties) {
         @SuppressWarnings("resource")
         HttpClient client = HttpClients.custom()
-                .setConnectionManager(createConnectionManager(sslContext, eidasConfigurationProperties))
+                .setConnectionManager(createConnectionManager(trustContext, eidasConfigurationProperties))
                 .build();
 
         List<HttpMessageConverter<?>> converters = new ArrayList<>();

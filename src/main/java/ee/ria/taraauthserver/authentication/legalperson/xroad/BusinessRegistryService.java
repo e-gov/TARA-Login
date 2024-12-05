@@ -66,10 +66,10 @@ public class BusinessRegistryService {
     private final String xpathFilterForEttevotjad;
 
     public BusinessRegistryService(@NonNull Configuration templateConfiguration,
-                                   @NonNull LegalPersonProperties legalPersonProperties, @NonNull SSLContext sslContext) {
+        @NonNull LegalPersonProperties legalPersonProperties,
+        @NonNull SSLContext xRoadTrustContext) {
         this.templateConfiguration = templateConfiguration;
         this.legalPersonProperties = legalPersonProperties;
-        this.sslContext = sslContext;
         this.xpathFilterForEttevotjad = "//ettevotjad/item[" +
                 "staatus = 'R' " +
                 "and (" + getConditionList(legalPersonProperties.getEsindusv2AllowedTypes(), "oiguslik_vorm = '%s'") + ") " +
@@ -79,6 +79,7 @@ public class BusinessRegistryService {
                 "and ainuesindusoigus_olemas = 'JAH'" +
                 "]" +
                 "]";
+      this.sslContext = xRoadTrustContext;
     }
 
     public List<TaraSession.LegalPerson> executeEsindusV2Service(String idCode) {
