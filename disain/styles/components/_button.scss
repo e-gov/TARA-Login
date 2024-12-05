@@ -48,4 +48,8 @@
 	text-decoration: none;
 	text-align: center;
   }
+  &:focus {
+    outline: 2px solid #337bb5;
+    outline-offset: 1px;
+  }
 }

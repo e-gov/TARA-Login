@@ -553,4 +553,9 @@ jQuery(function ($) {
 	function isProbablyMobileDevice() {
 		return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 	}
+
+	$('.c-btn').on('click', function () {
+		const button = $(this);
+		requestAnimationFrame(() => button.focus());
+	});
 });
