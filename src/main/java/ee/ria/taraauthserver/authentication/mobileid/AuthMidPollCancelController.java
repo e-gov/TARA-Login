@@ -6,6 +6,7 @@ import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
+import ee.ria.taraauthserver.utils.RequestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -55,7 +56,7 @@ public class AuthMidPollCancelController {
         SessionUtils.getHttpSession().setAttribute(TARA_SESSION, taraSession);
 
         log.warn("Mobile-ID authentication process has been canceled");
-        return new RedirectView("/auth/init?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge());
+        return new RedirectView("/auth/init?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge() + RequestUtils.getLangParam(taraSession));
     }
 
     private void logAndInvalidateSession(TaraSession taraSession) {

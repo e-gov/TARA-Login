@@ -35,8 +35,8 @@ import java.util.Map;
 @Slf4j
 @UtilityClass
 public class X509Utils {
-    private static final String BEGIN_CERT = "-----BEGIN CERTIFICATE-----";
-    private static final String END_CERT = "-----END CERTIFICATE-----";
+    private final String BEGIN_CERT = "-----BEGIN CERTIFICATE-----";
+    private final String END_CERT = "-----END CERTIFICATE-----";
 
     public X509Certificate toX509Certificate(String encodedCertificate) {
         try {

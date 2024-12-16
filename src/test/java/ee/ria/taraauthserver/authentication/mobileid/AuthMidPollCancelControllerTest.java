@@ -116,6 +116,64 @@ class AuthMidPollCancelControllerTest extends BaseTest {
     }
 
     @Test
+    @Tag(value = "MID_AUTH_CANCELED")
+    @Tag(value = "LOG_EVENT_UNIQUE_STATUS")
+    void authMidPollCancel_redirectToAuthInitWithEtLang() {
+        TaraAuthenticationState state = TaraAuthenticationState.INIT_MID;
+
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+            .sessionRepository(sessionRepository)
+            .authenticationTypes(of(MOBILE_ID))
+            .authenticationState(state)
+            .chosenLanguage("et")
+            .build();
+
+        given()
+            .filter(sessionFilter)
+            .when()
+            .post("/auth/mid/poll/cancel")
+            .then()
+            .assertThat()
+            .header("Location", "/auth/init?login_challenge=abcdefg098AAdsCC&lang=et")
+            .statusCode(302);
+
+        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
+        assertEquals(TaraAuthenticationState.POLL_MID_STATUS_CANCELED, taraSession.getState());
+        assertWarningIsLogged("Mobile-ID authentication process has been canceled");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED",
+            "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_CANCELED, errorCode=null)");
+    }
+
+    @Test
+    @Tag(value = "MID_AUTH_CANCELED")
+    @Tag(value = "LOG_EVENT_UNIQUE_STATUS")
+    void authMidPollCancel_redirectToAuthInitWithEnLang() {
+        TaraAuthenticationState state = TaraAuthenticationState.INIT_MID;
+
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+            .sessionRepository(sessionRepository)
+            .authenticationTypes(of(MOBILE_ID))
+            .authenticationState(state)
+            .chosenLanguage("en")
+            .build();
+
+        given()
+            .filter(sessionFilter)
+            .when()
+            .post("/auth/mid/poll/cancel")
+            .then()
+            .assertThat()
+            .header("Location", "/auth/init?login_challenge=abcdefg098AAdsCC&lang=en")
+            .statusCode(302);
+
+        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
+        assertEquals(TaraAuthenticationState.POLL_MID_STATUS_CANCELED, taraSession.getState());
+        assertWarningIsLogged("Mobile-ID authentication process has been canceled");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED",
+            "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_CANCELED, errorCode=null)");
+    }
+
+    @Test
     @Tag(value = "SID_AUTH_CANCELED")
     void authMidPollCancel_redirectToClientWhenAuthenticationStateIsSuccess() {
         MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()

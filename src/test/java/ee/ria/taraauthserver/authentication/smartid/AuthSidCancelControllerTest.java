@@ -117,6 +117,60 @@ class AuthSidCancelControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "SID_AUTH_CANCELED")
+    void authSidPollCancel_redirectToAuthInitWithEtLang() {
+        TaraAuthenticationState state = TaraAuthenticationState.INIT_SID;
+
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+            .sessionRepository(sessionRepository)
+            .authenticationTypes(of(SMART_ID))
+            .authenticationState(state)
+            .chosenLanguage("et")
+            .build();
+
+        given()
+            .filter(sessionFilter)
+            .when()
+            .post("/auth/sid/poll/cancel")
+            .then()
+            .assertThat()
+            .header("Location", "/auth/init?login_challenge=abcdefg098AAdsCC&lang=et")
+            .statusCode(302);
+
+        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
+        assertEquals(TaraAuthenticationState.POLL_SID_STATUS_CANCELED, taraSession.getState());
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED",
+            "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_CANCELED, errorCode=null)");
+    }
+
+    @Test
+    @Tag(value = "SID_AUTH_CANCELED")
+    void authSidPollCancel_redirectToAuthInitWithEnLang() {
+        TaraAuthenticationState state = TaraAuthenticationState.INIT_SID;
+
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+            .sessionRepository(sessionRepository)
+            .authenticationTypes(of(SMART_ID))
+            .authenticationState(state)
+            .chosenLanguage("en")
+            .build();
+
+        given()
+            .filter(sessionFilter)
+            .when()
+            .post("/auth/sid/poll/cancel")
+            .then()
+            .assertThat()
+            .header("Location", "/auth/init?login_challenge=abcdefg098AAdsCC&lang=en")
+            .statusCode(302);
+
+        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
+        assertEquals(TaraAuthenticationState.POLL_SID_STATUS_CANCELED, taraSession.getState());
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED",
+            "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_CANCELED, errorCode=null)");
+    }
+
+    @Test
+    @Tag(value = "SID_AUTH_CANCELED")
     void authSidPollCancel_redirectToClientWhenAuthenticationStateIsSuccess() {
         MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)

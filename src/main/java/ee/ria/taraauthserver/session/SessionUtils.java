@@ -22,7 +22,7 @@ import static net.logstash.logback.argument.StructuredArguments.value;
 @UtilityClass
 public class SessionUtils {
 
-    public static TaraSession getAuthSession() {
+    public TaraSession getAuthSession() {
         HttpSession httpSession = getHttpSession();
         return httpSession == null ? null : (TaraSession) requireNonNull(httpSession.getAttribute(TARA_SESSION));
     }
@@ -35,7 +35,7 @@ public class SessionUtils {
     }
 
     //TODO: This class should not throw BadRequestException directly
-    public static void assertSessionInState(TaraSession taraSession, Set<TaraAuthenticationState> validSessionStates) {
+    public void assertSessionInState(TaraSession taraSession, Set<TaraAuthenticationState> validSessionStates) {
         if (taraSession == null) {
             throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
         } else if (!validSessionStates.contains(taraSession.getState())) {
@@ -44,7 +44,7 @@ public class SessionUtils {
     }
 
     //TODO: This class should not throw BadRequestException directly
-    public static void assertSessionInState(TaraSession taraSession, TaraAuthenticationState validSessionState) {
+    public void assertSessionInState(TaraSession taraSession, TaraAuthenticationState validSessionState) {
         if (taraSession == null) {
             throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
         } else if (validSessionState != taraSession.getState()) {
@@ -52,7 +52,7 @@ public class SessionUtils {
         }
     }
 
-    public static void invalidateSession() {
+    public void invalidateSession() {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         HttpSession session = request.getSession(false);
         if (session != null) {

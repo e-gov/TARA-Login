@@ -57,7 +57,8 @@ public class MockTaraSessionBuilder {
                                                SPType spType,
                                                Map<String, String> shortNameTranslations,
                                                ChallengeNonce webEidChallengeNonce,
-                                               TaraSession.AuthenticationResult authenticationResult) {
+                                               TaraSession.AuthenticationResult authenticationResult,
+                                               String chosenLanguage) {
         TaraSession taraSession = new TaraSession(sessionId);
         TaraSession.LoginRequestInfo lri = new TaraSession.LoginRequestInfo();
         TaraSession.Client client = new TaraSession.Client();
@@ -93,6 +94,7 @@ public class MockTaraSessionBuilder {
         taraSession.setState(authenticationState == null ? TaraAuthenticationState.INIT_AUTH_PROCESS : authenticationState);
         taraSession.setLoginRequestInfo(lri);
         taraSession.setAuthenticationResult(requireNonNullElseGet(authenticationResult, () -> new TaraSession.MidAuthenticationResult("testSessionId")));
+        taraSession.setChosenLanguage(chosenLanguage);
         return taraSession;
     }
 

@@ -55,8 +55,9 @@ public class MockSessionFilter implements Filter {
                                                          Map<String, String> shortNameTranslations,
                                                          CsrfMode csrfMode,
                                                          ChallengeNonce nonce,
-                                                         TaraSession.AuthenticationResult authenticationResult) {
-        Session session = createTaraSession(sessionRepository, authenticationState, authenticationTypes, clientAllowedScopes, requestedScopes, legalPersonList, spType, shortNameTranslations, nonce, authenticationResult);
+                                                         TaraSession.AuthenticationResult authenticationResult,
+                                                         String chosenLanguage) {
+        Session session = createTaraSession(sessionRepository, authenticationState, authenticationTypes, clientAllowedScopes, requestedScopes, legalPersonList, spType, shortNameTranslations, nonce, authenticationResult, chosenLanguage);
         sessionRepository.save(session);
         return new MockSessionFilter(session, csrfMode);
     }
@@ -97,7 +98,8 @@ public class MockSessionFilter implements Filter {
                                              SPType spType,
                                              Map<String, String> shortNameTranslations,
                                              ChallengeNonce webEidChallengeNonce,
-                                             TaraSession.AuthenticationResult authenticationResult) {
+                                             TaraSession.AuthenticationResult authenticationResult,
+                                             String chosenLanguage) {
         Session session = createSession(sessionRepository);
         TaraSession taraSession = MockTaraSessionBuilder.builder()
                 .sessionId(session.getId())
@@ -110,6 +112,7 @@ public class MockSessionFilter implements Filter {
                 .shortNameTranslations(shortNameTranslations)
                 .authenticationResult(authenticationResult)
                 .webEidChallengeNonce(webEidChallengeNonce)
+                .chosenLanguage(chosenLanguage)
                 .build();
         session.setAttribute(TARA_SESSION, taraSession);
         return session;

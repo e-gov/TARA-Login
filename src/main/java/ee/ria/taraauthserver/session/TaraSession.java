@@ -70,6 +70,7 @@ public class TaraSession implements Serializable {
     private LegalPerson selectedLegalPerson;
     private String consentChallenge;
     private ChallengeNonce webEidChallengeNonce;
+    private String chosenLanguage;
 
     public void setState(@NonNull TaraAuthenticationState newState) {
         if (state.equals(newState)) {

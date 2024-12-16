@@ -527,7 +527,7 @@ class AuthInitControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "AUTH_INIT_UI_LOCALE")
-    void authInit_OidcLocaleIsOverridenByLangParameter() {
+    void authInit_OidcLocaleIsOverriddenByLangParameter() {
         wireMockServer.stubFor(get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -567,6 +567,101 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(200)
                 .header(HttpHeaders.CONTENT_LANGUAGE, "et")
                 .body(containsString("Sisestage oma isikukood ja telefoninumber ning vajutage \"Jätka\""));
+
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_UI_LOCALE")
+    void authInit_WhenLocaleFromCookieIsOverriddenByHydra() {
+        wireMockServer.stubFor(get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response.json")));
+
+        given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .cookie("__Host-LOCALE", "en")
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .header(HttpHeaders.CONTENT_LANGUAGE, "ru")
+                .body(containsString("Поместите ID-карту в считыватель и нажмите кнопку \"Продолжить\""));
+
+        assertStatisticsIsNotLogged();
+    }
+
+
+    @Test
+    @Tag(value = "AUTH_INIT_UI_LOCALE")
+    void authInit_WhenLocaleFromCookieAndHydraIsOverriddenByLangParam() {
+        wireMockServer.stubFor(get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+            .willReturn(aResponse()
+                .withStatus(200)
+                .withHeader("Content-Type", "application/json; charset=UTF-8")
+                .withBodyFile("mock_responses/oidc/mock_response.json")));
+
+        given()
+            .param("login_challenge", TEST_LOGIN_CHALLENGE)
+            .param("lang", "et")
+            .when()
+            .cookie("__Host-LOCALE", "en")
+            .get("/auth/init")
+            .then()
+            .assertThat()
+            .statusCode(200)
+            .header(HttpHeaders.CONTENT_LANGUAGE, "et")
+            .body(containsString("Sisestage oma isikukood ja telefoninumber ning vajutage \"Jätka\""));
+
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_UI_LOCALE")
+    void authInit_WhenInvalidLocaleFromHydraIsOverriddenByCookie() {
+        wireMockServer.stubFor(get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+            .willReturn(aResponse()
+                .withStatus(200)
+                .withHeader("Content-Type", "application/json; charset=UTF-8")
+                .withBodyFile("mock_responses/oidc/mock_response-ok_ui_locales-incorrect.json")));
+
+        given()
+            .param("login_challenge", TEST_LOGIN_CHALLENGE)
+            .when()
+            .cookie("__Host-LOCALE", "en")
+            .get("/auth/init")
+            .then()
+            .assertThat()
+            .statusCode(200)
+            .header(HttpHeaders.CONTENT_LANGUAGE, "en")
+            .body(containsString("Insert your ID-card into the card reader and click \"Continue\""));
+
+        assertStatisticsIsNotLogged();
+    }
+
+
+    @Test
+    @Tag(value = "AUTH_INIT_UI_LOCALE")
+    void authInit_WhenInvalidLocaleFromHydraAndCookieIsOverriddenByDefault() {
+        wireMockServer.stubFor(get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+            .willReturn(aResponse()
+                .withStatus(200)
+                .withHeader("Content-Type", "application/json; charset=UTF-8")
+                .withBodyFile("mock_responses/oidc/mock_response-ok_ui_locales-incorrect.json")));
+
+        given()
+            .param("login_challenge", TEST_LOGIN_CHALLENGE)
+            .when()
+            .cookie("__Host-LOCALE", "fr")
+            .get("/auth/init")
+            .then()
+            .assertThat()
+            .statusCode(200)
+            .header(HttpHeaders.CONTENT_LANGUAGE, "et")
+            .body(containsString("Sisestage oma isikukood ja telefoninumber ning vajutage \"Jätka\""));
 
         assertStatisticsIsNotLogged();
     }

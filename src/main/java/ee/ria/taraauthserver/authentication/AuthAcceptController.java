@@ -9,6 +9,7 @@ import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
+import ee.ria.taraauthserver.utils.RequestUtils;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +56,7 @@ class AuthAcceptController {
         if (taraSession == null) {
             throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
         } else if (taraSession.getState().equals(POLL_MID_STATUS_CANCELED) || taraSession.getState().equals(POLL_SID_STATUS_CANCELED)) {
-            return new RedirectView("/auth/init?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge());
+            return new RedirectView("/auth/init?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge() + RequestUtils.getLangParam(taraSession));
         } else if (!ALLOWED_STATES.contains(taraSession.getState())) {
             throw new BadRequestException(ErrorCode.SESSION_STATE_INVALID, format("Invalid authentication state: '%s', expected one of: %s", taraSession.getState(), ALLOWED_STATES));
         }

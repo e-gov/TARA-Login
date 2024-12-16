@@ -1,7 +1,11 @@
 package ee.ria.taraauthserver.utils;
 
+import static java.util.regex.Pattern.compile;
+
+import ee.ria.taraauthserver.session.TaraSession;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.function.Predicate;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -22,6 +26,8 @@ import java.util.function.Supplier;
 @UtilityClass
 public class RequestUtils {
 
+    public final Predicate<String> SUPPORTED_LANGUAGES = compile("(?i)(et|en|ru)").asMatchPredicate();
+
     public void setLocale(String requestedLocale) {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
@@ -35,6 +41,14 @@ public class RequestUtils {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         LocaleResolver localeResolver = RequestContextUtils.getLocaleResolver(request);
         return localeResolver.resolveLocale(request);
+    }
+
+    public String getLangParam(TaraSession taraSession) {
+        return (taraSession != null
+            && taraSession.getChosenLanguage() != null
+            && SUPPORTED_LANGUAGES.test(taraSession.getChosenLanguage()))
+            ? "&lang=" + taraSession.getChosenLanguage()
+            : "";
     }
 
     public static <T> Consumer<T> withMdc(Consumer<T> consumer) {

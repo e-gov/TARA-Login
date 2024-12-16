@@ -20,6 +20,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.core5.net.URIBuilder;
@@ -29,6 +30,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.SessionAttribute;
@@ -40,7 +42,6 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
@@ -53,7 +54,6 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 @Controller
 public class AuthInitController {
     public static final String AUTH_INIT_REQUEST_MAPPING = "/auth/init";
-    private static final Predicate<String> SUPPORTED_LANGUAGES = java.util.regex.Pattern.compile("(?i)(et|en|ru)").asMatchPredicate();
     private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.TARA_HYDRA, this.getClass());
 
     @Autowired
@@ -80,7 +80,9 @@ public class AuthInitController {
             @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed") String loginChallenge,
             @RequestParam(name = "lang", required = false)
             @Pattern(regexp = "(et|en|ru)", message = "supported values are: 'et', 'en', 'ru'") String language,
-            @SessionAttribute(value = TARA_SESSION) TaraSession newTaraSession, Model model) {
+            @SessionAttribute(value = TARA_SESSION) TaraSession newTaraSession,
+            @CookieValue(value = "__Host-LOCALE", defaultValue = "et") String cookieLocale,
+        Model model) {
         log.info(append("http.request.locale", RequestUtils.getLocale()), "New authentication session");
         SessionUtils.getHttpSession().setAttribute(TARA_SESSION, newTaraSession);
 
@@ -122,9 +124,10 @@ public class AuthInitController {
         }
 
         if (language == null) {
-            language = getDefaultOrRequestedLocale(newTaraSession);
+            language = getDefaultOrRequestedLocale(newTaraSession, cookieLocale);
             RequestUtils.setLocale(language);
         }
+        newTaraSession.setChosenLanguage(language);
 
         if (eidasOnlyWithCountryRequested(loginRequestInfo)) {
             model.addAttribute("country", getAllowedEidasCountryCode(loginRequestInfo));
@@ -152,12 +155,16 @@ public class AuthInitController {
         }
     }
 
-    private String getDefaultOrRequestedLocale(TaraSession taraSession) {
+    private String getDefaultOrRequestedLocale(TaraSession taraSession, String cookieLocale) {
         return taraSession.getLoginRequestInfo().getOidcContext().getUiLocales()
-                .stream()
-                .filter(SUPPORTED_LANGUAGES)
-                .findFirst()
-                .orElse(taraProperties.getDefaultLocale());
+            .stream()
+            .map(String::toLowerCase)
+            .filter(RequestUtils.SUPPORTED_LANGUAGES)
+            .findFirst()
+            .or(() -> Optional.ofNullable(cookieLocale)
+                .map(String::toLowerCase)
+                .filter(RequestUtils.SUPPORTED_LANGUAGES))
+            .orElse(taraProperties.getDefaultLocale());
     }
 
     private TaraSession.LoginRequestInfo fetchLoginRequestInfo(String loginChallenge) {
