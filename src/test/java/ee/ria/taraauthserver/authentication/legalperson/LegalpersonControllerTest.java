@@ -202,7 +202,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Test
     @Tag(value = "LEGAL_PERSON_BUSINESSREGISTER_RESPONSE")
     void getAuthLegalPerson_xroadError_SoapFaultInResponse() {
-        wireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
+        xroadWireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/xml; charset=UTF-8")
@@ -232,7 +232,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Test
     @Tag(value = "LEGAL_PERSON_BUSINESSREGISTER_RESPONSE")
     void getAuthLegalPerson_xroadError_InvalidResponse() throws Exception {
-        wireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
+        xroadWireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
                 .willReturn(aResponse()
                         .withStatus(404)
                         .withHeader("Content-Type", "text/html; charset=UTF-8")
@@ -255,14 +255,14 @@ public class LegalpersonControllerTest extends BaseTest {
                 .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
                 .body("path", equalTo("/auth/legalperson"));
 
-        assertErrorIsLogged("Server encountered an unexpected error: Failed to extract data from response: https://localhost:9877/cgi-bin/consumer_proxy");
+        assertErrorIsLogged("Server encountered an unexpected error: Failed to extract data from response: https://localhost:7877/cgi-bin/consumer_proxy");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
     @Tag(value = "LEGAL_PERSON_BUSINESSREGISTER_RESPONSE")
     void getAuthLegalPerson_xroadError_RequestTimesOut() {
-        wireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
+        xroadWireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/xml; charset=UTF-8")
@@ -293,7 +293,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Test
     @Tag(value = "LEGAL_PERSON_BUSINESSREGISTER_RESPONSE")
     void getAuthLegalPerson_noValidLegalPersonsFound() {
-        wireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
+        xroadWireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/xml; charset=UTF-8")
@@ -324,7 +324,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Tag(value = "LEGAL_PERSON_BUSINESSREGISTER_RESPONSE")
     @Tag(value = "LEGAL_PERSON_AUTH_START_ENDPOINT")
     void getAuthLegalPerson_validLegalPersons_singleLegalPersonFound() {
-        wireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
+        xroadWireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/xml; charset=UTF-8")
@@ -353,7 +353,7 @@ public class LegalpersonControllerTest extends BaseTest {
     @Tag(value = "LEGAL_PERSON_BUSINESSREGISTER_RESPONSE")
     @Tag(value = "LEGAL_PERSON_AUTH_START_ENDPOINT")
     void getAuthLegalPerson_validLegalPersons_multipleLegalPersonFound() throws Exception {
-        wireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
+        xroadWireMockServer.stubFor(WireMock.post(urlEqualTo("/cgi-bin/consumer_proxy"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/xml; charset=UTF-8")

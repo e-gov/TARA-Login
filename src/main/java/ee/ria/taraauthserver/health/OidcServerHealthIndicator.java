@@ -19,7 +19,7 @@ public class OidcServerHealthIndicator extends AbstractHealthIndicator {
     private AuthConfigurationProperties authConfigurationProperties;
 
     @Autowired
-    private SSLContext sslContext;
+    private SSLContext trustContext;
 
     public OidcServerHealthIndicator() {
         super("Authentication service health check failed");
@@ -29,7 +29,7 @@ public class OidcServerHealthIndicator extends AbstractHealthIndicator {
     protected void doHealthCheck(Health.Builder builder) throws Exception {
         URI uri = create(authConfigurationProperties.getHydraService().getHealthUrl());
         HttpsURLConnection con = (HttpsURLConnection) uri.toURL().openConnection();
-        con.setSSLSocketFactory(sslContext.getSocketFactory());
+        con.setSSLSocketFactory(trustContext.getSocketFactory());
         try {
             if (con.getResponseCode() == HttpsURLConnection.HTTP_OK) {
                 builder.up();

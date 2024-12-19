@@ -93,7 +93,7 @@ public class OCSPValidator {
     }
 
     @Autowired
-    private SSLContext sslContext;
+    private SSLContext trustContext;
 
     @Autowired
     private final OCSPConfigurationResolver ocspConfigurationResolver;
@@ -254,7 +254,7 @@ public class OCSPValidator {
 
     private HttpsURLConnection getHttpsURLConnection(URL obj) throws IOException {
         HttpsURLConnection httpsURLConnection = (HttpsURLConnection) obj.openConnection();
-        httpsURLConnection.setSSLSocketFactory(sslContext.getSocketFactory());
+        httpsURLConnection.setSSLSocketFactory(trustContext.getSocketFactory());
         return httpsURLConnection;
     }
 

@@ -6,7 +6,6 @@ import freemarker.template.TemplateExceptionHandler;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ResourceLoader;
 
 import javax.net.ssl.SSLContext;
 import java.io.IOException;
@@ -28,7 +27,7 @@ public class LegalPersonConfiguration {
 
     @Bean
     public BusinessRegistryService eBusinessRegistryService(freemarker.template.Configuration freemarkerConfiguration,
-                                                            LegalPersonProperties legalPersonProperties, SSLContext sslContext) {
-        return new BusinessRegistryService(freemarkerConfiguration, legalPersonProperties, sslContext);
+                                                            LegalPersonProperties legalPersonProperties, SSLContext xRoadTrustContext) {
+        return new BusinessRegistryService(freemarkerConfiguration, legalPersonProperties, xRoadTrustContext);
     }
 }

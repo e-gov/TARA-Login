@@ -30,11 +30,11 @@ ignite:
       addresses:
         - 127.0.0.1
   ssl-context-factory:
-    key-store-type: JKS
-    key-store-file-path: src/test/resources/tls-keystore.jks
+    key-store-type: PKCS12
+    key-store-file-path: src/test/resources/localhost.keystore.p12
     key-store-password: changeit
-    trust-store-type: JKS
-    trust-store-file-path: src/test/resources/tls-truststore.jks
+    trust-store-type: PKCS12
+    trust-store-file-path: src/test/resources/localhost.truststore.p12
     trust-store-password: changeit
     protocol: TLSv1.2
     protocols:
@@ -131,7 +131,7 @@ tara:
       relay-state-cache-duration-in-seconds: 30
 
   legal-person-authentication:
-    x-road-server-url: https://localhost:9877/cgi-bin/consumer_proxy
+    x-road-server-url: https://localhost:7877/cgi-bin/consumer_proxy
 
     x-road-service-instance: ee-dev
     x-road-service-member-class: GOV
@@ -147,9 +147,14 @@ tara:
     x-road-server-connect-timeout-in-milliseconds: 1000
 
   tls:
-    trust-store-location: classpath:tls-truststore.jks
+    trust-store-location: classpath:localhost.truststore.p12
     trust-store-password: changeit
-    trust-store-type: jks
+    trust-store-type: PKCS12
+    x-road-trust-store-location: classpath:localhost.truststore.p12
+    x-road-trust-store-password: changeit
+    x-road-key-store-location: classpath:localhost.keystore.p12
+    x-road-key-store-password: changeit
+    x-road-store-type: PKCS12
     default-protocol: TLSv1.3
     enabled-protocols:
       - TLSv1.2

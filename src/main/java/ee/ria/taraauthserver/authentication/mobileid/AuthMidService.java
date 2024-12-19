@@ -115,7 +115,7 @@ public class AuthMidService {
     private MidClient midClient;
 
     @Autowired
-    private SSLContext sslContext;
+    private SSLContext trustContext;
 
     @Autowired
     private SessionRepository<Session> sessionRepository;
@@ -317,7 +317,7 @@ public class AuthMidService {
                 .withHostUrl(midAuthConfigurationProperties.getHostUrl())
                 .withRelyingPartyUUID(clientRelyingParty.getUuid())
                 .withRelyingPartyName(clientRelyingParty.getName())
-                .withTrustSslContext(sslContext)
+                .withTrustSslContext(trustContext)
                 .withNetworkConnectionConfig(createMidClientConfig())
                 .withLongPollingTimeoutSeconds(midAuthConfigurationProperties.getLongPollingTimeoutSeconds())
                 .build();
