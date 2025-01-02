@@ -7,6 +7,7 @@ import ee.ria.taraauthserver.session.TaraSession;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.session.Session;
@@ -115,17 +116,22 @@ class AuthMidPollCancelControllerTest extends BaseTest {
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_CANCELED, errorCode=null)");
     }
 
-    @Test
+    @ParameterizedTest
+    @CsvSource({
+        "et, /auth/init?login_challenge=abcdefg098AAdsCC&lang=et",
+        "en, /auth/init?login_challenge=abcdefg098AAdsCC&lang=en",
+        "ru, /auth/init?login_challenge=abcdefg098AAdsCC&lang=ru",
+    })
     @Tag(value = "MID_AUTH_CANCELED")
     @Tag(value = "LOG_EVENT_UNIQUE_STATUS")
-    void authMidPollCancel_redirectToAuthInitWithEtLang() {
+    void authMidPollCancel_redirectToAuthInitWithLang(String language, String expectedLocation) {
         TaraAuthenticationState state = TaraAuthenticationState.INIT_MID;
 
         MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
             .sessionRepository(sessionRepository)
             .authenticationTypes(of(MOBILE_ID))
             .authenticationState(state)
-            .chosenLanguage("et")
+            .chosenLanguage(language)
             .build();
 
         given()
@@ -134,39 +140,11 @@ class AuthMidPollCancelControllerTest extends BaseTest {
             .post("/auth/mid/poll/cancel")
             .then()
             .assertThat()
-            .header("Location", "/auth/init?login_challenge=abcdefg098AAdsCC&lang=et")
+            .header("Location", expectedLocation)
             .statusCode(302);
 
-        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
-        assertEquals(TaraAuthenticationState.POLL_MID_STATUS_CANCELED, taraSession.getState());
-        assertWarningIsLogged("Mobile-ID authentication process has been canceled");
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED",
-            "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_CANCELED, errorCode=null)");
-    }
-
-    @Test
-    @Tag(value = "MID_AUTH_CANCELED")
-    @Tag(value = "LOG_EVENT_UNIQUE_STATUS")
-    void authMidPollCancel_redirectToAuthInitWithEnLang() {
-        TaraAuthenticationState state = TaraAuthenticationState.INIT_MID;
-
-        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
-            .sessionRepository(sessionRepository)
-            .authenticationTypes(of(MOBILE_ID))
-            .authenticationState(state)
-            .chosenLanguage("en")
-            .build();
-
-        given()
-            .filter(sessionFilter)
-            .when()
-            .post("/auth/mid/poll/cancel")
-            .then()
-            .assertThat()
-            .header("Location", "/auth/init?login_challenge=abcdefg098AAdsCC&lang=en")
-            .statusCode(302);
-
-        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
+        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId())
+            .getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.POLL_MID_STATUS_CANCELED, taraSession.getState());
         assertWarningIsLogged("Mobile-ID authentication process has been canceled");
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED",

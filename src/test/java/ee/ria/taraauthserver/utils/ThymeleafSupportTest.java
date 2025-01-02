@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -105,5 +107,31 @@ class ThymeleafSupportTest {
         mockLoginRequestInfo.getClient().getMetaData().getOidcClient().setLegacyReturnUrl(null);
         buildMockHttpSession(mockLoginRequestInfo);
         assertEquals("/auth/reject?error_code=user_cancel", thymeleafSupport.getHomeUrl());
+    }
+
+    @Test
+    void getBackUrl_returnsHashWhenSessionMissingOrInvalid() {
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(new MockHttpServletRequest(), new MockHttpServletResponse()));
+        assertEquals("#", thymeleafSupport.getBackUrl(), "Back URL should be '#' when session is missing");
+
+        TaraSession.LoginRequestInfo mockLoginRequestInfo = buildMockLoginRequestInfo();
+        mockLoginRequestInfo.setLoginChallengeExpired(true);
+        HttpSession mockHttpSession = buildMockHttpSession(mockLoginRequestInfo);
+        testSession = (TaraSession) mockHttpSession.getAttribute(TARA_SESSION);
+        assertEquals("#", thymeleafSupport.getBackUrl(), "Back URL should be '#' when login challenge is expired");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"et", "en", "ru"})
+    void getBackUrl_returnsInitAuthUrlWhenSessionValid(String language) {
+        TaraSession.LoginRequestInfo mockLoginRequestInfo = buildMockLoginRequestInfo();
+        mockLoginRequestInfo.setLoginChallengeExpired(false);
+        mockLoginRequestInfo.setChallenge("valid-challenge");
+        HttpSession mockHttpSession = buildMockHttpSession(mockLoginRequestInfo);
+        testSession = (TaraSession) mockHttpSession.getAttribute(TARA_SESSION);
+        testSession.setChosenLanguage(language);
+
+        String expectedUrl = "/auth/init?login_challenge=valid-challenge&lang=" + language;
+        assertEquals(expectedUrl, thymeleafSupport.getBackUrl(), "Back URL should match the expected initialization URL");
     }
 }

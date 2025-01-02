@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpHeaders;
 
 import static ch.qos.logback.classic.Level.ERROR;
@@ -325,6 +326,30 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(302)
                 .header("Location", Matchers.endsWith("/auth/init?login_challenge=abcdefg098AAdsCC"));
+
+        assertMessageIsNotLogged(AuthAcceptController.class, "TARA_HYDRA request");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_CANCELED, errorCode=null)");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"et", "en", "ru"})
+    @Tag(value = "ACCEPT_LOGIN")
+    @Tag(value = "AUTH_ACCEPT_LOGIN_ENDPOINT")
+    void authAccept_languageParameter_Redirected(String language) {
+        given()
+            .filter(MockSessionFilter.withTaraSession()
+                .sessionRepository(sessionRepository)
+                .chosenLanguage(language)
+                .authenticationState(TaraAuthenticationState.POLL_MID_STATUS_CANCELED)
+                .requestedScopes(of("legalperson"))
+                .authenticationResult(MockTaraSessionBuilder.buildMockCredential())
+                .build())
+            .when()
+            .post("/auth/accept")
+            .then()
+            .assertThat()
+            .statusCode(302)
+            .header("Location", Matchers.endsWith("/auth/init?login_challenge=abcdefg098AAdsCC&lang=" + language));
 
         assertMessageIsNotLogged(AuthAcceptController.class, "TARA_HYDRA request");
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_CANCELED, errorCode=null)");

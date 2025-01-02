@@ -48,6 +48,7 @@ import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 class AuthInitControllerTest extends BaseTest {
@@ -278,10 +279,6 @@ class AuthInitControllerTest extends BaseTest {
         Path path = Path.of("src/test/resources/svg/mockLongIcon.svg");
         String originalString = Files.readString(path);
         String base64 =  Base64.getEncoder().encodeToString(originalString.getBytes());
-
-        System.out.println("#####");
-        System.out.println(base64);
-        System.out.println("#####");
 
         given()
             .param("login_challenge", TEST_LOGIN_CHALLENGE)
@@ -1303,7 +1300,7 @@ class AuthInitControllerTest extends BaseTest {
     @ParameterizedTest
     @ValueSource(strings = {"now", "20"})
     @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
-    void authInit_ok_before_auth_flow_timeout(String secondsToTimeout) {
+    void authInit_okBeforeAuthFlowTimeout(String secondsToTimeout) {
         OffsetDateTime formattedTimeout = OffsetDateTime.now();
         if (!secondsToTimeout.equals("now")) {
             formattedTimeout = OffsetDateTime.now().minus(authConfigurationProperties.getAuthFlowTimeout()).plusSeconds(Long.parseLong(secondsToTimeout));
@@ -1334,7 +1331,7 @@ class AuthInitControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
-    void authInit_after_auth_flow_timeout() {
+    void authInit_afterAuthFlowTimeout() {
         OffsetDateTime formattedTimeout = OffsetDateTime.now().minus(authConfigurationProperties.getAuthFlowTimeout())
             .minusSeconds(1);
         wireMockServer.stubFor(
@@ -1353,7 +1350,7 @@ class AuthInitControllerTest extends BaseTest {
                     .withHeader("Content-Type", "application/json; charset=UTF-8")
                     .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
 
-        given()
+        String sessionId = given()
             .param("login_challenge", TEST_LOGIN_CHALLENGE)
             .when()
             .get("/auth/init")
@@ -1366,12 +1363,17 @@ class AuthInitControllerTest extends BaseTest {
             .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
             .body("reportable", equalTo(false))
             .body("redirect_to_service_provider", equalTo(true))
-            .body("redirect_to_service_provider_url", equalTo("/some/test/url"));
+            .body("redirect_to_service_provider_url", equalTo("/some/test/url"))
+            .extract().cookie(TARA_SESSION_COOKIE_NAME);
+
+        assertNull(sessionRepository.findById(sessionId), "Session should be invalidated");
+        assertMessageWithMarkerIsLoggedOnce(HydraService.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/reject?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"error\":\"user_cancel\",\"error_debug\":\"User canceled the authentication process.\",\"error_description\":\"User canceled the authentication process.\"}");
+        assertMessageWithMarkerIsLoggedOnce(HydraService.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"/some/test/url\"}");
     }
 
     @Test
     @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
-    void authInit_after_auth_flow_timeout_with_oidc_error() {
+    void authInit_afterAuthFlowTimeoutWithOidcError() {
         OffsetDateTime formattedTimeout = OffsetDateTime.now().minus(authConfigurationProperties.getAuthFlowTimeout()).minusSeconds(1);
         wireMockServer.stubFor(get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
             .willReturn(aResponse()
@@ -1398,5 +1400,48 @@ class AuthInitControllerTest extends BaseTest {
             .body("error", equalTo("Internal Server Error"))
             .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
             .body("reportable", equalTo(true));
+
+        assertMessageWithMarkerIsLoggedOnce(HydraService.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/reject?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"error\":\"user_cancel\",\"error_debug\":\"User canceled the authentication process.\",\"error_description\":\"User canceled the authentication process.\"}");
+        assertMessageWithMarkerIsLoggedOnce(HydraService.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={}");
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
+    void authInit_AfterAuthFlowTimeoutHtmlError() {
+        OffsetDateTime formattedTimeout = OffsetDateTime.now().minus(authConfigurationProperties.getAuthFlowTimeout())
+            .minusSeconds(1);
+        wireMockServer.stubFor(
+            get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json; charset=UTF-8")
+                    .withBodyFile("mock_responses/oidc/mock_response_requested_at_param.json")
+                    .withTransformers("response-template")
+                    .withTransformerParameter("requestedAt", formattedTimeout.toInstant().getEpochSecond())));
+
+        wireMockServer.stubFor(
+            put(urlEqualTo("/admin/oauth2/auth/requests/login/reject?login_challenge=" + MOCK_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json; charset=UTF-8")
+                    .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
+
+        String responseBody = given()
+            .header("Accept", "text/html")
+            .param("login_challenge", TEST_LOGIN_CHALLENGE)
+            .when()
+            .get("/auth/init")
+            .then()
+            .assertThat()
+            .statusCode(401)
+            .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + CHARSET_UTF_8)
+            .extract()
+            .body()
+            .asString();
+        assertTrue(responseBody.contains("<a href=\"/some/test/url\">Tagasi teenusepakkuja juurde</a>"),
+            "Response body should contain the expected <a> tag with href and text content.");
+
+        assertMessageWithMarkerIsLoggedOnce(HydraService.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/reject?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"error\":\"user_cancel\",\"error_debug\":\"User canceled the authentication process.\",\"error_description\":\"User canceled the authentication process.\"}");
+        assertMessageWithMarkerIsLoggedOnce(HydraService.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"/some/test/url\"}");
     }
 }
