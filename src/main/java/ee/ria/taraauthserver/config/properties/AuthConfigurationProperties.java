@@ -37,9 +37,7 @@ import static net.logstash.logback.marker.Markers.append;
 public class AuthConfigurationProperties {
     public static final Set<String> MASKED_FIELD_NAMES = new HashSet<>();
     public static final String DEFAULT_CONTENT_SECURITY_POLICY = "connect-src 'self'; default-src 'none'; font-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; block-all-mixed-content";
-
-    @Pattern(regexp = "(et|en|ru|ET|EN|RU)", message = "invalid default locale value, accepted values are: et, en, ru, ET, EN, RU")
-    private String defaultLocale = "et";
+    public static final String DEFAULT_LOCALE = "et";
 
     @NotBlank
     private String errorReportEmail;

@@ -393,7 +393,7 @@ public class TaraSession implements Serializable {
             if (translations.containsKey(language)) {
                 return translations.get(language);
             }
-            return translations.get("et");
+            return translations.get(AuthConfigurationProperties.DEFAULT_LOCALE);
         }
 
     }

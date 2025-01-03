@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.DEFAULT_LOCALE;
 import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static net.logstash.logback.marker.Markers.append;
@@ -81,7 +82,7 @@ public class AuthInitController {
             @RequestParam(name = "lang", required = false)
             @Pattern(regexp = "(et|en|ru)", message = "supported values are: 'et', 'en', 'ru'") String language,
             @SessionAttribute(value = TARA_SESSION) TaraSession newTaraSession,
-            @CookieValue(value = "__Host-LOCALE", defaultValue = "et") String cookieLocale,
+            @CookieValue(value = "__Host-LOCALE", defaultValue = DEFAULT_LOCALE) String cookieLocale,
         Model model) {
         log.info(append("http.request.locale", RequestUtils.getLocale()), "New authentication session");
         SessionUtils.getHttpSession().setAttribute(TARA_SESSION, newTaraSession);
@@ -164,7 +165,7 @@ public class AuthInitController {
             .or(() -> Optional.ofNullable(cookieLocale)
                 .map(String::toLowerCase)
                 .filter(RequestUtils.SUPPORTED_LANGUAGES))
-            .orElse(taraProperties.getDefaultLocale());
+            .orElse(DEFAULT_LOCALE);
     }
 
     private TaraSession.LoginRequestInfo fetchLoginRequestInfo(String loginChallenge) {

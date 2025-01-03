@@ -54,7 +54,7 @@ public class AlertsConfigurationProperties {
 
         public void setLoginAlert(LoginAlert loginAlert) {
             this.loginAlert = loginAlert;
-            this.defaultMessage = getAlertMessage("et");
+            this.defaultMessage = getAlertMessage(AuthConfigurationProperties.DEFAULT_LOCALE);
         }
 
         public boolean isActive() {
