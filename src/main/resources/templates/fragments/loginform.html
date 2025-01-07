@@ -250,7 +250,7 @@
                 <p th:utext="#{label.auth-flow-timeout.body}">Sinu sessioon hakkab aeguma varsti.</p>
             </div>
             <div class="modal-footer">
-                <span id="auth-flow-timeout-timer" th:data-seconds-to-timeout="${secondsToAuthFlowTimeout}" aria-live="polite">05:00</span>
+                <span id="auth-flow-timeout-timer" th:data-seconds-to-timeout="${secondsToAuthFlowTimeout}" role="timer">05:00</span>
                 <button type="button" class="accept c-btn c-btn--primary" th:text="#{label.common.understood}" tabindex="0">Sain aru</button>
             </div>
         </div>
