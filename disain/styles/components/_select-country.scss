@@ -12,6 +12,12 @@
   &.is-invalid {
     border-color: #d73e3e;
   }
+  &:focus-visible,
+  &.input-active,
+  .ts-control.single .ts-input.input-active input:focus-visible {
+    outline: 2px solid #337bb5;
+    outline-offset: 1px;
+  }
 }
 .ts-input.dropdown-active::before {
   content: ' ';
