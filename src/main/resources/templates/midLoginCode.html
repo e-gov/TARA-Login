@@ -14,15 +14,17 @@
             </div>
             <div class="c-tab-login__main">
                 <div layout:insert="~{fragments/logintabs :: content(tab_id = 'mobile-id', instruction = 'instruction-check', static = true)}"
-                     th:remove="tag">
-                    <form id="midAuthenticationCheckForm" method="post" th:action="@{/auth/mid/poll/cancel}"
-                          class="c-form" layout:fragment="login-form-content">
+                    th:remove="tag">
+                    <th:block layout:fragment="login-form-content">
                         <p th:text="#{label.common.control-code}">Control code:</p>
                         <p class="control-code" th:text="${mobileIdVerificationCode}"></p>
-                        <button type="submit" class="c-btn c-btn--cancel"
-                                th:text="#{label.common.cancel}">Cancel
-                        </button>
-                    </form>
+                        <form id="midAuthenticationCheckForm" method="post" th:action="@{/auth/mid/poll/cancel}"
+                              class="c-form">
+                            <button type="submit" class="c-btn c-btn--cancel"
+                                    th:text="#{label.common.cancel}">Cancel
+                            </button>
+                        </form>
+                    </th:block>
                 </div>
             </div>
         </div>

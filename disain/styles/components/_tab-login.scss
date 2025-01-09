@@ -183,7 +183,7 @@
   }
   &__content-text, &__content-wait {
     flex: 1 1 auto;
-    max-width: 100%;
+    max-width: max-content;
     padding: 40px 40px 40px 0;
     @media (max-width: $breakpoint-mobile) {
       padding: 20px 15px 0 15px;

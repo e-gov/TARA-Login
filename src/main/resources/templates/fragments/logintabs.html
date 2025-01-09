@@ -48,13 +48,11 @@
                      th:attrappend="src=${@thymeleafSupport.getServiceLogo()}"
                      th:alt="#{label.logo.client}">
             </div>
-            <div class="c-tab-login__content-text">
-                <div role="heading" aria-level="2">
-                    <h2 th:utext="${#messages.msg('label.' + tab_id + '.' + (title ?: 'title'))}"></h2>
-                </div>
+            <section class="c-tab-login__content-text" id="focus-wrapper" tabindex="-1">
+                <h2 th:utext="${#messages.msg('label.' + tab_id + '.' + (title ?: 'title'))}"></h2>
                 <p th:utext="${#strings.isEmpty(instruction) ? #messages.msg('label.' + tab_id + '.' + (#strings.isEmpty(@thymeleafSupport.getServiceName()) ? 'instruction' : 'instruction-with-short-name'), @thymeleafSupport.getServiceName()) : #messages.msg('label.' + tab_id + '.' + instruction)}"></p>
-                <form layout:fragment="login-form-content"></form>
-            </div>
+                <th:replace layout:fragment="login-form-content"></th:replace>
+            </section>
         </div>
         <div class="detailed-instruction-block"
              th:if="${@thymeleafSupport.getGovSsoLoginRequestInfo() != null && selfServiceUrl != null}">

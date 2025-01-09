@@ -556,6 +556,16 @@ jQuery(function ($) {
 
 	$('.c-btn').on('click', function () {
 		const button = $(this);
+		// Keeps button focus style on button after click for consistency across browsers
 		requestAnimationFrame(() => button.focus());
+	});
+
+	$(document).ready(function () {
+		let focusableElement = $('#focus-wrapper');
+		if (focusableElement.length) {
+			// Forcing focus on SID/MID confirmation code view for screen readers so important information is not missed
+			// Needed for consistent functioning of different screen reader and browser combinations
+			focusableElement.focus();
+		}
 	});
 });
