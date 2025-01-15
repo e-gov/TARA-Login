@@ -38,7 +38,7 @@
             <br>
 
             <div id="error-controls-container" class="hidden">
-                <div class="link-back text"><a th:href="${'/auth/init?login_challenge=' + login_challenge}" th:utext="#{label.common.back}"></a></div>
+                <div class="link-back text"><a th:href="${'/auth/init?login_challenge=' + login_challenge + '&lang=' + locale}" th:utext="#{label.common.back}"></a></div>
             </div>
         </div>
         <div class="c-tab-login__footer">

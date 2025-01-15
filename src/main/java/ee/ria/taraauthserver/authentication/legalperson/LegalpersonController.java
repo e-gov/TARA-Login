@@ -5,6 +5,7 @@ import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.NotFoundException;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
+import ee.ria.taraauthserver.utils.RequestUtils;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
@@ -68,6 +69,7 @@ public class LegalpersonController {
         model.addAttribute("lastName", authenticationResult.getLastName());
         model.addAttribute("dateOfBirth", authenticationResult.getDateOfBirth());
         model.addAttribute("login_challenge", taraSession.getLoginRequestInfo().getChallenge());
+        model.addAttribute("locale", RequestUtils.getLocale());
 
         taraSession.setState(LEGAL_PERSON_AUTHENTICATION_INIT);
         SessionUtils.getHttpSession().setAttribute(TARA_SESSION, taraSession);

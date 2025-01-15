@@ -11,6 +11,8 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 import static ch.qos.logback.classic.Level.ERROR;
 import static ch.qos.logback.classic.Level.INFO;
@@ -29,6 +31,7 @@ import static java.util.List.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertTrue;
 
 @Slf4j
 public class LegalpersonControllerTest extends BaseTest {
@@ -152,6 +155,30 @@ public class LegalpersonControllerTest extends BaseTest {
                 .headers(EXPECTED_RESPONSE_HEADERS)
                 .extract().response().htmlPath();
 
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    @Tag(value = "LEGAL_PERSON_AUTH_START")
+    void getAuthLegalPersonInit_CorrectRedirectLink() {
+        String body = given()
+            .header("Accept", "text/html")
+            .filter(MockSessionFilter.withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationState(NATURAL_PERSON_AUTHENTICATION_COMPLETED)
+                .authenticationResult(buildMockCredential())
+                .clientAllowedScopes(of("mid", "legalperson"))
+                .requestedScopes(of("mid", "legalperson"))
+                .build())
+            .when()
+            .get("/auth/legalperson/init")
+            .then()
+            .assertThat()
+            .statusCode(200)
+            .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE + CHARSET_UTF_8)
+            .extract().body().asString();
+
+        assertTrue(body.contains("href=\"/auth/init?login_challenge=abcdefg098AAdsCC&amp;lang=et\""));
         assertStatisticsIsNotLogged();
     }
 
