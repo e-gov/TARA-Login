@@ -251,8 +251,12 @@ body.is-mobile-subview {
   top: 0;
 }
 
-#jumpToMainContentInvisibleElement{
+#jumpToMainContentInvisibleElement {
   position: absolute;
   opacity: 0;
   z-index: -1;
+}
+
+#focus-wrapper:focus {
+  outline: none;
 }
