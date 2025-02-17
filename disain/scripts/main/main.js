@@ -135,9 +135,9 @@ jQuery(function ($) {
 		clearFormFieldErrors(field)
 		return true;
 	}
-	
+
 	function validateEstonianPhoneNumber(field) {
-		let value = field.val();
+		let value = field.val().replace(/\s+/g, '');
 		if (value.length < 3) {
 			displayFormFieldError(field, "phone-number-short");
 			return false;
@@ -341,15 +341,18 @@ jQuery(function ($) {
 	});
 	
 	// Mobile-ID form submit
-	$('#mobileIdForm button.c-btn--primary').on('click', function(event){
-		if ($(this).prop('disabled')) return;
+	$('#mobileIdForm button.c-btn--primary').on('click', function() {
+		if ($(this).prop('disabled')) {
+			return;
+		}
 		$(this).prop('disabled', true);
-		
-		var valid = true;
-		valid = validateEstonianIdCode($('#mid-personal-code')) && valid;
-		valid = validateEstonianPhoneNumber($('#mid-phone-number')) && valid;
-		
+
+		const phoneNumberInput = $('#mid-phone-number');
+		const valid = validateEstonianIdCode($('#mid-personal-code'))
+			&& validateEstonianPhoneNumber(phoneNumberInput);
+
 		if (valid) {
+			phoneNumberInput.val(phoneNumberInput.val().replace(/\s+/g, ''));
 			$('#mobileIdForm').submit();
 		} else {
 			$(this).prop('disabled', false);
