@@ -151,18 +151,24 @@ jQuery(function ($) {
 
 	function clearFormFieldErrors(field) {
 		field.removeClass('is-invalid');
+		field.removeAttr('aria-invalid');
 		field.parent('.input-group').removeClass('is-invalid');
 		hideFeedback(field.parents('td').children('.invalid-feedback'));
 		hideFeedback(field.siblings('.input-group-append').children('.invalid-feedback-warning'));
 	}
 
 	function displayFormFieldError(field, errorElementClass) {
-		field.addClass('is-invalid');
+		const errorId = errorElementClass + '-error';
+		field.addClass('is-invalid')
+		.attr({
+			'aria-invalid': 'true',
+			'aria-describedby': errorId
+		});
 		field.parent('.input-group').addClass('is-invalid');
 
 		field.parents('td').children('.invalid-feedback').each(function() {
 			if ($(this).hasClass(errorElementClass)) {
-				showFeedback($(this));
+				showFeedback($(this), errorId);
 				showFeedback(field.siblings('.input-group-append').children('.invalid-feedback-warning'));
 				// Refresh text for screen reader to read out message
 				$(this).html($(this).html());
@@ -348,8 +354,9 @@ jQuery(function ($) {
 		$(this).prop('disabled', true);
 
 		const phoneNumberInput = $('#mid-phone-number');
-		const valid = validateEstonianIdCode($('#mid-personal-code'))
-			&& validateEstonianPhoneNumber(phoneNumberInput);
+		const isIdCodeValid = validateEstonianIdCode($('#mid-personal-code'));
+		const isPhoneNumberValid = validateEstonianPhoneNumber(phoneNumberInput);
+		const valid = isIdCodeValid && isPhoneNumberValid;
 
 		if (valid) {
 			phoneNumberInput.val(phoneNumberInput.val().replace(/\s+/g, ''));
@@ -433,19 +440,21 @@ jQuery(function ($) {
         alert.removeClass('show');
     }
 
-    function showFeedback(feedback) {
+    function showFeedback(feedback, errorId = null) {
 		if (!feedback.hasClass('is-hidden')){
 			hideFeedback(feedback);
 		}
-        feedback.attr('role', 'alert');
+		if (errorId !== null) {
+			feedback.attr('id', errorId);
+		}
         feedback.removeClass('is-hidden');
 		feedback.removeAttr('aria-hidden');
     }
 
     function hideFeedback(feedback) {
-        feedback.removeAttr('role');
         feedback.addClass('is-hidden');
 		feedback.attr('aria-hidden', true);
+		feedback.removeAttr('id');
     }
 
 	async function detectWebEid() {
@@ -559,8 +568,16 @@ jQuery(function ($) {
 
 	$('.c-btn').on('click', function () {
 		const button = $(this);
-		// Keeps button focus style on button after click for consistency across browsers
-		requestAnimationFrame(() => button.focus());
+		const invalidInput = $('input[aria-invalid="true"]').first();
+
+		if (invalidInput.length === 0) {
+			// Only override browser default functionality when there are no aria-invalid inputs
+			requestAnimationFrame(() => button.focus());
+		} else {
+			// Keeps button focus style on button after click for consistency across browsers,
+			// overriding Chrome's default behaviour
+			requestAnimationFrame(() => invalidInput.focus());
+		}
 	});
 
 	$(document).ready(function () {
