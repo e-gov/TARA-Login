@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.9</version>
+        <version>3.4.3</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>ee.ria.tara</groupId>
@@ -33,10 +33,9 @@
         <logstash-logback-encoder.version>8.0</logstash-logback-encoder.version>
         <mid-rest.version>1.5</mid-rest.version>
         <smart-id.version>2.3</smart-id.version>
-        <spring-cloud.version>2023.0.5</spring-cloud.version><!-- Spring Cloud 2023.0.x release train is only compatible with Spring Boot 3.2.x and 3.3.x, see table 1 at https://spring.io/projects/spring-cloud -->
+        <spring-cloud.version>2024.0.0</spring-cloud.version><!-- Spring Cloud 2024.0.x release train is only compatible with Spring Boot 3.4.x, see table 1 at https://spring.io/projects/spring-cloud -->
         <webeid.version>3.1.1</webeid.version>
         <wiremock.version>3.12.0</wiremock.version>
-        <logback.version>1.5.12</logback.version> <!-- TODO AUT-2145 Newer Logback version requires resolving "Invalid [pattern]" error regarding "#asLong{%property{PID}}" logback-spring.xml configuration and resolving https://logback.qos.ch/manual/filters.html#JaninoEventEvaluator -->
     </properties>
 
     <dependencies>

@@ -17,7 +17,8 @@ management:
     web:
       base-path: /
       exposure:
-        exclude: "*"
+        exclude: ''
+        include: 'heartbeat'
     jmx:
       exposure:
         exclude: "*"

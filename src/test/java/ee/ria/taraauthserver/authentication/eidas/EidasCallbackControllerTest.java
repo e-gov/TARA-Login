@@ -223,7 +223,7 @@ class EidasCallbackControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"));
 
         assertWarningIsLogged("Session has been invalidated: " + sessionFilter.getSession().getId());
-        assertErrorIsLogged("User exception: 401 Unauthorized:");
+        assertErrorIsLogged("User exception: 401 Unauthorized");
         assertMessageWithMarkerIsLoggedOnce(EidasCallbackController.class, INFO, "EIDAS request", "http.request.method=POST, url.full=https://localhost:9877/returnUrl, http.request.body.content={\"SAMLResponse\":\"123test\"}");
         assertMessageWithMarkerIsLoggedOnce(RestTemplateErrorLogger.class, ERROR, "EIDAS response: 401", "http.response.status_code=401, http.response.body.content={\n" +
                 "  \"error\": \"Unauthorized\",\n" +
@@ -261,7 +261,7 @@ class EidasCallbackControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"));
 
         assertWarningIsLogged("Session has been invalidated: " + sessionFilter.getSession().getId());
-        assertErrorIsLogged("User exception: 401 Unauthorized:");
+        assertErrorIsLogged("User exception: 401 Unauthorized");
         assertMessageWithMarkerIsLoggedOnce(EidasCallbackController.class, INFO, "EIDAS request", "http.request.method=POST, url.full=https://localhost:9877/returnUrl, http.request.body.content={\"SAMLResponse\":\"123test\"}");
         assertMessageWithMarkerIsLoggedOnce(RestTemplateErrorLogger.class, ERROR, "EIDAS response: 401", "http.response.status_code=401, http.response.body.content={\n" +
                 "  \"error\": \"Unauthorized\",\n" +
@@ -299,7 +299,7 @@ class EidasCallbackControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"));
 
         assertWarningIsLogged("Session has been invalidated: " + sessionFilter.getSession().getId());
-        assertErrorIsLogged("User exception: 401 Unauthorized:");
+        assertErrorIsLogged("User exception: 401 Unauthorized");
         assertMessageWithMarkerIsLoggedOnce(EidasCallbackController.class, INFO, "EIDAS request", "http.request.method=POST, url.full=https://localhost:9877/returnUrl, http.request.body.content={\"SAMLResponse\":\"123test\"}");
         assertMessageWithMarkerIsLoggedOnce(RestTemplateErrorLogger.class, ERROR, "EIDAS response: 401", "http.response.status_code=401, http.response.body.content={\n" +
                 "  \"error\": \"Unauthorized\",\n" +
@@ -335,7 +335,7 @@ class EidasCallbackControllerTest extends BaseTest {
                 .body("message", equalTo("eIDAS teenuses esinevad tehnilised tõrked. Palun proovige mõne aja pärast uuesti."))
                 .body("error", equalTo("Bad Gateway"));
 
-        assertErrorIsLogged("Service not available: EIDAS service error: 404 Not Found: [no body]");
+        assertErrorIsLogged("Service not available: EIDAS service error: 404 Not Found on POST request for \"https://localhost:9877/returnUrl\": [no body]");
         assertWarningIsLogged("Session has been invalidated: " + sessionFilter.getSession().getId());
         assertMessageWithMarkerIsLoggedOnce(EidasCallbackController.class, INFO, "EIDAS request", "http.request.method=POST, url.full=https://localhost:9877/returnUrl, http.request.body.content={\"SAMLResponse\":\"123test\"}");
         assertMessageWithMarkerIsLoggedOnce(RestTemplateErrorLogger.class, ERROR, "EIDAS response: 404", "http.response.status_code=404");

@@ -35,7 +35,7 @@ import static java.util.stream.Collectors.toList;
 @Slf4j
 @Component
 @ConditionalOnExpression("'${management.endpoints.web.exposure.include}'.contains('heartbeat')")
-@Endpoint(id = "heartbeat", enableByDefault = false)
+@Endpoint(id = "heartbeat")
 public class ApplicationHealthEndpoint {
 
     @Autowired

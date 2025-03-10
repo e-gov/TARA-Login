@@ -1,6 +1,9 @@
 package ee.ria.taraauthserver.health;
 
 import ee.ria.taraauthserver.BaseTest;
+import io.restassured.response.Response;
+import java.util.Arrays;
+import java.util.List;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.cluster.ClusterState;
 import org.junit.jupiter.api.Tag;
@@ -9,38 +12,36 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.test.context.TestPropertySource;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static io.restassured.RestAssured.given;
 import static java.time.ZoneId.of;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
 import static org.mockito.Mockito.when;
 
-@TestPropertySource(
-        locations = "classpath:application.yml",
-        properties = {"management.endpoints.web.exposure.exclude=",
-                "management.endpoints.web.exposure.include=heartbeat"})
 public class ApplicationHealthEndpointTest extends BaseTest {
 
-    @MockBean
+    @MockitoBean
     protected BuildProperties buildProperties;
 
     @Autowired
     private Ignite ignite;
 
-    @MockBean
+    @MockitoBean
     protected GitProperties gitProperties;
 
-    @SpyBean
+    @MockitoSpyBean
     TruststoreHealthIndicator truststoreHealthIndicator;
 
     @Test
@@ -57,7 +58,9 @@ public class ApplicationHealthEndpointTest extends BaseTest {
         when(buildProperties.getVersion()).thenReturn("0.0.1-SNAPSHOT");
         when(buildProperties.getTime()).thenReturn(testTime);
 
-        given()
+        List<String> expectedDependencies = Arrays.asList("ignite", "oidcServer", "truststore");
+        Response response =
+            given()
                 .when()
                 .get("/heartbeat")
                 .then()
@@ -69,12 +72,14 @@ public class ApplicationHealthEndpointTest extends BaseTest {
                 .body("status", equalTo("UP"))
                 .body("name", equalTo("tara-auth-server"))
                 .body("buildTime", equalTo(testTime.toString()))
-                .body("dependencies[0].name", equalTo("ignite"))
-                .body("dependencies[0].status", equalTo("UP"))
-                .body("dependencies[1].name", equalTo("oidcServer"))
-                .body("dependencies[1].status", equalTo("UP"))
-                .body("dependencies[2].name", equalTo("truststore"))
-                .body("dependencies[2].status", equalTo("UP"));
+                // Assert that the dependency names list contains all expected dependencies
+                .body("dependencies.name", hasItems(expectedDependencies.toArray(new String[0])))
+                .body("dependencies.name", not(hasItem("ssl")))
+                .extract().response();
+
+        expectedDependencies.forEach(dep ->
+            response.then().body("dependencies.find { it.name == '" + dep + "' }.status", equalTo("UP"))
+        );
     }
 
     @Test
@@ -128,15 +133,15 @@ public class ApplicationHealthEndpointTest extends BaseTest {
                 .willReturn(aResponse().withStatus(200)));
 
         given()
-                .when()
-                .get("/heartbeat")
-                .then()
-                .assertThat()
-                .statusCode(200)
-                .body("status", equalTo("UP"))
-                .body("warnings[0]", equalTo("Truststore certificate 'CN=TEST of KLASS3-SK 2010, OU=Sertifitseerimisteenused, O=AS Sertifitseerimiskeskus, C=EE' with serial number '46174084079274426180990408274615839251' is expiring at 2025-03-21T10:58:29Z"))
-                .body("dependencies[2].name", equalTo("truststore"))
-                .body("dependencies[2].status", equalTo("UNKNOWN"));
+            .when()
+            .get("/heartbeat")
+            .then()
+            .assertThat()
+            .statusCode(200)
+            .body("status", equalTo("UP"))
+            .body("warnings[0]", equalTo("Truststore certificate 'CN=TEST of KLASS3-SK 2010, OU=Sertifitseerimisteenused, O=AS Sertifitseerimiskeskus, C=EE' with serial number '46174084079274426180990408274615839251' is expiring at 2025-03-21T10:58:29Z"))
+            .body("dependencies.find{it.name=='truststore'}.name", equalTo("truststore"))
+            .body("dependencies.find{it.name=='truststore'}.status", equalTo("UNKNOWN"));
     }
 
     @Test

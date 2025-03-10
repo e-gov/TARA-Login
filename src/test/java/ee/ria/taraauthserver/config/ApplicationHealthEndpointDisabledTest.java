@@ -11,7 +11,9 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @TestPropertySource(
         locations = "classpath:application.yml",
         properties = {"management.endpoints.jmx.exposure.exclude=*",
-                "management.endpoints.web.exposure.exclude=*"})
+                "management.endpoints.jmx.exposure.include=",
+                "management.endpoints.web.exposure.exclude=*",
+                "management.endpoints.web.exposure.include="})
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class ApplicationHealthEndpointDisabledTest extends DisabledConfigurationTest {
 

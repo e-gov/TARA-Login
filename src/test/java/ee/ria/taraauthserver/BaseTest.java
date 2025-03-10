@@ -261,9 +261,11 @@ public abstract class BaseTest {
         if (additionalFilter != null) {
             eventStream = eventStream.filter(additionalFilter);
         }
-        List<ILoggingEvent> events = eventStream.collect(toUnmodifiableList());
-        List<String> messages = events.stream().map(ILoggingEvent::getFormattedMessage).collect(toUnmodifiableList());
-        assertThat("Expected log messages not found in output.\n\tExpected log messages: " + of(messagePrefixesInRelativeOrder) + ",\n\tActual log messages: " + messages,
+        List<ILoggingEvent> events = eventStream.toList();
+        List<String> messages = events.stream().map(ILoggingEvent::getFormattedMessage).toList();
+        assertThat("Expected log messages not found in output.\n\t"
+                + "Expected log messages: " + of(messagePrefixesInRelativeOrder) + ",\n\t"
+                + "Actual log messages: " + messages,
                 messages, containsInRelativeOrder(expectedMessages.stream().map(CoreMatchers::startsWith).toArray(Matcher[]::new)));
         return events;
     }
