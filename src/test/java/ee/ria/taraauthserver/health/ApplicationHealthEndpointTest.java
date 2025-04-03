@@ -48,10 +48,12 @@ public class ApplicationHealthEndpointTest extends BaseTest {
     @Tag(value = "HEALTH_MONITORING_ENDPOINT")
     @Tag(value = "HEALTH_MONITORING_STATUS")
     void applicationHealth_ok() {
+        Instant testTime = Instant.parse("2025-01-01T00:00:00Z");
+        Mockito.when(truststoreHealthIndicator.getSystemClock()).thenReturn(Clock.fixed(testTime, of("UTC")));
+
         wireMockServer.stubFor(any(urlPathEqualTo("/health/ready"))
                 .willReturn(aResponse().withStatus(200)));
 
-        Instant testTime = Instant.now();
         when(gitProperties.getCommitId()).thenReturn("commit-id");
         when(gitProperties.getBranch()).thenReturn("branch");
         when(buildProperties.getName()).thenReturn("tara-auth-server");
