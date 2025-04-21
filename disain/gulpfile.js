@@ -1,5 +1,5 @@
 var gulp = require('gulp');
-var sass = require('gulp-sass');
+var sass = require('gulp-sass')(require('sass'));
 var concat = require('gulp-concat');
 var sourcemaps = require('gulp-sourcemaps');
 var autoprefixer = require('gulp-autoprefixer');
@@ -37,7 +37,7 @@ config = {
 gulp.task('build:images', function () {
   return gulp
     .src(config.SRC.IMG)
-    .pipe(imagemin())
+    // .pipe(imagemin())
     .pipe(gulp.dest(config.DEST.IMG))
     .pipe(browserSync.stream())
 });

@@ -7,13 +7,14 @@
     "gulp-concat": "^2.6.1",
     "gulp-imagemin": "^7.1.0",
     "gulp-npm-script-sync": "^1.1.0",
-    "gulp-sass": "^3.1.0",
     "gulp-sourcemaps": "^2.6.0",
     "gulp-uglify": "^3.0.0",
     "pump": "^1.0.2"
   },
   "dependencies": {
-    "npm": "^7.0.2"
+    "gulp-sass": "^6.0.1",
+    "npm": "^7.0.2",
+    "sass": "^1.86.0"
   },
   "scripts": {
     "build:images": "gulp build:images",
