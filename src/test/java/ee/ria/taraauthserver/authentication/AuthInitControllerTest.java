@@ -73,6 +73,9 @@ class AuthInitControllerTest extends BaseTest {
     @Autowired
     private AuthConfigurationProperties.GovSsoConfigurationProperties govSsoConfigurationProperties;
 
+    @Autowired
+    private AuthConfigurationProperties.HydraConfigurationProperties hydraConfigurationProperties;
+
     @AfterEach
     void tearDown() {
         configurationPropertiesReloader.reload(authConfigurationProperties);
@@ -389,6 +392,7 @@ class AuthInitControllerTest extends BaseTest {
     @Tag(value = "AUTH_INIT_GET_OIDC_REQUEST")
     void authInit_configuredTimeoutFails() {
         AuthConfigurationProperties.HydraConfigurationProperties test = new AuthConfigurationProperties.HydraConfigurationProperties();
+        test.setLoginUrl(hydraConfigurationProperties.getLoginUrl());
         test.setRequestTimeoutInSeconds(1);
         authConfigurationProperties.setHydraService(test); // TODO AUT-857
         wireMockServer.stubFor(get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))

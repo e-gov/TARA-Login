@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.3</version>
+        <version>3.4.5</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>ee.ria.tara</groupId>
@@ -25,17 +25,17 @@
         <maven.compiler.release>17</maven.compiler.release>
 
         <bouncycastle.version>1.80</bouncycastle.version>
-        <elastic-apm.version>1.52.1</elastic-apm.version>
+        <elastic-apm.version>1.53.0</elastic-apm.version>
         <ignite.version>2.13.0</ignite.version><!-- TODO AUT-1086 Upgrade to >=2.14.0 when the following issue is
                                                      resolved:
                                                      https://www.mail-archive.com/user@ignite.apache.org/msg33644.html -->
-        <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
-        <logstash-logback-encoder.version>8.0</logstash-logback-encoder.version>
-        <mid-rest.version>1.5</mid-rest.version>
-        <smart-id.version>2.3</smart-id.version>
-        <spring-cloud.version>2024.0.0</spring-cloud.version><!-- Spring Cloud 2024.0.x release train is only compatible with Spring Boot 3.4.x, see table 1 at https://spring.io/projects/spring-cloud -->
+        <jacoco-maven-plugin.version>0.8.13</jacoco-maven-plugin.version>
+        <logstash-logback-encoder.version>8.1</logstash-logback-encoder.version>
+        <mid-rest.version>1.6</mid-rest.version>
+        <smart-id.version>2.3.1</smart-id.version>
+        <spring-cloud.version>2024.0.1</spring-cloud.version><!-- Spring Cloud 2024.0.x release train is only compatible with Spring Boot 3.4.x, see table 1 at https://spring.io/projects/spring-cloud -->
         <webeid.version>3.1.1</webeid.version>
-        <wiremock.version>3.12.0</wiremock.version>
+        <wiremock.version>3.12.1</wiremock.version>
     </properties>
 
     <dependencies>
