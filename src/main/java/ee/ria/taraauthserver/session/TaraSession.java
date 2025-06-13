@@ -313,15 +313,25 @@ public class TaraSession implements Serializable {
         }
 
         private LevelOfAssurance getRequestedAcr() {
-            List<String> requestedAcr = getOidcContext().getAcrValues();
-            if (requestedAcr == null || requestedAcr.isEmpty()) {
+            List<String> loginRequestAcr = getOidcContext().getAcrValues();
+            String clientSettingsAcr = getClient().getMetaData().getMinimumAcrValue();
+
+            if (loginRequestAcr == null || loginRequestAcr.isEmpty()) {
+                if (clientSettingsAcr != null) {
+                    return LevelOfAssurance.findByAcrName(clientSettingsAcr);
+                }
                 return null;
+            } else if (clientSettingsAcr != null && !loginRequestAcr.get(0).equals(clientSettingsAcr)) {
+                throw new InvalidLoginRequestException(
+                        "Requested acr_values must match configured minimum_acr_value",
+                        this);
             }
-            LevelOfAssurance acr = LevelOfAssurance.findByAcrName(requestedAcr.get(0));
+
+            LevelOfAssurance acr = LevelOfAssurance.findByAcrName(loginRequestAcr.get(0));
             // TODO: Validation should be done way before we reach the getter.
             if (acr == null) {
                 throw new InvalidLoginRequestException(
-                        "Unsupported acr value requested by client: '" + requestedAcr.get(0) + "'",
+                        "Unsupported acr value requested by client: '" + loginRequestAcr.get(0) + "'",
                         this);
             }
             return acr;
@@ -414,6 +424,8 @@ public class TaraSession implements Serializable {
         @NotNull
         @JsonProperty("display_user_consent")
         private boolean displayUserConsent;
+        @JsonProperty("minimum_acr_value")
+        private String minimumAcrValue;
     }
 
     @Data

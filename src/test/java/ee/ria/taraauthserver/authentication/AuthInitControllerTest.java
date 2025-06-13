@@ -799,7 +799,7 @@ class AuthInitControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "AUTH_INIT_ENABLED_AUTHMETHODS_ACR")
-    void authInit_NoAcrRequestedByOidc() {
+    void authInit_NoAcrRequestedByOidc_And_NoClientSettingsAcrDefined() {
         wireMockServer.stubFor(get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -821,6 +821,86 @@ class AuthInitControllerTest extends BaseTest {
                 .body(containsString("mobileIdForm"));
 
         assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_ENABLED_AUTHMETHODS_ACR")
+    void authInit_NoAcrRequestedByOidc_And_ClientSettingsAcrIsHigh() {
+        wireMockServer.stubFor(get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_requested-acr-not-set_client-settings-acr-high.json")));
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.LOW); // TODO AUT-857
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.HIGH);
+
+        given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE +
+                        ";charset=UTF-8")
+                .body(containsString("idCardForm"))
+                .body(containsString("mobileIdForm"));
+
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_ENABLED_AUTHMETHODS_ACR")
+    void authInit_AcrRequestedByOidcIsHigh_And_ClientSettingsAcrIsHigh() {
+        wireMockServer.stubFor(get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_requested-acr-high_client-settings-acr-high.json")));
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.HIGH); // TODO AUT-857
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.LOW);
+
+        given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE +
+                        ";charset=UTF-8")
+                .body((containsString("idCardForm")))
+                .body(not(containsString("mobileIdForm")));
+
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_ENABLED_AUTHMETHODS_ACR")
+    void authInit_AcrRequestedByOidcIsSubstantial_And_ClientSettingsAcrIsHigh() {
+        wireMockServer.stubFor(get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_requested-acr-substantial_client-settings-acr-high.json")));
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.HIGH); // TODO AUT-857
+        authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.LOW);
+
+        given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .statusCode(500)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8)
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
+                .body("error", equalTo("Internal Server Error"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
+                .body("reportable", equalTo(true));
+
+        assertErrorIsLogged("Server encountered an unexpected error: Requested acr_values must match configured minimum_acr_value");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=70006317, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
     }
 
     @Test
