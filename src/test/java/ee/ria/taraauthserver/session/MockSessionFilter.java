@@ -50,6 +50,8 @@ public class MockSessionFilter implements Filter {
                                                          List<AuthenticationType> authenticationTypes,
                                                          List<String> clientAllowedScopes,
                                                          List<String> requestedScopes,
+                                                         List<String> requestedAcr,
+                                                         String clientSettingsAcr,
                                                          List<TaraSession.LegalPerson> legalPersonList,
                                                          SPType spType,
                                                          Map<String, String> shortNameTranslations,
@@ -57,7 +59,7 @@ public class MockSessionFilter implements Filter {
                                                          ChallengeNonce nonce,
                                                          TaraSession.AuthenticationResult authenticationResult,
                                                          String chosenLanguage) {
-        Session session = createTaraSession(sessionRepository, authenticationState, authenticationTypes, clientAllowedScopes, requestedScopes, legalPersonList, spType, shortNameTranslations, nonce, authenticationResult, chosenLanguage);
+        Session session = createTaraSession(sessionRepository, authenticationState, authenticationTypes, clientAllowedScopes, requestedScopes, requestedAcr, clientSettingsAcr, legalPersonList, spType, shortNameTranslations, nonce, authenticationResult, chosenLanguage);
         sessionRepository.save(session);
         return new MockSessionFilter(session, csrfMode);
     }
@@ -94,6 +96,8 @@ public class MockSessionFilter implements Filter {
                                              List<AuthenticationType> authenticationTypes,
                                              List<String> clientAllowedScopes,
                                              List<String> requestedScopes,
+                                             List<String> requestedAcr,
+                                             String clientSettingsAcr,
                                              List<TaraSession.LegalPerson> legalPersonList,
                                              SPType spType,
                                              Map<String, String> shortNameTranslations,
@@ -107,6 +111,8 @@ public class MockSessionFilter implements Filter {
                 .authenticationTypes(authenticationTypes)
                 .clientAllowedScopes(clientAllowedScopes)
                 .requestedScopes(requestedScopes)
+                .requestedAcr(requestedAcr)
+                .clientSettingsAcr(clientSettingsAcr)
                 .legalPersonList(legalPersonList)
                 .spType(spType)
                 .shortNameTranslations(shortNameTranslations)

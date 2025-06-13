@@ -44,7 +44,8 @@
           "registry_code": "70006317",
           "sector": "public"
         }
-      }
+      },
+      "minimum_acr_value": "high"
     },
     "owner": "string",
     "policy_uri": "string",

@@ -12,6 +12,7 @@ import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.InvalidLoginRequestException;
 import ee.ria.taraauthserver.session.update.TaraSessionUpdate;
+import ee.ria.taraauthserver.utils.AcrUtils;
 import eu.webeid.security.challenge.ChallengeNonce;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -313,17 +314,9 @@ public class TaraSession implements Serializable {
         }
 
         private LevelOfAssurance getRequestedAcr() {
-            List<String> requestedAcr = getOidcContext().getAcrValues();
-            if (requestedAcr == null || requestedAcr.isEmpty()) {
-                return null;
-            }
-            LevelOfAssurance acr = LevelOfAssurance.findByAcrName(requestedAcr.get(0));
-            // TODO: Validation should be done way before we reach the getter.
-            if (acr == null) {
-                throw new InvalidLoginRequestException(
-                        "Unsupported acr value requested by client: '" + requestedAcr.get(0) + "'",
-                        this);
-            }
+            String acrValue = AcrUtils.getAppropriateAcrValue(this);
+            LevelOfAssurance acr = LevelOfAssurance.findByAcrName(acrValue);
+
             return acr;
         }
 
@@ -414,6 +407,8 @@ public class TaraSession implements Serializable {
         @NotNull
         @JsonProperty("display_user_consent")
         private boolean displayUserConsent;
+        @JsonProperty("minimum_acr_value")
+        private String minimumAcrValue;
     }
 
     @Data

@@ -53,6 +53,8 @@ public class MockTaraSessionBuilder {
                                                List<AuthenticationType> authenticationTypes,
                                                List<String> clientAllowedScopes,
                                                List<String> requestedScopes,
+                                               List<String> requestedAcr,
+                                               String clientSettingsAcr,
                                                List<TaraSession.LegalPerson> legalPersonList,
                                                SPType spType,
                                                Map<String, String> shortNameTranslations,
@@ -65,6 +67,7 @@ public class MockTaraSessionBuilder {
         TaraSession.MetaData metaData = new TaraSession.MetaData();
         TaraSession.OidcClient oidcClient = new TaraSession.OidcClient();
         TaraSession.Institution institution = new TaraSession.Institution();
+        TaraSession.OidcContext oidcContext = new TaraSession.OidcContext();
         taraSession.setLegalPersonList(legalPersonList);
         taraSession.setWebEidChallengeNonce(webEidChallengeNonce);
 
@@ -85,8 +88,11 @@ public class MockTaraSessionBuilder {
             oidcClient.setShortNameTranslations(shortNameTranslations);
         }
         metaData.setOidcClient(oidcClient);
+        metaData.setMinimumAcrValue(clientSettingsAcr);
         client.setMetaData(metaData);
         client.setScope(clientAllowedScopes == null ? "" : join(" ", clientAllowedScopes));
+        oidcContext.setAcrValues(requestedAcr);
+        lri.setOidcContext(oidcContext);
         lri.setClient(client);
         lri.setUrl(new URL(MOCK_LOGIN_REQUEST_URL));
 
