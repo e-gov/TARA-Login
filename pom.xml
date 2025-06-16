@@ -23,6 +23,8 @@
 
     <properties>
         <maven.compiler.release>17</maven.compiler.release>
+        <imageName>${project.artifactId}:latest</imageName>
+        <githubMirror>https://github.com</githubMirror>
 
         <bouncycastle.version>1.80</bouncycastle.version>
         <elastic-apm.version>1.53.0</elastic-apm.version>
@@ -353,6 +355,7 @@
                         -Djava.net.preferIPv4Stack=true
                     </jvmArguments>
                     <image>
+                        <name>${imageName}</name>
                         <env>
                             <BPE_IGNITE_HOME>/tmp/ignite</BPE_IGNITE_HOME>
                             <BPE_DELIM_JAVA_TOOL_OPTIONS xml:space="preserve"> </BPE_DELIM_JAVA_TOOL_OPTIONS>
@@ -380,6 +383,12 @@
                                 --add-opens=java.base/java.time=ALL-UNNAMED
                                 --add-opens=java.base/java.net=ALL-UNNAMED
                             </BPE_APPEND_JAVA_TOOL_OPTIONS>
+                            <!-- Avoid excessive downloads in build environments with restricted internet access -->
+                            <BP_SPRING_CLOUD_BINDINGS_DISABLED>true</BP_SPRING_CLOUD_BINDINGS_DISABLED>
+                            <!-- Enable overriding GitHub mirror -->
+                            <BP_DEPENDENCY_MIRROR_GITHUB_COM>${githubMirror}</BP_DEPENDENCY_MIRROR_GITHUB_COM>
+                            <!-- Some mirrors might respond too slowly to handle the default timeout (5s) -->
+                            <BP_RESPONSE_HEADER_TIMEOUT>60</BP_RESPONSE_HEADER_TIMEOUT>
                         </env>
                     </image>
                     <excludes>

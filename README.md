@@ -64,6 +64,15 @@ MSYS_NO_PATHCONV=1 docker run --rm -v "${PWD}:/data" -w /data/disain node:14 sh 
 
 You can find the compiled WAR archive in the target/ directory.
 
+### Building Docker image
+
+Follow the instructions above to build the webapp. After that, execute the following command to build a Docker image:
+```shell
+./mvnw spring-boot:build-image -DskipTests
+```
+The built image is named and tagged as "tara-login-server:latest" by default.
+You can override it by using `-DimageName` parameter for Maven.
+
 <a name="deploying"></a>
 ## Deploying the webapp
 
