@@ -892,15 +892,15 @@ class AuthInitControllerTest extends BaseTest {
                 .get("/auth/init")
                 .then()
                 .assertThat()
-                .statusCode(500)
+                .statusCode(400)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8)
-                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
-                .body("error", equalTo("Internal Server Error"))
+                .body("message", equalTo("Ebakorrektne päring. Teenusel pole lubatud päringus määratud autentimistaseme (acr_values) väärtust kasutada."))
+                .body("error", equalTo("Bad Request"))
                 .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(true));
 
-        assertErrorIsLogged("Server encountered an unexpected error: Requested acr_values must match configured minimum_acr_value");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=70006317, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertErrorIsLogged("User exception: Requested acr_values must match configured minimum_acr_value");
+        assertStatisticsIsNotLogged();
     }
 
     @Test

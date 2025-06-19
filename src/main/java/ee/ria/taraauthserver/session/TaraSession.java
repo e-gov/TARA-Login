@@ -10,6 +10,7 @@ import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
+import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.InvalidLoginRequestException;
 import ee.ria.taraauthserver.session.update.TaraSessionUpdate;
 import eu.webeid.security.challenge.ChallengeNonce;
@@ -43,6 +44,7 @@ import java.util.Optional;
 
 import static ee.ria.taraauthserver.config.properties.TaraScope.EMAIL;
 import static ee.ria.taraauthserver.config.properties.TaraScope.PHONE;
+import static ee.ria.taraauthserver.error.ErrorCode.INVALID_ACR_VALUE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.stream;
 import static java.util.List.of;
@@ -322,9 +324,8 @@ public class TaraSession implements Serializable {
                 }
                 return null;
             } else if (clientSettingsAcr != null && !loginRequestAcr.get(0).equals(clientSettingsAcr)) {
-                throw new InvalidLoginRequestException(
-                        "Requested acr_values must match configured minimum_acr_value",
-                        this);
+                throw new BadRequestException(INVALID_ACR_VALUE,
+                        "Requested acr_values must match configured minimum_acr_value");
             }
 
             LevelOfAssurance acr = LevelOfAssurance.findByAcrName(loginRequestAcr.get(0));

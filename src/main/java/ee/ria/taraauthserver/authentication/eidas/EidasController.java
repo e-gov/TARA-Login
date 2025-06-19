@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import static ee.ria.taraauthserver.error.ErrorCode.INVALID_ACR_VALUE;
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
@@ -112,7 +113,7 @@ public class EidasController {
         if (loginRequestAcrList != null) {
             String loginRequestAcr = loginRequestAcrList.get(0).toUpperCase();
             if (clientSettingsAcr != null && !loginRequestAcr.equals(clientSettingsAcr.toUpperCase())) {
-                throw new BadRequestException(INVALID_REQUEST, "Requested acr_values must match configured minimum_acr_value");
+                throw new BadRequestException(INVALID_ACR_VALUE, "Requested acr_values must match configured minimum_acr_value");
             }
             builder.queryParam("LoA", loginRequestAcr);
         } else if (clientSettingsAcr != null) {

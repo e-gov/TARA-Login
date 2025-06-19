@@ -295,7 +295,7 @@ public class EidasControllerTest extends BaseTest {
                 .post("/auth/eidas/init")
                 .then()
                 .assertThat()
-                .body("message", equalTo("Ebakorrektne päring."))
+                .body("message", equalTo("Ebakorrektne päring. Teenusel pole lubatud päringus määratud autentimistaseme (acr_values) väärtust kasutada."))
                 .body("error", equalTo("Bad Request"))
                 .statusCode(400);
 
