@@ -28,6 +28,9 @@ import static ch.qos.logback.classic.Level.ERROR;
 import static ch.qos.logback.classic.Level.INFO;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
+import static com.github.tomakehurst.wiremock.client.WireMock.exactly;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.EIDAS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
@@ -237,6 +240,7 @@ public class EidasControllerTest extends BaseTest {
         RestAssured.responseSpecification = null;
         MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
+                .requestedAcr(List.of("high"))
                 .authenticationTypes(List.of(EIDAS))
                 .authenticationState(INIT_AUTH_PROCESS)
                 .authenticationResult(new TaraSession.EidasAuthenticationResult())
@@ -261,6 +265,102 @@ public class EidasControllerTest extends BaseTest {
         assertEquals(eidasRelayStateCache.get(relayState), sessionFilter.getSession().getId());
         assertEquals("a:b:c", oidcClient.getEidasRequesterId().toString());
         assertEquals(SPType.PUBLIC, oidcClient.getInstitution().getSector());
+        wireMockServer.verify(exactly(1), getRequestedFor(urlMatching("^\\/login\\?Country=CA&RequesterID=a:b:c&SPType=public&RelayState=.*&LoA=HIGH$")));
+        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request", "http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&RequesterID=a:b:c&SPType=public&RelayState="); // Regex?
+        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS response: 200", "http.response.status_code=200, http.response.body.content=\"<html xmlns=\\\"http://www.w3.org/1999/xhtml\\\" xml:lang=\\\"en\\\"><body onload=\\\"document.forms[0].submit()\\\"><noscript><p><strong>Note: </strong> Since your browser does not support JavaScript, you must press the Continue button once to proceed.</p></noscript><form action=\\\"https&#x3a;&#x2f;&#x2f;eidastest.eesti.ee/&#x3a;8080&#x2f;EidasNode&#x2f;ServiceProvider\\\" method=\\\"post\\\"><div><input type=\\\"hidden\\\" name=\\\"SAMLRequest\\\" value=\\\"PD94bWw...........MnA6QXV0aG5SZXF1ZXN0Pg==\\\"/><input type=\\\"hidden\\\" name=\\\"country\\\" value=\\\"CA\\\"/></div><noscript><div><input type=\\\"submit\\\" value=\\\"Continue\\\"/></div></noscript></form></body></html>");
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    @Tag(value = "EIDAS_AUTH_INIT_GET_REQUEST")
+    void eidasAuthInit_AcrRequestedByOidcIsSubstantial_And_ClientSettingsAcrIsHigh() {
+        createEidasCountryStub("mock_responses/eidas/eidas-countries-response.json", 200);
+        createEidasLoginStub("mock_responses/eidas/eidas-login-response.json", 200);
+        RestAssured.responseSpecification = null;
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                .requestedAcr(List.of("substantial"))
+                .clientSettingsAcr("high")
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(List.of(EIDAS))
+                .authenticationState(INIT_AUTH_PROCESS)
+                .authenticationResult(new TaraSession.EidasAuthenticationResult())
+                .clientAllowedScopes(List.of("eidas")).build();
+        await().atMost(FIVE_SECONDS)
+                .until(() -> eidasConfigurationProperties.getAvailableCountries().get(SPType.PUBLIC).size(), Matchers.equalTo(1));
+
+        given()
+                .filter(sessionFilter)
+                .when()
+                .param("country", "CA")
+                .post("/auth/eidas/init")
+                .then()
+                .assertThat()
+                .body("message", equalTo("Ebakorrektne päring."))
+                .body("error", equalTo("Bad Request"))
+                .statusCode(400);
+
+        assertErrorIsLogged("User exception: Requested acr_values must match configured minimum_acr_value");
+    }
+
+    @Test
+    @Tag(value = "EIDAS_AUTH_INIT_GET_REQUEST")
+    void eidasAuthInit_AcrRequestedByOidcIsHigh_And_ClientSettingsAcrIsHigh() {
+        createEidasCountryStub("mock_responses/eidas/eidas-countries-response.json", 200);
+        createEidasLoginStub("mock_responses/eidas/eidas-login-response.json", 200);
+        RestAssured.responseSpecification = null;
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                .requestedAcr(List.of("high"))
+                .clientSettingsAcr("high")
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(List.of(EIDAS))
+                .authenticationState(INIT_AUTH_PROCESS)
+                .authenticationResult(new TaraSession.EidasAuthenticationResult())
+                .clientAllowedScopes(List.of("eidas")).build();
+        await().atMost(FIVE_SECONDS)
+                .until(() -> eidasConfigurationProperties.getAvailableCountries().get(SPType.PUBLIC).size(), Matchers.equalTo(1));
+
+        given()
+                .filter(sessionFilter)
+                .when()
+                .param("country", "CA")
+                .post("/auth/eidas/init")
+                .then()
+                .assertThat()
+                .statusCode(200);
+
+        wireMockServer.verify(exactly(1), getRequestedFor(urlMatching("^\\/login\\?Country=CA&RequesterID=a:b:c&SPType=public&RelayState=.*&LoA=HIGH$")));
+        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request", "http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&RequesterID=a:b:c&SPType=public&RelayState="); // Regex?
+        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS response: 200", "http.response.status_code=200, http.response.body.content=\"<html xmlns=\\\"http://www.w3.org/1999/xhtml\\\" xml:lang=\\\"en\\\"><body onload=\\\"document.forms[0].submit()\\\"><noscript><p><strong>Note: </strong> Since your browser does not support JavaScript, you must press the Continue button once to proceed.</p></noscript><form action=\\\"https&#x3a;&#x2f;&#x2f;eidastest.eesti.ee/&#x3a;8080&#x2f;EidasNode&#x2f;ServiceProvider\\\" method=\\\"post\\\"><div><input type=\\\"hidden\\\" name=\\\"SAMLRequest\\\" value=\\\"PD94bWw...........MnA6QXV0aG5SZXF1ZXN0Pg==\\\"/><input type=\\\"hidden\\\" name=\\\"country\\\" value=\\\"CA\\\"/></div><noscript><div><input type=\\\"submit\\\" value=\\\"Continue\\\"/></div></noscript></form></body></html>");
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    @Tag(value = "EIDAS_AUTH_INIT_GET_REQUEST")
+    void eidasAuthInit_NoAcrRequestedByOidc_And_ClientSettingsAcrIsHigh() {
+        createEidasCountryStub("mock_responses/eidas/eidas-countries-response.json", 200);
+        createEidasLoginStub("mock_responses/eidas/eidas-login-response.json", 200);
+        RestAssured.responseSpecification = null;
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                .requestedAcr(null)
+                .clientSettingsAcr("high")
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(List.of(EIDAS))
+                .authenticationState(INIT_AUTH_PROCESS)
+                .authenticationResult(new TaraSession.EidasAuthenticationResult())
+                .clientAllowedScopes(List.of("eidas")).build();
+        await().atMost(FIVE_SECONDS)
+                .until(() -> eidasConfigurationProperties.getAvailableCountries().get(SPType.PUBLIC).size(), Matchers.equalTo(1));
+
+        given()
+                .filter(sessionFilter)
+                .when()
+                .param("country", "CA")
+                .post("/auth/eidas/init")
+                .then()
+                .assertThat()
+                .statusCode(200);
+
+        wireMockServer.verify(exactly(1), getRequestedFor(urlMatching("^\\/login\\?Country=CA&RequesterID=a:b:c&SPType=public&RelayState=.*&LoA=HIGH$")));
         assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request", "http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&RequesterID=a:b:c&SPType=public&RelayState="); // Regex?
         assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS response: 200", "http.response.status_code=200, http.response.body.content=\"<html xmlns=\\\"http://www.w3.org/1999/xhtml\\\" xml:lang=\\\"en\\\"><body onload=\\\"document.forms[0].submit()\\\"><noscript><p><strong>Note: </strong> Since your browser does not support JavaScript, you must press the Continue button once to proceed.</p></noscript><form action=\\\"https&#x3a;&#x2f;&#x2f;eidastest.eesti.ee/&#x3a;8080&#x2f;EidasNode&#x2f;ServiceProvider\\\" method=\\\"post\\\"><div><input type=\\\"hidden\\\" name=\\\"SAMLRequest\\\" value=\\\"PD94bWw...........MnA6QXV0aG5SZXF1ZXN0Pg==\\\"/><input type=\\\"hidden\\\" name=\\\"country\\\" value=\\\"CA\\\"/></div><noscript><div><input type=\\\"submit\\\" value=\\\"Continue\\\"/></div></noscript></form></body></html>");
         assertStatisticsIsNotLogged();
