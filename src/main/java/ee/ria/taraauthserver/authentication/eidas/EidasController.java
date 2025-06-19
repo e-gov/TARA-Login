@@ -6,6 +6,7 @@ import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import ee.ria.taraauthserver.error.exceptions.InvalidLoginRequestException;
 import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.session.update.InitEidasSessionUpdate;
 import ee.ria.taraauthserver.session.SessionUtils;
@@ -106,9 +107,17 @@ public class EidasController {
                 .queryParam("RequesterID", oidcClient.getEidasRequesterId())
                 .queryParam("SPType", oidcClient.getInstitution().getSector())
                 .queryParam("RelayState", relayState);
-        List<String> acr = getAcrFromSessionOidcContext(taraSession);
-        if (acr != null)
-            builder.queryParam("LoA", acr.get(0).toUpperCase());
+        List<String> loginRequestAcrList = getAcrFromSessionOidcContext(taraSession);
+        String clientSettingsAcr = getAcrFromClientSettings(taraSession);
+        if (loginRequestAcrList != null) {
+            String loginRequestAcr = loginRequestAcrList.get(0).toUpperCase();
+            if (clientSettingsAcr != null && !loginRequestAcr.equals(clientSettingsAcr.toUpperCase())) {
+                throw new BadRequestException(INVALID_REQUEST, "Requested acr_values must match configured minimum_acr_value");
+            }
+            builder.queryParam("LoA", loginRequestAcr);
+        } else if (clientSettingsAcr != null) {
+            builder.queryParam("LoA", clientSettingsAcr.toUpperCase());
+        }
         return builder.toUriString();
     }
 
@@ -127,6 +136,15 @@ public class EidasController {
                 .map(TaraSession::getLoginRequestInfo)
                 .map(TaraSession.LoginRequestInfo::getOidcContext)
                 .map(TaraSession.OidcContext::getAcrValues)
+                .orElse(null);
+    }
+
+    private String getAcrFromClientSettings(TaraSession taraSession) {
+        return Optional.of(taraSession)
+                .map(TaraSession::getLoginRequestInfo)
+                .map(TaraSession.LoginRequestInfo::getClient)
+                .map(TaraSession.Client::getMetaData)
+                .map(TaraSession.MetaData::getMinimumAcrValue)
                 .orElse(null);
     }
 
