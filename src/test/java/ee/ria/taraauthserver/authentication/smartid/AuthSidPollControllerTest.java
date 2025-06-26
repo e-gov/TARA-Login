@@ -127,7 +127,7 @@ class AuthSidPollControllerTest extends BaseTest {
     @Tag(value = "SID_AUTH_FAILED")
     void sidAuth_session_status_authentication_failed() {
         TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
-        authenticationResult.setErrorCode(ErrorCode.SID_USER_REFUSED_CERT_CHOICE);
+        authenticationResult.setErrorCode(ErrorCode.SID_USER_REFUSED);
         MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(SMART_ID))
@@ -142,7 +142,7 @@ class AuthSidPollControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .body("error", equalTo("Bad Request"))
-                .body("message", equalTo("Kasutajal on mitu<span translate=\"no\" lang=\"en\"> Smart-ID </span>kontot ja ühe kontoga tühistati autentimine."))
+                .body("message", equalTo("Kasutaja katkestas autentimise<span translate=\"no\" lang=\"en\"> Smart-ID </span>rakenduses."))
                 .body("reportable", equalTo(false))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
 
@@ -150,7 +150,7 @@ class AuthSidPollControllerTest extends BaseTest {
         assertNull(sessionRepository.findById(sessionFilter.getSession().getId()));
         assertWarningIsLogged("Session has been invalidated: " + sessionId);
         assertInfoIsLogged("Session is removed from cache: " + sessionId);
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_USER_REFUSED_CERT_CHOICE)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_USER_REFUSED)");
     }
 
     @Test

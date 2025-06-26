@@ -53,7 +53,6 @@ import static ee.ria.taraauthserver.error.ErrorCode.SID_DOCUMENT_UNUSABLE;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_SESSION_TIMEOUT;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_ACCOUNT_NOT_FOUND;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED;
-import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_CERT_CHOICE;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_CONFIRMATIONMESSAGE;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_DISAPLAYTEXTANDPIN;
@@ -89,7 +88,6 @@ public class ErrorAttributes extends DefaultErrorAttributes {
             SID_USER_REFUSED,
             SID_SESSION_TIMEOUT,
             SID_WRONG_VC,
-            SID_USER_REFUSED_CERT_CHOICE,
             SID_USER_REFUSED_DISAPLAYTEXTANDPIN,
             SID_USER_ACCOUNT_NOT_FOUND,
             SID_USER_REFUSED_VC_CHOICE,

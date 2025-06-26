@@ -61,7 +61,6 @@ import static ee.ria.taraauthserver.error.ErrorCode.SID_REQUEST_TIMEOUT;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_SESSION_TIMEOUT;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_ACCOUNT_NOT_FOUND;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED;
-import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_CERT_CHOICE;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_CONFIRMATIONMESSAGE;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_DISAPLAYTEXTANDPIN;
@@ -100,7 +99,6 @@ public class AuthSidService {
         errorMap.put(DocumentUnusableException.class, SID_DOCUMENT_UNUSABLE);
         errorMap.put(UserSelectedWrongVerificationCodeException.class, SID_WRONG_VC);
         errorMap.put(RequiredInteractionNotSupportedByAppException.class, SID_INTERACTION_NOT_SUPPORTED);
-        errorMap.put(UserRefusedCertChoiceException.class, SID_USER_REFUSED_CERT_CHOICE);
         errorMap.put(UserRefusedDisplayTextAndPinException.class, SID_USER_REFUSED_DISAPLAYTEXTANDPIN);
         errorMap.put(UserRefusedVerificationChoiceException.class, SID_USER_REFUSED_VC_CHOICE);
         errorMap.put(UserAccountNotFoundException.class, SID_USER_ACCOUNT_NOT_FOUND);
