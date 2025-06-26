@@ -1089,34 +1089,6 @@ class SmartIdControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "SID_AUTH_POLL_RESPONSE_COMPLETED_ERRORS")
-    void sidAuthInit_PollResponse_ok_userRefusedCertChoice() {
-        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
-                .sessionRepository(sessionRepository)
-                .authenticationTypes(of(SMART_ID))
-                .authenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS).build();
-        createSidApiAuthenticationStub("mock_responses/sid/sid_authentication_init_response.json", 200);
-        createSidApiPollStub("mock_responses/sid/sid_poll_response_user_refused_cert_choice.json", 200);
-
-        given()
-                .filter(sessionFilter)
-                .when()
-                .formParam(ID_CODE, ID_CODE_VALUE)
-                .post("/auth/sid/init")
-                .then()
-                .assertThat()
-                .statusCode(200);
-
-        TaraSession taraSession = await().atMost(FIVE_SECONDS)
-                .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
-        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
-        assertEquals(ErrorCode.SID_USER_REFUSED_CERT_CHOICE, taraSession.getAuthenticationResult().getErrorCode());
-        assertWarningIsLogged("Smart-ID authentication failed: User has multiple accounts and pressed Cancel on device choice screen on any device., Error code: SID_USER_REFUSED_CERT_CHOICE");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=SID_USER_REFUSED_CERT_CHOICE)");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_USER_REFUSED_CERT_CHOICE)");
-    }
-
-    @Test
-    @Tag(value = "SID_AUTH_POLL_RESPONSE_COMPLETED_ERRORS")
     void sidAuthInit_PollResponse_ok_userRefusedDisplaytextandpin() {
         MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)

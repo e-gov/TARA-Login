@@ -25,7 +25,6 @@ public enum ErrorCode {
     SID_DOCUMENT_UNUSABLE("message.smart-id.error.user-document-unusable"),
     SID_WRONG_VC("message.smart-id.error.wrong-vc"),
     SID_INTERACTION_NOT_SUPPORTED("message.smart-id.error.required-interaction-not-supported-by-app"),
-    SID_USER_REFUSED_CERT_CHOICE("message.smart-id.error.user-refused-cert-choice"),
     SID_USER_REFUSED_DISAPLAYTEXTANDPIN("message.smart-id.error.user-refused-display-text-and-pin"),
     SID_USER_ACCOUNT_NOT_FOUND("message.smart-id.error.user-account-not-found"),
     SID_USER_REFUSED_VC_CHOICE("message.smart-id.error.user-refused-vc-choice"),
