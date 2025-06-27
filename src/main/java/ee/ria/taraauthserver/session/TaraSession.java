@@ -10,9 +10,9 @@ import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
-import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.InvalidLoginRequestException;
 import ee.ria.taraauthserver.session.update.TaraSessionUpdate;
+import ee.ria.taraauthserver.utils.AcrUtils;
 import eu.webeid.security.challenge.ChallengeNonce;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -44,7 +44,6 @@ import java.util.Optional;
 
 import static ee.ria.taraauthserver.config.properties.TaraScope.EMAIL;
 import static ee.ria.taraauthserver.config.properties.TaraScope.PHONE;
-import static ee.ria.taraauthserver.error.ErrorCode.INVALID_ACR_VALUE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.stream;
 import static java.util.List.of;
@@ -315,26 +314,9 @@ public class TaraSession implements Serializable {
         }
 
         private LevelOfAssurance getRequestedAcr() {
-            List<String> loginRequestAcr = getOidcContext().getAcrValues();
-            String clientSettingsAcr = getClient().getMetaData().getMinimumAcrValue();
+            String acrValue = AcrUtils.getAppropriateAcrValue(this);
+            LevelOfAssurance acr = LevelOfAssurance.findByAcrName(acrValue);
 
-            if (loginRequestAcr == null || loginRequestAcr.isEmpty()) {
-                if (clientSettingsAcr != null) {
-                    return LevelOfAssurance.findByAcrName(clientSettingsAcr);
-                }
-                return null;
-            } else if (clientSettingsAcr != null && !loginRequestAcr.get(0).equals(clientSettingsAcr)) {
-                throw new BadRequestException(INVALID_ACR_VALUE,
-                        "Requested acr_values must match configured minimum_acr_value");
-            }
-
-            LevelOfAssurance acr = LevelOfAssurance.findByAcrName(loginRequestAcr.get(0));
-            // TODO: Validation should be done way before we reach the getter.
-            if (acr == null) {
-                throw new InvalidLoginRequestException(
-                        "Unsupported acr value requested by client: '" + loginRequestAcr.get(0) + "'",
-                        this);
-            }
             return acr;
         }
 

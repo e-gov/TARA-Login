@@ -6,12 +6,12 @@ import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
-import ee.ria.taraauthserver.error.exceptions.InvalidLoginRequestException;
 import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.session.update.InitEidasSessionUpdate;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraSession.OidcClient;
+import ee.ria.taraauthserver.utils.AcrUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -32,10 +32,8 @@ import javax.cache.Cache;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
-import static ee.ria.taraauthserver.error.ErrorCode.INVALID_ACR_VALUE;
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
@@ -108,17 +106,13 @@ public class EidasController {
                 .queryParam("RequesterID", oidcClient.getEidasRequesterId())
                 .queryParam("SPType", oidcClient.getInstitution().getSector())
                 .queryParam("RelayState", relayState);
-        List<String> loginRequestAcrList = getAcrFromSessionOidcContext(taraSession);
-        String clientSettingsAcr = getAcrFromClientSettings(taraSession);
-        if (loginRequestAcrList != null) {
-            String loginRequestAcr = loginRequestAcrList.get(0).toUpperCase();
-            if (clientSettingsAcr != null && !loginRequestAcr.equals(clientSettingsAcr.toUpperCase())) {
-                throw new BadRequestException(INVALID_ACR_VALUE, "Requested acr_values must match configured minimum_acr_value");
-            }
-            builder.queryParam("LoA", loginRequestAcr);
-        } else if (clientSettingsAcr != null) {
-            builder.queryParam("LoA", clientSettingsAcr.toUpperCase());
+
+        String acrValue = AcrUtils.getAppropriateAcrValue(taraSession.getLoginRequestInfo());
+
+        if (acrValue != null) {
+            builder.queryParam("LoA", acrValue.toUpperCase());
         }
+
         return builder.toUriString();
     }
 
@@ -130,23 +124,6 @@ public class EidasController {
                 ErrorCode.EIDAS_COUNTRY_NOT_SUPPORTED,
                 "Requested country not supported for " + spType + " sector.",
                 messageParameters);
-    }
-
-    private List<String> getAcrFromSessionOidcContext(TaraSession taraSession) {
-        return Optional.of(taraSession)
-                .map(TaraSession::getLoginRequestInfo)
-                .map(TaraSession.LoginRequestInfo::getOidcContext)
-                .map(TaraSession.OidcContext::getAcrValues)
-                .orElse(null);
-    }
-
-    private String getAcrFromClientSettings(TaraSession taraSession) {
-        return Optional.of(taraSession)
-                .map(TaraSession::getLoginRequestInfo)
-                .map(TaraSession.LoginRequestInfo::getClient)
-                .map(TaraSession.Client::getMetaData)
-                .map(TaraSession.MetaData::getMinimumAcrValue)
-                .orElse(null);
     }
 
     public void validateSession(TaraSession taraSession) {

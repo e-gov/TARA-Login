@@ -304,6 +304,64 @@ public class EidasControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "EIDAS_AUTH_INIT_GET_REQUEST")
+    void eidasAuthInit_MultipleAcrRequestedByOidc() {
+        createEidasCountryStub("mock_responses/eidas/eidas-countries-response.json", 200);
+        createEidasLoginStub("mock_responses/eidas/eidas-login-response.json", 200);
+        RestAssured.responseSpecification = null;
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                .requestedAcr(List.of("substantial", "high"))
+                .clientSettingsAcr("high")
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(List.of(EIDAS))
+                .authenticationState(INIT_AUTH_PROCESS)
+                .authenticationResult(new TaraSession.EidasAuthenticationResult())
+                .clientAllowedScopes(List.of("eidas")).build();
+
+        given()
+                .filter(sessionFilter)
+                .when()
+                .param("country", "CA")
+                .post("/auth/eidas/init")
+                .then()
+                .assertThat()
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
+                .body("error", equalTo("Internal Server Error"))
+                .statusCode(500);
+
+        assertErrorIsLogged("Server encountered an unexpected error: acrValues must contain only 1 value");
+    }
+
+    @Test
+    @Tag(value = "EIDAS_AUTH_INIT_GET_REQUEST")
+    void eidasAuthInit_UnsupportedAcrRequestedByOidc() {
+        createEidasCountryStub("mock_responses/eidas/eidas-countries-response.json", 200);
+        createEidasLoginStub("mock_responses/eidas/eidas-login-response.json", 200);
+        RestAssured.responseSpecification = null;
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                .requestedAcr(List.of("wrongvalue"))
+                .clientSettingsAcr("high")
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(List.of(EIDAS))
+                .authenticationState(INIT_AUTH_PROCESS)
+                .authenticationResult(new TaraSession.EidasAuthenticationResult())
+                .clientAllowedScopes(List.of("eidas")).build();
+
+        given()
+                .filter(sessionFilter)
+                .when()
+                .param("country", "CA")
+                .post("/auth/eidas/init")
+                .then()
+                .assertThat()
+                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
+                .body("error", equalTo("Internal Server Error"))
+                .statusCode(500);
+
+        assertErrorIsLogged("Server encountered an unexpected error: Unsupported acr value requested by client: 'wrongvalue'");
+    }
+
+    @Test
+    @Tag(value = "EIDAS_AUTH_INIT_GET_REQUEST")
     void eidasAuthInit_AcrRequestedByOidcIsHigh_And_ClientSettingsAcrIsHigh() {
         createEidasCountryStub("mock_responses/eidas/eidas-countries-response.json", 200);
         createEidasLoginStub("mock_responses/eidas/eidas-login-response.json", 200);

@@ -843,7 +843,7 @@ class AuthInitControllerTest extends BaseTest {
                 .statusCode(200)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML_VALUE +
                         ";charset=UTF-8")
-                .body(containsString("idCardForm"))
+                .body(not(containsString("idCardForm")))
                 .body(containsString("mobileIdForm"));
 
         assertStatisticsIsNotLogged();
