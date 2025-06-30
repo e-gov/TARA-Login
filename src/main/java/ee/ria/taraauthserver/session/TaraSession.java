@@ -10,9 +10,9 @@ import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
+import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.InvalidLoginRequestException;
 import ee.ria.taraauthserver.session.update.TaraSessionUpdate;
-import ee.ria.taraauthserver.utils.AcrUtils;
 import eu.webeid.security.challenge.ChallengeNonce;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -44,6 +44,7 @@ import java.util.Optional;
 
 import static ee.ria.taraauthserver.config.properties.TaraScope.EMAIL;
 import static ee.ria.taraauthserver.config.properties.TaraScope.PHONE;
+import static ee.ria.taraauthserver.error.ErrorCode.INVALID_ACR_VALUE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.stream;
 import static java.util.List.of;
@@ -248,12 +249,68 @@ public class TaraSession implements Serializable {
             List<AuthenticationType> requestedAuthMethods = getRequestedAuthenticationMethodList(taraProperties);
             List<AuthenticationType> allowedAuthenticationMethodsList = requestedAuthMethods.stream()
                     .filter(method -> isAuthenticationMethodEnabled(method, taraProperties))
-                    .filter(authMethod -> isAuthenticationMethodAllowedByRequestedLoa(authMethod, taraProperties))
+                    .filter(authMethod -> isAuthenticationMethodAllowedByLoa(authMethod, taraProperties))
                     .collect(toList());
 
             log.debug("List of authentication methods to display on login page: {}",
                     array("tara.session.login_request_info.requested_scope", allowedAuthenticationMethodsList));
             return allowedAuthenticationMethodsList;
+        }
+
+        @JsonIgnore
+        public LevelOfAssurance getAcr() {
+            LevelOfAssurance loginRequestAcr = getLoginRequestAcr();
+            LevelOfAssurance clientSettingsAcr = getClientSettingsAcr();
+            if (loginRequestAcr != null && clientSettingsAcr != null) {
+                if (loginRequestAcr != clientSettingsAcr) {
+                    // TODO: Using BadRequestException here directly is definitely bad practice
+                    throw new BadRequestException(INVALID_ACR_VALUE, "Requested acr_values must match configured minimum_acr_value");
+                }
+            }
+            if (loginRequestAcr != null) {
+                return loginRequestAcr;
+            }
+            if (clientSettingsAcr != null) {
+                return clientSettingsAcr;
+            }
+            return null;
+        }
+
+        @JsonIgnore
+        public LevelOfAssurance getLoginRequestAcr() {
+            List<String> acrValues = Optional.of(this)
+                    .map(TaraSession.LoginRequestInfo::getOidcContext)
+                    .map(TaraSession.OidcContext::getAcrValues)
+                    .orElse(null);
+            if (acrValues == null || acrValues.isEmpty()) {
+                return null;
+            }
+            if (acrValues.size() > 1) {
+                throw new InvalidLoginRequestException("acrValues must contain only 1 value", this);
+            }
+            String acrName = acrValues.get(0);
+            LevelOfAssurance acr = LevelOfAssurance.findByAcrName(acrName);
+            if (acr == null) {
+                throw new InvalidLoginRequestException("Unsupported acr value requested by client: '" + acrName + "'", this);
+            }
+            return acr;
+        }
+
+        @JsonIgnore
+        public LevelOfAssurance getClientSettingsAcr() {
+            String acrName = Optional.of(this)
+                    .map(LoginRequestInfo::getClient)
+                    .map(Client::getMetaData)
+                    .map(MetaData::getMinimumAcrValue)
+                    .orElse(null);
+            if (acrName == null) {
+                return null;
+            }
+            LevelOfAssurance acr = LevelOfAssurance.findByAcrName(acrName);
+            if (acr == null) {
+                log.error("Invalid ACR value '{}' configured for client", acrName);
+            }
+            return acr;
         }
 
         private List<AuthenticationType> getRequestedAuthenticationMethodList(AuthConfigurationProperties taraProperties) {
@@ -303,43 +360,35 @@ public class TaraSession implements Serializable {
             return allowedRequestedScopes;
         }
 
-        private boolean isAuthenticationMethodAllowedByRequestedLoa(AuthenticationType autMethod, AuthConfigurationProperties taraProperties) {
-            if (autMethod == AuthenticationType.EIDAS)
+        // `LoginRequestInfo` should probably not have to deal with validating authentication methods
+        private boolean isAuthenticationMethodAllowedByLoa(AuthenticationType authMethod, AuthConfigurationProperties taraProperties) {
+            if (authMethod == AuthenticationType.EIDAS) {
                 return true;
+            }
 
-            LevelOfAssurance requestedLoa = getRequestedAcr();
-            if (requestedLoa == null)
+            LevelOfAssurance requestAcr = getAcr();
+            if (requestAcr == null) {
+                // TODO (AUT-2273): Should use default ACR instead of blindly allowing everything
                 return true;
-            return isAllowedByRequestedLoa(requestedLoa, autMethod, taraProperties);
-        }
-
-        private LevelOfAssurance getRequestedAcr() {
-            String acrValue = AcrUtils.getAppropriateAcrValue(this);
-            LevelOfAssurance acr = LevelOfAssurance.findByAcrName(acrValue);
-
-            return acr;
-        }
-
-        private boolean isAllowedByRequestedLoa(LevelOfAssurance requestedLoa, AuthenticationType authenticationMethodType, AuthConfigurationProperties taraProperties) {
-            LevelOfAssurance authenticationMethodLoa = taraProperties.getAuthMethods().get(authenticationMethodType).getLevelOfAssurance();
+            }
+            LevelOfAssurance authenticationMethodLoa = taraProperties.getAuthMethods().get(authMethod).getLevelOfAssurance();
             // TODO: This is definitely not the correct place for this validation
             if (authenticationMethodLoa == null) {
                 throw new InvalidLoginRequestException(
-                        "Level of assurance must be configured for authentication method: " + authenticationMethodType.getPropertyName() + ". Please check the application configuration.",
+                        "Level of assurance must be configured for authentication method: " + authMethod.getPropertyName() + ". Please check the application configuration.",
                         this
                 );
             }
 
-            boolean isAllowed = authenticationMethodLoa.ordinal() >= requestedLoa.ordinal();
-
-            if (!isAllowed) {
+            if (authenticationMethodLoa.ordinal() < requestAcr.ordinal()) {
                 log.warn(append("tara.session.login_request_info", this),
                         "Ignoring authentication method since it's level of assurance is lower than requested. Authentication method: {} with assigned LoA: {}, requested level of assurance: {}",
-                        value("tara.session.login_request_info.authentication_method", authenticationMethodType),
+                        value("tara.session.login_request_info.authentication_method", authMethod),
                         value("tara.session.login_request_info.authentication_method_loa", authenticationMethodLoa),
-                        value("tara.session.login_request_info.requested_loa", requestedLoa));
+                        value("tara.session.login_request_info.requested_loa", requestAcr));
+                return false;
             }
-            return isAllowed;
+            return true;
         }
 
         private boolean isAuthenticationMethodEnabled(AuthenticationType method, AuthConfigurationProperties taraProperties) {

@@ -2,16 +2,16 @@ package ee.ria.taraauthserver.authentication.eidas;
 
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
+import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.logging.ClientRequestLogger;
-import ee.ria.taraauthserver.session.update.InitEidasSessionUpdate;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraSession.OidcClient;
-import ee.ria.taraauthserver.utils.AcrUtils;
+import ee.ria.taraauthserver.session.update.InitEidasSessionUpdate;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -107,10 +107,10 @@ public class EidasController {
                 .queryParam("SPType", oidcClient.getInstitution().getSector())
                 .queryParam("RelayState", relayState);
 
-        String acrValue = AcrUtils.getAppropriateAcrValue(taraSession.getLoginRequestInfo());
+        LevelOfAssurance acr = taraSession.getLoginRequestInfo().getAcr();
 
-        if (acrValue != null) {
-            builder.queryParam("LoA", acrValue.toUpperCase());
+        if (acr != null) {
+            builder.queryParam("LoA", acr.getAcrName().toUpperCase());
         }
 
         return builder.toUriString();
