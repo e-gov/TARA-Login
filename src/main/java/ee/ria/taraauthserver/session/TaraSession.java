@@ -242,6 +242,9 @@ public class TaraSession implements Serializable {
         }
 
         public List<AuthenticationType> getAllowedAuthenticationMethodsList(AuthConfigurationProperties taraProperties) {
+            // Call `getAcr()` first as it has the side effect of validating the requested ACR and client settings ACR
+            // combination.
+            LevelOfAssurance requestAcr = getAcr();
             if (requestedScopes.contains(TaraScope.EIDASONLY.getFormalName())) {
                 return List.of(AuthenticationType.EIDAS);
             }
@@ -249,7 +252,7 @@ public class TaraSession implements Serializable {
             List<AuthenticationType> requestedAuthMethods = getRequestedAuthenticationMethodList(taraProperties);
             List<AuthenticationType> allowedAuthenticationMethodsList = requestedAuthMethods.stream()
                     .filter(method -> isAuthenticationMethodEnabled(method, taraProperties))
-                    .filter(authMethod -> isAuthenticationMethodAllowedByLoa(authMethod, taraProperties))
+                    .filter(authMethod -> isAuthenticationMethodAllowedByLoa(authMethod, taraProperties, requestAcr))
                     .collect(toList());
 
             log.debug("List of authentication methods to display on login page: {}",
@@ -361,12 +364,11 @@ public class TaraSession implements Serializable {
         }
 
         // `LoginRequestInfo` should probably not have to deal with validating authentication methods
-        private boolean isAuthenticationMethodAllowedByLoa(AuthenticationType authMethod, AuthConfigurationProperties taraProperties) {
+        private boolean isAuthenticationMethodAllowedByLoa(AuthenticationType authMethod, AuthConfigurationProperties taraProperties, LevelOfAssurance requestAcr) {
+
             if (authMethod == AuthenticationType.EIDAS) {
                 return true;
             }
-
-            LevelOfAssurance requestAcr = getAcr();
             if (requestAcr == null) {
                 // TODO (AUT-2273): Should use default ACR instead of blindly allowing everything
                 return true;

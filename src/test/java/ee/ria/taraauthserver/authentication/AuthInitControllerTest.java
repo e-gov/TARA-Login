@@ -10,9 +10,6 @@ import ee.ria.taraauthserver.govsso.GovssoService;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import io.restassured.RestAssured;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Base64;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
@@ -28,7 +25,10 @@ import org.springframework.session.SessionRepository;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.OffsetDateTime;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -885,6 +885,32 @@ class AuthInitControllerTest extends BaseTest {
                         .withBodyFile("mock_responses/oidc/mock_response-ok_requested-acr-substantial_client-settings-acr-high.json")));
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.ID_CARD).setLevelOfAssurance(LevelOfAssurance.HIGH); // TODO AUT-857
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.LOW);
+
+        given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8)
+                .body("message", equalTo("Ebakorrektne päring. Teenusel pole lubatud päringus määratud autentimistaseme (acr_values) väärtust kasutada."))
+                .body("error", equalTo("Bad Request"))
+                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
+                .body("reportable", equalTo(true));
+
+        assertErrorIsLogged("User exception: Requested acr_values must match configured minimum_acr_value");
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_ENABLED_AUTHMETHODS_ACR")
+    void authInit_InvalidRequestedAcrAndClientSettingsAcrCombination_EidasonlyScope() {
+        wireMockServer.stubFor(get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_requested-acr-substantial_client-settings-acr-high_eidasonly-scope.json")));
 
         given()
                 .param("login_challenge", TEST_LOGIN_CHALLENGE)
