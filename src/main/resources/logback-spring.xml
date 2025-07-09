@@ -34,12 +34,8 @@
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>${log.level.file}</level>
         </filter>
-        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
-            <evaluator> <!-- defaults to type ch.qos.logback.classic.boolex.JaninoEventEvaluator -->
-                <expression>return logger.equals("ee.ria.taraauthserver.logging.StatisticsLogger");</expression>
-            </evaluator>
-            <onMismatch>NEUTRAL</onMismatch>
-            <onMatch>DENY</onMatch>
+        <filter class="ee.ria.taraauthserver.logging.LogbackStatisticsLogFilter">
+            <mode>NOT_STATISTICS</mode>
         </filter>
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
             <jsonFactoryDecorator class="ee.ria.taraauthserver.logging.LogbackJsonFactoryDecorator"/>
@@ -96,12 +92,8 @@
             <fileNamePattern>${log.files.dir}/TaraLoginStatistics.%d{yyyy-MM-dd,GMT}.log</fileNamePattern>
             <maxHistory>${log.files.max.count}</maxHistory>
         </rollingPolicy>
-        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
-            <evaluator> <!-- defaults to type ch.qos.logback.classic.boolex.JaninoEventEvaluator -->
-                <expression>return logger.equals("ee.ria.taraauthserver.logging.StatisticsLogger");</expression>
-            </evaluator>
-            <onMismatch>DENY</onMismatch>
-            <onMatch>ACCEPT</onMatch>
+        <filter class="ee.ria.taraauthserver.logging.LogbackStatisticsLogFilter">
+            <mode>STATISTICS_ONLY</mode>
         </filter>
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
             <providers>
