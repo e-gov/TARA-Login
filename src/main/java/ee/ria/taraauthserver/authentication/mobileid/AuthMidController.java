@@ -1,13 +1,12 @@
 package ee.ria.taraauthserver.authentication.mobileid;
 
+import ee.ria.taraauthserver.authentication.mobileid.validation.ValidMidPhoneNumber;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.ValidNationalIdNumber;
 import ee.sk.mid.MidAuthenticationHashToSign;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,8 +36,8 @@ public class AuthMidController {
     public String authMidInit(@Validated @ModelAttribute(value = "credential") MidRequest midRequest, Model model, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         log.info("Initiating Mobile-ID authentication session");
         validateSession(taraSession);
-        midRequest.telephoneNumber = "+372" + midRequest.telephoneNumber;
-        MidAuthenticationHashToSign authenticationHash = authMidService.startMidAuthSession(taraSession, midRequest.getIdCode(), midRequest.getTelephoneNumber());
+        MidAuthenticationHashToSign authenticationHash = authMidService.startMidAuthSession(
+                taraSession, midRequest.getIdCode(), midRequest.getTelephoneNumberWithPrefix());
         String verificationCode = authenticationHash.calculateVerificationCode();
         model.addAttribute("mobileIdVerificationCode", verificationCode);
         return "midLoginCode";
@@ -55,8 +54,11 @@ public class AuthMidController {
     public static class MidRequest {
         @ValidNationalIdNumber(message = "{message.mid-rest.error.invalid-identity-code}")
         private String idCode;
-        @NotNull(message = "{message.mid-rest.error.invalid-phone-number}")
-        @Pattern(regexp = "\\d{3,15}", message = "{message.mid-rest.error.invalid-phone-number}")
         private String telephoneNumber;
+
+        @ValidMidPhoneNumber(message = "{message.mid-rest.error.invalid-phone-number}")
+        private String getTelephoneNumberWithPrefix() {
+            return telephoneNumber != null ? "+372" + telephoneNumber : null;
+        }
     }
 }

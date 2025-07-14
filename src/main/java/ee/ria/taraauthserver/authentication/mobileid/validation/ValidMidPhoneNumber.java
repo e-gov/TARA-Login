@@ -1,4 +1,4 @@
-package ee.ria.taraauthserver.utils;
+package ee.ria.taraauthserver.authentication.mobileid.validation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
@@ -15,13 +15,14 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Target({FIELD, METHOD, PARAMETER, ANNOTATION_TYPE})
 @Retention(RUNTIME)
-@Constraint(validatedBy = NationalIdNumberValidator.class)
+@Constraint(validatedBy = MidPhoneNumberValidator.class)
 @Documented
-public @interface ValidNationalIdNumber {
+public @interface ValidMidPhoneNumber {
 
-    String message() default "Invalid EE national id number";
+    String message() default "Invalid Mobile-ID phone number";
 
     Class<?>[] groups() default {};
 
     Class<? extends Payload>[] payload() default {};
+
 }
