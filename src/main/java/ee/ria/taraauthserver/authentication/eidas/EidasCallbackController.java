@@ -40,8 +40,6 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static ee.ria.taraauthserver.error.ErrorCode.EIDAS_AUTHENTICATION_FAILED;
@@ -64,7 +62,6 @@ import static net.logstash.logback.argument.StructuredArguments.value;
 @ConditionalOnProperty(value = "tara.auth-methods.eidas.enabled")
 public class EidasCallbackController {
     public static final String EIDAS_CALLBACK_REQUEST_MAPPING = "/auth/eidas/callback";
-    public static final Pattern VALID_PERSON_IDENTIFIER_PATTERN = Pattern.compile("^([A-Z]{2,2})\\/([A-Z]{2,2})\\/(.*)$");
     public static final String REQUEST_DENIED = "urn:oasis:names:tc:SAML:2.0:status:RequestDenied";
     public static final String AUTHN_FAILED = "urn:oasis:names:tc:SAML:2.0:status:AuthnFailed";
     public static final String INCORRECT_LOA = "202019";
@@ -134,20 +131,23 @@ public class EidasCallbackController {
             throw new IllegalStateException("Response body from EIDAS client is null.");
         }
 
-        String personIdentifier = response.getAttributes().getPersonIdentifier();
-        Matcher personIdentifierMatcher = validatePersonIdentifier(personIdentifier);
+        EidasPersonIdentifier personIdentifier;
+        try {
+            personIdentifier = EidasPersonIdentifier.parse(response.getAttributes().getPersonIdentifier());
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException(EIDAS_AUTHENTICATION_FAILED, e.getMessage());
+        }
 
         TaraSession taraSession = requireNonNull(session.getAttribute(TARA_SESSION));
         taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
         TaraSession.AuthenticationResult authenticationResult = taraSession.getAuthenticationResult();
         authenticationResult.setFirstName(response.getAttributes().getFirstName());
         authenticationResult.setLastName(response.getAttributes().getFamilyName());
-        authenticationResult.setIdCode(getIdCodeFromPersonIdentifier(personIdentifierMatcher));
+        authenticationResult.setIdCode(personIdentifier.getIdCode());
         authenticationResult.setDateOfBirth(LocalDate.parse(response.getAttributes().getDateOfBirth()));
         authenticationResult.setAcr(LevelOfAssurance.findByFormalName(response.getLevelOfAssurance()));
         authenticationResult.setAmr(AuthenticationType.EIDAS);
-        authenticationResult.setSubject(getCountryCodeFromPersonIdentifier(personIdentifierMatcher) +
-                getIdCodeFromPersonIdentifier(personIdentifierMatcher));
+        authenticationResult.setSubject(personIdentifier.getCountryCode() + personIdentifier.getIdCode());
         taraSession.setAuthenticationResult(authenticationResult);
         session.setAttribute(TARA_SESSION, taraSession);
         sessionRepository.save(session);
@@ -164,22 +164,6 @@ public class EidasCallbackController {
         return constraintViolations.stream()
                 .map(cv -> cv == null ? "null" : cv.getPropertyPath() + ": " + cv.getMessage())
                 .sorted().collect(Collectors.joining(", "));
-    }
-
-    private Matcher validatePersonIdentifier(String personIdentifier) {
-        Matcher matcher = VALID_PERSON_IDENTIFIER_PATTERN.matcher(personIdentifier);
-        if (matcher.matches())
-            return matcher;
-        else
-            throw new BadRequestException(EIDAS_AUTHENTICATION_FAILED, "The person identifier has invalid format! <" + personIdentifier + ">");
-    }
-
-    private String getIdCodeFromPersonIdentifier(Matcher personIdentifierMatcher) {
-        return personIdentifierMatcher.group(3);
-    }
-
-    private String getCountryCodeFromPersonIdentifier(Matcher personIdentifierMatcher) {
-        return personIdentifierMatcher.group(1);
     }
 
     private HttpEntity<MultiValueMap<String, String>> createRequestEntity(String samlResponse) {
