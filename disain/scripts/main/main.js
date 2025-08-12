@@ -136,12 +136,13 @@ jQuery(function ($) {
 		return true;
 	}
 
-	function validateEstonianPhoneNumber(field) {
+	function validateMidPhoneNumber(field) {
 		let value = field.val().replace(/\s+/g, '');
 		if (value.length < 3) {
 			displayFormFieldError(field, "phone-number-short");
 			return false;
-		} else if (!(/^[0-9]{3,15}$/.test(value))) {
+		}
+		if (!(/^[0-9]{5,27}$/.test(value))) {
 			displayFormFieldError(field, "phone-number-invalid");
 			return false;
 		}
@@ -355,7 +356,7 @@ jQuery(function ($) {
 
 		const phoneNumberInput = $('#mid-phone-number');
 		const isIdCodeValid = validateEstonianIdCode($('#mid-personal-code'));
-		const isPhoneNumberValid = validateEstonianPhoneNumber(phoneNumberInput);
+		const isPhoneNumberValid = validateMidPhoneNumber(phoneNumberInput);
 		const valid = isIdCodeValid && isPhoneNumberValid;
 
 		if (valid) {

@@ -363,7 +363,7 @@ class AuthMidControllerTest extends BaseTest {
         given()
                 .filter(MockSessionFilter.withTaraSession().sessionRepository(sessionRepository).build())
                 .formParam("idCode", "60001019906")
-                .formParam("telephoneNumber", "45")
+                .formParam("telephoneNumber", "1234")
                 .when()
                 .post("/auth/mid/init")
                 .then()
@@ -382,7 +382,26 @@ class AuthMidControllerTest extends BaseTest {
         given()
                 .filter(MockSessionFilter.withTaraSession().sessionRepository(sessionRepository).build())
                 .formParam("idCode", "60001019906")
-                .formParam("telephoneNumber", "1".repeat(30))
+                .formParam("telephoneNumber", "1".repeat(28))
+                .when()
+                .post("/auth/mid/init")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Telefoninumber ei ole korrektne."))
+                .body("error", equalTo("Bad Request"))
+                .body("reportable", equalTo(false));
+
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+    }
+
+    @Test
+    @Tag(value = "MID_VALID_INPUT_TEL")
+    void phoneNumber_invalidSuffixOnValidNumber() {
+        given()
+                .filter(MockSessionFilter.withTaraSession().sessionRepository(sessionRepository).build())
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "12345678 asd")
                 .when()
                 .post("/auth/mid/init")
                 .then()
