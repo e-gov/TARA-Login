@@ -436,7 +436,6 @@ jQuery(function ($) {
 	});
 
     function hideAlert(alert) {
-        alert.removeAttr('role');
 	    alert.attr('aria-hidden', 'true');
         alert.removeClass('show');
     }
