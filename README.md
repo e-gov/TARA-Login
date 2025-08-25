@@ -62,7 +62,7 @@ MSYS_NO_PATHCONV=1 docker run --rm -v "${PWD}:/data" -w /data/disain node:14 sh 
 ./mvnw clean package
 ```
 
-You can find the compiled WAR archive in the target/ directory.
+You can find the compiled JAR file with embedded Tomcat in the target/ directory.
 
 ### Building Docker image
 
@@ -76,15 +76,18 @@ You can override it by using `-DimageName` parameter for Maven.
 <a name="deploying"></a>
 ## Deploying the webapp
 
-TARA login service is distributed as a WAR archive that can be deployed to a web server that supports Java Servlets (ie Apache Tomcat).
+TARA login service is distributed as a JAR file with embedded Tomcat that can be deployed by just running the JAR with Java.
 
-Example: to deploy the webapp to a standalone Tomcat server
+Example: to deploy the webapp using embedded Tomcat
 
-1. Add the tara-login-server-*.war file to Tomcat's webapp directory
-2. Set the location of the configuration file in Tomcat's setenv.sh (see chapter Configuration properties for further details)
-    ````
+1. Set the location of the configuration file (see chapter Configuration properties for further details):
+    ```
     export JAVA_OPTS="$JAVA_OPTS -Dspring.config.additional-location=file:/etc/tara-login-server/application.yml"
-    ````
+    ```
+2. Run tara-login.jar:
+    ```
+   java $JAVA_OPTS -jar tara-login.jar
+   ```
 
 <a name="configuration"></a>
 ## 1 TARA login service configuration properties
