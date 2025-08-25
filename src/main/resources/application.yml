@@ -1,3 +1,95 @@
+server:
+  port: 8443
+  forward-headers-strategy: NATIVE
+  tomcat:
+    processor-cache: 1536
+    threads:
+      max: 1536
+      min-spare: 32
+    accesslog:
+      enabled: false
+      prefix: localhost_access_log
+      suffix: .txt
+      max-days: 7 # Would save +1 files in folder for rotation
+      rotate: true
+      pattern: "%h %l %u %t \"%r\" %s %b \"%{Referer}i\" \"%{User-Agent}i\" %A %p %D \"%{X-Forwarded-For}i\" %{requestId}r"
+      encoding: UTF-8
+      locale: en
+    use-relative-redirects: true
+
+tara:
+  tls:
+    default-protocol: TLSv1.3
+    enabled-protocols:
+      - TLSv1.2
+      - TLSv1.3
+    enabled-cipher-suites:
+      - TLS_AES_128_GCM_SHA256
+      - TLS_AES_256_GCM_SHA384
+      - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+      - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+      - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+      - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+  default-authentication-methods: ID_CARD, MOBILE_ID, SMART_ID, EIDAS
+  govsso:
+    self-service-url: https://enduserselfservice.localhost:25443/
+  auth-flow-timeout: 1800s
+  error-report-email: help@example.com
+  auth-methods:
+    id-card:
+      enabled: true
+      level-of-assurance: HIGH
+      ocsp:
+        - issuer-cn: TEST of ESTEID-SK 2011
+          url: http://aia.demo.sk.ee/esteid2011
+          nonce-disabled: true
+
+        - issuer-cn: ESTEID-SK 2011
+          url: http://aia.demo.sk.ee/esteid2011
+          nonce-disabled: true
+          responder-certificate-cn: DEMO of KLASS3-SK 2010 SSL OCSP RESPONDER 2018
+
+        - issuer-cn: TEST of ESTEID-SK 2015
+          url: http://aia.demo.sk.ee/esteid2011
+          nonce-disabled: true
+
+        - issuer-cn: ESTEID-SK 2015
+          url: http://aia.demo.sk.ee/esteid2011
+          nonce-disabled: true
+          responder-certificate-cn: DEMO of KLASS3-SK 2010 SSL OCSP RESPONDER 2018
+
+        - issuer-cn: TEST of ESTEID2018
+          url: http://aia.demo.sk.ee/esteid2018
+          nonce-disabled: false
+
+        - issuer-cn: ESTEID2018
+          url: http://aia.demo.sk.ee/esteid2018
+          nonce-disabled: false
+          responder-certificate-cn: DEMO of KLASS3-SK 2010 SSL OCSP RESPONDER 2018
+    mobile-id:
+      enabled: true
+      level-of-assurance: HIGH
+      host-url: https://tsp.demo.sk.ee/mid-api
+      relying-party-name: DEMO
+      connection-timeout-milliseconds: 5000
+      read-timeout-milliseconds: 120000
+    smart-id:
+      enabled: true
+      level-of-assurance: HIGH
+      host-url: https://sid.demo.sk.ee/smart-id-rp/v2/
+      relying-party-name: DEMO
+      connection-timeout-milliseconds: 5000
+      read-timeout-milliseconds: 120000
+    eidas:
+      enabled: true
+      refresh-countries-interval-in-milliseconds: 86400000
+      relay-state-cache-duration-in-seconds: 600
+  legal-person-authentication:
+    x-road-server-read-timeout-in-milliseconds: 5000
+    x-road-server-connect-timeout-in-milliseconds: 5000
+  alerts:
+    refresh-alerts-interval-in-milliseconds: 10000
+
 spring:
   application:
     name: tara-login-service
@@ -9,6 +101,28 @@ spring:
       # SessionRepositoryFilter should be invoked before other filters so, that
       # Spring Session backed HttpSession implementation is available to subsequent filters.
       filter-order: -2147483648
+  task:
+    execution:
+      pool:
+        core-size: 128
+        max-size: 512
+        queue-capacity: 1
+
+ignite:
+  ignite-instance-name: tara-ignite
+  metrics-log-frequency: 300000
+  system-worker-blocked-timeout: 86400000
+  failure-detection-timeout: 86400000
+  client-failure-detection-timeout: 86400000
+  ssl-context-factory:
+    protocol: TLSv1.2
+    protocols:
+      - TLSv1.2
+    cipher-suites:
+      - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+      - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+      - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+      - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 
 management:
   health:
@@ -21,31 +135,13 @@ management:
     web:
       base-path: /
       exposure:
-        exclude: ''
-        include: 'heartbeat'
+        exclude: ""
+        include: heartbeat
     jmx:
       exposure:
         exclude: "*"
 
-ignite:
-  ignite-instance-name: tara-ignite
-  metrics-log-frequency: 300000
-
-tara:
-  govsso:
-    self-service-url: https://enduserselfservice.localhost:25443/
-  auth-flow-timeout: 1800s
-
-server:
-  forward-headers-strategy: NATIVE
-  tomcat:
-    accesslog:
-      enabled: false
-      prefix: localhost_access_log
-      suffix: .txt
-      max-days: 7 # Would save +1 files in folder for rotation
-      rotate: true
-      pattern: "%h %l %u %t \"%r\" %s %b \"%{Referer}i\" \"%{User-Agent}i\" %A %p %D \"%{X-Forwarded-For}i\" %{requestId}r"
-      encoding: UTF-8
-      locale: en
-    use-relative-redirects: true
+###########################################################################
+# Logging
+###########################################################################
+debug: false
