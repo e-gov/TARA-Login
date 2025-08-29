@@ -138,11 +138,11 @@ jQuery(function ($) {
 
 	function validateMidPhoneNumber(field) {
 		let value = field.val().replace(/\s+/g, '');
-		if (value.length < 3) {
+		if (value.length < 5) {
 			displayFormFieldError(field, "phone-number-short");
 			return false;
 		}
-		if (!(/^[0-9]{5,27}$/.test(value))) {
+		if (value.length > 27 || !(/^\d+$/.test(value))) {
 			displayFormFieldError(field, "phone-number-invalid");
 			return false;
 		}
