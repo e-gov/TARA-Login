@@ -39,7 +39,9 @@ public class IgniteCacheConfiguration {
 
     @Bean
     public Ignite ignite(IgniteConfiguration cfg) {
-        return Ignition.getOrStart(cfg);
+        Ignite ignite = Ignition.getOrStart(cfg);
+        log.info("Number of active Ignite nodes detected: {}", ignite.cluster().nodes().size());
+        return ignite;
     }
 
     @Bean
