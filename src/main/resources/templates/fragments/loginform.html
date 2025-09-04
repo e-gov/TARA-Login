@@ -126,7 +126,15 @@
                                         <span class="input-group-text"
                                               th:text="#{label.mobile-id.phone-number-prefix}"></span>
                                     </div>
-                                    <input type="tel" maxlength="15" id="mid-phone-number" class="form-control"
+                                    <!--/*
+                                    Phone input field `maxlength` property value could be larger than the max
+                                    allowed phone number length used in validation as the user is allowed to enter
+                                    whitespaces in the input field but validation removes all whitespaces before
+                                    checking the phone number length.
+                                    But for simplicity, let's use the same `maxlength` value as is used in the
+                                    validation.
+                                    */-->
+                                    <input type="tel" maxlength="27" id="mid-phone-number" class="form-control"
                                            name="telephoneNumber" autocomplete="tel">
                                     <div class="input-group-append d-flex">
                                         <img src="/assets/warning.svg" class="invalid-feedback-warning is-hidden"
