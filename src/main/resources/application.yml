@@ -131,12 +131,18 @@ management:
   info:
     git:
       mode: full
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+      group:
+        readiness:
+          include: readinessState, oidcServer
   endpoints:
     web:
-      base-path: /
       exposure:
-        exclude: ""
-        include: heartbeat
+        include: health
     jmx:
       exposure:
         exclude: "*"

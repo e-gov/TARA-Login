@@ -15,7 +15,6 @@
     * [ID-card auth method](#esteid_conf)
     * [Eidas auth method](#eidas_conf)
     * [Monitoring](#monitoring_conf)
-        * [Custom application health endpoint configuration](#monitoring_heartbeat_conf)
     * [Legal person attributes](#legalperson_conf)
     * [Security and session management](#session_and_sec_conf)
         * [Ignite integration](#ignite_conf)
@@ -393,64 +392,8 @@ Table 1.7.2 - Integration with the Estonian business registry
 <a name="monitoring_conf"></a>
 ## 1.8 Monitoring
 
-The webapp uses `Spring Boot Actuator` to enable endpoints for monitoring support. To customize Monitoring, Metrics, Auditing, and more see [Spring Boot Actuator documentation](https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#production-ready).
-
-| Parameter        | Mandatory | Description, example |
-| :---------------- | :---------- | :----------------|
-| `management.endpoints.web.base-path` | No | Base path of heartbeat endpoint. Default `/` |
-| `management.endpoints.web.exposure.exclude` | No | Endpoint IDs that should be excluded or `*` for all. Example `heartbeat` Default `*` |
-| `management.endpoints.web.exposure.include` | No | Endpoint IDs that should be included or `*` for all. Example `heartbeat` |
-
-<a name="monitoring_heartbeat_conf"></a>
-### 1.8.1 Custom application health endpoint configuration
-
-The webapp implements [custom health endpoint](https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#production-ready-endpoints-custom) with id `heartbeat` and [custom health indicators](https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#writing-custom-healthindicators) with id's `oidcServer`,  `truststore`. This endpoint is disabled by default.
-
-Request:
-
-````
-curl -X GET https://localhost:8443/heartbeat
-````
-
-Response:
-````
-{
-	"currentTime": "2021-01-21T11:32:48.955620Z",
-	"upTime": "PT11M45S",
-	"buildTime": "2021-01-21T11:19:12.785Z",
-	"name": "tara-login-server",
-	"startTime": "2021-01-21T11:21:03.568Z",
-	"commitId": "11111cd7b41f111111dfa93ba2f2cf16b55fef4c",
-	"version": "1.0.0-SNAPSHOT",
-	"commitBranch": "develop",
-	"status": "UP",
-	"dependencies": [
-	    {
-			"name": "ignite",
-			"status": "UP"
-		},
-		{
-			"name": "oidcServer",
-			"status": "UP"
-		},
-		{
-			"name": "truststore",
-			"status": "UP"
-		}
-	]
-}
-````
-
-This endpoint is turned off by default. Here is the minimum required configuration to turn it on:
-
-````yaml
-management:
-  endpoints:
-    web:
-      exposure:
-        exclude: ""
-        include: "heartbeat"
-````
+The webapp uses `Spring Boot Actuator` to enable endpoints for monitoring support. To customize Monitoring, Metrics, Auditing and more, see [Spring Boot Actuator documentation](https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#production-ready).
+For configuring readiness and liveness probes, see [Kubernetes Probes](https://docs.spring.io/spring-boot/reference/actuator/endpoints.html#actuator.endpoints.kubernetes-probes).
 
 <a name="session_and_sec_conf"></a>
 ## 1.9 Security and session management

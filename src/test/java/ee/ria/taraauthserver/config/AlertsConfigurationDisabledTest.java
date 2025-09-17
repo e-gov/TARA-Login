@@ -15,7 +15,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 public class AlertsConfigurationDisabledTest extends DisabledConfigurationTest {
     @Test
     @Tag(value = "ALERT_CONFIG")
-    public void whenHeartbeatEndpointDisabledThenBeansNotLoaded() {
+    public void whenAlertsDisabledThenBeansNotLoaded() {
         assertBeanNotInitiated(AlertsScheduler.class);
         assertBeanNotInitiated(AlertsConfiguration.class);
     }

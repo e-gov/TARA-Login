@@ -16,11 +16,6 @@ management:
     git:
       mode: full
   endpoints:
-    web:
-      base-path: /
-      exposure:
-        exclude: ''
-        include: 'heartbeat'
     jmx:
       exposure:
         exclude: "*"

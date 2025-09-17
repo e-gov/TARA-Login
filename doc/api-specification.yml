@@ -1369,12 +1369,12 @@ paths:
               schema:
                 type: string
                 example: 'The HTML error view is displayed'
-  /heartbeat:
+  /actuator/health:
     get:
       tags:
         - monitoring
       summary: Returns the detailed health status of TARA login service
-      operationId: heartbeat
+      operationId: health
       description: |
         Return service health information
       responses:
@@ -1383,13 +1383,68 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HeartbeatResponse'
+                $ref: '#/components/schemas/HealthResponse'
         '503':
           description: Tara-login is not ready to serve requests
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HeartbeatResponse'
+                $ref: '#/components/schemas/HealthResponse'
+  /actuator/health/readiness:
+    get:
+      tags:
+        - monitoring
+      summary: Shows whether the application is ready to receive traffic
+      operationId: healthReadiness
+      responses:
+        '200':
+          description: TARA Login is ready to receive traffic
+          content:
+            application/json:
+              schema:
+                status:
+                  type: string
+                  description: Readiness status of TARA Login
+                  example: UP
+                components:
+                  type: object
+                  description: Map of component names to their health status
+                  additionalProperties:
+                    $ref: '#/components/schemas/HealthComponent'
+        '503':
+          description: TARA Login is not ready to receive traffic
+          content:
+            application/json:
+              schema:
+                status:
+                  type: string
+                  description: Readiness status of TARA Login
+                  example: DOWN
+  /actuator/health/liveness:
+    get:
+      tags:
+        - monitoring
+      summary: Shows whether the application is running or has irrecoverably failed
+      operationId: healthLiveness
+      responses:
+        '200':
+          description: TARA Login is running
+          content:
+            application/json:
+              schema:
+                status:
+                  type: string
+                  description: Liveness status of TARA Login
+                  example: UP
+        '503':
+          description: TARA Login has failed and needs to be restarted
+          content:
+            application/json:
+              schema:
+                status:
+                  type: string
+                  description: Liveness status of TARA Login
+                  example: DOWN
   /oidc-error:
     get:
       tags:
@@ -1512,63 +1567,38 @@ components:
           type: boolean
           description: Shows whether the error should be reported
           example: true
-    Dependency:
+    HealthResponse:
       type: object
       properties:
         status:
           type: string
           description: The status of the service
           enum: [ UP, DOWN ]
-        name:
-          type: string
-          description: The name of the dependency
-          enum: [ truststore, oidcServer ]
-          example: 'truststore'
-    HeartbeatResponse:
-      type: object
-      properties:
-        status:
-          type: string
-          description: The status of the service
-          enum: [ UP, DOWN ]
-        name:
-          type: string
-          description: The name of the application
-          example: 'tara-login-service'
-        version:
-          type: string
-          description: The version number of the service
-          example: '1.0.0'
-        commitId:
-          type: string
-          description: Git hash of the specific commit
-          example: 'ca9e44921174b25c1470e8e1fabe1bf4545513f8'
-        commitBranch:
-          type: string
-          description: Git branch name
-          example: 'master'
-        startTime:
-          type: string
-          description: The service start time
-          example: '2020-12-18T15:18:21.918Z'
-        currentTime:
-          type: string
-          description: Current date and time
-          example: '2020-12-22T08:47:58.350Z'
-        upTime:
-          type: string
-          description: Uptime in ISO 8601 format
-          example: 'PT89H29M36S'
-        buildTime:
-          type: string
-          description: Build time
-          example: '2020-12-18T15:07:51.626Z'
-        dependencies:
-          type: array
-          items:
-            $ref: '#/components/schemas/Dependency'
-        warnings:
+        groups:
           type: array
           items:
             type: string
-            example: Truststore certificate 'oidc-tls' with serial number '192940911122987043582' is expiring at %s
+          description: List of health groups (e.g. liveness, readiness)
+          example: ["liveness", "readiness"]
+        components:
+          type: object
+          description: Map of component names to their health status and details
+          additionalProperties:
+            $ref: '#/components/schemas/HealthComponent'
+    HealthComponent:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Status of the component
+          example: UP
+        details:
+          type: object
+          description: Optional details of the component
+          additionalProperties:
+            type: object
+            description: Details entry with any key/value structure
+            example:
+              validTo: "2025-01-01T01:01:00Z"
+              subjectDN: "C=EE, O=SK ID Solutions AS, OU=OCSP, CN=DEMO of KLASS3-SK 2010 SSL OCSP RESPONDER 2018"
+              serialNumber: "123456789"
