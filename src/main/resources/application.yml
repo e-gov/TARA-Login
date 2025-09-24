@@ -146,7 +146,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: configprops, env, health, info
+        include: configprops, env, health, info, prometheus
 
 ###########################################################################
 # Logging
