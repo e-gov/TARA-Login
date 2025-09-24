@@ -126,11 +126,15 @@ ignite:
 
 management:
   health:
-    defaults:
+    ssl:
       enabled: false
   info:
     git:
       mode: full
+    java:
+      enabled: true
+    os:
+      enabled: true
   endpoint:
     health:
       probes:
@@ -142,10 +146,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health
-    jmx:
-      exposure:
-        exclude: "*"
+        include: configprops, env, health, info
 
 ###########################################################################
 # Logging
