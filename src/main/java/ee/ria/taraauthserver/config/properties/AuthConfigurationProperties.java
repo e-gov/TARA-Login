@@ -223,6 +223,7 @@ public class AuthConfigurationProperties {
         @Valid
         private List<Ocsp> fallbackOcsp;
 
+
         @PostConstruct
         public void validateConfiguration() {
             if (this.ocspEnabled) {
@@ -283,5 +284,14 @@ public class AuthConfigurationProperties {
     public static class HealthConfigurationProperties {
 
         private int expirationWarningPeriodInDays = 30;
+    }
+
+    @Data
+    @ConfigurationProperties(prefix = "tara.auth-methods.id-card.filter-for-eidas-proxy")
+    public static class FilterForEidasProxy {
+
+        private String clientId;
+
+        private List<String> forbiddenIssuerCns = List.of();
     }
 }

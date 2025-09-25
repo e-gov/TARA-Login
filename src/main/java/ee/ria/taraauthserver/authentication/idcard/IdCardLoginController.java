@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.authentication.idcard;
 
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.Ocsp;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
@@ -34,10 +35,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.SessionAttribute;
 
 import java.security.cert.X509Certificate;
+import java.util.List;
 import java.util.Map;
 
 import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
+import static ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.FilterForEidasProxy;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_EXPIRED;
+import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_FORBIDDEN;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_NOT_YET_VALID;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_OCSP_NOT_AVAILABLE;
 import static ee.ria.taraauthserver.error.ErrorCode.INTERNAL_ERROR;
@@ -60,6 +64,7 @@ public class IdCardLoginController {
 
 
     private final IdCardAuthConfigurationProperties configurationProperties;
+    private final FilterForEidasProxy filterForEidasProxy;
     private final OCSPValidator ocspValidator;
     private final AuthTokenValidator authTokenValidator;
     private final ChallengeNonceStore nonceStore;
@@ -85,6 +90,12 @@ public class IdCardLoginController {
         } catch (AuthTokenException e) {
             throw new BadRequestException(INVALID_REQUEST, e.getMessage(), e);
         }
+
+        String eidasClientId =  filterForEidasProxy.getClientId();
+        if(taraSession.getOriginalClient().getClientId().equals(eidasClientId)) {
+            validateIdCardValidForEidasAuthentication(certificate);
+        }
+
         taraSession.setState(NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT);
         SessionUtils.getHttpSession().setAttribute(TARA_SESSION, taraSession);
 
@@ -116,6 +127,15 @@ public class IdCardLoginController {
         }
 
         return ResponseEntity.ok(of("status", "COMPLETED"));
+    }
+
+    private void validateIdCardValidForEidasAuthentication(X509Certificate certificate) {
+        String issuerCn = X509Utils.getIssuerCNFromCertificate(certificate);
+        List<String> forbiddenIssuerCns = filterForEidasProxy.getForbiddenIssuerCns();
+
+        if (forbiddenIssuerCns.contains(issuerCn)) {
+            throw new BadRequestException(IDC_CERT_FORBIDDEN, "eIDAS authentication with given certificate issuer CN has been forbidden in the application configuration");
+        }
     }
 
     private void handleStatisticsLogging(TaraSession taraSession, X509Certificate certificate, ErrorCode errorCode, String ocspUrl, Exception e) {
