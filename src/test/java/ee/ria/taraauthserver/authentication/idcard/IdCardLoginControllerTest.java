@@ -110,6 +110,9 @@ class IdCardLoginControllerTest extends BaseTest {
     @Autowired
     private AuthConfigurationProperties.IdCardAuthConfigurationProperties configurationProperties;
 
+    @Autowired
+    private AuthConfigurationProperties.FilterForEidasProxy filterForEidasProxy;
+
     @BeforeAll
     public static void setupTestClass() throws CertificateEncodingException {
         Certificate certificate = loadCertificateFromResource(VALID_CERT_PATH);
@@ -934,6 +937,109 @@ class IdCardLoginControllerTest extends BaseTest {
         assertMessageWithMarkerIsLoggedOnce(ErrorHandler.class, WARN, "Session has been invalidated: " + sessionId, "tara.session=TaraSession(sessionId=" + sessionId + ", state=AUTHENTICATION_FAILED, loginRequestInfo=TaraSession.LoginRequestInfo(");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=38001085718, ocspUrl=https://localhost:9877/ocsp, authenticationType=ID_CARD, authenticationState=EXTERNAL_TRANSACTION, errorCode=IDC_OCSP_NOT_AVAILABLE)");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=38001085718, ocspUrl=https://localhost:9877/ocsp, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_OCSP_NOT_AVAILABLE)");
+    }
+
+    @Test
+    @DirtiesContext
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
+    void handleRequest_forbiddenClientId_Succeeds() {
+        configurationProperties.setOcspEnabled(false); // TODO AUT-857
+        filterForEidasProxy.setClientId("openIdDemo");
+        MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
+        given()
+                .body(createRequestBody())
+                .filter(mockSessionFilter)
+                .header("Content-Type", APPLICATION_JSON_VALUE)
+                .when()
+                .post("/auth/id/login")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .headers(EXPECTED_RESPONSE_HEADERS)
+                .body("status", equalTo("COMPLETED"));
+    }
+
+    @Test
+    @DirtiesContext
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
+    void handleRequest_forbiddenCertificateIssuerCN_Succeeds() {
+        configurationProperties.setOcspEnabled(false);
+        filterForEidasProxy.setForbiddenIssuerCns(List.of("TEST of ESTEID-SK 2015", "TEST of ESTEID2018"));
+        MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
+        given()
+                .body(createRequestBody())
+                .filter(mockSessionFilter)
+                .header("Content-Type", APPLICATION_JSON_VALUE)
+                .when()
+                .post("/auth/id/login")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .headers(EXPECTED_RESPONSE_HEADERS)
+                .body("status", equalTo("COMPLETED"));
+    }
+
+    @Test
+    @DirtiesContext
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
+    void handleRequest_forbiddenClientIdAndforbiddenCertificateIssuerCN_Fails() {
+        filterForEidasProxy.setClientId("openIdDemo");
+        filterForEidasProxy.setForbiddenIssuerCns(List.of("TEST of ESTEID-SK 2015", "TEST of ESTEID2018"));
+        MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
+        given()
+                .body(createRequestBody())
+                .filter(mockSessionFilter)
+                .header("Content-Type", APPLICATION_JSON_VALUE)
+                .when()
+                .post("/auth/id/login")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .headers(EXPECTED_RESPONSE_HEADERS)
+                .body("message", equalTo("eIDAS autentimine antud sertifikaadi väljastaja CN väärtusega on rakenduse konfiguratsioonis keelatud."));
+
+        assertErrorIsLogged(ErrorHandler.class, "User exception: eIDAS authentication with given certificate issuer CN has been forbidden in the application configuration");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_CERT_FORBIDDEN)");
+    }
+
+    @Test
+    @DirtiesContext
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
+    void handleRequest_nonForbiddenClientId_Succeeds() {
+        configurationProperties.setOcspEnabled(false); // TODO AUT-857
+        filterForEidasProxy.setClientId("testID");
+        MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
+        given()
+                .body(createRequestBody())
+                .filter(mockSessionFilter)
+                .header("Content-Type", APPLICATION_JSON_VALUE)
+                .when()
+                .post("/auth/id/login")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .headers(EXPECTED_RESPONSE_HEADERS)
+                .body("status", equalTo("COMPLETED"));
+    }
+
+    @Test
+    @DirtiesContext
+    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
+    void handleRequest_nonForbiddenCertificateIssuerCN_Succeeds() {
+        configurationProperties.setOcspEnabled(false); // TODO AUT-857
+        filterForEidasProxy.setForbiddenIssuerCns(List.of("TEST of ESTEID-SK 2015"));
+        MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
+        given()
+                .body(createRequestBody())
+                .filter(mockSessionFilter)
+                .header("Content-Type", APPLICATION_JSON_VALUE)
+                .when()
+                .post("/auth/id/login")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .headers(EXPECTED_RESPONSE_HEADERS)
+                .body("status", equalTo("COMPLETED"));
     }
 
     private MockSessionFilter buildDefaultSessionFilter() {
