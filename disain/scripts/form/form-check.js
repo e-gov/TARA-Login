@@ -68,6 +68,7 @@
 
                 if (pollResponse["reportable"]) {
                     document.querySelector("#error-incident-number").innerHTML = pollResponse["incident_nr"];
+                    document.querySelector("#error-incident-time").innerHTML = pollResponse["timestamp"];
 
                     var errorReportUrl = document.querySelector("#error-report-url").href;
                     errorReportUrl = errorReportUrl.replace("{1}", pollResponse["message"]);

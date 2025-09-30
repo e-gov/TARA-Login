@@ -6,6 +6,8 @@
         <div id="default-error-message" class="hidden aria-hidden" th:utext="#{message.error.general}"></div>
         <div id="idc-ajax-error-message" class="hidden aria-hidden" th:utext="#{message.idc.ajax-error}"></div>
         <div id="error-incident-number-wrapper">
+            <span th:utext="#{label.error.incident-time('')}"></span>
+            <span id="error-incident-time"></span>
             <span th:utext="#{label.error.incident-number('')}"></span>
             <span id="error-incident-number"></span>
         </div>
