@@ -24,10 +24,10 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.UnknownContentTypeException;
 import org.springframework.web.client.UnknownHttpStatusCodeException;
-
-import java.io.IOException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+
+import java.io.IOException;
 
 import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_LOGIN_CHALLENGE;
 import static ee.ria.taraauthserver.error.ErrorAttributes.ERROR_ATTR_REDIRECT_TO_SERVICE_PROVIDER;
@@ -60,7 +60,12 @@ public class ErrorHandler {
                 request.setAttribute(ERROR_ATTR_LOGIN_CHALLENGE, taraSession.getLoginRequestInfo().getChallenge());
             }
             session.invalidate();
-            log.warn(append(TARA_SESSION, taraSession), "Session has been invalidated: {}", session.getId());
+            log.atWarn()
+                    .addMarker(append(TARA_SESSION, taraSession))
+                    .setMessage("Session has been invalidated: {}")
+                    .addArgument(session.getId())
+                    .setCause(ex)
+                    .log();
         }
 
         response.sendError(status);
