@@ -25,7 +25,6 @@ import ee.sk.smartid.exception.useraccount.DocumentUnusableException;
 import ee.sk.smartid.exception.useraccount.RequiredInteractionNotSupportedByAppException;
 import ee.sk.smartid.exception.useraccount.UserAccountNotFoundException;
 import ee.sk.smartid.exception.useraction.SessionTimeoutException;
-import ee.sk.smartid.exception.useraction.UserRefusedCertChoiceException;
 import ee.sk.smartid.exception.useraction.UserRefusedConfirmationMessageException;
 import ee.sk.smartid.exception.useraction.UserRefusedConfirmationMessageWithVerificationChoiceException;
 import ee.sk.smartid.exception.useraction.UserRefusedDisplayTextAndPinException;
@@ -122,7 +121,7 @@ public class AuthSidService {
     private SmartIdConfigurationProperties smartIdConfigurationProperties;
 
     @Autowired
-    private Executor taskExecutor;
+    private Executor applicationTaskExecutor;
 
     @Autowired
     private StatisticsLogger statisticsLogger;
@@ -135,9 +134,9 @@ public class AuthSidService {
 
         CompletableFuture
                 .supplyAsync(withMdcAndLocale(() -> initAuthentication(idCode, taraSession, authenticationHash, requestBuilder)),
-                        delayedExecutor(smartIdConfigurationProperties.getDelayInitiateSidSessionInMilliseconds(), MILLISECONDS, taskExecutor))
+                        delayedExecutor(smartIdConfigurationProperties.getDelayInitiateSidSessionInMilliseconds(), MILLISECONDS, applicationTaskExecutor))
                 .thenAcceptAsync(withMdc((sidSessionId) -> pollAuthenticationResult(sidSessionId, taraSession, requestBuilder)),
-                        delayedExecutor(smartIdConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLISECONDS, taskExecutor));
+                        delayedExecutor(smartIdConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLISECONDS, applicationTaskExecutor));
         return authenticationHash;
     }
 

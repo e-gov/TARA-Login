@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.8</version>
+        <version>3.5.6</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>ee.ria.tara</groupId>
@@ -35,7 +35,6 @@
         <logstash-logback-encoder.version>8.1</logstash-logback-encoder.version>
         <mid-rest.version>1.6</mid-rest.version>
         <smart-id.version>2.3.1</smart-id.version>
-        <spring-cloud.version>2024.0.2</spring-cloud.version><!-- Spring Cloud 2024.0.x release train is only compatible with Spring Boot 3.4.x, see table 1 at https://spring.io/projects/spring-cloud -->
         <webeid.version>3.1.1</webeid.version>
         <wiremock.version>3.13.1</wiremock.version>
     </properties>
@@ -206,18 +205,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring-cloud.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <repositories>
         <repository>
