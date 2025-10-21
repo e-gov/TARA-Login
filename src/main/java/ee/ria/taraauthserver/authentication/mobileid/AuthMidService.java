@@ -127,7 +127,7 @@ public class AuthMidService {
     private MidAuthConfigurationProperties midAuthConfigurationProperties;
 
     @Autowired
-    private Executor taskExecutor;
+    private Executor applicationTaskExecutor;
 
     @Autowired
     private StatisticsLogger statisticsLogger;
@@ -140,9 +140,9 @@ public class AuthMidService {
 
         CompletableFuture
                 .supplyAsync(withMdcAndLocale(() -> initAuthentication(taraSession, idCode, telephoneNumber, authenticationHash, midLanguage)),
-                        delayedExecutor(midAuthConfigurationProperties.getDelayInitiateMidSessionInMilliseconds(), MILLISECONDS, taskExecutor))
+                        delayedExecutor(midAuthConfigurationProperties.getDelayInitiateMidSessionInMilliseconds(), MILLISECONDS, applicationTaskExecutor))
                 .thenAcceptAsync(withMdc((midAuthentication) -> pollAuthenticationResult(taraSession, authenticationHash, midAuthentication, telephoneNumber)),
-                        delayedExecutor(midAuthConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLISECONDS, taskExecutor));
+                        delayedExecutor(midAuthConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLISECONDS, applicationTaskExecutor));
 
         return authenticationHash;
     }

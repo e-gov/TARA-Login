@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.authentication.eidas;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
@@ -198,6 +199,10 @@ public class EidasCallbackController {
     }
 
     @Data
+    // This is needed to remove duplicate entries in logs.
+    @JsonAutoDetect(
+            getterVisibility = JsonAutoDetect.Visibility.NONE
+    )
     private static class Attributes implements Serializable {
         @NotBlank
         @JsonProperty("FirstName")
