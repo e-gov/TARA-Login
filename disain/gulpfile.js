@@ -19,7 +19,8 @@ config = {
     JS_FORM: './scripts/form/**/*.js',
     JS_GENERAL: './scripts/general/**/*.js',
     JS_LEGALPERSON: './scripts/legalperson/**/*.js',
-    JS_MODAL: './scripts/timeout/timeout-modal.js'
+    JS_MODAL: './scripts/timeout/timeout-modal.js',
+    JS_TIMECONVERTER: './scripts/timeconverter/**/*.js'
   },
   DEST: {
     ICO: '../src/main/resources/static/',
@@ -102,8 +103,19 @@ gulp.task('build:js_legalperson', function(cb) {
     cb
     );
 });
+gulp.task('build:js_timeconverter', function(cb) {
+  pump([
+    gulp.src(config.SRC.JS_TIMECONVERTER),
+    uglify(),
+    concat('timeconverter.js'),
+    gulp.dest(config.DEST.JS),
+    browserSync.stream()
+    ],
+    cb
+    );
+});
 
 
 // Gulp build
-gulp.task('build', gulp.series('build:images', 'build:favicon', 'build:fonts', 'build:css', 'build:js_main', 'build:js_form', 'build:js_legalperson'), function(done) {
+gulp.task('build', gulp.series('build:images', 'build:favicon', 'build:fonts', 'build:css', 'build:js_main', 'build:js_form', 'build:js_legalperson', 'build:js_timeconverter'), function(done) {
 });

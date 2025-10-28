@@ -1,4 +1,5 @@
 <div class="container" xmlns:th="http://www.w3.org/1999/xhtml">
+    <script th:src="@{/scripts/timeconverter.js}"></script>
     <div class="alert alert-error" role="alert">
         <div><strong><span th:class="error-title" th:text="#{message.error.auth.title}" th:remove="tag"></span></strong>
         </div>
@@ -7,7 +8,7 @@
         <div id="idc-ajax-error-message" class="hidden aria-hidden" th:utext="#{message.idc.ajax-error}"></div>
         <div id="error-incident-number-wrapper">
             <span th:utext="#{label.error.incident-time('')}"></span>
-            <span id="error-incident-time"></span>
+            <span id="error-incident-time" th:attr="data-time-format=#{format.datetime}"></span>
             <span th:utext="#{label.error.incident-number('')}"></span>
             <span id="error-incident-number"></span>
         </div>

@@ -315,7 +315,11 @@ jQuery(function ($) {
 		$('#error-message').html(responseJson.message);
 
 		if (responseJson.reportable === true) {
+		    var timeFormat = document.querySelector("#error-incident-time").getAttribute("data-time-format");
+			var formattedDateTimeWithOffset = formatDateTimeWithBrowserOffset(responseJson.timestamp, timeFormat);
+
 			$('#error-incident-number').text(responseJson.incident_nr);
+			$('#error-incident-time').text(formattedDateTimeWithOffset);
 			const plainTextMessage = $('#error-message').text();
 			const os = navigator.platform;
 			const browserInfo = navigator.appCodeName + '/' + navigator.appVersion;

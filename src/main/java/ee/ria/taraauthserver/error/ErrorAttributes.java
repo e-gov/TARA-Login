@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.error;
 
 import ee.ria.taraauthserver.error.exceptions.TaraException;
 import ee.ria.taraauthserver.utils.RequestUtils;
+import ee.ria.taraauthserver.utils.TimeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -19,9 +20,11 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.util.HtmlUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
@@ -76,6 +79,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
     public static final String ERROR_ATTR_REDIRECT_TO_SERVICE_PROVIDER_URL = "redirect_to_service_provider_url";
     public static final String ERROR_ATTR_INCIDENT_NR = "incident_nr";
     public static final String ERROR_ATTR_REPORTABLE = "reportable";
+    public static final String ERROR_ATTR_OFFSET_TIMESTAMP = "offset_timestamp";
     private final MessageSource messageSource;
 
     public static final Set<ErrorCode> notReportableErrors = EnumSet.of(
@@ -113,6 +117,13 @@ public class ErrorAttributes extends DefaultErrorAttributes {
     @Override
     public Map<String, Object> getErrorAttributes(WebRequest webRequest, ErrorAttributeOptions options) {
         Map<String, Object> attr = super.getErrorAttributes(webRequest, options.including(MESSAGE, BINDING_ERRORS));
+
+        Date errorTimestamp = (Date) attr.get("timestamp");
+        if (errorTimestamp == null) {
+            errorTimestamp = new Date();
+        }
+        OffsetDateTime timestampWithOffset = TimeUtil.toOffsetDateTime(errorTimestamp);
+
         HttpStatus status = HttpStatus.resolve((int) attr.get("status"));
         Throwable error = getError(webRequest);
 
@@ -129,6 +140,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
         attr.put(ERROR_ATTR_REDIRECT_TO_SERVICE_PROVIDER_URL, webRequest.getAttribute(ERROR_ATTR_REDIRECT_TO_SERVICE_PROVIDER_URL, SCOPE_REQUEST));
         attr.put(ERROR_ATTR_INCIDENT_NR, webRequest.getAttribute(REQUEST_ATTRIBUTE_NAME_REQUEST_ID, SCOPE_REQUEST));
         attr.put(ERROR_ATTR_REPORTABLE, isReportable(error, status));
+        attr.put(ERROR_ATTR_OFFSET_TIMESTAMP, timestampWithOffset);
         attr.remove("errors");
         return attr;
     }

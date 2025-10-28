@@ -9,13 +9,16 @@
             <div ><strong><span th:text="#{message.error.auth.title}" th:remove="tag"></span></strong></div>
             <div th:if="${message != null}" th:text="${message}"></div>
             <div th:unless="${message != null}" th:text="#{message.error.general}"></div>
-            <div th:utext="#{label.error.incident-time(${#prettyDates.dateTime(timestamp)})}"></div>
-            <div th:if="${incident_nr != null && reportable == true}" th:utext="#{label.error.incident-number(${incident_nr})}"></div>
-            <div th:if="${incident_nr != null && reportable == true}">
+            <th:block th:if="${incident_nr != null && reportable == true}">
+                <span th:utext="#{label.error.incident-time('')}"></span>
+                <span id="incident-time"
+                      th:attr="data-server-time=${offset_timestamp},data-time-format=#{format.datetime}"></span>
+                <div th:utext="#{label.error.incident-number(${incident_nr})}"></div>
                 <a id="error-report-url" class="mailto-link"
                    th:href="#{label.error.error-report-content(${@thymeleafSupport.getErrorReportEmail()},${#uris.escapePathSegment(message, 'UTF-8')},${incident_nr},'(3)','(4)','(5)')}"
                    th:text="#{label.error.error-report-link}">Send error report</a>
-            </div>
+                <script th:src="@{/scripts/timeconverter.js}"></script>
+            </th:block>
             <div th:if="${incident_nr != null}" id="error-report-notification" class="hidden"
                th:utext="#{label.error.error-report-notification(${@thymeleafSupport.getErrorReportEmail()}, ${incident_nr})}"></div>
         </div>

@@ -67,8 +67,12 @@
                 document.querySelector("#error-message").innerHTML = pollResponse["message"];
 
                 if (pollResponse["reportable"]) {
+                    var timeFormat = document.querySelector("#error-incident-time").getAttribute("data-time-format");
+                    var formattedDateTimeWithOffset = formatDateTimeWithBrowserOffset(
+                        pollResponse["timestamp"], timeFormat);
+
                     document.querySelector("#error-incident-number").innerHTML = pollResponse["incident_nr"];
-                    document.querySelector("#error-incident-time").innerHTML = pollResponse["timestamp"];
+                    document.querySelector("#error-incident-time").innerHTML = formattedDateTimeWithOffset;
 
                     var errorReportUrl = document.querySelector("#error-report-url").href;
                     errorReportUrl = errorReportUrl.replace("{1}", pollResponse["message"]);
