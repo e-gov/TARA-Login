@@ -996,7 +996,7 @@ class IdCardLoginControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .headers(EXPECTED_RESPONSE_HEADERS)
-                .body("message", equalTo("eIDAS autentimine antud sertifikaadi väljastaja CN väärtusega on rakenduse konfiguratsioonis keelatud."));
+                .body("message", equalTo("Uue seeria ID-kaartidega ei ole ajutiselt võimalik autentimine välisriikide e-teenustesse."));
 
         assertErrorIsLogged(ErrorHandler.class, "User exception: eIDAS authentication with given certificate issuer CN has been forbidden in the application configuration");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_CERT_FORBIDDEN)");
