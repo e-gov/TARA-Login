@@ -6,7 +6,7 @@ docker run \
   --rm \
   --user root \
   --volume $(pwd):/usr/src/project \
-  --workdir /usr/src/project eclipse-temurin:17 \
+  --workdir /usr/src/project ubuntu:24.04 \
   ./generate-not-yet-valid-cert.sh
 ```
 
