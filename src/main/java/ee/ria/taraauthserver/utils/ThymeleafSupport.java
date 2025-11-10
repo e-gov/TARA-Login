@@ -7,10 +7,12 @@ import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.SPType;
+import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.util.Assert;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponents;
@@ -38,6 +40,12 @@ public class ThymeleafSupport {
 
     @Autowired(required = false)
     private AlertsScheduler alertsScheduler;
+
+    @Autowired(required = false)
+    private AuthConfigurationProperties.FilterForEidasProxy filterForEidasProxy;
+
+    @Autowired(required = false)
+    private MessageSource messageSource;
 
     public boolean isNotLocale(String code, Locale locale) {
         return !locale.getLanguage().equalsIgnoreCase(code);
@@ -132,6 +140,7 @@ public class ThymeleafSupport {
     public List<Alert> getActiveAlerts() {
         List<Alert> alerts = new ArrayList<>();
         getStaticAlert().ifPresent(alerts::add);
+        getFilterForEidasProxyAlert().ifPresent(alerts::add);
 
         if (alertsScheduler != null)
             alerts.addAll(alertsScheduler.getActiveAlerts());
@@ -164,4 +173,29 @@ public class ThymeleafSupport {
         alert.setLoadedFromConf(true);
         return Optional.of(alert);
     }
+
+    private Optional<Alert> getFilterForEidasProxyAlert() {
+        TaraSession taraSession = SessionUtils.getAuthSession();
+        if (taraSession == null || filterForEidasProxy == null || messageSource == null ||
+                !taraSession.getOriginalClient().getClientId().equals(filterForEidasProxy.getClientId())) {
+            return Optional.empty();
+        }
+        Locale locale = RequestUtils.getLocale();
+        AlertsConfigurationProperties.MessageTemplate messageTemplate = new AlertsConfigurationProperties.MessageTemplate();
+        messageTemplate.setMessage(messageSource.getMessage(ErrorCode.IDC_CERT_FORBIDDEN.getMessage(), null, locale));
+        messageTemplate.setLocale(locale.getLanguage());
+        AlertsConfigurationProperties.LoginAlert loginAlert = AlertsConfigurationProperties.LoginAlert.builder()
+                .enabled(true)
+                .messageTemplates(List.of(messageTemplate))
+                .authMethods(List.of(AuthenticationType.ID_CARD.getScope().getFormalName()))
+                .build();
+        Alert alert = Alert.builder()
+                .startTime(OffsetDateTime.MIN)
+                .endTime(OffsetDateTime.MAX)
+                .loginAlert(loginAlert)
+                .loadedFromConf(true)
+                .build();
+        return Optional.of(alert);
+    }
+
 }

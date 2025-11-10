@@ -3,10 +3,12 @@ package ee.ria.taraauthserver.alerts;
 
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.LoginAlert;
+import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.ThymeleafSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ignite.binary.BinaryObject;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +25,8 @@ import static ee.ria.taraauthserver.config.properties.AlertsConfigurationPropert
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.ID_CARD;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.SMART_ID;
+import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.buildMockHttpSession;
+import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.buildMockLoginRequestInfo;
 import static java.time.OffsetDateTime.parse;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -47,6 +51,13 @@ public class AlertsSchedulerTest extends BaseTest {
     @Autowired
     @Qualifier("alertsCache")
     private Cache<String, BinaryObject> alertsCache;
+
+    @BeforeEach
+    public void beforeEachTest() {
+        TaraSession.LoginRequestInfo mockLoginRequestInfo = buildMockLoginRequestInfo();
+        mockLoginRequestInfo.getClient().setClientId("abc");
+        buildMockHttpSession(mockLoginRequestInfo);
+    }
 
     @AfterEach
     public void afterEachTest() {
