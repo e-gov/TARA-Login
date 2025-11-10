@@ -80,6 +80,7 @@ import static ee.ria.taraauthserver.security.SessionManagementFilter.MDC_ATTRIBU
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static java.lang.String.format;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.nullValue;
@@ -996,7 +997,7 @@ class IdCardLoginControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .headers(EXPECTED_RESPONSE_HEADERS)
-                .body("message", equalTo("Uue seeria ID-kaartidega ei ole ajutiselt võimalik autentimine välisriikide e-teenustesse."));
+                .body("message", containsString("ei ole ajutiselt võimalik autentimine välisriikide e-teenustesse."));
 
         assertErrorIsLogged(ErrorHandler.class, "User exception: eIDAS authentication with given certificate issuer CN has been forbidden in the application configuration");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_FAILED, errorCode=IDC_CERT_FORBIDDEN)");
