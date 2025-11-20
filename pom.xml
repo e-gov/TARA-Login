@@ -34,7 +34,7 @@
         <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
         <logstash-logback-encoder.version>8.1</logstash-logback-encoder.version><!-- TODO Upgrade to logstash-logback-encoder 9.x with Spring Boot 4.x, both upgrade to Jackson 3 -->
         <mid-rest.version>1.6</mid-rest.version>
-        <smart-id.version>2.3.1</smart-id.version><!-- TODO Upgrade to >= 3.x during AUT-2021 -->
+        <smart-id.version>3.1</smart-id.version>
         <webeid.version>3.2.0</webeid.version>
         <wiremock.version>3.13.2</wiremock.version>
     </properties>
@@ -154,13 +154,6 @@
             <groupId>ee.sk.smartid</groupId>
             <artifactId>smart-id-java-client</artifactId>
             <version>${smart-id.version}</version>
-            <exclusions>
-                <!-- bcprov-jdk18on is used instead.-->
-                <exclusion>
-                    <groupId>org.bouncycastle</groupId>
-                    <artifactId>bcprov-jdk15on</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.freemarker</groupId>

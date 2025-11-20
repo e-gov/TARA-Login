@@ -177,7 +177,7 @@ public abstract class BaseTest {
     }
 
     protected static void createSidApiAuthenticationStub(String response, int status, int delayInMilliseconds) {
-        wireMockServer.stubFor(any(urlPathMatching("/smart-id-rp/v2/authentication/etsi/.*"))
+        wireMockServer.stubFor(any(urlPathMatching("/smart-id-rp/v3/authentication/notification/etsi/.*"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withStatus(status)
@@ -190,7 +190,7 @@ public abstract class BaseTest {
     }
 
     protected static void createSidApiPollStub(String response, int status, int delayInMilliseconds) {
-        wireMockServer.stubFor(any(urlPathMatching("/smart-id-rp/v2/session/de305d54-75b4-431b-adb2-eb6b9e546014"))
+        wireMockServer.stubFor(any(urlPathMatching("/smart-id-rp/v3/session/de305d54-75b4-431b-adb2-eb6b9e546014"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withStatus(status)

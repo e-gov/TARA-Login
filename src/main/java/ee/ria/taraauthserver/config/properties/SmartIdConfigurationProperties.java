@@ -2,8 +2,8 @@ package ee.ria.taraauthserver.config.properties;
 
 import ee.ria.taraauthserver.authentication.RelyingParty;
 import jakarta.annotation.PostConstruct;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -18,9 +18,6 @@ import org.springframework.validation.annotation.Validated;
 @ConditionalOnProperty(value = "tara.auth-methods.smart-id.enabled")
 public class SmartIdConfigurationProperties extends AuthConfigurationProperties.AuthMethodProperties {
 
-    @Pattern(regexp = "(SHA256|SHA384|SHA512)", message = "invalid hash value, accepted values are: SHA256, SHA384, SHA512")
-    private String hashType = "SHA512";
-
     @NotNull
     private String relyingPartyUuid;
 
@@ -34,13 +31,15 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
     private String hostUrl;
 
     @NotNull
-    private String truststorePath;
+    @Valid
+    private TruststoreConfigurationProperties trustAnchorTruststore;
 
     @NotNull
-    private String truststoreType;
+    @Valid
+    private TruststoreConfigurationProperties intermediateCaTruststore;
 
     @NotNull
-    private String truststorePassword;
+    private String schemaName;
 
     private int connectionTimeoutMilliseconds = 5000;
 
@@ -59,6 +58,19 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
 
     public RelyingParty getRelyingParty() {
         return new RelyingParty(relyingPartyName, relyingPartyUuid);
+    }
+
+    @Data
+    public static class TruststoreConfigurationProperties {
+
+        @NotNull
+        private String path;
+
+        @NotNull
+        private String type;
+
+        @NotNull
+        private String password;
     }
 
 }

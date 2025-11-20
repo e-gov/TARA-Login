@@ -5,7 +5,7 @@ import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.ValidNationalIdNumber;
-import ee.sk.smartid.AuthenticationHash;
+import ee.sk.smartid.RpChallenge;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,8 +35,8 @@ public class SmartIdController {
     public String authSidInit(@Validated @ModelAttribute(value = "credential") SidCredential sidCredential, Model model, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         log.info("Initiating Smart-ID authentication session");
         validateSession(taraSession);
-        AuthenticationHash authenticationHash = authSidService.startSidAuthSession(taraSession, sidCredential.getIdCode());
-        model.addAttribute("smartIdVerificationCode", authenticationHash.calculateVerificationCode());
+        String verificationCode = authSidService.startSidAuthSession(taraSession, sidCredential.getIdCode());
+        model.addAttribute("smartIdVerificationCode", verificationCode);
         return "sidLoginCode";
     }
 

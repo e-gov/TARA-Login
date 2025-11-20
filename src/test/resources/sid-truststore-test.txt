@@ -1,20 +1,64 @@
-Certificate: Subject: C = EE, O = AS Sertifitseerimiskeskus, organizationIdentifier = NTREE-10747013, CN = EID-SK 2016
-             Issuer: C = EE, O = AS Sertifitseerimiskeskus, CN = EE Certification Centre Root CA, emailAddress = pki@sk.ee
-             Not Before: Aug 30 09:21:09 2016 GMT
-             Not After : Dec 17 23:59:59 2030 GMT
+Certificates in sid-trust-anchor-truststore-test.p12:
+
+Certificate: Subject: emailAddress=pki@sk.ee,CN=TEST of EE Certification Centre Root CA,O=AS Sertifitseerimiskeskus,C=EE
+             Issuer: emailAddress=pki@sk.ee,CN=TEST of EE Certification Centre Root CA,O=AS Sertifitseerimiskeskus,C=EE
+             Not Before: Oct  7 12:34:56 2010 GMT
+             Not After: Dec 17 23:59:59 2030 GMT
+             Signature Algorithm: sha1WithRSAEncryption
+
+Certificate: Subject: CN=TEST of SK ID Solutions ROOT G1E,organizationIdentifier=NTREE-10747013,O=SK ID Solutions AS,C=EE
+             Issuer: CN=TEST of SK ID Solutions ROOT G1E,organizationIdentifier=NTREE-10747013,O=SK ID Solutions AS,C=EE
+             Not Before: Jul  9 10:47:14 2021 GMT
+             Not After: Jul  9 10:47:14 2041 GMT
+             Signature Algorithm: ecdsa-with-SHA512
+
+Certificate: Subject: CN=TEST of SK ID Solutions ROOT G1R,organizationIdentifier=NTREE-10747013,O=SK ID Solutions AS,C=EE
+             Issuer: CN=TEST of SK ID Solutions ROOT G1R,organizationIdentifier=NTREE-10747013,O=SK ID Solutions AS,C=EE
+             Not Before: Aug 18 10:42:37 2021 GMT
+             Not After: Aug 18 10:42:37 2041 GMT
              Signature Algorithm: sha384WithRSAEncryption
-Certificate: Subject: C = EE, O = AS Sertifitseerimiskeskus, organizationIdentifier = NTREE-10747013, CN = NQ-SK 2016
-             Issuer: C = EE, O = AS Sertifitseerimiskeskus, CN = EE Certification Centre Root CA, emailAddress = pki@sk.ee
-             Not Before: Aug 30 09:16:37 2016 GMT
-             Not After : Dec 17 23:59:59 2030 GMT
+
+Certificate: Subject: emailAddress=pki@sk.ee,CN=EE Certification Centre Root CA,O=AS Sertifitseerimiskeskus,C=EE
+             Issuer: emailAddress=pki@sk.ee,CN=EE Certification Centre Root CA,O=AS Sertifitseerimiskeskus,C=EE
+             Not Before: Oct 30 10:10:30 2010 GMT
+             Not After: Dec 17 23:59:59 2030 GMT
+             Signature Algorithm: sha1WithRSAEncryption
+
+Certificate: Subject: CN=SK ID Solutions ROOT G1E,organizationIdentifier=NTREE-10747013,O=SK ID Solutions AS,C=EE
+             Issuer: CN=SK ID Solutions ROOT G1E,organizationIdentifier=NTREE-10747013,O=SK ID Solutions AS,C=EE
+             Not Before: Oct  4 11:45:06 2021 GMT
+             Not After: Oct  4 11:45:06 2041 GMT
+             Signature Algorithm: ecdsa-with-SHA512
+
+Certificate: Subject: CN=SK ID Solutions ROOT G1R,organizationIdentifier=NTREE-10747013,O=SK ID Solutions AS,C=EE
+             Issuer: CN=SK ID Solutions ROOT G1R,organizationIdentifier=NTREE-10747013,O=SK ID Solutions AS,C=EE
+             Not Before: Oct  4 11:51:17 2021 GMT
+             Not After: Oct  4 11:51:17 2041 GMT
              Signature Algorithm: sha384WithRSAEncryption
-Certificate: Subject: C = EE, O = AS Sertifitseerimiskeskus, organizationIdentifier = NTREE-10747013, CN = TEST of EID-SK 2016
-             Issuer: C = EE, O = AS Sertifitseerimiskeskus, CN = TEST of EE Certification Centre Root CA, emailAddress = pki@sk.ee
+
+
+Certificates in sid-intermediate-ca-truststore-test.p12:
+
+Certificate: Subject: CN=TEST of EID-SK 2016,organizationIdentifier=NTREE-10747013,O=AS Sertifitseerimiskeskus,C=EE
+             Issuer: emailAddress=pki@sk.ee,CN=TEST of EE Certification Centre Root CA,O=AS Sertifitseerimiskeskus,C=EE
              Not Before: Aug 30 11:24:15 2016 GMT
-             Not After : Dec 17 23:59:59 2030 GMT
+             Not After: Dec 17 23:59:59 2030 GMT
              Signature Algorithm: sha384WithRSAEncryption
-Certificate: Subject: C = EE, O = AS Sertifitseerimiskeskus, organizationIdentifier = NTREE-10747013, CN = TEST of NQ-SK 2016
-             Issuer: C = EE, O = AS Sertifitseerimiskeskus, CN = TEST of EE Certification Centre Root CA, emailAddress = pki@sk.ee
+
+Certificate: Subject: CN=EID-SK 2016,organizationIdentifier=NTREE-10747013,O=AS Sertifitseerimiskeskus,C=EE
+             Issuer: emailAddress=pki@sk.ee,CN=EE Certification Centre Root CA,O=AS Sertifitseerimiskeskus,C=EE
+             Not Before: Aug 30 09:21:09 2016 GMT
+             Not After: Dec 17 23:59:59 2030 GMT
+             Signature Algorithm: sha384WithRSAEncryption
+
+Certificate: Subject: CN=NQ-SK 2016,organizationIdentifier=NTREE-10747013,O=AS Sertifitseerimiskeskus,C=EE
+             Issuer: emailAddress=pki@sk.ee,CN=EE Certification Centre Root CA,O=AS Sertifitseerimiskeskus,C=EE
+             Not Before: Aug 30 09:16:37 2016 GMT
+             Not After: Dec 17 23:59:59 2030 GMT
+             Signature Algorithm: sha384WithRSAEncryption
+
+Certificate: Subject: CN=TEST of NQ-SK 2016,organizationIdentifier=NTREE-10747013,O=AS Sertifitseerimiskeskus,C=EE
+             Issuer: emailAddress=pki@sk.ee,CN=TEST of EE Certification Centre Root CA,O=AS Sertifitseerimiskeskus,C=EE
              Not Before: Aug 30 11:25:20 2016 GMT
-             Not After : Dec 17 23:59:59 2030 GMT
+             Not After: Dec 17 23:59:59 2030 GMT
              Signature Algorithm: sha384WithRSAEncryption

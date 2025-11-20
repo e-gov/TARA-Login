@@ -76,7 +76,8 @@ tara:
     smart-id:
       enabled: true
       level-of-assurance: HIGH
-      host-url: https://sid.demo.sk.ee/smart-id-rp/v2/
+      host-url: https://sid.demo.sk.ee/smart-id-rp/v3/
+      schema-name: smart-id-demo
       relying-party-name: DEMO
       connection-timeout-milliseconds: 5000
       read-timeout-milliseconds: 120000
