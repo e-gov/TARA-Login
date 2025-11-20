@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.7</version>
+        <version>3.5.8</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>ee.ria.tara</groupId>
@@ -36,7 +36,7 @@
         <mid-rest.version>1.6</mid-rest.version>
         <smart-id.version>2.3.1</smart-id.version><!-- TODO Upgrade to >= 3.x during AUT-2021 -->
         <webeid.version>3.2.0</webeid.version>
-        <wiremock.version>3.13.1</wiremock.version>
+        <wiremock.version>3.13.2</wiremock.version>
     </properties>
 
     <dependencies>
