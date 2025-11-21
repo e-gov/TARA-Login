@@ -55,7 +55,7 @@ import static org.mockito.Mockito.spy;
 class AuthMidControllerTest extends BaseTest {
     private final MidAuthenticationHashToSign MOCK_HASH_TO_SIGN = new MidAuthenticationHashToSign.MobileIdAuthenticationHashToSignBuilder()
             .withHashType(MidHashType.SHA512)
-            .withHashInBase64("rbk7bdU+rc5CEbJ4h7I5l6chpMzdBiWkxIENPmcLLmI=").build();
+            .withHashInBase64("7iG3DSOoETBiuvL3uKvCRTL0cmF0ciTXKMe88VgsLpw=").build();
 
     @SpyBean
     private AuthMidService authMidService;
@@ -114,7 +114,7 @@ class AuthMidControllerTest extends BaseTest {
                 "MID session id de305d54-75b4-431b-adb2-eb6b9e546015 authentication result: OK, status: COMPLETE",
                 "State: POLL_MID_STATUS -> NATURAL_PERSON_AUTHENTICATION_COMPLETED");
         assertStatisticsIsLoggedOnce(INFO, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
-                "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001017716, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+                "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
     }
 
     @Test
@@ -471,8 +471,8 @@ class AuthMidControllerTest extends BaseTest {
 
         given()
                 .filter(sessionFilter)
-                .formParam("idCode", "60001017716")
-                .formParam("telephoneNumber", "59100366")
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "00000766")
                 .when()
                 .post("/auth/mid/init")
                 .then()
@@ -494,7 +494,7 @@ class AuthMidControllerTest extends BaseTest {
                 "Mobile-ID response: 200",
                 "MID session id de305d54-75b4-431b-adb2-eb6b9e546015 authentication result: OK, status: COMPLETE",
                 "State: POLL_MID_STATUS -> NATURAL_PERSON_AUTHENTICATION_COMPLETED");
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001017716, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
     }
 
     @Test
@@ -513,8 +513,8 @@ class AuthMidControllerTest extends BaseTest {
 
         given()
                 .filter(sessionFilter)
-                .formParam("idCode", "60001017716")
-                .formParam("telephoneNumber", "59100366")
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "00000766")
                 .when()
                 .post("/auth/mid/init?lang=en")
                 .then()
@@ -525,7 +525,7 @@ class AuthMidControllerTest extends BaseTest {
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
         TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
         assertAuthenticationResult(result);
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001017716, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
     }
 
     @Test
@@ -546,8 +546,8 @@ class AuthMidControllerTest extends BaseTest {
 
         given()
                 .filter(sessionFilter)
-                .formParam("idCode", "60001017716")
-                .formParam("telephoneNumber", "59100366")
+                .formParam("idCode", "60001019906")
+                .formParam("telephoneNumber", "00000766")
                 .when()
                 .post("/auth/mid/init?lang=et")
                 .then()
@@ -558,7 +558,7 @@ class AuthMidControllerTest extends BaseTest {
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
         TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
         assertAuthenticationResult(result);
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001017716, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
     }
 
     @Nested
@@ -603,7 +603,7 @@ class AuthMidControllerTest extends BaseTest {
 
             given()
                     .filter(sessionFilter)
-                    .formParam("idCode", "60001017716")
+                    .formParam("idCode", "60001019906")
                     .formParam("telephoneNumber", "59100366")
                     .when()
                     .post("/auth/mid/init?lang=et")
@@ -615,7 +615,7 @@ class AuthMidControllerTest extends BaseTest {
                     .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
             TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
             assertAuthenticationResult(result);
-            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001017716, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
         }
 
         @Test
@@ -644,7 +644,7 @@ class AuthMidControllerTest extends BaseTest {
 
             given()
                     .filter(sessionFilter)
-                    .formParam("idCode", "60001017716")
+                    .formParam("idCode", "60001019906")
                     .formParam("telephoneNumber", "59100366")
                     .when()
                     .post("/auth/mid/init?lang=et")
@@ -656,7 +656,7 @@ class AuthMidControllerTest extends BaseTest {
                     .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
             TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
             assertAuthenticationResult(result);
-            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001017716, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
         }
 
         @Test
@@ -687,7 +687,7 @@ class AuthMidControllerTest extends BaseTest {
 
             given()
                     .filter(sessionFilter)
-                    .formParam("idCode", "60001017716")
+                    .formParam("idCode", "60001019906")
                     .formParam("telephoneNumber", "59100366")
                     .when()
                     .post("/auth/mid/init?lang=et")
@@ -699,7 +699,7 @@ class AuthMidControllerTest extends BaseTest {
                     .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
             TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
             assertAuthenticationResult(result);
-            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=GOVSSO, clientId=govsso_test_client_id, eidasRequesterId=null, sector=public, registryCode=govsso_test_registry_code, legalPerson=false, country=EE, idCode=60001017716, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=GOVSSO, clientId=govsso_test_client_id, eidasRequesterId=null, sector=public, registryCode=govsso_test_registry_code, legalPerson=false, country=EE, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
         }
 
         @Test
@@ -728,7 +728,7 @@ class AuthMidControllerTest extends BaseTest {
 
             given()
                     .filter(sessionFilter)
-                    .formParam("idCode", "60001017716")
+                    .formParam("idCode", "60001019906")
                     .formParam("telephoneNumber", "59100366")
                     .when()
                     .post("/auth/mid/init?lang=et")
@@ -740,7 +740,7 @@ class AuthMidControllerTest extends BaseTest {
                     .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
             TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
             assertAuthenticationResult(result);
-            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=GOVSSO, clientId=govsso_test_client_id, eidasRequesterId=null, sector=public, registryCode=govsso_test_registry_code, legalPerson=false, country=EE, idCode=60001017716, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=GOVSSO, clientId=govsso_test_client_id, eidasRequesterId=null, sector=public, registryCode=govsso_test_registry_code, legalPerson=false, country=EE, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
         }
 
         @Test
@@ -778,7 +778,7 @@ class AuthMidControllerTest extends BaseTest {
 
             given()
                     .filter(sessionFilter)
-                    .formParam("idCode", "60001017716")
+                    .formParam("idCode", "60001019906")
                     .formParam("telephoneNumber", "59100366")
                     .when()
                     .post("/auth/mid/init?lang=et")
@@ -790,7 +790,7 @@ class AuthMidControllerTest extends BaseTest {
                     .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
             TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
             assertAuthenticationResult(result);
-            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=GOVSSO, clientId=govsso_test_client_id, eidasRequesterId=null, sector=public, registryCode=govsso_test_registry_code, legalPerson=false, country=EE, idCode=60001017716, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=GOVSSO, clientId=govsso_test_client_id, eidasRequesterId=null, sector=public, registryCode=govsso_test_registry_code, legalPerson=false, country=EE, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
         }
 
         private TaraSession.LoginRequestInfo createGovSsoLoginRequest(TaraSession.MidSettings mobileIdSettings) {
@@ -1022,16 +1022,16 @@ class AuthMidControllerTest extends BaseTest {
 
         await().atMost(TEN_SECONDS)
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001017716, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
     }
 
     private void assertAuthenticationResult(TaraSession.MidAuthenticationResult result) {
-        assertEquals("60001017716", result.getIdCode());
+        assertEquals("60001019906", result.getIdCode());
         assertEquals("EE", result.getCountry());
-        assertEquals("ONE", result.getFirstName());
-        assertEquals("TESTNUMBER", result.getLastName());
-        assertEquals("+37259100366", result.getPhoneNumber());
-        assertEquals("EE60001017716", result.getSubject());
+        assertEquals("MARY ÄNN", result.getFirstName());
+        assertEquals("O’CONNEŽ-ŠUSLIK TESTNUMBER", result.getLastName());
+        assertEquals("+37200000766", result.getPhoneNumber());
+        assertEquals("EE60001019906", result.getSubject());
         assertEquals("2000-01-01", result.getDateOfBirth().toString());
         assertEquals(MOBILE_ID, result.getAmr());
         assertEquals(LevelOfAssurance.HIGH, result.getAcr());

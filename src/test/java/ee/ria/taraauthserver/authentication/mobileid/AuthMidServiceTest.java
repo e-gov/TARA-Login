@@ -68,11 +68,13 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class AuthMidServiceTest extends BaseTest {
 
-    // NB! Certificate in mid_poll_response.json expires Nov 12 21:59:59 2025 GMT.
+    // The hash below, signature.value and cert in mid_poll_response.json can be acquired by authenticating using MID
+    // in local development environment with test parameters and checking the TARA Login service logs.
+    // NB! Certificate in mid_poll_response.json expires Nov 19 13:53:30 2030 GMT.
 
     private final MidAuthenticationHashToSign MOCK_HASH_TO_SIGN = new MidAuthenticationHashToSign.MobileIdAuthenticationHashToSignBuilder()
             .withHashType(MidHashType.SHA512)
-            .withHashInBase64("rbk7bdU+rc5CEbJ4h7I5l6chpMzdBiWkxIENPmcLLmI=").build();
+            .withHashInBase64("7iG3DSOoETBiuvL3uKvCRTL0cmF0ciTXKMe88VgsLpw=").build();
     private final MidConnector midConnectorMock = Mockito.mock(MidConnector.class);
 
     @SpyBean
@@ -115,12 +117,12 @@ public class AuthMidServiceTest extends BaseTest {
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
         TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
         assertNull(result.getErrorCode());
-        assertEquals("60001017716", result.getIdCode());
+        assertEquals("60001019906", result.getIdCode());
         assertEquals("EE", result.getCountry());
-        assertEquals("ONE", result.getFirstName());
-        assertEquals("TESTNUMBER", result.getLastName());
-        assertEquals("+37259100366", result.getPhoneNumber());
-        assertEquals("EE60001017716", result.getSubject());
+        assertEquals("MARY ÄNN", result.getFirstName());
+        assertEquals("O’CONNEŽ-ŠUSLIK TESTNUMBER", result.getLastName());
+        assertEquals("+37200000766", result.getPhoneNumber());
+        assertEquals("EE60001019906", result.getSubject());
         assertEquals("2000-01-01", result.getDateOfBirth().toString());
         assertEquals(MOBILE_ID, result.getAmr());
         assertEquals(LevelOfAssurance.HIGH, result.getAcr());
@@ -134,7 +136,7 @@ public class AuthMidServiceTest extends BaseTest {
                 "Mobile-ID response: 200",
                 "MID session id de305d54-75b4-431b-adb2-eb6b9e546015 authentication result: OK, status: COMPLETE",
                 "State: POLL_MID_STATUS -> NATURAL_PERSON_AUTHENTICATION_COMPLETED");
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001017716, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
         assertMidApiRequests();
     }
 
@@ -197,12 +199,12 @@ public class AuthMidServiceTest extends BaseTest {
                 .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
         TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
         assertNull(result.getErrorCode());
-        assertEquals("60001017716", result.getIdCode());
+        assertEquals("60001019906", result.getIdCode());
         assertEquals("EE", result.getCountry());
-        assertEquals("ONE", result.getFirstName());
-        assertEquals("TESTNUMBER", result.getLastName());
-        assertEquals("+37259100366", result.getPhoneNumber());
-        assertEquals("EE60001017716", result.getSubject());
+        assertEquals("MARY ÄNN", result.getFirstName());
+        assertEquals("O’CONNEŽ-ŠUSLIK TESTNUMBER", result.getLastName());
+        assertEquals("+37200000766", result.getPhoneNumber());
+        assertEquals("EE60001019906", result.getSubject());
         assertEquals("2000-01-01", result.getDateOfBirth().toString());
         assertEquals(MOBILE_ID, result.getAmr());
         assertEquals(LevelOfAssurance.HIGH, result.getAcr());
@@ -216,7 +218,7 @@ public class AuthMidServiceTest extends BaseTest {
                 "Mobile-ID response: 200",
                 "MID session id de305d54-75b4-431b-adb2-eb6b9e546015 authentication result: OK, status: COMPLETE",
                 "State: POLL_MID_STATUS -> NATURAL_PERSON_AUTHENTICATION_COMPLETED");
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001017716, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
         assertMidApiRequests();
     }
 
@@ -226,7 +228,7 @@ public class AuthMidServiceTest extends BaseTest {
     void authenticationFailsWhen_MidAuthenticationResultValidationFails(String validationError) {
         MidAuthenticationResult authenticationResult = new MidAuthenticationResult();
         MidAuthenticationIdentity authenticationIdentity = new MidAuthenticationIdentity();
-        authenticationIdentity.setIdentityCode("60001017716");
+        authenticationIdentity.setIdentityCode("60001019906");
         authenticationResult.setValid(false);
         authenticationResult.setAuthenticationIdentity(authenticationIdentity);
         MidAuthenticationError error = MidAuthenticationError.valueOf(validationError);
@@ -240,8 +242,8 @@ public class AuthMidServiceTest extends BaseTest {
         assertEquals(MID_VALIDATION_ERROR, taraSession.getAuthenticationResult().getErrorCode());
         assertErrorIsLogged(format("Authentication result validation failed: [%s]", error.getMessage()));
         assertMidApiRequests();
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=null, idCode=60001017716, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=MID_VALIDATION_ERROR)");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=null, idCode=60001017716, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=MID_VALIDATION_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=null, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=MID_VALIDATION_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=null, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=MID_VALIDATION_ERROR)");
     }
 
     @Test
@@ -504,7 +506,7 @@ public class AuthMidServiceTest extends BaseTest {
 
     private String createNewAuthenticationSessionAndReturnId() {
         Session session = createNewAuthenticationSession();
-        MidAuthenticationHashToSign midAuthenticationHashToSign = authMidService.startMidAuthSession(session.getAttribute(TARA_SESSION), "60001017716", "+37259100366");
+        MidAuthenticationHashToSign midAuthenticationHashToSign = authMidService.startMidAuthSession(session.getAttribute(TARA_SESSION), "60001019906", "+37200000766");
         assertNotNull(midAuthenticationHashToSign);
         return session.getId();
     }
