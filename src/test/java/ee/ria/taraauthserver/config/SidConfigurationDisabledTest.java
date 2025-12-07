@@ -1,6 +1,6 @@
 package ee.ria.taraauthserver.config;
 
-import ee.ria.taraauthserver.authentication.smartid.SmartIdController;
+import ee.ria.taraauthserver.authentication.smartid.SmartIdNotificationBasedController;
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -18,7 +18,7 @@ public class SidConfigurationDisabledTest extends DisabledConfigurationTest {
     @Test
     @Tag(value = "SID_AUTH_ENABLED")
     public void whenLegalPersonDisabledThenBeansNotLoaded() {
-        assertBeanNotInitiated(SmartIdController.class);
+        assertBeanNotInitiated(SmartIdNotificationBasedController.class);
         assertBeanNotInitiated(SmartIdConfiguration.class);
         assertBeanNotInitiated(SmartIdConfigurationProperties.class);
     }

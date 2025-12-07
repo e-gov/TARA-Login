@@ -7,6 +7,7 @@ import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.EidasConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.SPType;
+import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
@@ -34,6 +35,9 @@ public class ThymeleafSupport {
 
     @Autowired(required = false)
     private AuthConfigurationProperties authConfigurationProperties;
+
+    @Autowired(required = false)
+    private SmartIdConfigurationProperties smartIdConfigurationProperties;
 
     @Autowired
     private AlertsConfigurationProperties alertsConfigurationProperties;
@@ -120,6 +124,11 @@ public class ThymeleafSupport {
         } else {
             return "/auth/init?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge() + RequestUtils.getLangParam(taraSession);
         }
+    }
+
+    public boolean isSidWeb2AppEnabled() {
+        return isAuthMethodAllowed(AuthenticationType.SMART_ID)
+                && smartIdConfigurationProperties.getWeb2app().isEnabled();
     }
 
     public boolean isAuthMethodAllowed(AuthenticationType method) {

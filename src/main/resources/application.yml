@@ -81,6 +81,8 @@ tara:
       relying-party-name: DEMO
       connection-timeout-milliseconds: 5000
       read-timeout-milliseconds: 120000
+      web2app:
+        enabled: false
     eidas:
       enabled: true
       refresh-countries-interval-in-milliseconds: 86400000

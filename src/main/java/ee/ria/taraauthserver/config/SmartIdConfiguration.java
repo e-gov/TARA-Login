@@ -2,14 +2,12 @@ package ee.ria.taraauthserver.config;
 
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import ee.ria.taraauthserver.logging.JaxRsClientRequestLogger;
-import ee.sk.smartid.AuthenticationResponseMapperImpl;
 import ee.sk.smartid.CertificateValidatorImpl;
 import ee.sk.smartid.DefaultTrustedCAStoreBuilder;
+import ee.sk.smartid.DeviceLinkAuthenticationResponseValidator;
 import ee.sk.smartid.NotificationAuthenticationResponseValidator;
-import ee.sk.smartid.SignatureValueValidatorImpl;
 import ee.sk.smartid.SmartIdClient;
 import ee.sk.smartid.TrustedCACertStore;
-import ee.sk.smartid.auth.AuthenticationCertificatePurposeValidatorFactoryImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
@@ -65,8 +63,19 @@ public class SmartIdConfiguration {
     }
 
     @Bean
-    public NotificationAuthenticationResponseValidator authResponseValidator() throws Exception {
-        TrustedCACertStore trustedCACertStore = new DefaultTrustedCAStoreBuilder()
+    public DeviceLinkAuthenticationResponseValidator deviceLinkAuthenticationResponseValidator() throws Exception {
+        return DeviceLinkAuthenticationResponseValidator.defaultSetupWithCertificateValidator(
+                new CertificateValidatorImpl(getTrustedCACertStore()));
+    }
+
+    @Bean
+    public NotificationAuthenticationResponseValidator notificationAuthenticationResponseValidator() throws Exception {
+        return NotificationAuthenticationResponseValidator.defaultSetupWithCertificateValidator(
+                new CertificateValidatorImpl(getTrustedCACertStore()));
+    }
+
+    private TrustedCACertStore getTrustedCACertStore() throws Exception {
+        return new DefaultTrustedCAStoreBuilder()
                 .withTrustAnchors(getTrustAnchors())
                 .withIntermediateCACertificate(getIntermediateCaCertificates())
                 // TODO: Enable when OCSP support will be implemented in newer Smart ID versions.
@@ -74,11 +83,6 @@ public class SmartIdConfiguration {
                 //   (as of Smart-ID version 3.1, this line throws UnsupportedOperationException with message "will be implemented later")
                 .withOcspEnabled(false)
                 .build();
-        return new NotificationAuthenticationResponseValidator(
-                new CertificateValidatorImpl(trustedCACertStore),
-                new AuthenticationResponseMapperImpl(),
-                new SignatureValueValidatorImpl(),
-                new AuthenticationCertificatePurposeValidatorFactoryImpl());
     }
 
     private Set<TrustAnchor> getTrustAnchors() throws Exception {

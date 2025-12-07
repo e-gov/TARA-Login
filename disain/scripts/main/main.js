@@ -409,7 +409,6 @@ jQuery(function ($) {
 		}
 	});
 
-
 	// Smart-ID status polling form - submit cancel
     $('#authenticationCheckForm a.c-btn--from-link').on('click', function(event){
 

@@ -32,6 +32,10 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
 
     @NotNull
     @Valid
+    private Web2App web2app;
+
+    @NotNull
+    @Valid
     private TruststoreConfigurationProperties trustAnchorTruststore;
 
     @NotNull
@@ -71,6 +75,13 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
 
         @NotNull
         private String password;
+    }
+
+    @Data
+    public static class Web2App {
+
+        @NotNull
+        private boolean enabled;
     }
 
 }
