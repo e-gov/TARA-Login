@@ -189,12 +189,12 @@ Table 1.4.3 - Integration with the [SK SID service](https://github.com/SK-EID/sm
 | :---------------- | :---------- | :----------------|
 | `tara.auth-methods.smart-id.host-url` | Yes | Smart-ID authentication service url |
 | `tara.auth-methods.smart-id.schema-name` | Yes | Smart-ID service schema name. Must be either `smart-id-demo` for Smart-ID DEMO service or `smart-id` for Smart-ID LIVE service. |
-| `tara.auth-methods.smart-id.trust-anchor-truststore-path` | Yes | Path to trust anchor truststore file. Trust anchor is the root CA which issues intermediate CA certificates (see `*.intermediate-ca-truststore-*` parameters below). Example. `file:src/test/resources/ocsp/sid-trust-anchor-truststore.p12` |
-| `tara.auth-methods.smart-id.trust-anchor-truststore-type` | Yes | Type of the truststore from trust-anchor-truststore-path. Example: `PKCS12` |
-| `tara.auth-methods.smart-id.trust-anchor-truststore-password` | Yes | Password of the truststore from trust-anchor-truststore-path. Example: `changeit` |
-| `tara.auth-methods.smart-id.intermediate-ca-truststore-path` | Yes | Path to intermediate CA truststore file. Intermediate CA is the CA which issues personal certificates for Smart-ID users. Example: `file:src/test/resources/ocsp/sid-intermediate-ca-truststore.p12` |
-| `tara.auth-methods.smart-id.intermediate-ca-truststore-type` | Yes | Type of the truststore from intermediate-ca-truststore-path. Example: `PKCS12` |
-| `tara.auth-methods.smart-id.intermediate-ca-truststore-password` | Yes | Password of the truststore from intermediate-ca-truststore-path. Example: `changeit` |
+| `tara.auth-methods.smart-id.trust-anchor-truststore.path` | Yes | Path to trust anchor truststore file. Trust anchor is the root CA which issues intermediate CA certificates (see `*.intermediate-ca-truststore-*` parameters below). Example. `file:src/test/resources/ocsp/sid-trust-anchor-truststore.p12` |
+| `tara.auth-methods.smart-id.trust-anchor-truststore.type` | Yes | Type of the truststore from trust-anchor-truststore-path. Example: `PKCS12` |
+| `tara.auth-methods.smart-id.trust-anchor-truststore.password` | Yes | Password of the truststore from trust-anchor-truststore-path. Example: `changeit` |
+| `tara.auth-methods.smart-id.intermediate-ca-truststore.path` | Yes | Path to intermediate CA truststore file. Intermediate CA is the CA which issues personal certificates for Smart-ID users. Example: `file:src/test/resources/ocsp/sid-intermediate-ca-truststore.p12` |
+| `tara.auth-methods.smart-id.intermediate-ca-truststore.type` | Yes | Type of the truststore from intermediate-ca-truststore-path. Example: `PKCS12` |
+| `tara.auth-methods.smart-id.intermediate-ca-truststore.password` | Yes | Password of the truststore from intermediate-ca-truststore-path. Example: `changeit` |
 | `tara.auth-methods.smart-id.relying-party-uuid` | Yes | UUID from RIA smart id contract |
 | `tara.auth-methods.smart-id.relying-party-name` | Yes | Name from RIA smart id contract |
 | `tara.auth-methods.smart-id.display-text` | Yes | Text to be displayed in user's mobile device. Used as a fallback in case the OIDC client has not registered a short name. |
