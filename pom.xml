@@ -35,7 +35,7 @@
         <logstash-logback-encoder.version>8.1</logstash-logback-encoder.version><!-- TODO Upgrade to logstash-logback-encoder 9.x with Spring Boot 4.x, both upgrade to Jackson 3 -->
         <mid-rest.version>1.6</mid-rest.version>
         <smart-id.version>3.1</smart-id.version>
-        <webeid.version>3.2.0</webeid.version>
+        <webeid.version>3.2.0-2473</webeid.version>
         <wiremock.version>3.13.2</wiremock.version>
     </properties>
 
@@ -203,6 +203,10 @@
         <repository>
             <id>gitlab</id>
             <url>https://gitlab.com/api/v4/projects/19948337/packages/maven</url>
+        </repository>
+        <repository>
+            <id>local-repo</id>
+            <url>file://${project.basedir}/libs</url>
         </repository>
     </repositories>
 

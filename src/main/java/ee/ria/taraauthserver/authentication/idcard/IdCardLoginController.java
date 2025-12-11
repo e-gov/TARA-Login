@@ -82,7 +82,7 @@ public class IdCardLoginController {
             throw new BadRequestException(INVALID_REQUEST, e.getMessage(), e);
         }
         try {
-            certificate = authTokenValidator.validate(data.getAuthToken(), nonce);
+            certificate = authTokenValidator.validate(data.getAuthToken(), nonce).getSubjectCertificate();
         } catch (CertificateExpiredException e) {
             throw new BadRequestException(IDC_CERT_EXPIRED, e.getMessage(), e);
         } catch (CertificateNotYetValidException e) {
