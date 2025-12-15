@@ -51,6 +51,9 @@ public class AuthConfigurationProperties {
 
     private TlsConfigurationProperties tls = new TlsConfigurationProperties();
 
+    @NotNull
+    private URL siteOrigin;
+
     private EnumMap<AuthenticationType, AuthMethodProperties> authMethods = new EnumMap<>(AuthenticationType.class);
 
     @NotNull
@@ -210,9 +213,6 @@ public class AuthConfigurationProperties {
         private String truststoreType = "PKCS12";
 
         private boolean ocspEnabled = true;
-
-        @NotNull
-        private URL siteOrigin;
 
         @NotNull
         private String truststorePassword;

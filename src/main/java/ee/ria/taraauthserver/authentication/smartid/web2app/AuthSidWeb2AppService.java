@@ -1,16 +1,23 @@
-package ee.ria.taraauthserver.authentication.smartid;
+package ee.ria.taraauthserver.authentication.smartid.web2app;
 
 import co.elastic.apm.api.ElasticApm;
 import co.elastic.apm.api.Scope;
 import co.elastic.apm.api.Span;
 import ee.ria.taraauthserver.authentication.RelyingParty;
+import ee.ria.taraauthserver.authentication.smartid.RpChallengeService;
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
+import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraSession.SidAuthenticationResult;
+import ee.ria.taraauthserver.session.update.FailSmartIdWeb2AppAuthenticationSessionUpdate;
+import ee.ria.taraauthserver.session.update.InitSmartIdWeb2AppAuthenticationSessionUpdate;
+import ee.ria.taraauthserver.session.update.PollSmartIdWeb2AppAuthenticationSessionUpdate;
+import ee.ria.taraauthserver.utils.LanguageUtil;
 import ee.sk.mid.MidNationalIdentificationCodeValidator;
 import ee.sk.smartid.AuthenticationCertificateLevel;
 import ee.sk.smartid.AuthenticationIdentity;
@@ -20,6 +27,7 @@ import ee.sk.smartid.DeviceLinkType;
 import ee.sk.smartid.RpChallenge;
 import ee.sk.smartid.SessionType;
 import ee.sk.smartid.SmartIdClient;
+import ee.sk.smartid.common.devicelink.CallbackUrl;
 import ee.sk.smartid.common.devicelink.interactions.DeviceLinkInteraction;
 import ee.sk.smartid.exception.UnprocessableSmartIdResponseException;
 import ee.sk.smartid.exception.useraccount.CertificateLevelMismatchException;
@@ -35,8 +43,8 @@ import ee.sk.smartid.exception.useraction.UserSelectedWrongVerificationCodeExcep
 import ee.sk.smartid.rest.SessionStatusPoller;
 import ee.sk.smartid.rest.dao.DeviceLinkAuthenticationSessionRequest;
 import ee.sk.smartid.rest.dao.DeviceLinkSessionResponse;
-import ee.sk.smartid.rest.dao.SessionSignature;
 import ee.sk.smartid.rest.dao.SessionStatus;
+import ee.sk.smartid.util.CallbackUrlUtil;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.ProcessingException;
 import lombok.extern.slf4j.Slf4j;
@@ -47,11 +55,10 @@ import org.springframework.session.SessionRepository;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 import static co.elastic.apm.api.Outcome.FAILURE;
@@ -69,15 +76,10 @@ import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_DISAPLAYTEX
 import static ee.ria.taraauthserver.error.ErrorCode.SID_VALIDATION_ERROR;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_WRONG_VC;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_SID_WEB2APP;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_WEB2APP_STATUS;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
-import static ee.ria.taraauthserver.utils.RequestUtils.withMdc;
 import static java.time.Instant.now;
 import static java.time.temporal.ChronoUnit.MILLIS;
-import static java.util.concurrent.CompletableFuture.delayedExecutor;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static net.logstash.logback.marker.Markers.append;
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
@@ -94,6 +96,7 @@ import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 public class AuthSidWeb2AppService {
 
     private static final Map<Class<?>, ErrorCode> errorMap;
+    private static final String RELATIVE_CALLBACK_URL = "auth/sid/web2app/callback";
 
     static {
         errorMap = new HashMap<>();
@@ -126,6 +129,9 @@ public class AuthSidWeb2AppService {
     private SmartIdConfigurationProperties smartIdConfigurationProperties;
 
     @Autowired
+    private AuthConfigurationProperties authConfigurationProperties;
+
+    @Autowired
     private Executor applicationTaskExecutor;
 
     @Autowired
@@ -134,18 +140,24 @@ public class AuthSidWeb2AppService {
     @Autowired
     private RpChallengeService rpChallengeService;
 
-    public URI startSidAuthSession(TaraSession taraSession) {
+    public URI startSidAuthSession(TaraSession taraSession) throws URISyntaxException {
         RpChallenge rpChallenge = rpChallengeService.getRpChallenge();
-        taraSession.setState(INIT_SID_WEB2APP);
+        taraSession.accept(new InitSmartIdWeb2AppAuthenticationSessionUpdate());
         updateSession(taraSession);
 
-        RelyingParty relyingParty =
-                taraSession.getSmartIdRelyingParty().orElse(smartIdConfigurationProperties.getRelyingParty());
+        RelyingParty relyingParty = taraSession.getSmartIdRelyingParty()
+                .orElse(smartIdConfigurationProperties.getRelyingParty());
         String shortName = defaultIfNull(
                 taraSession.getOriginalClient().getTranslatedShortName(),
                 smartIdConfigurationProperties.getDisplayText());
+        String callbackUrl = authConfigurationProperties.getSiteOrigin()
+                .toURI()
+                .resolve(RELATIVE_CALLBACK_URL)
+                .toString();
+        CallbackUrl callbackUrlWithToken = CallbackUrlUtil.createCallbackUrl(callbackUrl);
         DeviceLinkAuthenticationSessionRequestBuilder requestBuilder = sidClient
                 .createDeviceLinkAuthentication()
+                .withInitialCallbackUrl(callbackUrlWithToken.initialCallbackUri().toString())
                 .withRpChallenge(rpChallenge.toBase64EncodedValue())
                 .withInteractions(Collections.singletonList(DeviceLinkInteraction.displayTextAndPin(shortName)))
                 .withRelyingPartyUUID(relyingParty.getUuid())
@@ -154,41 +166,31 @@ public class AuthSidWeb2AppService {
 
         DeviceLinkSessionResponse sessionResponse = initAuthentication(taraSession, requestBuilder);
         DeviceLinkAuthenticationSessionRequest sessionRequest = requestBuilder.getAuthenticationSessionRequest();
-        URI deviceLink = createDeviceLink(
+        String language = LanguageUtil.toIso3(taraSession.getChosenLanguage());
+        return createDeviceLink(
                 sessionRequest.interactions(),
                 sessionResponse,
-                taraSession.getChosenLanguage(),
-                rpChallenge);
-
-        CompletableFuture.supplyAsync(
-                withMdc(() -> {
-                    pollAuthenticationResult(sessionResponse, taraSession, requestBuilder);
-                    return null; // This is only needed to support the existing signature of withMdc() method
-                }),
-                delayedExecutor(
-                        smartIdConfigurationProperties.getDelayInitiateSidSessionInMilliseconds(),
-                        MILLISECONDS,
-                        applicationTaskExecutor
-                )
-        );
-        return deviceLink;
+                language,
+                rpChallenge,
+                callbackUrlWithToken.initialCallbackUri().toString());
     }
 
     private URI createDeviceLink(
             String interactions,
             DeviceLinkSessionResponse sessionResponse,
             String language,
-            RpChallenge rpChallenge) {
+            RpChallenge rpChallenge,
+            String callbackUrl) {
         return sidClient.createDynamicContent()
                 .withDeviceLinkBase(sessionResponse.deviceLinkBase().toString())
                 .withDeviceLinkType(DeviceLinkType.WEB_2_APP)
-                // TODO AUT-2449: Use real callback URL
-                .withInitialCallbackUrl("https://www.example.org")
+                .withInitialCallbackUrl(callbackUrl)
                 .withSessionToken(sessionResponse.sessionToken())
                 .withSessionType(SessionType.AUTHENTICATION)
                 .withLang(language)
                 .withDigest(rpChallenge.toBase64EncodedValue())
                 .withInteractions(interactions)
+                .withSchemeName(smartIdConfigurationProperties.getSchemaName())
                 .buildDeviceLink(sessionResponse.sessionSecret());
     }
 
@@ -203,7 +205,10 @@ public class AuthSidWeb2AppService {
             String sidSessionId = authenticationSessionResponse.sessionID();
             log.info("Initiated Smart-ID Web2App session with id: {}",
                     value("tara.session.authentication_result.sid_session_id", sidSessionId));
-            taraSession.setState(POLL_SID_WEB2APP_STATUS);
+            taraSession.accept(new PollSmartIdWeb2AppAuthenticationSessionUpdate(
+                    sidSessionId,
+                    requestBuilder.getAuthenticationSessionRequest()
+            ));
             createAuthenticationResult(taraSession, sidSessionId);
             return authenticationSessionResponse;
         } catch (Exception e) {
@@ -217,7 +222,7 @@ public class AuthSidWeb2AppService {
         }
     }
 
-    private void createAuthenticationResult(TaraSession taraSession, String sidSessionId) {
+    private static void createAuthenticationResult(TaraSession taraSession, String sidSessionId) {
         SidAuthenticationResult sidAuthenticationResult = new SidAuthenticationResult(sidSessionId);
         sidAuthenticationResult.setAmr(AuthenticationType.SMART_ID);
         taraSession.setAuthenticationResult(sidAuthenticationResult);
@@ -233,10 +238,7 @@ public class AuthSidWeb2AppService {
         }
     }
 
-    private void pollAuthenticationResult(
-            DeviceLinkSessionResponse sessionResponse,
-            TaraSession taraSession,
-            DeviceLinkAuthenticationSessionRequestBuilder requestBuilder) {
+    public TaraAuthenticationState getAuthenticationResult(TaraSession taraSession, String userChallengeVerifier) {
         Span span = ElasticApm.currentTransaction().startSpan("app", "SID", "poll");
         span.setName("AuthSidWeb2AppService#pollAuthenticationResult");
         span.setStartTimestamp(
@@ -247,14 +249,22 @@ public class AuthSidWeb2AppService {
         try (final Scope scope = span.activate()) {
             SessionStatusPoller sessionStatusPoller = sidClient.getSessionStatusPoller();
             log.info("Starting Smart-ID session status polling with id: {}",
-                    value("tara.session.sid_authentication_result.sid_session_id", sessionResponse.sessionID()));
-            SessionStatus sessionStatus = sessionStatusPoller.fetchFinalSessionStatus(sessionResponse.sessionID());
-            handleSidAuthenticationResult(taraSession, sessionStatus, requestBuilder);
+                    value("tara.session.sid_authentication_result.sid_session_id", taraSession.getSmartIdWeb2AppSession().getSessionId()));
+            // TODO AUT-2504: Polling should be asynchronous
+            SessionStatus sessionStatus = sessionStatusPoller.fetchFinalSessionStatus(taraSession.getSmartIdWeb2AppSession().getSessionId());
+
+            handleSidAuthenticationResult(
+                    taraSession,
+                    sessionStatus,
+                    taraSession.getSmartIdWeb2AppSession().getAuthenticationSessionRequest(),
+                    userChallengeVerifier);
             taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
             statisticsLogger.logExternalTransaction(taraSession);
+            return NATURAL_PERSON_AUTHENTICATION_COMPLETED;
         } catch (Exception ex) {
             handleSidAuthenticationException(taraSession, ex);
             handleStatisticsLogging(taraSession, ex);
+            return AUTHENTICATION_FAILED;
         } finally {
             updateSession(taraSession);
             span.end();
@@ -264,7 +274,8 @@ public class AuthSidWeb2AppService {
     private void handleSidAuthenticationResult(
             TaraSession taraSession,
             SessionStatus sessionStatus,
-            DeviceLinkAuthenticationSessionRequestBuilder requestBuilder) {
+            DeviceLinkAuthenticationSessionRequest authenticationSessionRequest,
+            String userChallengeVerifier) {
         SidAuthenticationResult taraAuthResult = (SidAuthenticationResult) taraSession.getAuthenticationResult();
         String sidSessionId = taraAuthResult.getSidSessionId();
         log.info("SID session id {} authentication result: {}, document number: {}, status: {}",
@@ -275,8 +286,8 @@ public class AuthSidWeb2AppService {
 
         AuthenticationIdentity authIdentity = responseValidator.validate(
                 sessionStatus,
-                requestBuilder.getAuthenticationSessionRequest(),
-                getUserChallenge(sessionStatus),
+                authenticationSessionRequest,
+                userChallengeVerifier,
                 smartIdConfigurationProperties.getSchemaName());
         // TODO: SidAuthenticationResult fields were previously populated *before* calling responseValidator.validate(),
         //  so that this information would be available in case of validation failure and could be logged with full details.
@@ -293,16 +304,9 @@ public class AuthSidWeb2AppService {
         taraAuthResult.setAcr(smartIdConfigurationProperties.getLevelOfAssurance());
     }
 
-    private static String getUserChallenge(SessionStatus sessionStatus) {
-        return Optional.ofNullable(sessionStatus.getSignature())
-                .map(SessionSignature::getUserChallenge)
-                .orElse(null);
-    }
-
     private void handleSidAuthenticationException(TaraSession taraSession, Exception ex) {
-        taraSession.setState(AUTHENTICATION_FAILED);
         ErrorCode errorCode = translateExceptionToErrorCode(ex);
-        taraSession.getAuthenticationResult().setErrorCode(errorCode);
+        taraSession.accept(new FailSmartIdWeb2AppAuthenticationSessionUpdate(errorCode));
 
         if (ERROR_GENERAL == errorCode || SID_INTERNAL_ERROR == errorCode || SID_VALIDATION_ERROR == errorCode) {
             log.error(append("error.code", errorCode.name()), "Smart-ID authentication exception: {}", ex.getMessage(), ex);

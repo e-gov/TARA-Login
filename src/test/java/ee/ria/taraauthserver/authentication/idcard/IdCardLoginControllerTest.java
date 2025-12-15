@@ -109,6 +109,9 @@ class IdCardLoginControllerTest extends BaseTest {
     private SessionRepository<Session> sessionRepository;
 
     @Autowired
+    private AuthConfigurationProperties authConfigurationProperties;
+
+    @Autowired
     private AuthConfigurationProperties.IdCardAuthConfigurationProperties configurationProperties;
 
     @Autowired
@@ -1123,7 +1126,7 @@ class IdCardLoginControllerTest extends BaseTest {
 
     @SneakyThrows
     private String getSignedAuthenticationValue(PrivateKey privateKey) {
-        String origin = configurationProperties.getSiteOrigin().toString();
+        String origin = authConfigurationProperties.getSiteOrigin().toString();
         MessageDigest md = MessageDigest.getInstance("SHA-384");
         byte[] originDigest = md.digest(origin.getBytes());
         byte[] nonceDigest = md.digest(TEST_NONCE.getBytes());

@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.authentication.RelyingParty;
+import ee.ria.taraauthserver.session.sid.devicelink.DeviceLinkAuthenticationSessionMapper;
+import ee.ria.taraauthserver.session.sid.devicelink.DeviceLinkAuthenticationSessionRequestSurrogate;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
@@ -13,16 +15,19 @@ import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.InvalidLoginRequestException;
 import ee.ria.taraauthserver.session.update.TaraSessionUpdate;
+import ee.sk.smartid.rest.dao.DeviceLinkAuthenticationSessionRequest;
 import eu.webeid.security.challenge.ChallengeNonce;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AccessLevel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.util.StringUtils;
@@ -66,6 +71,7 @@ public class TaraSession implements Serializable {
     private TaraAuthenticationState state = TaraAuthenticationState.NOT_SET;
     private LoginRequestInfo loginRequestInfo;
     private LoginRequestInfo govSsoLoginRequestInfo;
+    private SmartIdWeb2AppSession smartIdWeb2AppSession;
     private List<AuthenticationType> allowedAuthMethods;
     private AuthenticationResult authenticationResult;
     private List<LegalPerson> legalPersonList;
@@ -148,6 +154,31 @@ public class TaraSession implements Serializable {
     @RequiredArgsConstructor
     public static class EidasAuthenticationResult extends AuthenticationResult {
         private String relayState;
+    }
+
+    @Data
+    public static class SmartIdWeb2AppSession implements Serializable {
+
+        private String sessionId;
+
+        @Getter(AccessLevel.NONE)
+        @Setter(AccessLevel.NONE)
+        private DeviceLinkAuthenticationSessionRequestSurrogate authenticationSessionRequest;
+
+        public SmartIdWeb2AppSession(
+                String sessionId,
+                DeviceLinkAuthenticationSessionRequest authenticationSessionRequest) {
+            this.sessionId = sessionId;
+            this.authenticationSessionRequest = DeviceLinkAuthenticationSessionMapper.toSurrogate(authenticationSessionRequest);
+        }
+
+        public DeviceLinkAuthenticationSessionRequest getAuthenticationSessionRequest() {
+            return DeviceLinkAuthenticationSessionMapper.toRecord(authenticationSessionRequest);
+        }
+
+        public void setAuthenticationSessionRequest(DeviceLinkAuthenticationSessionRequest authenticationSessionRequest) {
+            this.authenticationSessionRequest = DeviceLinkAuthenticationSessionMapper.toSurrogate(authenticationSessionRequest);
+        }
     }
 
     @Data

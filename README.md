@@ -97,6 +97,7 @@ Example: to deploy the webapp using embedded Tomcat
 | `tara.default-authentication-methods` | No | default authentication methods. Example `ID_CARD, MOBILE_ID, SMART_ID, EIDAS` |
 | `tara.error-report-address` | Yes | E-mail address where users can send error reports. Example `help@example.com` |
 | `tara.auth-flow-timeout` | Yes | Duration till authentication flow timeout. Example `1800s` (30min) |
+| `tara.site-origin` | Yes | Web page's [origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) (scheme (protocol), hostname (domain), and port) where user's browser accesses TARA service from. Used by Web eID and Smart ID Web2App authenticaton flows. Example: https://example.com |
 
 
 <a name="hydra_integration_conf"></a>
@@ -215,7 +216,6 @@ Table 1.5.1 - Enabling ID-card authentication
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.auth-methods.id-card.enabled` | No | Enable or disable ID-card authentication method. Default `false` |
-| `tara.auth-methods.id-card.site-origin` | Yes | Web page's [origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) (scheme (protocol), hostname (domain), and port) where user's browser accesses TARA service from. Web eID browser component embeds web page's origin into authentication token signature and this configuration value must be identical, otherwise signature validation fails. Example: https://example.com |
 
 
 Table 1.5.2 - Assigning the Level of assurance to authentication method
@@ -256,11 +256,11 @@ Example 1: using SK AIA OCSP only (a non-commercial, best-effort service):
 
 ````
 tara:
+  site-origin: https://example.com
   auth-methods:
     id-card:
       enabled: true
       level-of-assurance: HIGH
-      site-origin: https://example.com
       truststore-path: file:src/test/resources/idcard-truststore-test.p12
       truststore-type: PKCS12
       truststore-password: changeit
@@ -278,11 +278,11 @@ Example 2:  using SK's commercial OCSP only (with subscription only):
 
 ````
 tara:
+  site-origin: https://example.com
   auth-methods:
     id-card:
       enabled: true
       level-of-assurance: HIGH
-      site-origin: https://example.com
       truststore-path: file:src/test/resources/idcard-truststore-test.p12
       truststore-type: PKCS12
       truststore-password: changeit
@@ -315,11 +315,11 @@ Example: AIA OCSP by default using a static backup OCSP
 
 ````
 tara:
+  site-origin: https://example.com
   auth-methods:
     id-card:
       enabled: true
       level-of-assurance: HIGH
-      site-origin: https://example.com
       truststore-path: file:src/test/resources/idcard-truststore-test.p12
       truststore-type: PKCS12
       truststore-password: changeit

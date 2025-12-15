@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.config;
 
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.utils.X509Utils;
 import eu.webeid.security.challenge.ChallengeNonceGenerator;
 import eu.webeid.security.challenge.ChallengeNonceGeneratorBuilder;
@@ -74,7 +75,7 @@ public class IDCardConfiguration {
     }
 
     @Bean
-    public AuthTokenValidator validator(IdCardAuthConfigurationProperties configurationProvider, Map<String, X509Certificate> trustedCertificatesMap) {
+    public AuthTokenValidator validator(AuthConfigurationProperties configurationProvider, Map<String, X509Certificate> trustedCertificatesMap) {
         X509Certificate[] certificates = trustedCertificatesMap.values().toArray(new X509Certificate[0]);
         try {
             return new AuthTokenValidatorBuilder()
