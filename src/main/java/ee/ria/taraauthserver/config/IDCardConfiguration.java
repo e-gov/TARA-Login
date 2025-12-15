@@ -79,10 +79,6 @@ public class IDCardConfiguration {
         try {
             return new AuthTokenValidatorBuilder()
                     .withSiteOrigin(configurationProvider.getSiteOrigin().toURI())
-                    // TARA is using customized OCSP validation instead of AuthTokenValidator's built-in check
-                    .withoutUserCertificateRevocationCheckWithOcsp()
-                    // This duplicates some checks that have already been implemented in OCSPValidator class,
-                    // but we still need to set the trusted CA certificates here.
                     .withTrustedCertificateAuthorities(certificates)
                     .build();
         } catch (JceException | URISyntaxException e) {
