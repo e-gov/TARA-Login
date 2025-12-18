@@ -9,6 +9,7 @@ public enum TaraAuthenticationState {
     INIT_MID,
     INIT_SID,
     INIT_SID_WEB2APP,
+    INIT_SID_QR_CODE,
     POLL_MID_STATUS,
     POLL_MID_STATUS_CANCELED,
     POLL_SID_STATUS,

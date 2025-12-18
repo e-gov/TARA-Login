@@ -2,9 +2,8 @@
 <html xmlns:th="http://www.w3.org/1999/xhtml" th:lang="${#locale.language}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout}" th:with="hideHeaderLanguageSelection=true, ariaHideLogoHeader=true">
 <head th:replace="~{fragments/head}"></head>
-<body class="is-mobile-subview"
-      th:attr="data-check-form-refresh-rate=${@environment.getProperty('tara.auth-methods.mobile-id.interval-between-session-status-queries-in-milliseconds')}">
-<div layout:fragment="content" th:with="hideHeaderLanguageSelection=true" th:remove="tag">
+<body class="is-mobile-subview">
+<th:block layout:fragment="content" th:with="hideHeaderLanguageSelection=true">
     <div class="container">
         <div class="c-tab-login">
             <div class="c-tab-login__header hide-in-desktop">
@@ -15,26 +14,32 @@
             <div class="c-tab-login__main">
                 <th:block layout:insert="~{fragments/logintabs :: content(tab_id = 'smart-id', static = true)}">
                     <th:block layout:fragment="login-form-content">
-                        <p th:utext="#{label.smart-id.instruction-check}"></p>
-                        <p th:text="#{label.common.control-code}">Control code:</p>
-                        <p class="control-code" th:text="${smartIdVerificationCode}"></p>
-                        <form id="midAuthenticationCheckForm" method="post" th:action="@{/auth/sid/poll/cancel}"
-                              class="c-form">
-                            <button type="submit" class="c-btn c-btn--cancel"
-                                    th:text="#{label.common.cancel}">Cancel
-                            </button>
-                        </form>
+                        <div class="c-tab-login__qr-code-card">
+                            <p>
+                                <th:block th:utext="#{message.smart-id.qr-code.instructions}"></th:block>
+                                <br/>
+                                <a th:text="#{label.smart-id.qr-code.instructions.learn-more}"
+                                   th:href="#{link.smart-id.qr-code.instructions.learn-more}"></a>
+                            </p>
+                            <div>
+                                <div class="c-tab-login__qr-code"></div>
+                            </div>
+                            <p th:utext="#{message.smart-id.qr-code.troubleshooting}"></p>
+                            <button type="submit" class="c-btn c-btn--cancel" form="cancelForm"
+                                    th:text="#{label.common.cancel}"></button>
+                        </div>
                     </th:block>
                 </th:block>
             </div>
         </div>
     </div>
+
+    <form id="cancelForm" method="post" th:action="@{/auth/sid/qr-code/cancel}"></form>
     <div id="sid-error" th:insert="~{fragments/error}" th:class="hidden"/>
     <p class="link-back-mobile" xmlns:th="http://www.w3.org/1999/xhtml">
         <a th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a>
     </p>
-    <script th:src="@{/scripts/sid-form-check.js}" defer></script>
     <script th:src="@{/scripts/main.js}" defer></script>
-</div>
+</th:block>
 </body>
 </html>

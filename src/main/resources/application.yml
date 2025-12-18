@@ -83,6 +83,8 @@ tara:
       read-timeout-milliseconds: 120000
       web2app:
         enabled: false
+      qr-code:
+        enabled: false
     eidas:
       enabled: true
       refresh-countries-interval-in-milliseconds: 86400000

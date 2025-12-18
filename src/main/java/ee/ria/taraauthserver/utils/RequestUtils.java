@@ -1,11 +1,9 @@
 package ee.ria.taraauthserver.utils;
 
-import static java.util.regex.Pattern.compile;
-
 import ee.ria.taraauthserver.session.TaraSession;
+import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.function.Predicate;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -20,13 +18,17 @@ import org.springframework.web.servlet.support.RequestContextUtils;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
+
+import static java.util.regex.Pattern.compile;
 
 @Slf4j
 @UtilityClass
 public class RequestUtils {
 
     public final Predicate<String> SUPPORTED_LANGUAGES = compile("(?i)(et|en|ru)").asMatchPredicate();
+    public static final String LANG_PARAM_NAME = "lang";
 
     public void setLocale(String requestedLocale) {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
@@ -44,11 +46,23 @@ public class RequestUtils {
     }
 
     public String getLangParam(TaraSession taraSession) {
-        return (taraSession != null
-            && taraSession.getChosenLanguage() != null
-            && SUPPORTED_LANGUAGES.test(taraSession.getChosenLanguage()))
-            ? "&lang=" + taraSession.getChosenLanguage()
-            : "";
+        String langParamValue = getLangParamValue(taraSession);
+        return langParamValue != null ? "&" + LANG_PARAM_NAME + "=" + langParamValue : "";
+    }
+
+    public @Nullable String getLangParamValue(@Nullable TaraSession taraSession) {
+        if (taraSession == null) {
+            return null;
+        }
+        String chosenLanguage = taraSession.getChosenLanguage();
+        if (chosenLanguage == null) {
+            return null;
+        }
+        if (!SUPPORTED_LANGUAGES.test(chosenLanguage)) {
+            log.warn("Chosen language \"{}\" not supported", chosenLanguage);
+            return null;
+        }
+        return chosenLanguage;
     }
 
     public static <T> Consumer<T> withMdc(Consumer<T> consumer) {

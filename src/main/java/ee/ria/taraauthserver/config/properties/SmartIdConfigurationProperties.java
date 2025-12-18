@@ -36,6 +36,10 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
 
     @NotNull
     @Valid
+    private QrCode qrCode;
+
+    @NotNull
+    @Valid
     private TruststoreConfigurationProperties trustAnchorTruststore;
 
     @NotNull
@@ -79,6 +83,13 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
 
     @Data
     public static class Web2App {
+
+        @NotNull
+        private boolean enabled;
+    }
+
+    @Data
+    public static class QrCode {
 
         @NotNull
         private boolean enabled;

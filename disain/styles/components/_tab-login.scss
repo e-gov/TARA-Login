@@ -205,6 +205,27 @@
       }
     }
   }
+  &__qr-code-card {
+    border-radius: 8px;
+    padding: 24px;
+    background-color: #f2f3f3;
+    text-align: center;
+  }
+  &__qr-code {
+    border: 1px solid #000;
+    padding: 8px;
+    background-color: #fff;
+    margin: 0 25px 25px;
+    display: inline-block;
+  }
+  // Placeholder
+  &__qr-code::after {
+    content: " ";
+    display: block;
+    height: 240px;
+    width: 240px;
+    background: linear-gradient(135deg, #e5e7e7 0%, #f2f3f3 50%, #e5e7e7 100%)
+  }
   &__footer {
     display: flex;
     justify-content: space-between;

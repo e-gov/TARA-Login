@@ -131,6 +131,11 @@ public class ThymeleafSupport {
                 && smartIdConfigurationProperties.getWeb2app().isEnabled();
     }
 
+    public boolean isSidQrCodeEnabled() {
+        return isAuthMethodAllowed(AuthenticationType.SMART_ID)
+                && smartIdConfigurationProperties.getQrCode().isEnabled();
+    }
+
     public boolean isAuthMethodAllowed(AuthenticationType method) {
         Assert.notNull(method, "Authentication method can not be null!");
 

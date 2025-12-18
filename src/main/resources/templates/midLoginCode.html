@@ -13,9 +13,9 @@
                 </ul>
             </div>
             <div class="c-tab-login__main">
-                <div layout:insert="~{fragments/logintabs :: content(tab_id = 'mobile-id', instruction = 'instruction-check', static = true)}"
-                    th:remove="tag">
+                <th:block layout:insert="~{fragments/logintabs :: content(tab_id = 'mobile-id', static = true)}">
                     <th:block layout:fragment="login-form-content">
+                        <p th:utext="#{label.mobile-id.instruction-check}"></p>
                         <p th:text="#{label.common.control-code}">Control code:</p>
                         <p class="control-code" th:text="${mobileIdVerificationCode}"></p>
                         <form id="midAuthenticationCheckForm" method="post" th:action="@{/auth/mid/poll/cancel}"
@@ -25,7 +25,7 @@
                             </button>
                         </form>
                     </th:block>
-                </div>
+                </th:block>
             </div>
         </div>
     </div>
