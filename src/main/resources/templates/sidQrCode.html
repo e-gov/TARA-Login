@@ -22,7 +22,9 @@
                                    th:href="#{link.smart-id.qr-code.instructions.learn-more}"></a>
                             </p>
                             <div>
-                                <div class="c-tab-login__qr-code"></div>
+                                <div id="sidQrCode" class="c-tab-login__qr-code">
+                                    <div class="loadersmall"></div>
+                                </div>
                             </div>
                             <p th:utext="#{message.smart-id.qr-code.troubleshooting}"></p>
                             <button type="submit" class="c-btn c-btn--cancel" form="cancelForm"
@@ -40,6 +42,7 @@
         <a th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a>
     </p>
     <script th:src="@{/scripts/main.js}" defer></script>
+    <script th:src="@{/scripts/sid-qr-code.js}" defer></script>
 </th:block>
 </body>
 </html>

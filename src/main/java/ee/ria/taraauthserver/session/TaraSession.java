@@ -4,9 +4,9 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.authentication.RelyingParty;
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.session.sid.devicelink.DeviceLinkAuthenticationSessionMapper;
 import ee.ria.taraauthserver.session.sid.devicelink.DeviceLinkAuthenticationSessionRequestSurrogate;
-import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.config.properties.SPType;
@@ -16,12 +16,14 @@ import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.InvalidLoginRequestException;
 import ee.ria.taraauthserver.session.update.TaraSessionUpdate;
 import ee.sk.smartid.rest.dao.DeviceLinkAuthenticationSessionRequest;
+import ee.sk.smartid.RpChallenge;
 import eu.webeid.security.challenge.ChallengeNonce;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -29,6 +31,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.util.StringUtils;
 import org.apache.hc.core5.http.NameValuePair;
@@ -40,6 +43,7 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.time.LocalDate;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -79,6 +83,7 @@ public class TaraSession implements Serializable {
     private String consentChallenge;
     private ChallengeNonce webEidChallengeNonce;
     private String chosenLanguage;
+    private SmartIdQrCodeSession smartIdQrCodeSession;
 
     public void setState(@NonNull TaraAuthenticationState newState) {
         if (state.equals(newState)) {
@@ -570,6 +575,35 @@ public class TaraSession implements Serializable {
     public static class LegalPerson implements Serializable {
         private final String legalName;
         private final String legalPersonIdentifier;
+    }
+
+    @Value
+    @AllArgsConstructor(access = AccessLevel.NONE)
+    public static class SmartIdQrCodeSession implements Serializable {
+        Instant startTime;
+        /* `RpChallenge` does not implement serializable and has a final field, which means Ignite is unable to
+         * deserialize it. */
+        @Getter(AccessLevel.NONE)
+        private final byte[] rpChallengeBytes;
+        private final String relyingPartyName;
+        private final String interactions;
+        private final String deviceLinkBase;
+        private final String sessionToken;
+        private final String sessionSecret;
+
+        public SmartIdQrCodeSession(@NonNull Instant startTime, @NonNull RpChallenge rpChallenge, @NonNull String relyingPartyName, @NonNull String interactions, @NonNull String deviceLinkBase, @NonNull String sessionToken, @NonNull String sessionSecret) {
+            this.startTime = startTime;
+            this.rpChallengeBytes = rpChallenge.value();
+            this.relyingPartyName = relyingPartyName;
+            this.interactions = interactions;
+            this.deviceLinkBase = deviceLinkBase;
+            this.sessionToken = sessionToken;
+            this.sessionSecret = sessionSecret;
+        }
+
+        public RpChallenge getRpChallenge() {
+            return new RpChallenge(rpChallengeBytes);
+        }
     }
 
     @JsonIgnore

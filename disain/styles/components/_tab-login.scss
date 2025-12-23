@@ -212,19 +212,29 @@
     text-align: center;
   }
   &__qr-code {
-    border: 1px solid #000;
-    padding: 8px;
+    $border-width: 1px;
+    $padding: 8px;
+    $qr-version: 11;
+    $qr-module-size: 6px;
+
+    $qr-modules: 17 + (4 * $qr-version);
+    $max-width: $qr-modules * $qr-module-size + 2 * ($border-width + $padding);
+    border: $border-width solid #000;
+    padding: $padding;
     background-color: #fff;
-    margin: 0 25px 25px;
-    display: inline-block;
+    margin-bottom: 25px;
+    display: inline-flex;
+    // Use `unquote` to use run-time CSS `min` function instead of SCSS compile-time `min` function.
+    width: unquote('min(#{$max-width}, 100%)');
+    justify-content: center;
+    align-content: center;
+    aspect-ratio: 1;
   }
-  // Placeholder
-  &__qr-code::after {
-    content: " ";
+  &__qr-code svg {
     display: block;
-    height: 240px;
-    width: 240px;
-    background: linear-gradient(135deg, #e5e7e7 0%, #f2f3f3 50%, #e5e7e7 100%)
+  }
+  &__qr-code .loadersmall {
+    margin: 0;
   }
   &__footer {
     display: flex;
