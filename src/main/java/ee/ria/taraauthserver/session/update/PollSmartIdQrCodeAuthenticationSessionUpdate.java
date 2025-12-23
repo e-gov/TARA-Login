@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.session.update;
 
+import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.sk.smartid.RpChallenge;
@@ -28,13 +29,19 @@ public class PollSmartIdQrCodeAuthenticationSessionUpdate implements TaraSession
         TaraSession.SmartIdQrCodeSession smartIdSession = new TaraSession.SmartIdQrCodeSession(
                 startTime,
                 rpChallenge,
-                initSmartIdSessionRequest.relyingPartyName(),
-                initSmartIdSessionRequest.interactions(),
                 initSmartIdSessionResponse.deviceLinkBase().toString(),
+                initSmartIdSessionResponse.sessionID(),
                 initSmartIdSessionResponse.sessionToken(),
-                initSmartIdSessionResponse.sessionSecret()
+                initSmartIdSessionResponse.sessionSecret(),
+                initSmartIdSessionRequest
         );
         session.setSmartIdQrCodeSession(smartIdSession);
+
+        TaraSession.SidAuthenticationResult authenticationResult =
+                new TaraSession.SidAuthenticationResult(initSmartIdSessionResponse.sessionID());
+        authenticationResult.setAmr(AuthenticationType.SMART_ID);
+        session.setAuthenticationResult(authenticationResult);
+
         session.setState(POLL_SID_QR_CODE);
     }
 

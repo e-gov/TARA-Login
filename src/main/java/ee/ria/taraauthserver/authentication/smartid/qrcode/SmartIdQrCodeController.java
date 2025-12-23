@@ -2,9 +2,12 @@ package ee.ria.taraauthserver.authentication.smartid.qrcode;
 
 
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.RequestUtils;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.core5.net.URIBuilder;
@@ -22,6 +25,8 @@ import java.util.Locale;
 import java.util.Set;
 
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
+import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
+import static ee.ria.taraauthserver.error.ErrorCode.SESSION_STATE_INVALID;
 import static ee.ria.taraauthserver.session.SessionUtils.assertSessionInState;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_SID_QR_CODE;
@@ -61,11 +66,24 @@ public class SmartIdQrCodeController {
     public PollResponse pollStatus(
             @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         log.info("Polling Smart-ID QR code authentication status");
-        assertSessionInState(taraSession, Set.of(INIT_SID_QR_CODE, POLL_SID_QR_CODE));
-        Locale locale = RequestUtils.getLocale();
-        return new PollResponse(
-                authSidQrCodeService.getDeviceLink(taraSession, locale)
-        );
+        if (taraSession == null) {
+            throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
+        }
+        TaraAuthenticationState state = taraSession.getState();
+        switch (state) {
+            case NATURAL_PERSON_AUTHENTICATION_COMPLETED:
+                return PollResponse.completed();
+            case INIT_SID_QR_CODE:
+            case POLL_SID_QR_CODE:
+                Locale locale = RequestUtils.getLocale();
+                String deviceLink = authSidQrCodeService.getDeviceLink(taraSession, locale);
+                return PollResponse.pending(deviceLink);
+            case AUTHENTICATION_FAILED:
+                ErrorCode errorCode = taraSession.getAuthenticationResult().getErrorCode();
+                return PollResponse.failed(errorCode);
+            default:
+                return PollResponse.failed(SESSION_STATE_INVALID);
+        }
     }
 
     @PostMapping(value = "/auth/sid/qr-code/cancel", produces = MediaType.TEXT_HTML_VALUE)
@@ -93,7 +111,41 @@ public class SmartIdQrCodeController {
     }
 
     public record PollResponse(
-            String deviceLink
-    ) {}
+            @NonNull Status status,
+            String deviceLink,
+            ErrorCode error
+    ) {
+
+        public static PollResponse pending(String deviceLink) {
+            return new PollResponse(
+                    Status.PENDING,
+                    deviceLink,
+                    null
+            );
+        }
+
+        public static PollResponse completed() {
+            return new PollResponse(
+                    Status.COMPLETED,
+                    null,
+                    null
+            );
+        }
+
+        public static PollResponse failed(ErrorCode errorCode) {
+            return new PollResponse(
+                    Status.FAILED,
+                    null,
+                    errorCode
+            );
+        }
+
+        public enum Status {
+            PENDING,
+            COMPLETED,
+            FAILED
+        }
+
+    }
 
 }

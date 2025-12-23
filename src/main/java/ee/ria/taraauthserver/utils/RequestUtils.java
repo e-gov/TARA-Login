@@ -18,6 +18,7 @@ import org.springframework.web.servlet.support.RequestContextUtils;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -66,63 +67,122 @@ public class RequestUtils {
     }
 
     public static <T> Consumer<T> withMdc(Consumer<T> consumer) {
-        Map<String, String> mdc = MDC.getCopyOfContextMap();
+        Context context = mdc();
         return (t) -> {
             try {
-                if (mdc != null) {
-                    MDC.setContextMap(mdc);
-                } else {
-                    MDC.clear();
-                }
+                context.populate();
                 consumer.accept(t);
             } finally {
-                MDC.clear();
+                context.reset();
             }
         };
     }
 
     public static <T> Supplier<T> withMdc(Supplier<T> supplier) {
-        Map<String, String> mdc = MDC.getCopyOfContextMap();
+        Context context = mdc();
         return () -> {
             try {
-                if (mdc != null) {
-                    MDC.setContextMap(mdc);
-                } else {
-                    MDC.clear();
-                }
+                context.populate();
                 return supplier.get();
             } finally {
-                MDC.clear();
+                context.reset();
             }
         };
     }
 
     public static <T> Supplier<T> withMdcAndLocale(Supplier<T> supplier) {
-        Map<String, String> mdc = MDC.getCopyOfContextMap();
-        Locale locale = LocaleContextHolder.getLocale();
+        Context context = mdc().and(locale());
         return () -> {
             try {
-                LocaleContextHolder.setLocale(locale);
-                if (mdc != null) {
-                    MDC.setContextMap(mdc);
-                } else {
-                    MDC.clear();
-                }
+                context.populate();
                 return supplier.get();
             } finally {
-                MDC.clear();
-                LocaleContextHolder.setLocale(null);
+                context.reset();
             }
         };
     }
 
     public static Runnable withMdcAndLocale(Runnable runnable) {
+        Context context = mdc().and(locale());
         return () -> {
-            withMdcAndLocale(() -> {
+            try {
+                context.populate();
                 runnable.run();
-                return null;
-            }).get();
+            } finally {
+                context.reset();
+            }
         };
+    }
+
+    public static <T, R> Function<T, R> withMdcAndLocale(Function<T, R> function) {
+        Context context = mdc().and(locale());
+        return (input) -> {
+            try {
+                context.populate();
+                return function.apply(input);
+            } finally {
+                context.reset();
+            }
+        };
+    }
+
+    private static Context mdc() {
+        Map<String, String> mdc = MDC.getCopyOfContextMap();
+        return new Context() {
+            @Override
+            public void populate() {
+                if (mdc != null) {
+                    MDC.setContextMap(mdc);
+                } else {
+                    MDC.clear();
+                }
+            }
+
+            @Override
+            public void reset() {
+                MDC.clear();
+            }
+        };
+    }
+
+    private static Context locale() {
+        Locale locale = LocaleContextHolder.getLocale();
+        return new Context() {
+            @Override
+            public void populate() {
+                LocaleContextHolder.setLocale(locale);
+            }
+
+            @Override
+            public void reset() {
+                LocaleContextHolder.setLocale(null);
+            }
+        };
+    }
+
+    private interface Context {
+
+        void populate();
+
+        void reset();
+
+        default Context and(Context other) {
+            Context self = this;
+            return new Context() {
+                @Override
+                public void populate() {
+                    self.populate();
+                    other.populate();
+                }
+
+                @Override
+                public void reset() {
+                    self.reset();
+                    other.reset();
+                }
+            };
+        }
+
     }
 
 }

@@ -5,8 +5,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.authentication.RelyingParty;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
-import ee.ria.taraauthserver.session.sid.devicelink.DeviceLinkAuthenticationSessionMapper;
-import ee.ria.taraauthserver.session.sid.devicelink.DeviceLinkAuthenticationSessionRequestSurrogate;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.config.properties.SPType;
@@ -14,9 +12,11 @@ import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.InvalidLoginRequestException;
+import ee.ria.taraauthserver.session.sid.devicelink.DeviceLinkAuthenticationSessionMapper;
+import ee.ria.taraauthserver.session.sid.devicelink.DeviceLinkAuthenticationSessionRequestSurrogate;
 import ee.ria.taraauthserver.session.update.TaraSessionUpdate;
-import ee.sk.smartid.rest.dao.DeviceLinkAuthenticationSessionRequest;
 import ee.sk.smartid.RpChallenge;
+import ee.sk.smartid.rest.dao.DeviceLinkAuthenticationSessionRequest;
 import eu.webeid.security.challenge.ChallengeNonce;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -42,8 +42,8 @@ import java.io.Serializable;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.time.LocalDate;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -587,29 +587,46 @@ public class TaraSession implements Serializable {
     @AllArgsConstructor(access = AccessLevel.NONE)
     public static class SmartIdQrCodeSession implements Serializable {
         Instant startTime;
-        /* `RpChallenge` does not implement serializable and has a final field, which means Ignite is unable to
+        /* `RpChallenge` does not implement `Serializable` and has a final field, which means Ignite is unable to
          * deserialize it. */
         @Getter(AccessLevel.NONE)
         private final byte[] rpChallengeBytes;
-        private final String relyingPartyName;
-        private final String interactions;
         private final String deviceLinkBase;
+        private final String sessionId;
         private final String sessionToken;
         private final String sessionSecret;
+        @Getter(AccessLevel.NONE)
+        private final DeviceLinkAuthenticationSessionRequestSurrogate requestSurrogate;
 
-        public SmartIdQrCodeSession(@NonNull Instant startTime, @NonNull RpChallenge rpChallenge, @NonNull String relyingPartyName, @NonNull String interactions, @NonNull String deviceLinkBase, @NonNull String sessionToken, @NonNull String sessionSecret) {
+        public SmartIdQrCodeSession(@NonNull Instant startTime, @NonNull RpChallenge rpChallenge,
+                                    @NonNull String deviceLinkBase, @NonNull String sessionId,
+                                    @NonNull String sessionToken, @NonNull String sessionSecret,
+                                    @NonNull DeviceLinkAuthenticationSessionRequest request) {
             this.startTime = startTime;
             this.rpChallengeBytes = rpChallenge.value();
-            this.relyingPartyName = relyingPartyName;
-            this.interactions = interactions;
             this.deviceLinkBase = deviceLinkBase;
+            this.sessionId = sessionId;
             this.sessionToken = sessionToken;
             this.sessionSecret = sessionSecret;
+            this.requestSurrogate = DeviceLinkAuthenticationSessionMapper.toSurrogate(request);
         }
 
         public RpChallenge getRpChallenge() {
             return new RpChallenge(rpChallengeBytes);
         }
+
+        public String getRelyingPartyName() {
+            return requestSurrogate.getRelyingPartyName();
+        }
+
+        public String getInteractions() {
+            return requestSurrogate.getInteractions();
+        }
+
+        public DeviceLinkAuthenticationSessionRequest getRequest() {
+            return DeviceLinkAuthenticationSessionMapper.toRecord(requestSurrogate);
+        }
+
     }
 
     @JsonIgnore
