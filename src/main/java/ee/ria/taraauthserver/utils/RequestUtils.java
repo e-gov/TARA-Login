@@ -30,7 +30,7 @@ public class RequestUtils {
     public final Predicate<String> SUPPORTED_LANGUAGES = compile("(?i)(et|en|ru)").asMatchPredicate();
     public static final String LANG_PARAM_NAME = "lang";
 
-    public void setLocale(String requestedLocale) {
+    public static void setLocale(String requestedLocale) {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
         Locale locale = StringUtils.parseLocaleString(requestedLocale);
@@ -39,18 +39,18 @@ public class RequestUtils {
         localeResolver.setLocale(request, response, locale);
     }
 
-    public Locale getLocale() {
+    public static Locale getLocale() {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         LocaleResolver localeResolver = RequestContextUtils.getLocaleResolver(request);
         return localeResolver.resolveLocale(request);
     }
 
-    public String getLangParam(TaraSession taraSession) {
+    public static String getLangParam(TaraSession taraSession) {
         String langParamValue = getLangParamValue(taraSession);
         return langParamValue != null ? "&" + LANG_PARAM_NAME + "=" + langParamValue : "";
     }
 
-    public @Nullable String getLangParamValue(@Nullable TaraSession taraSession) {
+    public static @Nullable String getLangParamValue(@Nullable TaraSession taraSession) {
         if (taraSession == null) {
             return null;
         }
@@ -115,4 +115,14 @@ public class RequestUtils {
             }
         };
     }
+
+    public static Runnable withMdcAndLocale(Runnable runnable) {
+        return () -> {
+            withMdcAndLocale(() -> {
+                runnable.run();
+                return null;
+            }).get();
+        };
+    }
+
 }
