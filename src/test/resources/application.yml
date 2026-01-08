@@ -138,6 +138,8 @@ tara:
       read-timeout-milliseconds: 6000
       web2app:
         enabled: true
+      qr-code:
+        enabled: true
     eidas:
       enabled: true
       client-url: https://localhost:9877
