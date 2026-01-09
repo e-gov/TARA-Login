@@ -11,6 +11,7 @@ import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraSession.SidAuthenticationResult;
+import ee.ria.taraauthserver.utils.ElasticApmUtil;
 import ee.sk.mid.MidNationalIdentificationCodeValidator;
 import ee.sk.smartid.AuthenticationCertificateLevel;
 import ee.sk.smartid.AuthenticationIdentity;
@@ -146,9 +147,13 @@ public class AuthSidNotificationBasedService {
             TaraSession taraSession,
             RpChallenge rpChallenge,
             NotificationAuthenticationSessionRequestBuilder requestBuilder) {
-        Span span = ElasticApm.currentTransaction().startSpan("app", "MID", "poll");
-        span.setName("AuthSidNotificationBasedService#initAuthentication");
-        span.setStartTimestamp(now().plus(200, MILLIS).minus(smartIdConfigurationProperties.getDelayInitiateSidSessionInMilliseconds(), MILLIS).toEpochMilli() * 1_000);
+        Span span = ElasticApm.currentSpan().startSpan("app", "SID", "poll")
+                .setName(ElasticApmUtil.currentMethodName())
+                .setStartTimestamp(
+                        now()
+                                .plus(200, MILLIS)
+                                .minus(smartIdConfigurationProperties.getDelayInitiateSidSession())
+                                .toEpochMilli() * 1_000);
         try (final Scope scope = span.activate()) {
             SemanticsIdentifier semanticsIdentifier = new SemanticsIdentifier(SemanticsIdentifier.IdentityType.PNO, SemanticsIdentifier.CountryCode.EE, idCode);
             RelyingParty relyingParty =
@@ -213,13 +218,13 @@ public class AuthSidNotificationBasedService {
         if (authenticationSessionResponse == null || authenticationSessionResponse.sessionID() == null) {
             return;
         }
-        Span span = ElasticApm.currentTransaction().startSpan("app", "SID", "poll");
-        span.setName("AuthSidNotificationBasedService#pollAuthenticationResult");
-        span.setStartTimestamp(
-                now()
-                .plus(200, MILLIS)
-                .minus(smartIdConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLIS)
-                .toEpochMilli() * 1_000);
+        Span span = ElasticApm.currentSpan().startSpan("app", "SID", "poll")
+                .setName(ElasticApmUtil.currentMethodName())
+                .setStartTimestamp(
+                        now()
+                                .plus(200, MILLIS)
+                                .minus(smartIdConfigurationProperties.getDelayStatusPollingStart())
+                                .toEpochMilli() * 1_000);
         try (final Scope scope = span.activate()) {
             SessionStatusPoller sessionStatusPoller = sidClient.getSessionStatusPoller();
             log.info("Starting Smart-ID session status polling with id: {}",

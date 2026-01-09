@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.ID_CARD;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
+import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.util.List.of;
 import static net.logstash.logback.marker.Markers.append;
 
@@ -194,6 +195,14 @@ public class AuthConfigurationProperties {
         private int delayInitiateMidSessionInMilliseconds = 0;
 
         private int delayStatusPollingStartInMilliseconds = 500;
+
+        public Duration getDelayInitiateMidSession() {
+            return Duration.of(delayInitiateMidSessionInMilliseconds, MILLIS);
+        }
+
+        public Duration getDelayStatusPollingStart() {
+            return Duration.of(delayStatusPollingStartInMilliseconds, MILLIS);
+        }
 
         @PostConstruct
         public void validateConfiguration() {

@@ -11,6 +11,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 
+import java.time.Duration;
+
+import static java.time.temporal.ChronoUnit.MILLIS;
+
 @Data
 @Validated
 @Slf4j
@@ -58,6 +62,14 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
     private int delayInitiateSidSessionInMilliseconds = 3000;
 
     private int delayStatusPollingStartInMilliseconds = 500;
+
+    public Duration getDelayInitiateSidSession() {
+        return Duration.of(delayInitiateSidSessionInMilliseconds, MILLIS);
+    }
+
+    public Duration getDelayStatusPollingStart() {
+        return Duration.of(delayStatusPollingStartInMilliseconds, MILLIS);
+    }
 
     @PostConstruct
     public void validateConfiguration() {

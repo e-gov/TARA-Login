@@ -17,6 +17,7 @@ import ee.ria.taraauthserver.session.TaraSession.SidAuthenticationResult;
 import ee.ria.taraauthserver.session.update.FailSmartIdWeb2AppAuthenticationSessionUpdate;
 import ee.ria.taraauthserver.session.update.InitSmartIdWeb2AppAuthenticationSessionUpdate;
 import ee.ria.taraauthserver.session.update.PollSmartIdWeb2AppAuthenticationSessionUpdate;
+import ee.ria.taraauthserver.utils.ElasticApmUtil;
 import ee.ria.taraauthserver.utils.LanguageUtil;
 import ee.sk.mid.MidNationalIdentificationCodeValidator;
 import ee.sk.smartid.AuthenticationCertificateLevel;
@@ -197,9 +198,9 @@ public class AuthSidWeb2AppService {
     private DeviceLinkSessionResponse initAuthentication(
             TaraSession taraSession,
             DeviceLinkAuthenticationSessionRequestBuilder requestBuilder) {
-        Span span = ElasticApm.currentTransaction().startSpan("app", "MID", "poll");
-        span.setName("AuthSidWeb2AppService#initAuthentication");
-        span.setStartTimestamp(now().plus(200, MILLIS).toEpochMilli() * 1_000);
+        Span span = ElasticApm.currentSpan().startSpan("app", "SID", "poll")
+                .setName(ElasticApmUtil.currentMethodName())
+                .setStartTimestamp(now().plus(200, MILLIS).toEpochMilli() * 1_000);
         try (final Scope ignored = span.activate()) {
             DeviceLinkSessionResponse authenticationSessionResponse = requestBuilder.initAuthenticationSession();
             String sidSessionId = authenticationSessionResponse.sessionID();
@@ -239,8 +240,8 @@ public class AuthSidWeb2AppService {
     }
 
     public TaraAuthenticationState getAuthenticationResult(TaraSession taraSession, String userChallengeVerifier) {
-        Span span = ElasticApm.currentTransaction().startSpan("app", "SID", "poll");
-        span.setName("AuthSidWeb2AppService#pollAuthenticationResult");
+        Span span = ElasticApm.currentSpan().startSpan("app", "SID", "poll");
+        span.setName(ElasticApmUtil.currentMethodName());
         span.setStartTimestamp(
                 now()
                 .plus(200, MILLIS)

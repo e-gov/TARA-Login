@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.authentication.smartid.qrcode;
 
 import co.elastic.apm.api.ElasticApm;
+import co.elastic.apm.api.Outcome;
 import co.elastic.apm.api.Scope;
 import co.elastic.apm.api.Span;
 import ee.ria.taraauthserver.authentication.RelyingParty;
@@ -149,6 +150,7 @@ public class AuthSidQrCodeService {
             updateSession(session);
         } catch (Exception e) {
             span.captureException(e);
+            span.setOutcome(Outcome.FAILURE);
             throw e;
         } finally {
             span.end(ElasticApmUtil.currentTimeMicros(clock));

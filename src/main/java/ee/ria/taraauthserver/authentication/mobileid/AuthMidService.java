@@ -11,6 +11,7 @@ import ee.ria.taraauthserver.error.exceptions.MidValidationException;
 import ee.ria.taraauthserver.logging.JaxRsClientRequestLogger;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.TaraSession;
+import ee.ria.taraauthserver.utils.ElasticApmUtil;
 import ee.sk.mid.MidAuthentication;
 import ee.sk.mid.MidAuthenticationHashToSign;
 import ee.sk.mid.MidAuthenticationIdentity;
@@ -152,10 +153,13 @@ public class AuthMidService {
     }
 
     private MidAuthenticationResponse initAuthentication(TaraSession taraSession, String idCode, String telephoneNumber, MidAuthenticationHashToSign authenticationHash, MidLanguage midLanguage) {
-        Span span = ElasticApm.currentTransaction().startSpan("app", "MID", "poll");
-        span.setName("AuthMidService#initAuthentication");
-        span.setStartTimestamp(now().plus(200, MILLIS).minus(midAuthConfigurationProperties.getDelayInitiateMidSessionInMilliseconds(), MILLIS).toEpochMilli() * 1_000);
-
+        Span span = ElasticApm.currentSpan().startSpan("app", "MID", "poll")
+                .setName(ElasticApmUtil.currentMethodName())
+                .setStartTimestamp(
+                        now()
+                                .plus(200, MILLIS)
+                                .minus(midAuthConfigurationProperties.getDelayInitiateMidSession())
+                                .toEpochMilli() * 1_000);
         try (final Scope scope = span.activate()) {
             String shortName = defaultIfNull(taraSession.getOriginalClient().getTranslatedShortName(), midAuthConfigurationProperties.getDisplayText());
             MidClient midClient = getAppropriateMidClient(taraSession);
@@ -217,9 +221,13 @@ public class AuthMidService {
 
     private void pollAuthenticationResult(TaraSession taraSession, MidAuthenticationHashToSign authenticationHash, MidAuthenticationResponse response, String telephoneNumber) {
         if (response != null) {
-            Span span = ElasticApm.currentTransaction().startSpan("app", "MID", "poll");
-            span.setName("AuthMidService#pollAuthenticationResult");
-            span.setStartTimestamp(now().plus(200, MILLIS).minus(midAuthConfigurationProperties.getDelayStatusPollingStartInMilliseconds(), MILLIS).toEpochMilli() * 1_000);
+            Span span = ElasticApm.currentSpan().startSpan("app", "MID", "poll")
+                    .setName(ElasticApmUtil.currentMethodName())
+                    .setStartTimestamp(
+                            now()
+                                    .plus(200, MILLIS)
+                                    .minus(midAuthConfigurationProperties.getDelayStatusPollingStart())
+                                    .toEpochMilli() * 1_000);
             try (final Scope scope = span.activate()) {
                 String midSessionId = response.getSessionID();
                 log.info("Starting Mobile-ID session status polling with id: {}", value("tara.session.sid_authentication_result.mid_session_id", midSessionId));
