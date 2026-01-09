@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.authentication.idcard;
 
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
@@ -16,14 +17,17 @@ import eu.webeid.security.challenge.ChallengeNonceStore;
 import eu.webeid.security.exceptions.AuthTokenException;
 import eu.webeid.security.exceptions.CertificateExpiredException;
 import eu.webeid.security.exceptions.CertificateNotYetValidException;
-import eu.webeid.security.exceptions.UserCertificateOCSPCheckFailedException;
 import eu.webeid.security.exceptions.UserCertificateUnknownException;
 import eu.webeid.security.validator.AuthTokenValidator;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.marker.LogstashMarker;
+import org.bouncycastle.cert.ocsp.OCSPReq;
+import org.bouncycastle.cert.ocsp.OCSPResp;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,8 +35,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.SessionAttribute;
 
+import java.io.IOException;
+import java.net.URI;
 import java.security.cert.X509Certificate;
-import java.util.Iterator;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -48,6 +54,7 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERS
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.util.Map.of;
+import static net.logstash.logback.argument.StructuredArguments.value;
 import static net.logstash.logback.marker.Markers.append;
 
 @Slf4j
@@ -59,6 +66,7 @@ public class IdCardLoginController {
     public static final String CN_GIVEN_NAME = "GIVENNAME";
     public static final String CN_SURNAME = "SURNAME";
 
+    private final ClientRequestLogger requestLogger = new ClientRequestLogger(ClientRequestLogger.Service.OCSP, this.getClass());
 
     private final IdCardAuthConfigurationProperties configurationProperties;
     private final FilterForEidasProxy filterForEidasProxy;
@@ -70,7 +78,6 @@ public class IdCardLoginController {
     public ResponseEntity<Map<String, Object>> handleRequest(@RequestBody WebEidData data, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
         logWebEidData(data);
-        X509Certificate certificate;
         String nonce;
         try {
             nonce = nonceStore.getAndRemove().getBase64EncodedNonce();
@@ -81,20 +88,9 @@ public class IdCardLoginController {
         taraSession.setState(NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT);
         SessionUtils.getHttpSession().setAttribute(TARA_SESSION, taraSession);
 
+        ValidationInfo validationInfo;
         try {
-            ValidationInfo validationInfo = authTokenValidator.validate(data.getAuthToken(), nonce);
-            certificate = validationInfo.getSubjectCertificate();
-            // TODO This might change based on the order of multiple RevocationInfo objects.
-            Iterator<RevocationInfo> revocationInfoIterator = validationInfo.getRevocationInfos().iterator();
-            RevocationInfo revocationInfo = revocationInfoIterator.hasNext()
-                    ? revocationInfoIterator.next()
-                    : null;
-            String ocspUrl = revocationInfo != null
-                    ? revocationInfo.getOcspResponderUri().toString()
-                    : null;
-            log.info("OCSP URL: {}", ocspUrl);
-            updateAuthenticationResult(taraSession, certificate, ocspUrl);
-            statisticsLogger.logExternalTransaction(taraSession);
+            validationInfo = authTokenValidator.validate(data.getAuthToken(), nonce);
         } catch (CertificateExpiredException e) {
             throw new BadRequestException(IDC_CERT_EXPIRED, e.getMessage(), e);
         } catch (CertificateNotYetValidException e) {
@@ -105,10 +101,19 @@ public class IdCardLoginController {
             throw new BadRequestException(INVALID_REQUEST, e.getMessage(), e);
         }
 
+        X509Certificate certificate = validationInfo.getSubjectCertificate();
         String eidasClientId =  filterForEidasProxy.getClientId();
         if(taraSession.getOriginalClient().getClientId().equals(eidasClientId)) {
             validateIdCardValidForEidasAuthentication(certificate);
         }
+
+        logValidationInfo(validationInfo);
+
+        String lastOcspResponderUri = validationInfo.getRevocationInfoList()
+                .get(validationInfo.getRevocationInfoList().size() - 1)
+                .getOcspResponderUri().toString();
+        updateAuthenticationResult(taraSession, certificate, lastOcspResponderUri);
+        statisticsLogger.logExternalTransaction(taraSession);
 
         return ResponseEntity.ok(of("status", "COMPLETED"));
     }
@@ -166,6 +171,48 @@ public class IdCardLoginController {
         authenticationResult.setSubject(authenticationResult.getCountry() + authenticationResult.getIdCode());
         taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
         SessionUtils.getHttpSession().setAttribute(TARA_SESSION, taraSession);
+    }
+
+    private void logValidationInfo(ValidationInfo validationInfo) {
+        X509Certificate certificate = validationInfo.getSubjectCertificate();
+        log.info("OCSP certificate info: Serialnumber=<{}>, SubjectDN=<{}>, issuerDN=<{}>",
+                value("x509.serial_number", certificate.getSerialNumber().toString()),
+                value("x509.subject.distinguished_name", certificate.getSubjectX500Principal().getName()),
+                value("x509.issuer.distinguished_name", certificate.getIssuerX500Principal().getName()));
+        List<RevocationInfo> revocationInfoList = validationInfo.getRevocationInfoList();
+        for (RevocationInfo revocationInfo : revocationInfoList) {
+            if (revocationInfo == null) {
+                continue;
+            }
+            Map<String, Object> ocspResponseAttributes = revocationInfo.getOcspResponseAttributes();
+            if (ocspResponseAttributes == null) {
+                continue;
+            }
+            OCSPReq ocspReq = (OCSPReq) ocspResponseAttributes.get(RevocationInfo.KEY_OCSP_REQUEST);
+            OCSPResp ocspResp = (OCSPResp) ocspResponseAttributes.get(RevocationInfo.KEY_OCSP_RESPONSE);
+            URI ocspResponderUri = revocationInfo.getOcspResponderUri();
+            // TODO Also log the exceptions that could be here
+            try {
+                if (ocspReq != null) {
+                    requestLogger.logRequest(ocspResponderUri.toString(), HttpMethod.POST, of("http.request.body.content",
+                            Base64.getEncoder().encodeToString(ocspReq.getEncoded())));
+                }
+            } catch (IOException e) {
+                log.atError()
+                        .setCause(e)
+                        .log("Failed to encode OCSP request");
+            }
+            try {
+                if (ocspResp != null) {
+                    // TODO Status code should not be hardcoded
+                    requestLogger.logResponse(HttpStatus.OK.value(), Base64.getEncoder().encodeToString(ocspResp.getEncoded()));
+                }
+            } catch (IOException e) {
+                log.atError()
+                        .setCause(e)
+                        .log("Failed to encode OCSP response");
+            }
+        }
     }
 
     @Data
