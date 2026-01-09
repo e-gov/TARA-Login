@@ -14,6 +14,7 @@ import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraSession.SidAuthenticationResult;
+import ee.ria.taraauthserver.session.update.CallbackSmartIdWeb2AppAuthenticationSessionUpdate;
 import ee.ria.taraauthserver.session.update.FailSmartIdWeb2AppAuthenticationSessionUpdate;
 import ee.ria.taraauthserver.session.update.InitSmartIdWeb2AppAuthenticationSessionUpdate;
 import ee.ria.taraauthserver.session.update.PollSmartIdWeb2AppAuthenticationSessionUpdate;
@@ -239,7 +240,20 @@ public class AuthSidWeb2AppService {
         }
     }
 
-    public TaraAuthenticationState getAuthenticationResult(TaraSession taraSession, String userChallengeVerifier) {
+    public void storeCallbackParametersInSession(
+            TaraSession taraSession,
+            String value,
+            String sessionSecretDigest,
+            String userChallengeVerifier) {
+        taraSession.accept(new CallbackSmartIdWeb2AppAuthenticationSessionUpdate(
+                value,
+                sessionSecretDigest,
+                userChallengeVerifier
+        ));
+        updateSession(taraSession);
+    }
+
+    public TaraAuthenticationState getAuthenticationResult(TaraSession taraSession) {
         Span span = ElasticApm.currentSpan().startSpan("app", "SID", "poll");
         span.setName(ElasticApmUtil.currentMethodName());
         span.setStartTimestamp(
@@ -251,14 +265,8 @@ public class AuthSidWeb2AppService {
             SessionStatusPoller sessionStatusPoller = sidClient.getSessionStatusPoller();
             log.info("Starting Smart-ID session status polling with id: {}",
                     value("tara.session.sid_authentication_result.sid_session_id", taraSession.getSmartIdWeb2AppSession().getSessionId()));
-            // TODO AUT-2504: Polling should be asynchronous
             SessionStatus sessionStatus = sessionStatusPoller.fetchFinalSessionStatus(taraSession.getSmartIdWeb2AppSession().getSessionId());
-
-            handleSidAuthenticationResult(
-                    taraSession,
-                    sessionStatus,
-                    taraSession.getSmartIdWeb2AppSession().getAuthenticationSessionRequest(),
-                    userChallengeVerifier);
+            handleSidAuthenticationResult(taraSession, sessionStatus);
             taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
             statisticsLogger.logExternalTransaction(taraSession);
             return NATURAL_PERSON_AUTHENTICATION_COMPLETED;
@@ -272,11 +280,7 @@ public class AuthSidWeb2AppService {
         }
     }
 
-    private void handleSidAuthenticationResult(
-            TaraSession taraSession,
-            SessionStatus sessionStatus,
-            DeviceLinkAuthenticationSessionRequest authenticationSessionRequest,
-            String userChallengeVerifier) {
+    private void handleSidAuthenticationResult(TaraSession taraSession, SessionStatus sessionStatus) {
         SidAuthenticationResult taraAuthResult = (SidAuthenticationResult) taraSession.getAuthenticationResult();
         String sidSessionId = taraAuthResult.getSidSessionId();
         log.info("SID session id {} authentication result: {}, document number: {}, status: {}",
@@ -287,8 +291,8 @@ public class AuthSidWeb2AppService {
 
         AuthenticationIdentity authIdentity = responseValidator.validate(
                 sessionStatus,
-                authenticationSessionRequest,
-                userChallengeVerifier,
+                taraSession.getSmartIdWeb2AppSession().getAuthenticationSessionRequest(),
+                taraSession.getSmartIdWeb2AppSession().getCallbackParameters().getUserChallengeVerifier(),
                 smartIdConfigurationProperties.getSchemaName());
         // TODO: SidAuthenticationResult fields were previously populated *before* calling responseValidator.validate(),
         //  so that this information would be available in case of validation failure and could be logged with full details.

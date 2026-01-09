@@ -139,6 +139,7 @@ tara:
       read-timeout-milliseconds: 6000
       web2app:
         enabled: true
+        frontend-polling-interval-in-milliseconds: 1000
       qr-code:
         enabled: true
     eidas:

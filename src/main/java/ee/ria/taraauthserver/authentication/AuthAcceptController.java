@@ -34,6 +34,7 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.LEGAL_PERSON
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_MID_STATUS_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_STATUS_CANCELED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_WEB2APP_STATUS_CANCELED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.lang.String.format;
 import static java.util.EnumSet.of;
@@ -42,6 +43,7 @@ import static java.util.EnumSet.of;
 @Controller
 class AuthAcceptController {
     private static final EnumSet<TaraAuthenticationState> ALLOWED_STATES = of(AUTHENTICATION_SUCCESS, NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED);
+    private static final EnumSet<TaraAuthenticationState> POLL_CANCELED_STATES = of(POLL_MID_STATUS_CANCELED, POLL_SID_STATUS_CANCELED, POLL_SID_WEB2APP_STATUS_CANCELED);
     private static final EnumSet<TaraAuthenticationState> OIDC_AUTH_ACCEPT_STATES = of(NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED);
     private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.TARA_HYDRA, this.getClass());
 
@@ -55,7 +57,7 @@ class AuthAcceptController {
     public RedirectView authAccept(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         if (taraSession == null) {
             throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
-        } else if (taraSession.getState().equals(POLL_MID_STATUS_CANCELED) || taraSession.getState().equals(POLL_SID_STATUS_CANCELED)) {
+        } else if (POLL_CANCELED_STATES.contains(taraSession.getState())) {
             return new RedirectView("/auth/init?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge() + RequestUtils.getLangParam(taraSession));
         } else if (!ALLOWED_STATES.contains(taraSession.getState())) {
             throw new BadRequestException(ErrorCode.SESSION_STATE_INVALID, format("Invalid authentication state: '%s', expected one of: %s", taraSession.getState(), ALLOWED_STATES));

@@ -17,6 +17,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -27,6 +28,7 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATI
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.EXTERNAL_TRANSACTION;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_MID_STATUS_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_STATUS_CANCELED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_WEB2APP_STATUS_CANCELED;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static net.logstash.logback.marker.Markers.appendFields;
@@ -36,6 +38,11 @@ import static net.logstash.logback.marker.Markers.appendFields;
 public class StatisticsLogger {
 
     public static final String SERVICE_GOVSSO = "GOVSSO";
+    private static final EnumSet<TaraAuthenticationState> CANCELED_STATES = EnumSet.of(
+            AUTHENTICATION_CANCELED,
+            POLL_MID_STATUS_CANCELED,
+            POLL_SID_STATUS_CANCELED,
+            POLL_SID_WEB2APP_STATUS_CANCELED);
 
     public void log(TaraSession taraSession) {
         log(taraSession, null);
@@ -140,7 +147,7 @@ public class StatisticsLogger {
         TaraAuthenticationState state = taraSession.getState();
         if (AUTHENTICATION_SUCCESS == state || AUTHENTICATION_FAILED == state) {
             return of(state);
-        } else if (AUTHENTICATION_CANCELED == state || POLL_MID_STATUS_CANCELED == state || POLL_SID_STATUS_CANCELED == state) {
+        } else if (CANCELED_STATES.contains(state)) {
             return of(AUTHENTICATION_CANCELED);
         } else {
             return empty();

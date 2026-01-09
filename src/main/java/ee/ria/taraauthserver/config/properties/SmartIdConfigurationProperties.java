@@ -98,6 +98,8 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
 
         @NotNull
         private boolean enabled;
+
+        private int frontendPollingIntervalInMilliseconds = 1000;
     }
 
     @Data
