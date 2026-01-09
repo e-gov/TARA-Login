@@ -40,32 +40,36 @@ tara:
       enabled: true
       level-of-assurance: HIGH
       ocsp:
-        - issuer-cn: TEST of ESTEID-SK 2011
-          url: http://aia.demo.sk.ee/esteid2011
-          nonce-disabled: true
-
-        - issuer-cn: ESTEID-SK 2011
-          url: http://aia.demo.sk.ee/esteid2011
-          nonce-disabled: true
-          responder-certificate-cn: DEMO of KLASS3-SK 2010 SSL OCSP RESPONDER 2018
-
-        - issuer-cn: TEST of ESTEID-SK 2015
-          url: http://aia.demo.sk.ee/esteid2011
-          nonce-disabled: true
-
-        - issuer-cn: ESTEID-SK 2015
-          url: http://aia.demo.sk.ee/esteid2011
-          nonce-disabled: true
-          responder-certificate-cn: DEMO of KLASS3-SK 2010 SSL OCSP RESPONDER 2018
+#        - issuer-cn: TEST of ESTEID-SK 2011
+#          url: http://aia.demo.sk.ee/esteid2011
+#          nonce-disabled: true
+#
+#        - issuer-cn: ESTEID-SK 2011
+#          url: http://aia.demo.sk.ee/esteid2011
+#          nonce-disabled: true
+#          responder-certificate-cn: DEMO of KLASS3-SK 2010 SSL OCSP RESPONDER 2018
+#
+#        - issuer-cn: TEST of ESTEID-SK 2015
+#          url: http://aia.demo.sk.ee/esteid2011
+#          nonce-disabled: true
+#
+#        - issuer-cn: ESTEID-SK 2015
+#          url: http://aia.demo.sk.ee/esteid2011
+#          nonce-disabled: true
+#          responder-certificate-cn: DEMO of KLASS3-SK 2010 SSL OCSP RESPONDER 2018
 
         - issuer-cn: TEST of ESTEID2018
           url: http://aia.demo.sk.ee/esteid2018
           nonce-disabled: false
 
         - issuer-cn: ESTEID2018
-          url: http://aia.demo.sk.ee/esteid2018
+          url: http://aia.sk.ee/esteid2018
           nonce-disabled: false
           responder-certificate-cn: DEMO of KLASS3-SK 2010 SSL OCSP RESPONDER 2018
+
+        - issuer-cn: Test ESTEID2025
+          url: http://ocsp-test.eidpki.ee
+          nonce-disabled: false
     mobile-id:
       enabled: true
       level-of-assurance: HIGH
