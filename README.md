@@ -205,6 +205,7 @@ Table 1.4.3 - Integration with the [SK SID service](https://github.com/SK-EID/sm
 | `tara.auth-methods.smart-id.long-polling-timeout-milliseconds` | No | Long polling timeout period used for SID session status requests. Default `30000` |
 | `tara.auth-methods.smart-id.delay-initiate-sid-session-in-milliseconds` | No | Delay before initiating Smart-ID session after verification code is displayed. Default `3000` |
 | `tara.auth-methods.smart-id.delay-status-polling-start-in-milliseconds` | No | Delay before long polling. Default `500` |
+| `tara.auth-methods.smart-id.web2app.frontend-polling-interval-in-milliseconds` | No | Interval between status polling queries in Smart-ID Web2App flow (from UI to tara-login-service). Default `1000` |
 
 <a name="esteid_conf"></a>
 ### 1.5 ID-card auth method

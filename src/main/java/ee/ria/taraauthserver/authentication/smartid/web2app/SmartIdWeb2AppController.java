@@ -28,23 +28,18 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
-import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_SID_WEB2APP;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_WEB2APP_STATUS;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_WEB2APP_STATUS_CANCELED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
-import static java.lang.String.format;
 import static java.util.Map.of;
 
 @Slf4j
@@ -90,7 +85,7 @@ public class SmartIdWeb2AppController {
                 POLL_SID_WEB2APP_STATUS,
                 NATURAL_PERSON_AUTHENTICATION_COMPLETED,
                 AUTHENTICATION_FAILED);
-        authSidWeb2AppService.storeCallbackParametersInSession(taraSession, value, sessionSecretDigest, userChallengeVerifier);
+        authSidWeb2AppService.startPollingAuthenticationResult(taraSession, userChallengeVerifier);
         return CALLBACK_VIEW;
     }
 
@@ -102,10 +97,9 @@ public class SmartIdWeb2AppController {
                 POLL_SID_WEB2APP_STATUS,
                 NATURAL_PERSON_AUTHENTICATION_COMPLETED,
                 AUTHENTICATION_FAILED);
-        TaraAuthenticationState result = authSidWeb2AppService.getAuthenticationResult(taraSession);
-        if (result == NATURAL_PERSON_AUTHENTICATION_COMPLETED) {
+        if (taraSession.getState() == NATURAL_PERSON_AUTHENTICATION_COMPLETED) {
             return of("status", "COMPLETED");
-        } else if (result == AUTHENTICATION_FAILED) {
+        } else if (taraSession.getState() == AUTHENTICATION_FAILED) {
             ErrorCode errorCode = taraSession.getAuthenticationResult().getErrorCode();
             if (errorCode.equals(ErrorCode.ERROR_GENERAL)) {
                 throw new IllegalStateException(errorCode.getMessage());

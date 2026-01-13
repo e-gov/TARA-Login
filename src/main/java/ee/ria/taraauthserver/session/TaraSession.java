@@ -27,7 +27,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -166,7 +165,6 @@ public class TaraSession implements Serializable {
     public static class SmartIdWeb2AppSession implements Serializable {
 
         private String sessionId;
-        private SmartIdWeb2AppCallbackParameters callbackParameters;
 
         @Getter(AccessLevel.NONE)
         @Setter(AccessLevel.NONE)
@@ -185,15 +183,6 @@ public class TaraSession implements Serializable {
 
         public void setAuthenticationSessionRequest(DeviceLinkAuthenticationSessionRequest authenticationSessionRequest) {
             this.authenticationSessionRequest = DeviceLinkAuthenticationSessionMapper.toSurrogate(authenticationSessionRequest);
-        }
-
-        @Data
-        @NoArgsConstructor
-        @AllArgsConstructor
-        public static class SmartIdWeb2AppCallbackParameters implements Serializable{
-            private String value;
-            private String sessionSecretDigest;
-            private String userChallengeVerifier;
         }
     }
 
