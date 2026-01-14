@@ -29,7 +29,9 @@ import ee.sk.smartid.SessionType;
 import ee.sk.smartid.SmartIdClient;
 import ee.sk.smartid.common.devicelink.CallbackUrl;
 import ee.sk.smartid.common.devicelink.interactions.DeviceLinkInteraction;
+import ee.sk.smartid.exception.SessionSecretMismatchException;
 import ee.sk.smartid.exception.UnprocessableSmartIdResponseException;
+import ee.sk.smartid.exception.permanent.SmartIdClientException;
 import ee.sk.smartid.exception.useraccount.CertificateLevelMismatchException;
 import ee.sk.smartid.exception.useraccount.DocumentUnusableException;
 import ee.sk.smartid.exception.useraccount.RequiredInteractionNotSupportedByAppException;
@@ -115,6 +117,7 @@ public class AuthSidWeb2AppService {
         errorMap.put(ServiceNotAvailableException.class, SID_INTERNAL_ERROR);
         errorMap.put(UnprocessableSmartIdResponseException.class, SID_VALIDATION_ERROR);
         errorMap.put(CertificateLevelMismatchException.class, SID_VALIDATION_ERROR);
+        errorMap.put(SessionSecretMismatchException.class, SID_VALIDATION_ERROR);
     }
 
     @Autowired
@@ -165,7 +168,7 @@ public class AuthSidWeb2AppService {
                 .withRelyingPartyName(relyingParty.getName())
                 .withCertificateLevel(AuthenticationCertificateLevel.QUALIFIED);
 
-        DeviceLinkSessionResponse sessionResponse = initAuthentication(taraSession, requestBuilder);
+        DeviceLinkSessionResponse sessionResponse = initAuthentication(taraSession, requestBuilder, callbackUrlWithToken);
         DeviceLinkAuthenticationSessionRequest sessionRequest = requestBuilder.getAuthenticationSessionRequest();
         String language = LanguageUtil.toIso3(taraSession.getChosenLanguage());
         return createDeviceLink(
@@ -197,7 +200,8 @@ public class AuthSidWeb2AppService {
 
     private DeviceLinkSessionResponse initAuthentication(
             TaraSession taraSession,
-            DeviceLinkAuthenticationSessionRequestBuilder requestBuilder) {
+            DeviceLinkAuthenticationSessionRequestBuilder requestBuilder,
+            CallbackUrl callbackUrlWithToken) {
         Span span = ElasticApm.currentSpan().startSpan("app", "SID", "poll")
                 .setName(ElasticApmUtil.currentMethodName())
                 .setStartTimestamp(now().plus(200, MILLIS).toEpochMilli() * 1_000);
@@ -208,7 +212,9 @@ public class AuthSidWeb2AppService {
                     value("tara.session.authentication_result.sid_session_id", sidSessionId));
             taraSession.accept(new PollSmartIdWeb2AppAuthenticationSessionUpdate(
                     sidSessionId,
-                    requestBuilder.getAuthenticationSessionRequest()
+                    authenticationSessionResponse.sessionSecret(),
+                    requestBuilder.getAuthenticationSessionRequest(),
+                    callbackUrlWithToken.urlToken()
             ));
             createAuthenticationResult(taraSession, sidSessionId);
             return authenticationSessionResponse;
@@ -239,17 +245,19 @@ public class AuthSidWeb2AppService {
         }
     }
 
-    public void startPollingAuthenticationResult(TaraSession taraSession, String userChallengeVerifier) {
+    public void startPollingAuthenticationResult(
+            TaraSession taraSession, String userChallengeVerifier, String sessionSecretDigest, String urlToken) {
         CompletableFuture.supplyAsync(
                 withMdc(() -> {
-                    pollUntilFinalAuthenticationResult(taraSession, userChallengeVerifier);
+                    pollUntilFinalAuthenticationResult(taraSession, userChallengeVerifier, sessionSecretDigest, urlToken);
                     return null; // This is only needed to support the existing signature of withMdc() method
                 }),
                 applicationTaskExecutor
         );
     }
 
-    private void pollUntilFinalAuthenticationResult(TaraSession taraSession, String userChallengeVerifier) {
+    private void pollUntilFinalAuthenticationResult(
+            TaraSession taraSession, String userChallengeVerifier, String sessionSecretDigest, String urlToken) {
         Span span = ElasticApm.currentSpan().startSpan("app", "SID", "poll");
         span.setName(ElasticApmUtil.currentMethodName());
         span.setStartTimestamp(
@@ -262,13 +270,14 @@ public class AuthSidWeb2AppService {
             log.info("Starting Smart-ID session status polling with id: {}",
                     value("tara.session.sid_authentication_result.sid_session_id", taraSession.getSmartIdWeb2AppSession().getSessionId()));
             SessionStatus sessionStatus = sessionStatusPoller.fetchFinalSessionStatus(taraSession.getSmartIdWeb2AppSession().getSessionId());
-            handleSidAuthenticationResult(taraSession, sessionStatus, userChallengeVerifier);
+            handleSidAuthenticationResult(taraSession, sessionStatus, userChallengeVerifier, sessionSecretDigest, urlToken);
             taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
             statisticsLogger.logExternalTransaction(taraSession);
         } catch (Exception ex) {
             handleSidAuthenticationException(taraSession, ex);
             handleStatisticsLogging(taraSession, ex);
         } finally {
+            taraSession.setSmartIdWeb2AppSession(null);
             updateSession(taraSession);
             span.end();
         }
@@ -277,7 +286,9 @@ public class AuthSidWeb2AppService {
     private void handleSidAuthenticationResult(
             TaraSession taraSession,
             SessionStatus sessionStatus,
-            String userChallengeVerifier) {
+            String userChallengeVerifier,
+            String sessionSecretDigest,
+            String urlToken) {
         SidAuthenticationResult taraAuthResult = (SidAuthenticationResult) taraSession.getAuthenticationResult();
         String sidSessionId = taraAuthResult.getSidSessionId();
         log.info("SID session id {} authentication result: {}, document number: {}, status: {}",
@@ -285,12 +296,12 @@ public class AuthSidWeb2AppService {
                 value("tara.session.authentication_result.sid_end_result", sessionStatus.getResult().getEndResult()),
                 value("tara.session.authentication_result.sid_document_number", sessionStatus.getResult().getDocumentNumber()),
                 value("tara.session.authentication_result.sid_state", sessionStatus.getState()));
-
-        AuthenticationIdentity authIdentity = responseValidator.validate(
+        AuthenticationIdentity authIdentity = validateSessionAndGetIdentity(
+                taraSession,
                 sessionStatus,
-                taraSession.getSmartIdWeb2AppSession().getAuthenticationSessionRequest(),
                 userChallengeVerifier,
-                smartIdConfigurationProperties.getSchemaName());
+                sessionSecretDigest,
+                urlToken);
         // TODO: SidAuthenticationResult fields were previously populated *before* calling responseValidator.validate(),
         //  so that this information would be available in case of validation failure and could be logged with full details.
         //  Since Smart ID v3, this is no longer possible, but the impact of missing information is not known yet.
@@ -304,6 +315,23 @@ public class AuthSidWeb2AppService {
         taraAuthResult.setDateOfBirth(MidNationalIdentificationCodeValidator.getBirthDate(authIdentity.getIdentityNumber()));
         taraAuthResult.setAmr(AuthenticationType.SMART_ID);
         taraAuthResult.setAcr(smartIdConfigurationProperties.getLevelOfAssurance());
+    }
+
+    private AuthenticationIdentity validateSessionAndGetIdentity(
+            TaraSession taraSession,
+            SessionStatus sessionStatus,
+            String userChallengeVerifier,
+            String sessionSecretDigest,
+            String urlToken) {
+        if (urlToken == null || !urlToken.equals(taraSession.getSmartIdWeb2AppSession().getUrlToken())) {
+            throw new SmartIdClientException("Token from actual callback URL does not match token from initial callback URL");
+        }
+        CallbackUrlUtil.validateSessionSecretDigest(sessionSecretDigest, taraSession.getSmartIdWeb2AppSession().getSessionSecret());
+        return responseValidator.validate(
+                sessionStatus,
+                taraSession.getSmartIdWeb2AppSession().getAuthenticationSessionRequest(),
+                userChallengeVerifier,
+                smartIdConfigurationProperties.getSchemaName());
     }
 
     private void handleSidAuthenticationException(TaraSession taraSession, Exception ex) {

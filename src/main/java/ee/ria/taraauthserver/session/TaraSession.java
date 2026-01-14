@@ -165,6 +165,8 @@ public class TaraSession implements Serializable {
     public static class SmartIdWeb2AppSession implements Serializable {
 
         private String sessionId;
+        private String sessionSecret;
+        private String urlToken;
 
         @Getter(AccessLevel.NONE)
         @Setter(AccessLevel.NONE)
@@ -172,9 +174,13 @@ public class TaraSession implements Serializable {
 
         public SmartIdWeb2AppSession(
                 String sessionId,
-                DeviceLinkAuthenticationSessionRequest authenticationSessionRequest) {
+                String sessionSecret,
+                DeviceLinkAuthenticationSessionRequest authenticationSessionRequest,
+                String urlToken) {
             this.sessionId = sessionId;
+            this.sessionSecret = sessionSecret;
             this.authenticationSessionRequest = DeviceLinkAuthenticationSessionMapper.toSurrogate(authenticationSessionRequest);
+            this.urlToken = urlToken;
         }
 
         public DeviceLinkAuthenticationSessionRequest getAuthenticationSessionRequest() {

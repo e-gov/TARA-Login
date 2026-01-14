@@ -76,7 +76,6 @@ public class SmartIdWeb2AppController {
     @GetMapping(value = "/auth/sid/web2app/callback", produces = MediaType.TEXT_HTML_VALUE)
     public String authSidCallback(
             @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession,
-            // TODO AUT-2450: Remove unused parameters from here
             @RequestParam String value,
             @RequestParam String sessionSecretDigest,
             @RequestParam String userChallengeVerifier) {
@@ -85,7 +84,11 @@ public class SmartIdWeb2AppController {
                 POLL_SID_WEB2APP_STATUS,
                 NATURAL_PERSON_AUTHENTICATION_COMPLETED,
                 AUTHENTICATION_FAILED);
-        authSidWeb2AppService.startPollingAuthenticationResult(taraSession, userChallengeVerifier);
+        authSidWeb2AppService.startPollingAuthenticationResult(
+                taraSession,
+                userChallengeVerifier,
+                sessionSecretDigest,
+                value);
         return CALLBACK_VIEW;
     }
 
@@ -115,6 +118,7 @@ public class SmartIdWeb2AppController {
     @PostMapping(value = "/auth/sid/web2app/poll/cancel", produces = MediaType.APPLICATION_JSON_VALUE)
     public RedirectView authSidPollCancel(
             @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+        log.info("Validating Smart-ID Web2App poll cancel endpoint");
         validateSession(taraSession,
                 AUTHENTICATION_SUCCESS,
                 POLL_SID_WEB2APP_STATUS,
