@@ -13,6 +13,11 @@ jQuery(function ($) {
         $('.c-tab-login__nav-item').addClass('is-active');
 	}
 
+	// Show Web2App link only in mobile devices which support Smart-ID app
+	if (supportsSmartIdApp()) {
+	    $('#sidWeb2AppLinkContainer').show();
+	}
+
 	// Show auth methods in mobile view, if we think the user is actually using a mobile device, keep ID-card hidden
 	$('.c-tab-login__nav-item').each(function() {
 		const linkElement = $(this).find('.c-tab-login__nav-link');
@@ -556,6 +561,14 @@ jQuery(function ($) {
 	function isProbablyMobileDevice() {
 		return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 	}
+
+	function supportsSmartIdApp() {
+        const agent = navigator.userAgent || navigator.vendor || window.opera;
+        const isStandardMobile = /android|iphone|ipad|ipod/i.test(agent);
+        // iPadOS 13 and later claim to be Macintosh and have touch screen.
+        const isNewerIPad = (navigator.platform === 'MacIntel' || /Macintosh/i.test(agent)) && navigator.maxTouchPoints > 1;
+        return isStandardMobile || isNewerIPad;
+    }
 
 	$('.c-btn').on('click', function () {
 		const button = $(this);

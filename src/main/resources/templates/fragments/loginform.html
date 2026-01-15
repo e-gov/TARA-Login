@@ -172,7 +172,7 @@
                     <div class="c-form">
                         <table role="presentation">
                             <tbody>
-                            <tr th:if="${@thymeleafSupport.isSidWeb2AppEnabled()}">
+                            <tr id="sidWeb2AppLinkContainer" th:if="${@thymeleafSupport.isSidWeb2AppEnabled()}" class="hidden">
                                 <td></td>
                                 <td>
                                     <a href="/auth/sid/web2app/init" class="c-btn c-btn--primary" th:text="#{label.smart-id.open-app}"></a>
