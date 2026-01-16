@@ -20,4 +20,13 @@ public class LanguageUtil {
             return DEFAULT_LANG_ISO3;
         }
     }
+
+    public String toIso3(Locale locale) {
+        try {
+            return locale.getISO3Language();
+        } catch (MissingResourceException e) {
+            log.error("Cannot produce 3-letter ISO language abbreviation for locale {}", locale);
+            return DEFAULT_LANG_ISO3;
+        }
+    }
 }

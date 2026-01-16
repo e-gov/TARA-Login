@@ -7,7 +7,6 @@ import co.elastic.apm.api.Span;
 import ee.ria.taraauthserver.authentication.RelyingParty;
 import ee.ria.taraauthserver.authentication.smartid.RpChallengeService;
 import ee.ria.taraauthserver.authentication.smartid.SmartIdExceptionTranslator;
-import ee.ria.taraauthserver.authentication.smartid.SmartIdLanguage;
 import ee.ria.taraauthserver.authentication.smartid.SmartIdSessionStatus;
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
@@ -20,6 +19,7 @@ import ee.ria.taraauthserver.session.update.PollSmartIdQrCodeAuthenticationSessi
 import ee.ria.taraauthserver.session.update.SmartIdAuthenticationSuccessfulSessionUpdate;
 import ee.ria.taraauthserver.session.update.TaraSessionUpdate;
 import ee.ria.taraauthserver.utils.ElasticApmUtil;
+import ee.ria.taraauthserver.utils.LanguageUtil;
 import ee.sk.smartid.AuthenticationCertificateLevel;
 import ee.sk.smartid.AuthenticationIdentity;
 import ee.sk.smartid.DeviceLinkAuthenticationResponseValidator;
@@ -104,10 +104,7 @@ public class AuthSidQrCodeService {
             return null;
         }
         Duration elapsedTime = getElapsedTime(smartIdSession);
-        SmartIdLanguage language = SmartIdLanguage.fromLocale(locale);
-        if (language == null) {
-            throw new IllegalArgumentException("Invalid language provided");
-        }
+        String language = LanguageUtil.toIso3(locale);
         URI deviceLink = smartIdClient.createDynamicContent()
                 .withSchemeName(smartIdConfigurationProperties.getSchemaName())
                 .withDeviceLinkBase(smartIdSession.getDeviceLinkBase())
@@ -115,7 +112,7 @@ public class AuthSidQrCodeService {
                 .withSessionType(SessionType.AUTHENTICATION)
                 .withSessionToken(smartIdSession.getSessionToken())
                 .withElapsedSeconds(elapsedTime.getSeconds())
-                .withLang(language.getValue())
+                .withLang(language)
                 .withDigest(smartIdSession.getRpChallenge().toBase64EncodedValue())
                 .withInteractions(smartIdSession.getInteractions())
                 .withRelyingPartyName(smartIdSession.getRelyingPartyName())
