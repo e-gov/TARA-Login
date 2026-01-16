@@ -7,10 +7,10 @@ import ee.ria.taraauthserver.authentication.RelyingParty;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
-import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraSession.SidAuthenticationResult;
+import ee.ria.taraauthserver.session.update.AuthenticationFailedSessionUpdate;
 import ee.ria.taraauthserver.utils.ElasticApmUtil;
 import ee.sk.mid.MidNationalIdentificationCodeValidator;
 import ee.sk.smartid.AuthenticationCertificateLevel;
@@ -21,23 +21,10 @@ import ee.sk.smartid.RpChallenge;
 import ee.sk.smartid.SmartIdClient;
 import ee.sk.smartid.VerificationCodeCalculator;
 import ee.sk.smartid.common.notification.interactions.NotificationInteraction;
-import ee.sk.smartid.exception.UnprocessableSmartIdResponseException;
-import ee.sk.smartid.exception.useraccount.CertificateLevelMismatchException;
-import ee.sk.smartid.exception.useraccount.DocumentUnusableException;
-import ee.sk.smartid.exception.useraccount.RequiredInteractionNotSupportedByAppException;
-import ee.sk.smartid.exception.useraccount.UserAccountNotFoundException;
-import ee.sk.smartid.exception.useraction.SessionTimeoutException;
-import ee.sk.smartid.exception.useraction.UserRefusedConfirmationMessageException;
-import ee.sk.smartid.exception.useraction.UserRefusedConfirmationMessageWithVerificationChoiceException;
-import ee.sk.smartid.exception.useraction.UserRefusedDisplayTextAndPinException;
-import ee.sk.smartid.exception.useraction.UserRefusedException;
-import ee.sk.smartid.exception.useraction.UserSelectedWrongVerificationCodeException;
 import ee.sk.smartid.rest.SessionStatusPoller;
 import ee.sk.smartid.rest.dao.NotificationAuthenticationSessionResponse;
 import ee.sk.smartid.rest.dao.SemanticsIdentifier;
 import ee.sk.smartid.rest.dao.SessionStatus;
-import jakarta.ws.rs.InternalServerErrorException;
-import jakarta.ws.rs.ProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -46,27 +33,11 @@ import org.springframework.session.SessionRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 import static co.elastic.apm.api.Outcome.FAILURE;
-import static ee.ria.taraauthserver.error.ErrorCode.ERROR_GENERAL;
-import static ee.ria.taraauthserver.error.ErrorCode.SID_DOCUMENT_UNUSABLE;
-import static ee.ria.taraauthserver.error.ErrorCode.SID_INTERACTION_NOT_SUPPORTED;
-import static ee.ria.taraauthserver.error.ErrorCode.SID_INTERNAL_ERROR;
-import static ee.ria.taraauthserver.error.ErrorCode.SID_REQUEST_TIMEOUT;
-import static ee.ria.taraauthserver.error.ErrorCode.SID_SESSION_TIMEOUT;
-import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_ACCOUNT_NOT_FOUND;
-import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED;
-import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_CONFIRMATIONMESSAGE;
-import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE;
-import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_DISAPLAYTEXTANDPIN;
-import static ee.ria.taraauthserver.error.ErrorCode.SID_VALIDATION_ERROR;
-import static ee.ria.taraauthserver.error.ErrorCode.SID_WRONG_VC;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_SID;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_STATUS;
@@ -85,26 +56,6 @@ import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 @Service
 @ConditionalOnProperty(value = "tara.auth-methods.smart-id.enabled")
 public class AuthSidNotificationBasedService {
-
-    private static final Map<Class<?>, ErrorCode> errorMap;
-
-    static {
-        errorMap = new HashMap<>();
-        errorMap.put(InternalServerErrorException.class, SID_INTERNAL_ERROR);
-        errorMap.put(ProcessingException.class, SID_REQUEST_TIMEOUT);
-        errorMap.put(UserRefusedException.class, SID_USER_REFUSED);
-        errorMap.put(SessionTimeoutException.class, SID_SESSION_TIMEOUT);
-        errorMap.put(DocumentUnusableException.class, SID_DOCUMENT_UNUSABLE);
-        errorMap.put(UserSelectedWrongVerificationCodeException.class, SID_WRONG_VC);
-        errorMap.put(RequiredInteractionNotSupportedByAppException.class, SID_INTERACTION_NOT_SUPPORTED);
-        errorMap.put(UserRefusedDisplayTextAndPinException.class, SID_USER_REFUSED_DISAPLAYTEXTANDPIN);
-        errorMap.put(UserAccountNotFoundException.class, SID_USER_ACCOUNT_NOT_FOUND);
-        errorMap.put(UserRefusedConfirmationMessageException.class, SID_USER_REFUSED_CONFIRMATIONMESSAGE);
-        errorMap.put(UserRefusedConfirmationMessageWithVerificationChoiceException.class, SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE);
-        errorMap.put(ServiceNotAvailableException.class, SID_INTERNAL_ERROR);
-        errorMap.put(UnprocessableSmartIdResponseException.class, SID_VALIDATION_ERROR);
-        errorMap.put(CertificateLevelMismatchException.class, SID_VALIDATION_ERROR);
-    }
 
     @Autowired
     private SmartIdClient sidClient;
@@ -276,11 +227,10 @@ public class AuthSidNotificationBasedService {
     }
 
     private void handleSidAuthenticationException(TaraSession taraSession, Exception ex) {
-        taraSession.setState(AUTHENTICATION_FAILED);
-        ErrorCode errorCode = translateExceptionToErrorCode(ex);
-        taraSession.getAuthenticationResult().setErrorCode(errorCode);
+        ErrorCode errorCode = SmartIdExceptionTranslator.getErrorCode(ex);
+        taraSession.accept(new AuthenticationFailedSessionUpdate(errorCode));
 
-        if (ERROR_GENERAL == errorCode || SID_INTERNAL_ERROR == errorCode || SID_VALIDATION_ERROR == errorCode) {
+        if (SmartIdExceptionTranslator.isTechnicalError(errorCode)) {
             log.error(append("error.code", errorCode.name()), "Smart-ID authentication exception: {}", ex.getMessage(), ex);
         } else {
             log.warn("Smart-ID authentication failed: {}, Error code: {}", value("error.message", ex.getMessage()), value("error.code", errorCode.name()));
@@ -295,15 +245,11 @@ public class AuthSidNotificationBasedService {
 
     private void handleStatisticsLogging(TaraSession taraSession, Exception ex) {
         ErrorCode errorCode = taraSession.getAuthenticationResult().getErrorCode();
-        if (ERROR_GENERAL == errorCode || SID_INTERNAL_ERROR == errorCode || SID_VALIDATION_ERROR == errorCode) {
+        if (SmartIdExceptionTranslator.isTechnicalError(errorCode)) {
             statisticsLogger.logExternalTransaction(taraSession, ex);
         } else {
             statisticsLogger.logExternalTransaction(taraSession);
         }
-    }
-
-    private ErrorCode translateExceptionToErrorCode(Throwable ex) {
-        return errorMap.getOrDefault(ex.getClass(), ERROR_GENERAL);
     }
 
 }
