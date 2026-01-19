@@ -35,7 +35,7 @@
         <logstash-logback-encoder.version>8.1</logstash-logback-encoder.version><!-- TODO Upgrade to logstash-logback-encoder 9.x with Spring Boot 4.x, both upgrade to Jackson 3 -->
         <mid-rest.version>1.6</mid-rest.version>
         <smart-id.version>3.1</smart-id.version>
-        <webeid.version>3.2.0-2512</webeid.version>
+        <webeid.version>3.2.0-2552</webeid.version>
         <wiremock.version>3.13.2</wiremock.version>
         <resilience4j.version>1.7.0</resilience4j.version>
     </properties>

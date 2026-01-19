@@ -11,13 +11,13 @@ import ee.ria.taraauthserver.utils.EstonianIdCodeUtil;
 import ee.ria.taraauthserver.utils.X509Utils;
 import ee.sk.mid.MidNationalIdentificationCodeValidator;
 import eu.webeid.security.RevocationInfo;
+import eu.webeid.security.TaraUserCertificateRevokedException;
 import eu.webeid.security.ValidationInfo;
 import eu.webeid.security.authtoken.WebEidAuthToken;
 import eu.webeid.security.challenge.ChallengeNonceStore;
 import eu.webeid.security.exceptions.AuthTokenException;
 import eu.webeid.security.exceptions.CertificateExpiredException;
 import eu.webeid.security.exceptions.CertificateNotYetValidException;
-import eu.webeid.security.exceptions.UserCertificateUnknownException;
 import eu.webeid.security.validator.AuthTokenValidator;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +47,7 @@ import static ee.ria.taraauthserver.config.properties.AuthConfigurationPropertie
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_EXPIRED;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_FORBIDDEN;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_NOT_YET_VALID;
-import static ee.ria.taraauthserver.error.ErrorCode.IDC_UNKNOWN;
+import static ee.ria.taraauthserver.error.ErrorCode.IDC_REVOKED;
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT;
@@ -95,8 +95,8 @@ public class IdCardLoginController {
             throw new BadRequestException(IDC_CERT_EXPIRED, e.getMessage(), e);
         } catch (CertificateNotYetValidException e) {
             throw new BadRequestException(IDC_CERT_NOT_YET_VALID, e.getMessage(), e);
-        } catch (UserCertificateUnknownException e) {
-            throw new BadRequestException(IDC_UNKNOWN, e.getMessage(), e);
+        } catch (TaraUserCertificateRevokedException e) {
+            throw new BadRequestException(IDC_REVOKED, e.getMessage(), e);
         } catch (AuthTokenException e) {
             throw new BadRequestException(INVALID_REQUEST, e.getMessage(), e);
         }
