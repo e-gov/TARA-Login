@@ -1,4 +1,4 @@
-package ee.ria.taraauthserver.authentication.smartid;
+package ee.ria.taraauthserver.authentication.smartid.notificationbased;
 
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
@@ -9,6 +9,7 @@ import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.RequestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,6 +33,13 @@ import static java.util.EnumSet.of;
 
 @Slf4j
 @RestController
+@ConditionalOnProperty(
+        value = {
+                "tara.auth-methods.smart-id.enabled",
+                "tara.auth-methods.smart-id.notification-based.enabled"
+        },
+        havingValue = "true"
+)
 public class AuthSidCancelController {
     static final EnumSet<TaraAuthenticationState> ALLOWED_STATES = of(INIT_SID, POLL_SID_STATUS, AUTHENTICATION_FAILED, NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED);
 

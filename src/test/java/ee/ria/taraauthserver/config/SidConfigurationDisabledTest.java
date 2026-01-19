@@ -1,6 +1,6 @@
 package ee.ria.taraauthserver.config;
 
-import ee.ria.taraauthserver.authentication.smartid.SmartIdNotificationBasedController;
+import ee.ria.taraauthserver.authentication.smartid.notificationbased.SmartIdNotificationBasedController;
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;

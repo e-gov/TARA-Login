@@ -1,4 +1,4 @@
-package ee.ria.taraauthserver.authentication.smartid;
+package ee.ria.taraauthserver.authentication.smartid.notificationbased;
 
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
@@ -7,6 +7,7 @@ import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,6 +22,13 @@ import static java.util.Map.of;
 
 @Slf4j
 @RestController
+@ConditionalOnProperty(
+        value = {
+                "tara.auth-methods.smart-id.enabled",
+                "tara.auth-methods.smart-id.notification-based.enabled"
+        },
+        havingValue = "true"
+)
 public class AuthSidPollController {
     private static final EnumSet<TaraAuthenticationState> ALLOWED_STATES = EnumSet.of(INIT_SID, POLL_SID_STATUS, AUTHENTICATION_FAILED, NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 

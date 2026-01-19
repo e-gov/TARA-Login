@@ -126,6 +126,11 @@ public class ThymeleafSupport {
         }
     }
 
+    public boolean isSidNotificationBasedEnabled() {
+        return isAuthMethodAllowed(AuthenticationType.SMART_ID)
+                && smartIdConfigurationProperties.getNotificationBased().isEnabled();
+    }
+
     public boolean isSidWeb2AppEnabled() {
         return isAuthMethodAllowed(AuthenticationType.SMART_ID)
                 && smartIdConfigurationProperties.getWeb2app().isEnabled();

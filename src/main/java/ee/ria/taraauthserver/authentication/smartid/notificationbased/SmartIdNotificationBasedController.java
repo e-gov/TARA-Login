@@ -1,4 +1,4 @@
-package ee.ria.taraauthserver.authentication.smartid;
+package ee.ria.taraauthserver.authentication.smartid.notificationbased;
 
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
@@ -24,7 +24,13 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 @Slf4j
 @Validated
 @Controller
-@ConditionalOnProperty(value = "tara.auth-methods.smart-id.enabled")
+@ConditionalOnProperty(
+        value = {
+                "tara.auth-methods.smart-id.enabled",
+                "tara.auth-methods.smart-id.notification-based.enabled"
+        },
+        havingValue = "true"
+)
 public class SmartIdNotificationBasedController {
 
     @Autowired

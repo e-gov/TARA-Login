@@ -1,9 +1,11 @@
-package ee.ria.taraauthserver.authentication.smartid;
+package ee.ria.taraauthserver.authentication.smartid.notificationbased;
 
 import co.elastic.apm.api.ElasticApm;
 import co.elastic.apm.api.Scope;
 import co.elastic.apm.api.Span;
 import ee.ria.taraauthserver.authentication.RelyingParty;
+import ee.ria.taraauthserver.authentication.smartid.RpChallengeService;
+import ee.ria.taraauthserver.authentication.smartid.SmartIdExceptionTranslator;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
@@ -54,7 +56,13 @@ import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 
 @Slf4j
 @Service
-@ConditionalOnProperty(value = "tara.auth-methods.smart-id.enabled")
+@ConditionalOnProperty(
+        value = {
+                "tara.auth-methods.smart-id.enabled",
+                "tara.auth-methods.smart-id.notification-based.enabled"
+        },
+        havingValue = "true"
+)
 public class AuthSidNotificationBasedService {
 
     @Autowired

@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.authentication.smartid;
 
 import ee.ria.taraauthserver.BaseTest;
+import ee.ria.taraauthserver.authentication.smartid.notificationbased.AuthSidNotificationBasedService;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;

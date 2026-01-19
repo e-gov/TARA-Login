@@ -190,7 +190,7 @@
                     </div>
                     <form id="sidQrCodeForm" method="POST" th:action="@{/auth/sid/qr-code/init}"></form>
 
-                    <form th:action="@{/auth/sid/init}" method="post" id="smartIdForm" class="c-form">
+                    <form th:if="${@thymeleafSupport.isSidNotificationBasedEnabled()}" th:action="@{/auth/sid/init}" method="post" id="smartIdForm" class="c-form">
                         <table role="presentation">
                             <tbody>
                             <tr>
