@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.core5.net.URIBuilder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.MessageSource;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
@@ -49,6 +50,7 @@ public class SmartIdQrCodeController {
 
     public static final String QR_CODE_VIEW = "sidQrCode";
     private final AuthSidQrCodeService authSidQrCodeService;
+    private final MessageSource messageSource;
 
     @PostMapping(value = "/auth/sid/qr-code/init", produces = MediaType.TEXT_HTML_VALUE)
     public String initAuthentication(
@@ -80,9 +82,9 @@ public class SmartIdQrCodeController {
                 return PollResponse.pending(deviceLink);
             case AUTHENTICATION_FAILED:
                 ErrorCode errorCode = taraSession.getAuthenticationResult().getErrorCode();
-                return PollResponse.failed(errorCode);
+                return PollResponse.failed(errorCode, messageSource);
             default:
-                return PollResponse.failed(SESSION_STATE_INVALID);
+                return PollResponse.failed(SESSION_STATE_INVALID, messageSource);
         }
     }
 
@@ -113,13 +115,15 @@ public class SmartIdQrCodeController {
     public record PollResponse(
             @NonNull Status status,
             String deviceLink,
-            ErrorCode error
+            ErrorCode error,
+            String message
     ) {
 
         public static PollResponse pending(String deviceLink) {
             return new PollResponse(
                     Status.PENDING,
                     deviceLink,
+                    null,
                     null
             );
         }
@@ -128,15 +132,17 @@ public class SmartIdQrCodeController {
             return new PollResponse(
                     Status.COMPLETED,
                     null,
+                    null,
                     null
             );
         }
 
-        public static PollResponse failed(ErrorCode errorCode) {
+        public static PollResponse failed(ErrorCode errorCode, MessageSource messageSource) {
             return new PollResponse(
                     Status.FAILED,
                     null,
-                    errorCode
+                    errorCode,
+                    messageSource.getMessage(errorCode.getMessage(), null, RequestUtils.getLocale())
             );
         }
 

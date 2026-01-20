@@ -29,8 +29,6 @@
                 'Accept': 'application/json;charset=UTF-8'
             },
             credentials: 'include'
-        }).then(function (response) {
-            return response.json();
         });
     }
 
@@ -40,6 +38,43 @@
             clearTimeout(qrCodeExpirationTimeout);
         }
         qrCodeExpirationTimeout = setTimeout(showLoader, QR_CODE_MAX_AGE_MS);
+    }
+
+    function showError(error) {
+        hideEl(document.querySelector(".c-tab-login__main"));
+        showEl(document.querySelector("#sid-error"));
+
+        const errorMessageEl = document.querySelector("#error-message");
+        const defaultErrorMessageEl = document.querySelector("#default-error-message");
+        if (error.message != null) {
+            hideEl(defaultErrorMessageEl);
+            errorMessageEl.innerHTML = error.message;
+            showEl(errorMessageEl);
+        } else {
+            showEl(defaultErrorMessageEl);
+            hideEl(errorMessageEl);
+        }
+
+        const incidentNumberWrapperEl = document.querySelector("#error-incident-number-wrapper");
+        const incidentNumberEl = document.querySelector("#error-incident-number");
+        const incidentTimeEl = document.querySelector("#error-incident-time");
+        const reportUrlEl = document.querySelector("#error-report-url");
+        const reportNotificationEl = document.querySelector("#error-report-notification");
+        if (error.reportable === true) {
+            showEl(incidentNumberWrapperEl);
+            showEl(reportUrlEl);
+            incidentNumberEl.innerHTML = error.incident_nr;
+            const timeFormat = incidentTimeEl.getAttribute("data-time-format");
+            incidentTimeEl.innerHTML = formatDateTimeWithBrowserOffset(error.timestamp, timeFormat);
+            reportUrlEl.href = reportUrlEl.href
+                .replace('{1}', error.message)
+                .replace('{2}', error.incident_nr);
+            reportNotificationEl.innerHTML = reportNotificationEl.innerHTML
+                .replace('{1}', error.incident_nr);
+        } else {
+            hideEl(incidentNumberWrapperEl);
+            hideEl(reportUrlEl);
+        }
     }
 
     function acceptAuthentication() {
@@ -64,30 +99,50 @@
 
     function doPoll() {
         pollStartMs = Date.now();
+        let pollingCancelled = false;
         pollStatus().then(function(response) {
-            switch (response.status) {
-                case "PENDING":
-                    const deviceLink = response.deviceLink;
+            if (!response.ok) {
+                throw new Error('Polling status returned HTTP error ' + response.status + ' ' + response.statusText);
+            }
+            return response.json();
+        }).then(function(responseBody) {
+            switch (responseBody.status) {
+                case 'PENDING':
+                    const deviceLink = responseBody.deviceLink;
                     if (deviceLink == null) {
                         return;
                     }
                     return createQrCodePromise(deviceLink).then(function (qrCodeHtml) {
                         showQrCode(qrCodeHtml);
                     });
-                case "COMPLETED":
+                case 'COMPLETED':
+                    pollingCancelled = true;
                     return acceptAuthentication();
-                case "FAILED":
-                    //TODO (AUT-2500): Properly handle authentication failure
-                    console.error('Smart-ID authentication failed');
+                case 'FAILED':
+                default:
+                    pollingCancelled = true;
+                    showError(responseBody);
                     return;
             }
         }).catch(function(error) {
-            //TODO (AUT-2500): Properly handle polling errors
-            console.error('Failed to update Smart-ID device link QR code', error);
+            pollingCancelled = true;
+            // If any kind of unexpected JS Error is thrown, we don't want to display the technical message.
+            showError({});
         }).then(function () {
+            if (pollingCancelled) {
+                return;
+            }
             const pollDurationMs = Date.now() - pollStartMs;
             setTimeout(doPoll, Math.max(0, POLL_INTERVAL_MS - pollDurationMs));
         })
+    }
+
+    function hideEl(el) {
+        el.classList.add('hidden');
+    }
+
+    function showEl(el) {
+        el.classList.remove('hidden');
     }
 
     doPoll();
