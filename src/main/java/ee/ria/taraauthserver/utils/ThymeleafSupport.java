@@ -126,36 +126,6 @@ public class ThymeleafSupport {
         }
     }
 
-    public boolean isSidNotificationBasedEnabled() {
-        return isAuthMethodAllowed(AuthenticationType.SMART_ID)
-                && smartIdConfigurationProperties.getNotificationBased().isEnabled();
-    }
-
-    public boolean isSidWeb2AppEnabled() {
-        return isAuthMethodAllowed(AuthenticationType.SMART_ID)
-                && smartIdConfigurationProperties.getWeb2app().isEnabled();
-    }
-
-    public boolean isSidQrCodeEnabled() {
-        return isAuthMethodAllowed(AuthenticationType.SMART_ID)
-                && smartIdConfigurationProperties.getQrCode().isEnabled();
-    }
-
-    public boolean isAuthMethodAllowed(AuthenticationType method) {
-        Assert.notNull(method, "Authentication method can not be null!");
-
-        TaraSession taraSession = SessionUtils.getAuthSession();
-        if (taraSession == null) {
-            return false;
-        }
-        List<AuthenticationType> clientSpecificAuthMethodList = taraSession.getAllowedAuthMethods();
-        if (clientSpecificAuthMethodList == null || clientSpecificAuthMethodList.isEmpty()) {
-            return false;
-        }
-
-        return clientSpecificAuthMethodList.contains(method);
-    }
-
     public List<Alert> getActiveAlerts() {
         List<Alert> alerts = new ArrayList<>();
         getStaticAlert().ifPresent(alerts::add);
@@ -215,6 +185,64 @@ public class ThymeleafSupport {
                 .loadedFromConf(true)
                 .build();
         return Optional.of(alert);
+    }
+
+    public EnabledAuthMethods getEnabledAuthMethods() {
+        return new EnabledAuthMethods(
+                isAuthMethodAllowed(AuthenticationType.ID_CARD),
+                isAuthMethodAllowed(AuthenticationType.MOBILE_ID),
+                isAuthMethodAllowed(AuthenticationType.SMART_ID),
+                isAuthMethodAllowed(AuthenticationType.EIDAS),
+                new EnabledAuthMethods.SmartIdFlows(
+                        isSidNotificationBasedEnabled(),
+                        isSidWeb2AppEnabled(),
+                        isSidQrCodeEnabled()
+                )
+        );
+    }
+
+    public record EnabledAuthMethods(
+        boolean idCard,
+        boolean mobileId,
+        boolean smartId,
+        boolean eidas,
+        SmartIdFlows smartIdFlows
+    ) {
+        public record SmartIdFlows (
+           boolean notificationBased,
+           boolean web2app,
+           boolean qrCode
+        ) {}
+    }
+
+    private boolean isAuthMethodAllowed(AuthenticationType method) {
+        Assert.notNull(method, "Authentication method can not be null!");
+
+        TaraSession taraSession = SessionUtils.getAuthSession();
+        if (taraSession == null) {
+            return false;
+        }
+        List<AuthenticationType> clientSpecificAuthMethodList = taraSession.getAllowedAuthMethods();
+        if (clientSpecificAuthMethodList == null || clientSpecificAuthMethodList.isEmpty()) {
+            return false;
+        }
+
+        return clientSpecificAuthMethodList.contains(method);
+    }
+
+    private boolean isSidNotificationBasedEnabled() {
+        return isAuthMethodAllowed(AuthenticationType.SMART_ID)
+                && smartIdConfigurationProperties.getNotificationBased().isEnabled();
+    }
+
+    private boolean isSidWeb2AppEnabled() {
+        return isAuthMethodAllowed(AuthenticationType.SMART_ID)
+                && smartIdConfigurationProperties.getWeb2app().isEnabled();
+    }
+
+    private boolean isSidQrCodeEnabled() {
+        return isAuthMethodAllowed(AuthenticationType.SMART_ID)
+                && smartIdConfigurationProperties.getQrCode().isEnabled();
     }
 
 }

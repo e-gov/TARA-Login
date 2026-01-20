@@ -18,14 +18,30 @@ jQuery(function ($) {
         $('#sidWeb2AppLinkContainer').show();
     }
 
-    // Show auth methods in mobile view, if we think the user is actually using a mobile device, keep ID-card hidden
+    // Show/hide auth method tabs depending on user's device:
+    //  - In mobile view, if we think the user is actually using a mobile device, keep ID-card hidden.
+    //  - If Smart-ID authentication method is enabled, but only for Web2App flow, and user's device doesn't
+    //    support Web2App flow, hide the whole Smart-ID tab.
     $('.c-tab-login__nav-item').each(function() {
         const linkElement = $(this).find('.c-tab-login__nav-link');
         const tabId = linkElement.attr('data-tab');
+        const enabledAuthMethodsElement = document.getElementById("enabled-auth-methods");
+        const enabledAuthMethods = JSON.parse(enabledAuthMethodsElement.textContent);
+
+        // Keep ID-card hidden for mobile devices
         if (tabId === 'id-card' && isProbablyMobileDevice()) {
             return;
         }
         $(this).removeClass('hide-on-mobile');
+
+        // Hide Smart-ID tab if only Web2App flow is enabled and user's device doesn't support it
+        if (tabId === 'smart-id'
+                && !supportsSmartIdApp()
+                && enabledAuthMethods.smartIdFlows.web2app === true
+                && enabledAuthMethods.smartIdFlows.qrCode !== true
+                && enabledAuthMethods.smartIdFlows.notificationBased !== true) {
+            $(this).addClass('hidden');
+        }
     })
 
     // Activate previously selected or first auth method

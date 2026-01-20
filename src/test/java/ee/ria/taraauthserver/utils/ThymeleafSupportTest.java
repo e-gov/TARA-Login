@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.utils;
 
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
+import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import ee.ria.taraauthserver.session.TaraSession;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -29,42 +32,71 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 class ThymeleafSupportTest {
+
+    @InjectMocks
     private ThymeleafSupport thymeleafSupport;
+
+    @Mock
+    private SmartIdConfigurationProperties configurationProperties;
+
     private TaraSession testSession;
 
     @BeforeEach
     public void setUp() {
-        thymeleafSupport = new ThymeleafSupport();
         LocaleContextHolder.setLocale(Locale.ENGLISH);
         HttpSession mockHttpSession = buildMockHttpSession(buildMockLoginRequestInfo());
         testSession = (TaraSession) mockHttpSession.getAttribute(TARA_SESSION);
     }
 
     @Test
-    void isAuthMethodAllowed_falseWhenSessionNotPresent() {
+    void getEnabledAuthMethods_WhenSessionNotPresent_NoneEnabled() {
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(new MockHttpServletRequest(), new MockHttpServletResponse()));
-        for (AuthenticationType authMethod : AuthenticationType.values()) {
-            assertFalse(thymeleafSupport.isAuthMethodAllowed(authMethod), "Authmethod " + authMethod + " should NOT be allowed");
-        }
+        assertFalse(thymeleafSupport.getEnabledAuthMethods().idCard());
+        assertFalse(thymeleafSupport.getEnabledAuthMethods().mobileId());
+        assertFalse(thymeleafSupport.getEnabledAuthMethods().smartId());
+        assertFalse(thymeleafSupport.getEnabledAuthMethods().eidas());
     }
 
     @Test
-    void isAuthMethodAllowed_trueWhenAuthMethodListedInSession() {
-        for (AuthenticationType authMethod : AuthenticationType.values()) {
-            testSession.setAllowedAuthMethods(List.of(authMethod));
-            assertTrue(thymeleafSupport.isAuthMethodAllowed(authMethod), "Authmethod " + authMethod + " should be allowed");
-        }
+    void getEnabledAuthMethods_WhenSingleAuthMethodListedInSession_OnlyThisAuthMethodEnabled() {
+        setupConfigurationProperties();
+
+        testSession.setAllowedAuthMethods(List.of(AuthenticationType.ID_CARD));
+        assertTrue(thymeleafSupport.getEnabledAuthMethods().idCard());
+        assertFalse(thymeleafSupport.getEnabledAuthMethods().mobileId());
+        assertFalse(thymeleafSupport.getEnabledAuthMethods().smartId());
+        assertFalse(thymeleafSupport.getEnabledAuthMethods().eidas());
+
+        testSession.setAllowedAuthMethods(List.of(AuthenticationType.SMART_ID));
+        assertFalse(thymeleafSupport.getEnabledAuthMethods().idCard());
+        assertFalse(thymeleafSupport.getEnabledAuthMethods().mobileId());
+        assertTrue(thymeleafSupport.getEnabledAuthMethods().smartId());
+        assertFalse(thymeleafSupport.getEnabledAuthMethods().eidas());
+
+        testSession.setAllowedAuthMethods(List.of(AuthenticationType.MOBILE_ID));
+        assertFalse(thymeleafSupport.getEnabledAuthMethods().idCard());
+        assertTrue(thymeleafSupport.getEnabledAuthMethods().mobileId());
+        assertFalse(thymeleafSupport.getEnabledAuthMethods().smartId());
+        assertFalse(thymeleafSupport.getEnabledAuthMethods().eidas());
+
+        testSession.setAllowedAuthMethods(List.of(AuthenticationType.EIDAS));
+        assertFalse(thymeleafSupport.getEnabledAuthMethods().idCard());
+        assertFalse(thymeleafSupport.getEnabledAuthMethods().mobileId());
+        assertFalse(thymeleafSupport.getEnabledAuthMethods().smartId());
+        assertTrue(thymeleafSupport.getEnabledAuthMethods().eidas());
     }
 
     @Test
-    void isAuthMethodAllowed_falseWhenAuthMethodNotListedInSession() {
-        for (AuthenticationType authMethod : AuthenticationType.values()) {
-            assertFalse(thymeleafSupport.isAuthMethodAllowed(authMethod), "Authmethod " + authMethod + " should NOT be allowed");
-        }
+    void getEnabledAuthMethods_WhenNoAuthMethodsListedInSession_NoneEnabled() {
+        assertFalse(thymeleafSupport.getEnabledAuthMethods().idCard());
+        assertFalse(thymeleafSupport.getEnabledAuthMethods().mobileId());
+        assertFalse(thymeleafSupport.getEnabledAuthMethods().smartId());
+        assertFalse(thymeleafSupport.getEnabledAuthMethods().eidas());
     }
 
     @Test
@@ -133,5 +165,17 @@ class ThymeleafSupportTest {
 
         String expectedUrl = "/auth/init?login_challenge=valid-challenge&lang=" + language;
         assertEquals(expectedUrl, thymeleafSupport.getBackUrl(), "Back URL should match the expected initialization URL");
+    }
+
+    private void setupConfigurationProperties() {
+        SmartIdConfigurationProperties.NotificationBased notificationBased = new SmartIdConfigurationProperties.NotificationBased();
+        notificationBased.setEnabled(true);
+        when(configurationProperties.getNotificationBased()).thenReturn(notificationBased);
+        SmartIdConfigurationProperties.Web2App web2App = new SmartIdConfigurationProperties.Web2App();
+        web2App.setEnabled(true);
+        when(configurationProperties.getWeb2app()).thenReturn(web2App);
+        SmartIdConfigurationProperties.QrCode qrCode = new SmartIdConfigurationProperties.QrCode();
+        qrCode.setEnabled(true);
+        when(configurationProperties.getQrCode()).thenReturn(qrCode);
     }
 }
