@@ -11,6 +11,7 @@ import ee.ria.taraauthserver.utils.EstonianIdCodeUtil;
 import ee.ria.taraauthserver.utils.X509Utils;
 import ee.sk.mid.MidNationalIdentificationCodeValidator;
 import eu.webeid.security.RevocationInfo;
+import eu.webeid.security.TaraUserCertificateOCSPCheckFailedException;
 import eu.webeid.security.TaraUserCertificateRevokedException;
 import eu.webeid.security.ValidationInfo;
 import eu.webeid.security.authtoken.WebEidAuthToken;
@@ -18,6 +19,7 @@ import eu.webeid.security.challenge.ChallengeNonceStore;
 import eu.webeid.security.exceptions.AuthTokenException;
 import eu.webeid.security.exceptions.CertificateExpiredException;
 import eu.webeid.security.exceptions.CertificateNotYetValidException;
+import eu.webeid.security.exceptions.OcspClientException;
 import eu.webeid.security.validator.AuthTokenValidator;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +38,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.SessionAttribute;
 
 import java.io.IOException;
-import java.net.URI;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.List;
@@ -47,6 +48,7 @@ import static ee.ria.taraauthserver.config.properties.AuthConfigurationPropertie
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_EXPIRED;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_FORBIDDEN;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_NOT_YET_VALID;
+import static ee.ria.taraauthserver.error.ErrorCode.IDC_OCSP_NOT_AVAILABLE;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_REVOKED;
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
@@ -96,26 +98,33 @@ public class IdCardLoginController {
         } catch (CertificateNotYetValidException e) {
             throw new BadRequestException(IDC_CERT_NOT_YET_VALID, e.getMessage(), e);
         } catch (TaraUserCertificateRevokedException e) {
+            logValidationInfo(e.getValidationInfo(), taraSession);
             throw new BadRequestException(IDC_REVOKED, e.getMessage(), e);
+        } catch (TaraUserCertificateOCSPCheckFailedException e) {
+            logValidationInfo(e.getValidationInfo(), taraSession);
+            throw new BadRequestException(INVALID_REQUEST, e.getMessage(), e);
         } catch (AuthTokenException e) {
             throw new BadRequestException(INVALID_REQUEST, e.getMessage(), e);
         }
 
-        X509Certificate certificate = validationInfo.getSubjectCertificate();
         String eidasClientId =  filterForEidasProxy.getClientId();
+        X509Certificate certificate = validationInfo.getSubjectCertificate();
         if(taraSession.getOriginalClient().getClientId().equals(eidasClientId)) {
             validateIdCardValidForEidasAuthentication(certificate);
         }
 
-        logValidationInfo(validationInfo);
-
-        String lastOcspResponderUri = validationInfo.getRevocationInfoList()
-                .get(validationInfo.getRevocationInfoList().size() - 1)
-                .getOcspResponderUri().toString();
-        updateAuthenticationResult(taraSession, certificate, lastOcspResponderUri);
-        statisticsLogger.logExternalTransaction(taraSession);
-
+        logValidationInfo(validationInfo, taraSession);
         return ResponseEntity.ok(of("status", "COMPLETED"));
+    }
+
+    private static ErrorCode getErrorCodeByExceptionType(Exception e) {
+        if (e instanceof TaraUserCertificateRevokedException) {
+            return IDC_REVOKED;
+        }
+        if (e instanceof OcspClientException) {
+            return IDC_OCSP_NOT_AVAILABLE;
+        }
+        return INVALID_REQUEST;
     }
 
     private void validateIdCardValidForEidasAuthentication(X509Certificate certificate) {
@@ -130,7 +139,6 @@ public class IdCardLoginController {
     private void handleStatisticsLogging(TaraSession taraSession, X509Certificate certificate, ErrorCode errorCode, String ocspUrl, Exception e) {
         IdCardAuthenticationResult authenticationResult = (IdCardAuthenticationResult) taraSession.getAuthenticationResult();
         updateAuthenticationResult(taraSession, certificate, ocspUrl);
-        authenticationResult.setOcspUrl(ocspUrl);
         authenticationResult.setErrorCode(errorCode);
         if (e == null) {
             statisticsLogger.logExternalTransaction(taraSession);
@@ -161,6 +169,7 @@ public class IdCardLoginController {
             String email = X509Utils.getRfc822NameSubjectAltName(certificate);
             authenticationResult.setEmail(email);
         }
+        authenticationResult.setErrorCode(null);
         authenticationResult.setOcspUrl(validatingOcspConfUrl);
         authenticationResult.setFirstName(params.get(CN_GIVEN_NAME));
         authenticationResult.setLastName(params.get(CN_SURNAME));
@@ -169,33 +178,70 @@ public class IdCardLoginController {
         authenticationResult.setDateOfBirth(MidNationalIdentificationCodeValidator.getBirthDate(idCode));
         authenticationResult.setAcr(configurationProperties.getLevelOfAssurance());
         authenticationResult.setSubject(authenticationResult.getCountry() + authenticationResult.getIdCode());
-        taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
         SessionUtils.getHttpSession().setAttribute(TARA_SESSION, taraSession);
     }
 
-    private void logValidationInfo(ValidationInfo validationInfo) {
+    private void logValidationInfo(ValidationInfo validationInfo, TaraSession taraSession) {
         X509Certificate certificate = validationInfo.getSubjectCertificate();
         log.info("OCSP certificate info: Serialnumber=<{}>, SubjectDN=<{}>, issuerDN=<{}>",
                 value("x509.serial_number", certificate.getSerialNumber().toString()),
                 value("x509.subject.distinguished_name", certificate.getSubjectX500Principal().getName()),
                 value("x509.issuer.distinguished_name", certificate.getIssuerX500Principal().getName()));
         List<RevocationInfo> revocationInfoList = validationInfo.getRevocationInfoList();
-        for (RevocationInfo revocationInfo : revocationInfoList) {
+        if (revocationInfoList.isEmpty()) {
+            return;
+        }
+        // TODO Defaults
+        int httpStatusCode = 400;
+
+        // TODO Should these be inside the loop?
+        RevocationInfo revocationInfo;
+        Exception exception;
+        String ocspUrl;
+        Map<String, Object> ocspResponseAttributes;
+        ErrorCode errorCode;
+        OCSPReq ocspReq;
+        OCSPResp ocspResp;
+        byte[] encodedOcspResp;
+        for (int i = 0; i < revocationInfoList.size(); i++) {
+            revocationInfo = revocationInfoList.get(i);
             if (revocationInfo == null) {
                 continue;
             }
-            Map<String, Object> ocspResponseAttributes = revocationInfo.getOcspResponseAttributes();
-            if (ocspResponseAttributes == null) {
-                continue;
+            ocspResponseAttributes = revocationInfo.getOcspResponseAttributes();
+            ocspUrl = revocationInfo.getOcspResponderUri().toString();
+            ocspReq = (OCSPReq) ocspResponseAttributes.get(RevocationInfo.KEY_OCSP_REQUEST);
+            ocspResp = (OCSPResp) ocspResponseAttributes.get(RevocationInfo.KEY_OCSP_RESPONSE);
+            exception = (Exception) ocspResponseAttributes.get(RevocationInfo.KEY_OCSP_ERROR);
+            if (i == revocationInfoList.size() - 1) {
+                if (exception == null) {
+                    updateAuthenticationResult(taraSession, certificate, ocspUrl);
+                    taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
+                    statisticsLogger.logExternalTransaction(taraSession);
+                    try {
+                        requestLogger.logRequest(ocspUrl, HttpMethod.POST, Base64.getEncoder().encodeToString(ocspReq.getEncoded()));
+                    } catch (IOException e) {
+                        log.atError()
+                                .setCause(e)
+                                .log("Failed to encode OCSP request");
+                    }
+                    try {
+                        requestLogger.logResponse(HttpStatus.OK.value(), Base64.getEncoder().encodeToString(ocspResp.getEncoded()));
+                    } catch (IOException e) {
+                        log.atError()
+                                .setCause(e)
+                                .log("Failed to encode OCSP response");
+                    }
+                    return;
+                }
             }
-            OCSPReq ocspReq = (OCSPReq) ocspResponseAttributes.get(RevocationInfo.KEY_OCSP_REQUEST);
-            OCSPResp ocspResp = (OCSPResp) ocspResponseAttributes.get(RevocationInfo.KEY_OCSP_RESPONSE);
-            URI ocspResponderUri = revocationInfo.getOcspResponderUri();
-            // TODO Also log the exceptions that could be here
+            errorCode = getErrorCodeByExceptionType(exception);
+            handleStatisticsLogging(taraSession, certificate, errorCode, ocspUrl, exception);
             try {
                 if (ocspReq != null) {
-                    requestLogger.logRequest(ocspResponderUri.toString(), HttpMethod.POST, of("http.request.body.content",
-                            Base64.getEncoder().encodeToString(ocspReq.getEncoded())));
+                    requestLogger.logRequest(ocspUrl, HttpMethod.POST, Base64.getEncoder().encodeToString(ocspReq.getEncoded()));
+                } else {
+                    requestLogger.logRequest(ocspUrl, HttpMethod.POST);
                 }
             } catch (IOException e) {
                 log.atError()
@@ -203,9 +249,19 @@ public class IdCardLoginController {
                         .log("Failed to encode OCSP request");
             }
             try {
-                if (ocspResp != null) {
-                    // TODO Status code should not be hardcoded
-                    requestLogger.logResponse(HttpStatus.OK.value(), Base64.getEncoder().encodeToString(ocspResp.getEncoded()));
+                if (exception instanceof OcspClientException ocspClientException) {
+                    encodedOcspResp = ocspClientException.getResponseBody();
+                    httpStatusCode = ocspClientException.getStatusCode() != null
+                            ? ocspClientException.getStatusCode()
+                            // TODO What should be the default value?
+                            : HttpStatus.BAD_REQUEST.value();
+                } else {
+                    encodedOcspResp = ocspResp.getEncoded();
+                }
+                if (encodedOcspResp != null) {
+                    requestLogger.logResponse(httpStatusCode, Base64.getEncoder().encodeToString(encodedOcspResp));
+                } else {
+                    requestLogger.logResponse(httpStatusCode);
                 }
             } catch (IOException e) {
                 log.atError()
