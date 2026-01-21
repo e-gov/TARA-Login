@@ -176,7 +176,9 @@ Table 1.4.1 - Enabling Smart-ID authentication
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.auth-methods.smart-id.enabled` | No | Enable or disable Smart-ID authentication method. Default `false` |
-| `tara.auth-methods.smart-id.web2app.enabled` | No | Enable or disable Smart-ID Web2App authentication flow. NB! This parameter has no effect if `tara.auth-methods.smart-id.enabled` is set to `false`. Default `false` |
+| `tara.auth-methods.smart-id.notification-based.enabled` | Yes | Enable or disable Smart-ID notification-based authentication flow. NB! This parameter has no effect if `tara.auth-methods.smart-id.enabled` is set to `false`. |
+| `tara.auth-methods.smart-id.web2app.enabled` | Yes | Enable or disable Smart-ID Web2App authentication flow. NB! This parameter has no effect if `tara.auth-methods.smart-id.enabled` is set to `false`. |
+| `tara.auth-methods.smart-id.qr-code.enabled` | Yes | Enable or disable Smart-ID QR code authentication flow. NB! This parameter has no effect if `tara.auth-methods.smart-id.enabled` is set to `false`. |
 
 Table 1.4.2 - Assigning the Level of assurance to authentication method
 
