@@ -1,16 +1,18 @@
 package ee.ria.taraauthserver.config.properties;
 
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.retry.RetryConfig;
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -221,69 +223,120 @@ public class AuthConfigurationProperties {
 
         private String truststoreType = "PKCS12";
 
-        private boolean ocspEnabled = true;
-
         @NotNull
         private String truststorePassword;
 
-        @Valid
-        private List<Ocsp> ocsp;
-
-        @Valid
-        private List<Ocsp> fallbackOcsp;
-
+        @NotNull
+        private Ocsp ocsp;
 
         @PostConstruct
         public void validateConfiguration() {
-            if (this.ocspEnabled) {
-                Assert.notEmpty(ocsp, "At least one ocsp configuration must be defined!");
+            Assert.notNull(this.truststorePath, "Keystore location cannot be empty!");
+            Assert.notNull(this.truststorePassword, "Keystore password cannot be empty!");
+            log.info(append("tara.conf.auth-methods.id-card", this), "Using id-card configuration");
+        }
+    }
+
+    @Data
+    public static class Ocsp {
+
+        private boolean enabled = true;
+
+        private Duration allowedResponseTimeSkew = Duration.ofMinutes(15);
+
+        private Duration primaryServerThisUpdateMaxAge = Duration.ofMinutes(2);
+
+        private Duration requestTimeout = Duration.ofSeconds(5);
+
+        private OcspRetryConfig retry = new OcspRetryConfig();
+
+        private OcspCircuitBreakerConfig circuitBreaker = new OcspCircuitBreakerConfig();
+
+        @Valid
+        private List<CertificateChain> certificateChains;
+
+        @PostConstruct
+        public void validateConfiguration() {
+            if (this.enabled) {
+                Assert.notEmpty(certificateChains, "At least one certificate chain configuration must be defined!");
                 Set<String> duplicateNames = getFindDuplicateConfigurations();
-                Assert.isTrue(duplicateNames.isEmpty(), "Multiple OCSP configurations detected for issuer's with CN's: " + duplicateNames + ". Please check your configuration!");
-                Assert.notNull(this.truststorePath, "Keystore location cannot be empty when OCSP is enabled!");
-                Assert.notNull(this.truststorePassword, "Keystore password cannot be empty when OCSP is enabled!");
+                Assert.isTrue(duplicateNames.isEmpty(), "Multiple certificate chain configurations detected for issuer's with CN's: " + duplicateNames + ". Please check your configuration!");
             } else {
                 log.warn("OCSP verification has been DISABLED! User certificates will not be checked for revocation!");
             }
-            log.info(append("tara.conf.auth-methods.id-card", this), "Using id-card configuration");
         }
 
         private Set<String> getFindDuplicateConfigurations() {
             Set<String> names = new HashSet<>();
-            return ocsp.stream()
-                    .flatMap(item -> item.getIssuerCn().stream())
+            return certificateChains.stream()
+                    .map(CertificateChain::getIssuerCn)
                     .filter(cn -> !names.add(cn))
                     .collect(Collectors.toSet());
         }
     }
 
     @Data
-    @NoArgsConstructor
-    public static class Ocsp {
-        public static final long DEFAULT_ACCEPTED_CLOCK_SKEW_IN_SECONDS = 2L;
-        public static final long DEFAULT_RESPONSE_LIFETIME_IN_SECONDS = 900L;
-        public static final int DEFAULT_CONNECT_TIMEOUT_IN_MILLISECONDS = 3 * 1000;
-        public static final int DEFAULT_READ_TIMEOUT_IN_MILLISECONDS = 3 * 1000;
+    public static class OcspRetryConfig {
+
+        private Duration waitDuration = Duration.ofMillis(RetryConfig.DEFAULT_WAIT_DURATION);
+
+        @Positive
+        private int maxAttempts = 2;
+    }
+
+    @Data
+    public static class OcspCircuitBreakerConfig {
+
+        @Positive
+        private int slidingWindowSize = CircuitBreakerConfig.DEFAULT_SLIDING_WINDOW_SIZE;
+
+        @Positive
+        private int minimumNumberOfCalls = CircuitBreakerConfig.DEFAULT_MINIMUM_NUMBER_OF_CALLS;
+
+        @Min(1)
+        @Max(100)
+        private int failureRateThreshold = CircuitBreakerConfig.DEFAULT_FAILURE_RATE_THRESHOLD;
+
+        @Positive
+        private int permittedNumberOfCallsInHalfOpenState = CircuitBreakerConfig.DEFAULT_PERMITTED_CALLS_IN_HALF_OPEN_STATE;
+
+        private Duration waitDurationInOpenState = Duration.ofSeconds(CircuitBreakerConfig.DEFAULT_WAIT_DURATION_IN_OPEN_STATE);
+    }
+
+    @Data
+    public static class CertificateChain {
 
         @NotEmpty
-        private List<String> issuerCn;
+        private String issuerCn;
+
+        @NotNull
+        private PrimaryOcspServer primaryServer;
+
+        private FallbackOcspServer firstFallbackServer;
+
+        private FallbackOcspServer secondFallbackServer;
+
+        @PostConstruct
+        public void validateConfiguration() {
+            Assert.isTrue(secondFallbackServer == null || firstFallbackServer != null, "Second fallback is only allowed when first fallback is set");
+        }
+    }
+
+    @Data
+    public abstract static class OcspServer {
 
         @NotEmpty
         private String url;
 
-        @Getter
-        private boolean nonceDisabled = false;
+        private boolean nonceEnabled = true;
+    }
 
-        @Min(0L)
-        private long acceptedClockSkewInSeconds = DEFAULT_ACCEPTED_CLOCK_SKEW_IN_SECONDS;
+    public static class PrimaryOcspServer extends OcspServer {
+    }
 
-        @Min(0L)
-        private long responseLifetimeInSeconds = DEFAULT_RESPONSE_LIFETIME_IN_SECONDS;
-
-        @Min(0L)
-        private int connectTimeoutInMilliseconds = DEFAULT_CONNECT_TIMEOUT_IN_MILLISECONDS;
-
-        @Min(0L)
-        private int readTimeoutInMilliseconds = DEFAULT_READ_TIMEOUT_IN_MILLISECONDS;
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    public static class FallbackOcspServer extends OcspServer {
 
         private String responderCertificateCn;
     }

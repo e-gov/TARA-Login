@@ -40,36 +40,36 @@ tara:
       enabled: true
       level-of-assurance: HIGH
       ocsp:
-#        - issuer-cn: TEST of ESTEID-SK 2011
-#          url: http://aia.demo.sk.ee/esteid2011
-#          nonce-disabled: true
-#
-#        - issuer-cn: ESTEID-SK 2011
-#          url: http://aia.demo.sk.ee/esteid2011
-#          nonce-disabled: true
-#          responder-certificate-cn: DEMO of KLASS3-SK 2010 SSL OCSP RESPONDER 2018
-#
-#        - issuer-cn: TEST of ESTEID-SK 2015
-#          url: http://aia.demo.sk.ee/esteid2011
-#          nonce-disabled: true
-#
-#        - issuer-cn: ESTEID-SK 2015
-#          url: http://aia.demo.sk.ee/esteid2011
-#          nonce-disabled: true
-#          responder-certificate-cn: DEMO of KLASS3-SK 2010 SSL OCSP RESPONDER 2018
+        certificate-chains:
+          - issuer-cn: TEST of ESTEID2018
+            primary-server:
+              url: http://aia.demo.sk.ee/esteid2018
+            first-fallback-server:
+              url: https://ocspcrl:14443/ocsp/test_esteid2018
+              responder-certificate-cn: local-ocsp
 
-        - issuer-cn: TEST of ESTEID2018
-          url: http://aia.demo.sk.ee/esteid2018
-          nonce-disabled: false
+          - issuer-cn: ESTEID2018
+            primary-server:
+              url: http://aia.sk.ee/esteid2018
+            first-fallback-server:
+              url: https://ocspcrl:14443/ocsp/esteid2018
+              responder-certificate-cn: local-ocsp
 
-        - issuer-cn: ESTEID2018
-          url: http://aia.sk.ee/esteid2018
-          nonce-disabled: false
-          responder-certificate-cn: DEMO of KLASS3-SK 2010 SSL OCSP RESPONDER 2018
+          - issuer-cn: Test ESTEID2025
+            primary-server:
+              # This must exactly match the OCSP URL inside the ID card certificate.
+              url: http://ocsp-test.eidpki.ee
+            first-fallback-server:
+              url: https://ocspcrl:14443/ocsp/test_esteid2025
+              responder-certificate-cn: local-ocsp
 
-        - issuer-cn: Test ESTEID2025
-          url: http://ocsp-test.eidpki.ee
-          nonce-disabled: false
+          - issuer-cn: ESTEID2025
+            primary-server:
+              # This must exactly match the OCSP URL inside the ID card certificate.
+              url: http://ocsp.eidpki.ee
+            first-fallback-server:
+              url: https://ocspcrl:14443/ocsp/esteid2025
+              responder-certificate-cn: local-ocsp
     mobile-id:
       enabled: true
       level-of-assurance: HIGH

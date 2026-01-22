@@ -96,26 +96,22 @@ public class IDCardConfiguration {
                                         Map<String, X509Certificate> trustedCertificatesMap) {
         X509Certificate[] certificates = trustedCertificatesMap.values().toArray(new X509Certificate[0]);
 
-        Duration ocspRequestTimeout = Duration.ofSeconds(5);
-
-        // TODO AUT-2547 Move these to AuthConfigurationProperties.
-        int slidingWindowSize = CircuitBreakerConfig.DEFAULT_SLIDING_WINDOW_SIZE;
-        int minimumNumberOfCalls = CircuitBreakerConfig.DEFAULT_MINIMUM_NUMBER_OF_CALLS;
-        int failureRateThreshold = CircuitBreakerConfig.DEFAULT_FAILURE_RATE_THRESHOLD;
-        int permittedNumberOfCallsInHalfOpenState = CircuitBreakerConfig.DEFAULT_PERMITTED_CALLS_IN_HALF_OPEN_STATE;
-        Duration waitDurationInOpenState = Duration.ofSeconds(CircuitBreakerConfig.DEFAULT_WAIT_DURATION_IN_OPEN_STATE);
-
-        Duration retryWaitDuration = Duration.ofMillis(RetryConfig.DEFAULT_WAIT_DURATION);
-        int retryMaxAttempts = 2;
-
-        Duration allowedOcspResponseTimeSkew = Duration.ofMinutes(15);
-        // TODO There should be two separate values here.
-        Duration maxOcspResponseThisUpdateAge = Duration.ofMinutes(2);
-        boolean rejectUnknownOcspResponseStatus = true;
-
         try {
+            AuthTokenValidatorBuilder validatorBuilder = new AuthTokenValidatorBuilder()
+                    .withSiteOrigin(authConfigurationProperties.getSiteOrigin().toURI())
+                    .withTrustedCertificateAuthorities(certificates);
+
+            AuthConfigurationProperties.Ocsp ocsp = idCardAuthConfigurationProperties.getOcsp();
+
+            if (!ocsp.isEnabled()) {
+                log.info("OCSP check is disabled");
+                return validatorBuilder
+                        .withoutUserCertificateRevocationCheck()
+                        .build();
+            }
+
             AiaOcspServiceConfiguration aiaOcspServiceConfiguration
-                    = getAiaOcspServiceConfiguration(idCardAuthConfigurationProperties, trustedCertificatesMap);
+                    = getAiaOcspServiceConfiguration(ocsp, trustedCertificatesMap);
 
             List<FallbackOcspServiceConfiguration> fallbackOcspServiceConfigurations
                     = getFallbackOcspServiceConfigurations(idCardAuthConfigurationProperties, trustedCertificatesMap);
@@ -126,19 +122,21 @@ public class IDCardConfiguration {
                     fallbackOcspServiceConfigurations
             );
 
-            OcspClient ocspClient = OcspClientImpl.build(ocspRequestTimeout);
+            OcspClient ocspClient = OcspClientImpl.build(ocsp.getRequestTimeout());
 
+            AuthConfigurationProperties.OcspCircuitBreakerConfig ocspCircuitBreakerConfig = ocsp.getCircuitBreaker();
             CircuitBreakerConfig circuitBreakerConfig = CircuitBreakerConfig.custom()
-                    .slidingWindowSize(slidingWindowSize)
-                    .minimumNumberOfCalls(minimumNumberOfCalls)
-                    .failureRateThreshold(failureRateThreshold)
-                    .permittedNumberOfCallsInHalfOpenState(permittedNumberOfCallsInHalfOpenState)
-                    .waitIntervalFunctionInOpenState(IntervalFunction.of(waitDurationInOpenState))
+                    .slidingWindowSize(ocspCircuitBreakerConfig.getSlidingWindowSize())
+                    .minimumNumberOfCalls(ocspCircuitBreakerConfig.getMinimumNumberOfCalls())
+                    .failureRateThreshold(ocspCircuitBreakerConfig.getFailureRateThreshold())
+                    .permittedNumberOfCallsInHalfOpenState(ocspCircuitBreakerConfig.getPermittedNumberOfCallsInHalfOpenState())
+                    .waitIntervalFunctionInOpenState(IntervalFunction.of(ocspCircuitBreakerConfig.getWaitDurationInOpenState()))
                     .build();
 
+            AuthConfigurationProperties.OcspRetryConfig ocspRetryConfig = ocsp.getRetry();
             RetryConfig retryConfig = RetryConfig.custom()
-                    .waitDuration(retryWaitDuration)
-                    .maxAttempts(retryMaxAttempts)
+                    .waitDuration(ocspRetryConfig.getWaitDuration())
+                    .maxAttempts(ocspRetryConfig.getMaxAttempts())
                     .build();
 
             ResilientOcspCertificateRevocationChecker ocspRevocationChecker = new ResilientOcspCertificateRevocationChecker(
@@ -146,14 +144,13 @@ public class IDCardConfiguration {
                     ocspServiceProvider,
                     circuitBreakerConfig,
                     retryConfig,
-                    allowedOcspResponseTimeSkew,
-                    maxOcspResponseThisUpdateAge,
-                    rejectUnknownOcspResponseStatus
+                    ocsp.getAllowedResponseTimeSkew(),
+                    ocsp.getPrimaryServerThisUpdateMaxAge(),
+                    true
             );
 
-            return new AuthTokenValidatorBuilder()
-                    .withSiteOrigin(authConfigurationProperties.getSiteOrigin().toURI())
-                    .withTrustedCertificateAuthorities(certificates)
+            log.info("Using ResilientOcspCertificateRevocationChecker for OCSP");
+            return validatorBuilder
                     .withCertificateRevocationChecker(ocspRevocationChecker)
                     .build();
         } catch (JceException | URISyntaxException | OCSPCertificateException e) {
@@ -161,11 +158,12 @@ public class IDCardConfiguration {
         }
     }
 
-    private static AiaOcspServiceConfiguration getAiaOcspServiceConfiguration(IdCardAuthConfigurationProperties idCardAuthConfigurationProperties,
-                                                                             Map<String, X509Certificate> trustedCertificatesMap) throws JceException {
-        List<URI> nonceDisabledOcspUrls = idCardAuthConfigurationProperties.getOcsp().stream()
-                .filter(AuthConfigurationProperties.Ocsp::isNonceDisabled)
-                .map(ocsp -> URI.create(ocsp.getUrl()))
+    private static AiaOcspServiceConfiguration getAiaOcspServiceConfiguration(AuthConfigurationProperties.Ocsp ocsp,
+                                                                              Map<String, X509Certificate> trustedCertificatesMap) throws JceException {
+        // TODO Handle URLs ending/not ending with a slash
+        List<URI> nonceDisabledOcspUrls = ocsp.getCertificateChains().stream()
+                .filter(certificateChain -> !certificateChain.getPrimaryServer().isNonceEnabled())
+                .map(certificateChain -> URI.create(certificateChain.getPrimaryServer().getUrl()))
                 .toList();
 
         Set<TrustAnchor> trustedCACertificateAnchors = CertificateValidator
@@ -180,35 +178,58 @@ public class IDCardConfiguration {
     }
 
     private static List<FallbackOcspServiceConfiguration> getFallbackOcspServiceConfigurations(IdCardAuthConfigurationProperties idCardAuthConfigurationProperties,
-                                                       Map<String, X509Certificate> trustedCertificatesMap) throws OCSPCertificateException {
-        List<FallbackOcspServiceConfiguration> fallbackOcspServiceConfigurations = new ArrayList<>();
+                                                                                               Map<String, X509Certificate> trustedCertificatesMap) throws OCSPCertificateException {
+        List<FallbackOcspServiceConfiguration> fallbackOcspServiceConfigurationList = new ArrayList<>();
 
-        for (AuthConfigurationProperties.Ocsp fallback : idCardAuthConfigurationProperties.getFallbackOcsp()) {
-            if (fallback.getResponderCertificateCn() == null) {
-                // TODO Throw an exception
+        for (AuthConfigurationProperties.CertificateChain chain : idCardAuthConfigurationProperties.getOcsp().getCertificateChains()) {
+            String issuerCn = chain.getIssuerCn();
+            AuthConfigurationProperties.FallbackOcspServer firstFallbackServer = chain.getFirstFallbackServer();
+
+            if (firstFallbackServer == null) {
+                log.info("No fallback configurations found for issuer {}", issuerCn);
                 continue;
             }
-            for (String issuerCn : fallback.getIssuerCn()) {
-                AuthConfigurationProperties.Ocsp primary = idCardAuthConfigurationProperties.getOcsp().stream()
-                        .filter(ocsp -> ocsp.getIssuerCn().contains(issuerCn))
-                        // TODO What if there are multiple entries?
-                        .findFirst()
-                        .orElse(null);
-                if (primary == null) {
-                    // TODO Throw an exception
-                    continue;
-                }
-                X509Certificate responderCertificate = trustedCertificatesMap.get(fallback.getResponderCertificateCn());
-                FallbackOcspServiceConfiguration fallbackOcspServiceConfiguration = new FallbackOcspServiceConfiguration(
-                        URI.create(primary.getUrl()),
-                        URI.create(fallback.getUrl()),
-                        responderCertificate,
-                        !fallback.isNonceDisabled()
-                );
-                log.info("Created a fallback configuration. Primary URL: {}, fallback URL: {}, does support nonce: {}", fallbackOcspServiceConfiguration.getOcspServiceAccessLocation(), fallbackOcspServiceConfiguration.getFallbackOcspServiceAccessLocation(), fallbackOcspServiceConfiguration.doesSupportNonce());
-                fallbackOcspServiceConfigurations.add(fallbackOcspServiceConfiguration);
+
+            FallbackOcspServiceConfiguration firstFallbackConfiguration = new FallbackOcspServiceConfiguration(
+                    URI.create(chain.getPrimaryServer().getUrl()),
+                    URI.create(firstFallbackServer.getUrl()),
+                    trustedCertificatesMap.get(getResponderCertificateCn(firstFallbackServer, chain)),
+                    firstFallbackServer.isNonceEnabled()
+            );
+            log.info("Found first fallback configuration for issuer {}", issuerCn);
+            logFallbackOcspServiceConfiguration(firstFallbackConfiguration);
+            fallbackOcspServiceConfigurationList.add(firstFallbackConfiguration);
+
+            AuthConfigurationProperties.FallbackOcspServer secondFallbackServer = chain.getSecondFallbackServer();
+            if (secondFallbackServer == null) {
+                continue;
             }
+
+            FallbackOcspServiceConfiguration secondFallbackConfiguration = new FallbackOcspServiceConfiguration(
+                    URI.create(firstFallbackServer.getUrl()),
+                    URI.create(secondFallbackServer.getUrl()),
+                    trustedCertificatesMap.get(getResponderCertificateCn(secondFallbackServer, chain)),
+                    secondFallbackServer.isNonceEnabled()
+            );
+            log.info("Found second fallback configuration for issuer {}", issuerCn);
+            logFallbackOcspServiceConfiguration(secondFallbackConfiguration);
+            fallbackOcspServiceConfigurationList.add(secondFallbackConfiguration);
         }
-        return fallbackOcspServiceConfigurations;
+        return fallbackOcspServiceConfigurationList;
+    }
+
+    private static String getResponderCertificateCn(AuthConfigurationProperties.FallbackOcspServer fallbackOcspServer,
+                                                    AuthConfigurationProperties.CertificateChain certificateChain) {
+        return fallbackOcspServer.getResponderCertificateCn() == null
+                ? certificateChain.getIssuerCn()
+                : fallbackOcspServer.getResponderCertificateCn();
+    }
+
+    private static void logFallbackOcspServiceConfiguration(FallbackOcspServiceConfiguration configuration) {
+        log.info("Created a fallback configuration. Primary URL: {}, fallback URL: {}, does support nonce: {}",
+                configuration.getOcspServiceAccessLocation(),
+                configuration.getFallbackOcspServiceAccessLocation(),
+                configuration.doesSupportNonce()
+        );
     }
 }
