@@ -98,12 +98,15 @@ public class IDCardConfiguration {
 
         Duration ocspRequestTimeout = Duration.ofSeconds(5);
 
-        // These are the defaults of CircuitBreakerConfig.
-        int slidingWindowSize = 100;
-        int minimumNumberOfCalls = 100;
-        int failureRateThreshold = 50;
-        int permittedNumberOfCallsInHalfOpenState = 10;
-        Duration waitDurationInOpenState = Duration.ofSeconds(60);
+        // TODO AUT-2547 Move these to AuthConfigurationProperties.
+        int slidingWindowSize = CircuitBreakerConfig.DEFAULT_SLIDING_WINDOW_SIZE;
+        int minimumNumberOfCalls = CircuitBreakerConfig.DEFAULT_MINIMUM_NUMBER_OF_CALLS;
+        int failureRateThreshold = CircuitBreakerConfig.DEFAULT_FAILURE_RATE_THRESHOLD;
+        int permittedNumberOfCallsInHalfOpenState = CircuitBreakerConfig.DEFAULT_PERMITTED_CALLS_IN_HALF_OPEN_STATE;
+        Duration waitDurationInOpenState = Duration.ofSeconds(CircuitBreakerConfig.DEFAULT_WAIT_DURATION_IN_OPEN_STATE);
+
+        Duration retryWaitDuration = Duration.ofMillis(RetryConfig.DEFAULT_WAIT_DURATION);
+        int retryMaxAttempts = 2;
 
         Duration allowedOcspResponseTimeSkew = Duration.ofMinutes(15);
         // TODO There should be two separate values here.
@@ -133,7 +136,10 @@ public class IDCardConfiguration {
                     .waitIntervalFunctionInOpenState(IntervalFunction.of(waitDurationInOpenState))
                     .build();
 
-            RetryConfig retryConfig = RetryConfig.ofDefaults();
+            RetryConfig retryConfig = RetryConfig.custom()
+                    .waitDuration(retryWaitDuration)
+                    .maxAttempts(retryMaxAttempts)
+                    .build();
 
             ResilientOcspRevocationChecker ocspRevocationChecker = new ResilientOcspRevocationChecker(
                     ocspClient,
