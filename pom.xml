@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.8</version>
+        <version>3.5.9</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>ee.ria.tara</groupId>
@@ -26,8 +26,8 @@
         <imageName>${project.artifactId}:latest</imageName>
         <githubMirror>https://github.com</githubMirror>
 
-        <bouncycastle.version>1.82</bouncycastle.version>
-        <elastic-apm.version>1.55.1</elastic-apm.version>
+        <bouncycastle.version>1.83</bouncycastle.version>
+        <elastic-apm.version>1.55.4</elastic-apm.version>
         <ignite.version>2.13.0</ignite.version><!-- TODO AUT-1086 Upgrade to >=2.14.0 when the following issue is
                                                      resolved:
                                                      https://www.mail-archive.com/user@ignite.apache.org/msg33644.html -->
