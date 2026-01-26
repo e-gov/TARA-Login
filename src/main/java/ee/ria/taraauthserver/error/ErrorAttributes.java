@@ -59,7 +59,7 @@ import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_ACCOUNT_NOT_FOUND;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_CONFIRMATIONMESSAGE;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE;
-import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_DISAPLAYTEXTANDPIN;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_DISPLAYTEXTANDPIN;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_WRONG_VC;
 import static ee.ria.taraauthserver.security.RequestCorrelationFilter.REQUEST_ATTRIBUTE_NAME_REQUEST_ID;
 import static java.lang.String.format;
@@ -92,7 +92,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
             SID_USER_REFUSED,
             SID_SESSION_TIMEOUT,
             SID_WRONG_VC,
-            SID_USER_REFUSED_DISAPLAYTEXTANDPIN,
+            SID_USER_REFUSED_DISPLAYTEXTANDPIN,
             SID_USER_ACCOUNT_NOT_FOUND,
             SID_USER_REFUSED_CONFIRMATIONMESSAGE,
             SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE,

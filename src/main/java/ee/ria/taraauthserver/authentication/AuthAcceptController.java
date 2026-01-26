@@ -34,7 +34,6 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.LEGAL_PERSON
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_MID_STATUS_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_STATUS_CANCELED;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_WEB2APP_STATUS_CANCELED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.lang.String.format;
 import static java.util.EnumSet.of;
@@ -43,7 +42,7 @@ import static java.util.EnumSet.of;
 @Controller
 class AuthAcceptController {
     private static final EnumSet<TaraAuthenticationState> ALLOWED_STATES = of(AUTHENTICATION_SUCCESS, NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED);
-    private static final EnumSet<TaraAuthenticationState> POLL_CANCELED_STATES = of(POLL_MID_STATUS_CANCELED, POLL_SID_STATUS_CANCELED, POLL_SID_WEB2APP_STATUS_CANCELED);
+    private static final EnumSet<TaraAuthenticationState> POLL_CANCELED_STATES = of(POLL_MID_STATUS_CANCELED, POLL_SID_STATUS_CANCELED);
     private static final EnumSet<TaraAuthenticationState> OIDC_AUTH_ACCEPT_STATES = of(NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED);
     private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.TARA_HYDRA, this.getClass());
 

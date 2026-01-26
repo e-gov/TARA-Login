@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.authentication.smartid.web2app;
 
+import ee.ria.taraauthserver.authentication.smartid.SmartIdSessionStatus;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
@@ -10,6 +11,7 @@ import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.update.CancelPollSmartIdWeb2AppAuthenticationSessionUpdate;
 import ee.ria.taraauthserver.utils.RequestUtils;
+import ee.sk.smartid.rest.dao.SessionStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -36,9 +38,11 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATI
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_SID_WEB2APP;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_WEB2APP_STATUS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.util.Map.of;
 
@@ -73,55 +77,72 @@ public class SmartIdWeb2AppController {
                 .build();
     }
 
-    @GetMapping(value = "/auth/sid/web2app/callback", produces = MediaType.TEXT_HTML_VALUE)
-    public String authSidCallback(
-            @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession,
-            @RequestParam String value,
-            @RequestParam String sessionSecretDigest,
-            @RequestParam String userChallengeVerifier) {
-        log.info("Validating Smart-ID Web2App callback endpoint");
-        validateSession(taraSession,
-                POLL_SID_WEB2APP_STATUS,
-                NATURAL_PERSON_AUTHENTICATION_COMPLETED,
-                AUTHENTICATION_FAILED);
-        authSidWeb2AppService.startPollingAuthenticationResult(
-                taraSession,
-                userChallengeVerifier,
-                sessionSecretDigest,
-                value);
-        return CALLBACK_VIEW;
-    }
-
     @ResponseBody
     @GetMapping(value = "/auth/sid/web2app/poll", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, String> authSidPoll(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         log.info("Validating Smart-ID Web2App poll endpoint");
         validateSession(taraSession,
+                INIT_SID_WEB2APP,
                 POLL_SID_WEB2APP_STATUS,
-                NATURAL_PERSON_AUTHENTICATION_COMPLETED,
+                POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED,
                 AUTHENTICATION_FAILED);
-        if (taraSession.getState() == NATURAL_PERSON_AUTHENTICATION_COMPLETED) {
-            return of("status", "COMPLETED");
-        } else if (taraSession.getState() == AUTHENTICATION_FAILED) {
-            ErrorCode errorCode = taraSession.getAuthenticationResult().getErrorCode();
-            if (errorCode.equals(ErrorCode.ERROR_GENERAL)) {
-                throw new IllegalStateException(errorCode.getMessage());
-            } else if (errorCode.equals(ErrorCode.SID_INTERNAL_ERROR)) {
-                throw new ServiceNotAvailableException(errorCode, "Sid Web2App poll failed", null);
-            } else {
-                throw new BadRequestException(taraSession.getAuthenticationResult().getErrorCode(), "Sid Web2App poll failed");
-            }
+        switch (taraSession.getState()) {
+            case AUTHENTICATION_FAILED:
+                throw getExceptionForAuthenticationFailureOnPoll(taraSession);
+            case POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED:
+                return of("status", "COMPLETED");
+            // INIT_SID_WEB2APP or POLL_SID_WEB2APP_STATUS, depending on whether "/auth/sid/web2app/init" controller
+            // has already updated the status or not
+            default:
+                return of("status", "PENDING");
         }
-        return of("status", "PENDING");
     }
 
-    @PostMapping(value = "/auth/sid/web2app/poll/cancel", produces = MediaType.APPLICATION_JSON_VALUE)
-    public RedirectView authSidPollCancel(
+    @GetMapping(value = "/auth/sid/web2app/callback", produces = MediaType.TEXT_HTML_VALUE)
+    public String authSidCallback(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+        log.info("Validating Smart-ID Web2App callback endpoint");
+        validateSession(taraSession,
+                POLL_SID_WEB2APP_STATUS,
+                POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED,
+                AUTHENTICATION_FAILED);
+        return CALLBACK_VIEW;
+    }
+
+    @ResponseBody
+    @GetMapping(value = "/auth/sid/web2app/callback/poll", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Map<String, String> authSidCallbackPoll(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession,
+                                           @RequestParam String value,
+                                           @RequestParam String sessionSecretDigest,
+                                           @RequestParam String userChallengeVerifier) {
+        log.info("Validating Smart-ID Web2App callback poll endpoint");
+        validateSession(taraSession,
+                POLL_SID_WEB2APP_STATUS,
+                POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED,
+                AUTHENTICATION_FAILED);
+        switch (taraSession.getState()) {
+            case AUTHENTICATION_FAILED:
+                throw getExceptionForAuthenticationFailureOnPoll(taraSession);
+            case POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED:
+                SessionStatus sessionStatus = taraSession.getSmartIdWeb2AppSession().getSessionStatus();
+                if (SmartIdSessionStatus.COMPLETE.equals(sessionStatus.getState())) {
+                    authSidWeb2AppService.handleFinalAuthenticationResult(
+                            taraSession, sessionStatus, userChallengeVerifier, sessionSecretDigest, value);
+                    return of("status", "COMPLETED");
+                }
+                throw new IllegalStateException("Unexpected session status: " + sessionStatus.getState());
+            default: // POLL_SID_WEB2APP_STATUS
+                return of("status", "PENDING");
+        }
+    }
+
+    @PostMapping(value = "/auth/sid/web2app/callback/poll/cancel", produces = MediaType.APPLICATION_JSON_VALUE)
+    public RedirectView authSidCallbackPollCancel(
             @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
-        log.info("Validating Smart-ID Web2App poll cancel endpoint");
+        log.info("Validating Smart-ID Web2App callback poll cancel endpoint");
         validateSession(taraSession,
                 AUTHENTICATION_SUCCESS,
                 POLL_SID_WEB2APP_STATUS,
+                POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED,
                 AUTHENTICATION_FAILED,
                 NATURAL_PERSON_AUTHENTICATION_COMPLETED,
                 LEGAL_PERSON_AUTHENTICATION_COMPLETED);
@@ -137,7 +158,18 @@ public class SmartIdWeb2AppController {
                 + taraSession.getLoginRequestInfo().getChallenge() + RequestUtils.getLangParam(taraSession));
     }
 
-    private void validateSession(TaraSession taraSession, TaraAuthenticationState... allowedStates) {
+    private static RuntimeException getExceptionForAuthenticationFailureOnPoll(TaraSession taraSession) {
+        ErrorCode errorCode = taraSession.getAuthenticationResult().getErrorCode();
+        if (errorCode.equals(ErrorCode.ERROR_GENERAL)) {
+            return new IllegalStateException(errorCode.getMessage());
+        }
+        if (errorCode.equals(ErrorCode.SID_INTERNAL_ERROR)) {
+            return new ServiceNotAvailableException(errorCode, "Sid Web2App poll failed", null);
+        }
+        return new BadRequestException(errorCode, "Sid Web2App poll failed");
+    }
+
+    private static void validateSession(TaraSession taraSession, TaraAuthenticationState... allowedStates) {
         SessionUtils.assertSessionInState(taraSession, Set.of(allowedStates));
         if (!taraSession.getAllowedAuthMethods().contains(AuthenticationType.SMART_ID)) {
             throw new BadRequestException(INVALID_REQUEST, "Smart-ID authentication method is not allowed");

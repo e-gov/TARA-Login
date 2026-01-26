@@ -8,8 +8,11 @@ import ee.sk.mid.MidNationalIdentificationCodeValidator;
 import ee.sk.smartid.AuthenticationIdentity;
 import lombok.Value;
 
+import java.util.Set;
+
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_QR_CODE;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED;
 import static java.util.Objects.requireNonNull;
 
 @Value
@@ -20,7 +23,7 @@ public class SmartIdAuthenticationSuccessfulSessionUpdate implements TaraSession
 
     @Override
     public void apply(TaraSession session) {
-        SessionUtils.assertSessionInState(session, POLL_SID_QR_CODE);
+        SessionUtils.assertSessionInState(session, Set.of(POLL_SID_QR_CODE, POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED));
         TaraSession.AuthenticationResult authenticationResult = requireNonNull(session.getAuthenticationResult());
         if (!(authenticationResult instanceof TaraSession.SidAuthenticationResult sidAuthenticationResult)) {
             throw new IllegalStateException(

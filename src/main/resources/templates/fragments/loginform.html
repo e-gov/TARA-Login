@@ -1,6 +1,7 @@
-<div th:if="${@thymeleafSupport.getEnabledAuthMethods().idCard}">
-    <div id="id-card-error" th:insert="~{fragments/error}" th:class="hidden"/>
-    <div id="id-card-wait" th:insert="~{fragments/wait}" th:class="hidden"/>
+<div th:if="${@thymeleafSupport.getEnabledAuthMethods().idCard OR @thymeleafSupport.getEnabledAuthMethods().smartIdFlows.web2app}">
+    <div id="login-form-error" th:insert="~{fragments/error}" th:class="hidden"/>
+    <div id="id-card-wait" th:insert="~{fragments/waitIdCard}" th:class="hidden"/>
+    <div id="smart-id-web2app-wait" th:insert="~{fragments/waitSidWeb2App}" th:class="hidden"/>
 </div>
 <div class="container" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
         th:with="enabledAuthMethods=${@thymeleafSupport.getEnabledAuthMethods()}">
@@ -176,10 +177,11 @@
                     <div class="c-form">
                         <table role="presentation">
                             <tbody>
-                            <tr id="sidWeb2AppLinkContainer" th:if="${enabledAuthMethods.smartIdFlows.web2app}" class="hidden">
+                            <tr id="sidWeb2AppLinkContainer" th:if="${enabledAuthMethods.smartIdFlows.web2app}" class="hidden"
+                                th:attr="data-sid-web2app-poll-interval=${@environment.getProperty('tara.auth-methods.smart-id.web2app.frontend-polling-interval-in-milliseconds')}">
                                 <td></td>
                                 <td>
-                                    <a href="/auth/sid/web2app/init" class="c-btn c-btn--primary" th:text="#{label.smart-id.open-app}"></a>
+                                    <a id="sidWeb2AppLink" href="/auth/sid/web2app/init" class="c-btn c-btn--primary" th:text="#{label.smart-id.open-app}"></a>
                                 </td>
                             </tr>
                             <tr th:if="${enabledAuthMethods.smartIdFlows.qrCode}">
@@ -299,3 +301,4 @@
 </div>
 
 <script th:src="@{/scripts/main.js}" defer></script>
+<script th:src="@{/scripts/sid-web2app-poll.js}" defer></script>

@@ -501,7 +501,7 @@ jQuery(function ($) {
         const waitMessageSelector = '#id-card-wait';
         const waitPopupMessageSelector = '#id-card-wait-popup';
         const waitLoginMessageSelector = '#id-card-wait-login';
-        const errorContainerSelector = '#id-card-error';
+        const errorContainerSelector = '#login-form-error';
         const errorMessageSelector = '#error-message';
         const ajaxErrorSelector = '#idc-ajax-error-message';
         const errorReportUrlSelector = '#error-report-url';

@@ -28,7 +28,6 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATI
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.EXTERNAL_TRANSACTION;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_MID_STATUS_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_STATUS_CANCELED;
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_WEB2APP_STATUS_CANCELED;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static net.logstash.logback.marker.Markers.appendFields;
@@ -41,8 +40,7 @@ public class StatisticsLogger {
     private static final EnumSet<TaraAuthenticationState> CANCELED_STATES = EnumSet.of(
             AUTHENTICATION_CANCELED,
             POLL_MID_STATUS_CANCELED,
-            POLL_SID_STATUS_CANCELED,
-            POLL_SID_WEB2APP_STATUS_CANCELED);
+            POLL_SID_STATUS_CANCELED);
 
     public void log(TaraSession taraSession) {
         log(taraSession, null);

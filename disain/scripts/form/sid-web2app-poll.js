@@ -1,32 +1,34 @@
 (function () {
-    var timeout = 5000;
-    var isPolling = true;
+    let pollIntervalMs;
 
-    try {
-        var value = document.body.getAttribute("sid-web2app-poll-interval");
-        var number = new Number(value);
+    $("#sidWeb2AppLinkContainer").on("click", function (e) {
+        startPolling($(this));
+        hide(".c-layout--full > .container");
+        hide(".link-back-mobile");
+        show("#smart-id-web2app-wait");
+    });
 
-        if (number >= 100) {
-            timeout = number;
-        }
-    } catch (e) {
+    function startPolling() {
+        pollIntervalMs = parseInt($("#sidWeb2AppLinkContainer").attr("data-sid-web2app-poll-interval"));
+        setTimeout(checkAuthenticationStatus, pollIntervalMs);
     }
 
-    setTimeout(stopPolling, 120000);
-
-    function stopPolling() {
-        isPolling = false;
+    function show(selector) {
+        const element = $(selector);
+        element.attr('aria-hidden', 'false');
+        element.removeClass('hidden');
     }
 
-    const csrfToken = document.querySelector("input[name='_csrf']").getAttribute("value");
+    function hide(selector) {
+        const element = $(selector);
+        element.attr('aria-hidden', 'true');
+        element.addClass('hidden');
+    }
 
     function checkAuthenticationStatus() {
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
             if (this.readyState !== 4) {
-                return;
-            } else if (this.responseText === "" && isPolling) {
-                setTimeout(checkAuthenticationStatus, timeout);
                 return;
             }
 
@@ -34,36 +36,22 @@
             try {
                 pollResponse = JSON.parse(this.responseText);
             } catch (e) {
-                if (isPolling) {
-                    setTimeout(checkAuthenticationStatus, timeout);
-                    return;
-                } else {
-                    document.querySelector(".c-tab-login__main").classList.add('hidden');
-                    document.querySelector("#sid-error").classList.remove('hidden');
-                    document.querySelector("#error-incident-number-wrapper").classList.add('hidden');
-                    document.querySelector("#error-report-url").classList.add('hidden');
-                    document.querySelector("#default-error-message").classList.remove('hidden');
-                    return;
-                }
+                document.querySelector(".c-tab-login__main").classList.add('hidden');
+                document.querySelector("#login-form-error").classList.remove('hidden');
+                document.querySelector("#error-incident-number-wrapper").classList.add('hidden');
+                document.querySelector("#error-report-url").classList.add('hidden');
+                document.querySelector("#default-error-message").classList.remove('hidden');
+                return;
             }
 
             if (this.status === 200 && pollResponse["status"] === 'COMPLETED') {
-                var form = document.createElement("form");
-                form.method = "POST";
-                form.action = "/auth/accept";
-
-                var input = document.createElement("input");
-                input.setAttribute("type", "hidden");
-                input.setAttribute("name", "_csrf");
-                input.setAttribute("value", csrfToken);
-                form.appendChild(input);
-                document.body.appendChild(form);
-                form.submit();
-            } else if (this.status === 200 && pollResponse["status"] === 'PENDING' && isPolling) {
-                setTimeout(checkAuthenticationStatus, timeout);
-            } else {
-                document.querySelector(".c-tab-login__main").classList.add('hidden');
-                document.querySelector("#sid-error").classList.remove('hidden');
+                $("#sid-web2app-wait-login").hide();
+                $("#sid-web2app-login-success").show();
+            } else if (this.status === 200 && pollResponse["status"] === 'PENDING') {
+                setTimeout(checkAuthenticationStatus, pollIntervalMs);
+            } else { // Failure
+                hide("#smart-id-web2app-wait");
+                show("#login-form-error");
                 document.querySelector("#error-message").innerHTML = pollResponse["message"];
 
                 if (pollResponse["reportable"]) {
@@ -86,12 +74,12 @@
                     document.querySelector("#error-incident-number-wrapper").classList.add('hidden');
                     document.querySelector("#error-report-url").classList.add('hidden');
                 }
+                // Error message appears on top of the page and might not be visible to the user without scrolling to top
+                window.scrollTo(0, 0);
             }
         };
         xhttp.open('GET', '/auth/sid/web2app/poll', true);
         xhttp.setRequestHeader('Accept', 'application/json;charset=UTF-8');
         xhttp.send();
     }
-
-    setTimeout(checkAuthenticationStatus, timeout);
 })();

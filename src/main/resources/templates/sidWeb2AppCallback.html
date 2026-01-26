@@ -3,7 +3,7 @@
       layout:decorate="~{layout}" th:with="hideHeaderLanguageSelection=true, ariaHideLogoHeader=true">
 <head th:replace="~{fragments/head}"></head>
 <body class="is-mobile-subview"
-      th:attr="sid-web2app-poll-interval=${@environment.getProperty('tara.auth-methods.smart-id.web2app.frontend-polling-interval-in-milliseconds')}">
+      th:attr="data-sid-web2app-poll-interval=${@environment.getProperty('tara.auth-methods.smart-id.web2app.frontend-polling-interval-in-milliseconds')}">
 <div layout:fragment="content" th:with="hideHeaderLanguageSelection=true" th:remove="tag">
     <div class="container">
         <div class="c-tab-login">
@@ -16,7 +16,7 @@
                 <th:block layout:insert="~{fragments/logintabs :: content(tab_id = 'smart-id', static = true)}">
                     <th:block layout:fragment="login-form-content">
                         <p th:text="#{label.smart-id.wait-login}"></p>
-                        <form method="post" th:action="@{/auth/sid/web2app/poll/cancel}" class="c-form">
+                        <form method="post" th:action="@{/auth/sid/web2app/callback/poll/cancel}" class="c-form">
                             <button type="submit" class="c-btn c-btn--cancel" th:text="#{label.common.cancel}">Cancel</button>
                         </form>
                     </th:block>
@@ -28,7 +28,7 @@
     <p class="link-back-mobile" xmlns:th="http://www.w3.org/1999/xhtml">
         <a th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a>
     </p>
-    <script th:src="@{/scripts/sid-web2app-poll.js}" defer></script>
+    <script th:src="@{/scripts/sid-web2app-callback-poll.js}" defer></script>
     <script th:src="@{/scripts/main.js}" defer></script>
 </div>
 </body>

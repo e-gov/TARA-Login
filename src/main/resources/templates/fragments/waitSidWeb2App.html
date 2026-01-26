@@ -1,0 +1,14 @@
+<div class="container" xmlns:th="http://www.w3.org/1999/xhtml">
+    <div class="c-tab-login__content-wrap">
+        <div class="c-tab-login__content-icon" aria-hidden="true">
+            <img id="client-logo-wait" th:if="${@thymeleafSupport.getServiceLogo() != null}" class="icon" th:alt="#{label.logo.client}">
+        </div>
+        <div class="c-tab-login__content-wait">
+            <div role="heading" aria-level="2">
+                <h2 th:utext="${#messages.msg('label.smart-id.title')}"></h2>
+            </div>
+            <p id="sid-web2app-wait-login" th:text="${#messages.msg('label.smart-id.wait-login')}"></p>
+            <p id="sid-web2app-login-success" th:utext="${#messages.msg('label.smart-id.success-close-window')}" class="hidden" aria-hidden="true"></p>
+        </div>
+    </div>
+</div>

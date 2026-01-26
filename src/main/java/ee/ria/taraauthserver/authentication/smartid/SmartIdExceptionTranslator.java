@@ -31,7 +31,7 @@ import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_ACCOUNT_NOT_FOUND;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_CONFIRMATIONMESSAGE;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE;
-import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_DISAPLAYTEXTANDPIN;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_DISPLAYTEXTANDPIN;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_VALIDATION_ERROR;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_WRONG_VC;
 import static java.util.Map.entry;
@@ -47,7 +47,7 @@ public class SmartIdExceptionTranslator {
             entry(DocumentUnusableException.class, SID_DOCUMENT_UNUSABLE),
             entry(UserSelectedWrongVerificationCodeException.class, SID_WRONG_VC),
             entry(RequiredInteractionNotSupportedByAppException.class, SID_INTERACTION_NOT_SUPPORTED),
-            entry(UserRefusedDisplayTextAndPinException.class, SID_USER_REFUSED_DISAPLAYTEXTANDPIN),
+            entry(UserRefusedDisplayTextAndPinException.class, SID_USER_REFUSED_DISPLAYTEXTANDPIN),
             entry(UserAccountNotFoundException.class, SID_USER_ACCOUNT_NOT_FOUND),
             entry(UserRefusedConfirmationMessageException.class, SID_USER_REFUSED_CONFIRMATIONMESSAGE),
             entry(UserRefusedConfirmationMessageWithVerificationChoiceException.class,

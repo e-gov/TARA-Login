@@ -17,6 +17,7 @@ import ee.ria.taraauthserver.session.sid.devicelink.DeviceLinkAuthenticationSess
 import ee.ria.taraauthserver.session.update.TaraSessionUpdate;
 import ee.sk.smartid.RpChallenge;
 import ee.sk.smartid.rest.dao.DeviceLinkAuthenticationSessionRequest;
+import ee.sk.smartid.rest.dao.SessionStatus;
 import eu.webeid.security.challenge.ChallengeNonce;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -167,6 +168,7 @@ public class TaraSession implements Serializable {
         private String sessionId;
         private String sessionSecret;
         private String urlToken;
+        private SessionStatus sessionStatus;
 
         @Getter(AccessLevel.NONE)
         @Setter(AccessLevel.NONE)

@@ -1118,7 +1118,7 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
         TaraSession taraSession = await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
-        assertEquals(ErrorCode.SID_USER_REFUSED_DISAPLAYTEXTANDPIN, taraSession.getAuthenticationResult().getErrorCode());
+        assertEquals(ErrorCode.SID_USER_REFUSED_DISPLAYTEXTANDPIN, taraSession.getAuthenticationResult().getErrorCode());
         assertWarningIsLogged("Smart-ID authentication failed: User pressed Cancel on PIN screen., Error code: SID_USER_REFUSED_DISAPLAYTEXTANDPIN");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=SID_USER_REFUSED_DISAPLAYTEXTANDPIN)");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_USER_REFUSED_DISAPLAYTEXTANDPIN)");
