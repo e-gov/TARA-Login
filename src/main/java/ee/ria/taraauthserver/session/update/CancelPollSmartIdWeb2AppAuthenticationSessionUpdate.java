@@ -11,6 +11,7 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.LEGAL_PERSON
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_STATUS_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_WEB2APP_STATUS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED;
 
 @Value
 public class CancelPollSmartIdWeb2AppAuthenticationSessionUpdate implements TaraSessionUpdate {
@@ -19,6 +20,7 @@ public class CancelPollSmartIdWeb2AppAuthenticationSessionUpdate implements Tara
     public void apply(TaraSession session) {
         SessionUtils.assertSessionInState(session, EnumSet.of(
                 POLL_SID_WEB2APP_STATUS,
+                POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED,
                 AUTHENTICATION_FAILED,
                 NATURAL_PERSON_AUTHENTICATION_COMPLETED,
                 LEGAL_PERSON_AUTHENTICATION_COMPLETED
