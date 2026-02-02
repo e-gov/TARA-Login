@@ -10,6 +10,7 @@
 
     let pollStartMs = 0;
     let qrCodeExpirationTimeout = null;
+    let pollAbortController = new AbortController();
 
     function createQrCodePromise(deviceLink) {
         /* QR code version 11 with error correction level LOW can fit up to 321 bytes of data. The example device
@@ -28,6 +29,10 @@
             headers: {
                 'Accept': 'application/json;charset=UTF-8'
             },
+            signal: AbortSignal.any([
+                pollAbortController.signal,
+                AbortSignal.timeout(10_000)
+            ]),
             credentials: 'include'
         });
     }
@@ -40,7 +45,8 @@
         qrCodeExpirationTimeout = setTimeout(showLoader, QR_CODE_MAX_AGE_MS);
     }
 
-    function showError(error) {
+    function setErrorState(error) {
+        pollAbortController.abort();
         hideEl(document.querySelector(".c-tab-login__main"));
         showEl(document.querySelector("#sid-error"));
 
@@ -97,44 +103,43 @@
         qrCodeEl.innerHTML = '<div class="loadersmall"></div>';
     }
 
-    function doPoll() {
+    async function doPoll() {
+        if (pollAbortController.signal.aborted) {
+            return;
+        }
         pollStartMs = Date.now();
-        let pollingCancelled = false;
-        pollStatus().then(function(response) {
+        try {
+            const response = await pollStatus();
             if (!response.ok) {
                 throw new Error('Polling status returned HTTP error ' + response.status + ' ' + response.statusText);
             }
-            return response.json();
-        }).then(function(responseBody) {
+            const responseBody = await response.json();
             switch (responseBody.status) {
                 case 'PENDING':
                     const deviceLink = responseBody.deviceLink;
                     if (deviceLink == null) {
-                        return;
+                        break;
                     }
-                    return createQrCodePromise(deviceLink).then(function (qrCodeHtml) {
-                        showQrCode(qrCodeHtml);
-                    });
+                    const qrCodeHtml = await createQrCodePromise(deviceLink);
+                    showQrCode(qrCodeHtml);
+                    break;
                 case 'COMPLETED':
-                    pollingCancelled = true;
-                    return acceptAuthentication();
+                    acceptAuthentication();
+                    break;
                 case 'FAILED':
                 default:
-                    pollingCancelled = true;
-                    showError(responseBody);
-                    return;
+                    setErrorState(responseBody);
+                    break;
             }
-        }).catch(function(error) {
-            pollingCancelled = true;
-            // If any kind of unexpected JS Error is thrown, we don't want to display the technical message.
-            showError({});
-        }).then(function () {
-            if (pollingCancelled) {
+        } catch (error) {
+            if (error != null && error.name === 'AbortError') {
                 return;
             }
-            const pollDurationMs = Date.now() - pollStartMs;
-            setTimeout(doPoll, Math.max(0, POLL_INTERVAL_MS - pollDurationMs));
-        })
+            // If any kind of unexpected JS Error is thrown, we don't want to display the technical message.
+            setErrorState({});
+        }
+        const pollDurationMs = Date.now() - pollStartMs;
+        setTimeout(doPoll, Math.max(0, POLL_INTERVAL_MS - pollDurationMs));
     }
 
     function hideEl(el) {
@@ -144,6 +149,10 @@
     function showEl(el) {
         el.classList.remove('hidden');
     }
+
+    window.addEventListener('beforeunload', function () {
+        pollAbortController.abort();
+    });
 
     doPoll();
 
