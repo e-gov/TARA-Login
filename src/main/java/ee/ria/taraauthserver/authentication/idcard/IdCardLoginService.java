@@ -199,8 +199,8 @@ public class IdCardLoginService {
                     .setCause(e)
                     .log("Failed to encode OCSP request");
         }
-        // TODO What should be the default value?
-        int httpStatusCode = HttpStatus.BAD_REQUEST.value();
+
+        int httpStatusCode = -1;
         byte[] encodedOcspResp;
         try {
             if (exception instanceof OcspClientException ocspClientException) {
