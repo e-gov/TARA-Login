@@ -2,7 +2,24 @@
     let pollIntervalMs;
 
     $("#sidWeb2AppLinkContainer").on("click", function (e) {
-        startPolling($(this));
+        // Workaround for Firefox: make request to /init endpoint without making the browser think we want to navigate
+        // away from the current page. If we would initiate the request using a common HTML link, then Firefox would stop
+        // setTimeout() timers required for polling.
+        e.preventDefault();
+        fetch('/auth/sid/web2app/init')
+            .then(response => response.json())
+            .then(data => {
+                startPolling();
+                window.location.href = data.deviceLink;
+            })
+            .catch(msg => {
+                hide("#smart-id-web2app-wait");
+                show("#login-form-error");
+                document.querySelector("#error-incident-number-wrapper").classList.add('hidden');
+                document.querySelector("#error-report-url").classList.add('hidden');
+                document.querySelector("#error-message").innerHTML = msg;
+            });
+
         hide(".c-layout--full > .container");
         hide(".link-back-mobile");
         show("#smart-id-web2app-wait");

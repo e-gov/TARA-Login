@@ -4,7 +4,6 @@
   font-weight: 500;
   border-radius: 8px;
   border: 0;
-  text-decoration: none;
   cursor: pointer;
   @media (max-width: $breakpoint-mobile) {
     display: block;
@@ -20,7 +19,6 @@
     background-color: #008936;
     border: 2px solid #008936;
     &:hover {
-      color: #fff; /* Keep white text color while hovering over button-like links */
       background-color: darken( #008936, 5% );
       border-color: darken( #008936, 5% );
     }

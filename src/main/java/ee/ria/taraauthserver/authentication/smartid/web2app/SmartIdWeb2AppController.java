@@ -15,10 +15,7 @@ import ee.sk.smartid.rest.dao.SessionStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,7 +41,6 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERS
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_WEB2APP_STATUS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
-import static java.util.Map.of;
 
 @Slf4j
 @Validated
@@ -66,15 +62,13 @@ public class SmartIdWeb2AppController {
     @Autowired
     StatisticsLogger statisticsLogger;
 
-    @GetMapping(value = "/auth/sid/web2app/init", produces = MediaType.TEXT_HTML_VALUE)
-    public ResponseEntity<Object> authSidInit(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) throws URISyntaxException {
+    @ResponseBody
+    @GetMapping(value = "/auth/sid/web2app/init", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Map<String, String> authSidInit(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) throws URISyntaxException {
         log.info("Initiating Smart-ID Web2App authentication session");
         validateSession(taraSession, INIT_AUTH_PROCESS);
         URI deviceLink = authSidWeb2AppService.startSidAuthSession(taraSession);
-        return ResponseEntity
-                .status(HttpStatus.SEE_OTHER.value())
-                .header(HttpHeaders.LOCATION, deviceLink.toString())
-                .build();
+        return Map.of("deviceLink", deviceLink.toString());
     }
 
     @ResponseBody
@@ -90,11 +84,11 @@ public class SmartIdWeb2AppController {
             case AUTHENTICATION_FAILED:
                 throw getExceptionForAuthenticationFailureOnPoll(taraSession);
             case POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED:
-                return of("status", "COMPLETED");
+                return Map.of("status", "COMPLETED");
             // INIT_SID_WEB2APP or POLL_SID_WEB2APP_STATUS, depending on whether "/auth/sid/web2app/init" controller
             // has already updated the status or not
             default:
-                return of("status", "PENDING");
+                return Map.of("status", "PENDING");
         }
     }
 
@@ -127,11 +121,11 @@ public class SmartIdWeb2AppController {
                 if (SmartIdSessionStatus.COMPLETE.equals(sessionStatus.getState())) {
                     authSidWeb2AppService.handleFinalAuthenticationResult(
                             taraSession, sessionStatus, userChallengeVerifier, sessionSecretDigest, value);
-                    return of("status", "COMPLETED");
+                    return Map.of("status", "COMPLETED");
                 }
                 throw new IllegalStateException("Unexpected session status: " + sessionStatus.getState());
             default: // POLL_SID_WEB2APP_STATUS
-                return of("status", "PENDING");
+                return Map.of("status", "PENDING");
         }
     }
 
