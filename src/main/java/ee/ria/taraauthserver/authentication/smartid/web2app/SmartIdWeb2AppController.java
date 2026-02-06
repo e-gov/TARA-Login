@@ -63,7 +63,7 @@ public class SmartIdWeb2AppController {
     StatisticsLogger statisticsLogger;
 
     @ResponseBody
-    @GetMapping(value = "/auth/sid/web2app/init", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/auth/sid/web2app/init", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, String> authSidInit(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) throws URISyntaxException {
         log.info("Initiating Smart-ID Web2App authentication session");
         validateSession(taraSession, INIT_AUTH_PROCESS);

@@ -6,8 +6,28 @@
         // away from the current page. If we would initiate the request using a common HTML link, then Firefox would stop
         // setTimeout() timers required for polling.
         e.preventDefault();
-        fetch('/auth/sid/web2app/init')
-            .then(response => response.json())
+        initAuthenticationAndStartPolling();
+        hide(".c-layout--full > .container");
+        hide(".link-back-mobile");
+        show("#smart-id-web2app-wait");
+    });
+
+    function initAuthenticationAndStartPolling() {
+        const csrfToken = document.querySelector("input[name='_csrf']").getAttribute("value");
+        fetch("/auth/sid/web2app/init", {
+                method: "POST",
+                body: new URLSearchParams({_csrf: csrfToken}),
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to start Smart-ID authentication: TARA returned error ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 startPolling();
                 window.location.href = data.deviceLink;
@@ -19,11 +39,7 @@
                 document.querySelector("#error-report-url").classList.add('hidden');
                 document.querySelector("#error-message").innerHTML = msg;
             });
-
-        hide(".c-layout--full > .container");
-        hide(".link-back-mobile");
-        show("#smart-id-web2app-wait");
-    });
+    }
 
     function startPolling() {
         pollIntervalMs = parseInt($("#sidWeb2AppLinkContainer").attr("data-sid-web2app-poll-interval"));
