@@ -2,20 +2,20 @@ package ee.ria.taraauthserver.config;
 
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.utils.X509Utils;
-import eu.webeid.security.ResilientOcspRevocationChecker;
+import eu.webeid.ocsp.client.OcspClient;
+import eu.webeid.ocsp.client.OcspClientImpl;
+import eu.webeid.ocsp.exceptions.OCSPCertificateException;
+import eu.webeid.ocsp.service.AiaOcspServiceConfiguration;
+import eu.webeid.ocsp.service.OcspServiceProvider;
+import eu.webeid.resilientocsp.ResilientOcspCertificateRevocationChecker;
+import eu.webeid.resilientocsp.service.FallbackOcspServiceConfiguration;
 import eu.webeid.security.certificate.CertificateValidator;
 import eu.webeid.security.challenge.ChallengeNonceGenerator;
 import eu.webeid.security.challenge.ChallengeNonceGeneratorBuilder;
 import eu.webeid.security.challenge.ChallengeNonceStore;
 import eu.webeid.security.exceptions.JceException;
-import eu.webeid.security.exceptions.OCSPCertificateException;
 import eu.webeid.security.validator.AuthTokenValidator;
 import eu.webeid.security.validator.AuthTokenValidatorBuilder;
-import eu.webeid.security.validator.ocsp.OcspClient;
-import eu.webeid.security.validator.ocsp.OcspClientImpl;
-import eu.webeid.security.validator.ocsp.OcspServiceProvider;
-import eu.webeid.security.validator.ocsp.service.AiaOcspServiceConfiguration;
-import eu.webeid.security.validator.ocsp.service.FallbackOcspServiceConfiguration;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.core.IntervalFunction;
 import io.github.resilience4j.retry.RetryConfig;
@@ -141,7 +141,7 @@ public class IDCardConfiguration {
                     .maxAttempts(retryMaxAttempts)
                     .build();
 
-            ResilientOcspRevocationChecker ocspRevocationChecker = new ResilientOcspRevocationChecker(
+            ResilientOcspCertificateRevocationChecker ocspRevocationChecker = new ResilientOcspCertificateRevocationChecker(
                     ocspClient,
                     ocspServiceProvider,
                     circuitBreakerConfig,
@@ -154,7 +154,7 @@ public class IDCardConfiguration {
             return new AuthTokenValidatorBuilder()
                     .withSiteOrigin(authConfigurationProperties.getSiteOrigin().toURI())
                     .withTrustedCertificateAuthorities(certificates)
-                    .withOcspCertificateRevocationChecker(ocspRevocationChecker)
+                    .withCertificateRevocationChecker(ocspRevocationChecker)
                     .build();
         } catch (JceException | URISyntaxException | OCSPCertificateException e) {
             throw new RuntimeException("Error building the Web eID auth token validator.", e);

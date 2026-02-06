@@ -10,16 +10,16 @@ import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.EstonianIdCodeUtil;
 import ee.ria.taraauthserver.utils.X509Utils;
 import ee.sk.mid.MidNationalIdentificationCodeValidator;
-import eu.webeid.security.RevocationInfo;
-import eu.webeid.security.TaraUserCertificateOCSPCheckFailedException;
-import eu.webeid.security.TaraUserCertificateRevokedException;
-import eu.webeid.security.ValidationInfo;
+import eu.webeid.ocsp.exceptions.OCSPClientException;
+import eu.webeid.resilientocsp.exceptions.ResilientUserCertificateOCSPCheckFailedException;
+import eu.webeid.resilientocsp.exceptions.ResilientUserCertificateRevokedException;
 import eu.webeid.security.challenge.ChallengeNonceStore;
 import eu.webeid.security.exceptions.AuthTokenException;
 import eu.webeid.security.exceptions.CertificateExpiredException;
 import eu.webeid.security.exceptions.CertificateNotYetValidException;
-import eu.webeid.security.exceptions.OcspClientException;
 import eu.webeid.security.validator.AuthTokenValidator;
+import eu.webeid.security.validator.ValidationInfo;
+import eu.webeid.security.validator.revocationcheck.RevocationInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.cert.ocsp.OCSPReq;
@@ -83,10 +83,10 @@ public class IdCardLoginService {
             throw new BadRequestException(IDC_CERT_EXPIRED, e.getMessage(), e);
         } catch (CertificateNotYetValidException e) {
             throw new BadRequestException(IDC_CERT_NOT_YET_VALID, e.getMessage(), e);
-        } catch (TaraUserCertificateRevokedException e) {
+        } catch (ResilientUserCertificateRevokedException e) {
             logValidationInfo(e.getValidationInfo(), taraSession);
             throw new BadRequestException(IDC_REVOKED, e.getMessage(), e);
-        } catch (TaraUserCertificateOCSPCheckFailedException e) {
+        } catch (ResilientUserCertificateOCSPCheckFailedException e) {
             logValidationInfo(e.getValidationInfo(), taraSession);
             throw new BadRequestException(INVALID_REQUEST, e.getMessage(), e);
         } catch (AuthTokenException e) {
@@ -94,7 +94,7 @@ public class IdCardLoginService {
         }
 
         String eidasClientId =  filterForEidasProxy.getClientId();
-        X509Certificate certificate = validationInfo.getSubjectCertificate();
+        X509Certificate certificate = validationInfo.subjectCertificate();
         if(taraSession.getOriginalClient().getClientId().equals(eidasClientId)) {
             validateIdCardValidForEidasAuthentication(certificate);
         }
@@ -103,10 +103,10 @@ public class IdCardLoginService {
     }
 
     private static ErrorCode getErrorCodeByExceptionType(Exception e) {
-        if (e instanceof TaraUserCertificateRevokedException) {
+        if (e instanceof ResilientUserCertificateRevokedException) {
             return IDC_REVOKED;
         }
-        if (e instanceof OcspClientException) {
+        if (e instanceof OCSPClientException) {
             return IDC_OCSP_NOT_AVAILABLE;
         }
         return INVALID_REQUEST;
@@ -154,20 +154,20 @@ public class IdCardLoginService {
     }
 
     private void logValidationInfo(ValidationInfo validationInfo, TaraSession taraSession) {
-        X509Certificate certificate = validationInfo.getSubjectCertificate();
+        X509Certificate certificate = validationInfo.subjectCertificate();
         log.info("OCSP certificate info: Serialnumber=<{}>, SubjectDN=<{}>, issuerDN=<{}>",
                 value("x509.serial_number", certificate.getSerialNumber().toString()),
                 value("x509.subject.distinguished_name", certificate.getSubjectX500Principal().getName()),
                 value("x509.issuer.distinguished_name", certificate.getIssuerX500Principal().getName()));
 
-        Iterator<RevocationInfo> iterator = validationInfo.getRevocationInfoList().iterator();
+        Iterator<RevocationInfo> iterator = validationInfo.revocationInfoList().iterator();
         while(iterator.hasNext()) {
             RevocationInfo revocationInfo = iterator.next();
             if (revocationInfo == null) {
                 throw new IllegalArgumentException("Revocation info cannot be null");
             }
-            Map<String, Object> ocspResponseAttributes = revocationInfo.getOcspResponseAttributes();
-            String ocspUrl = revocationInfo.getOcspResponderUri().toString();
+            Map<String, Object> ocspResponseAttributes = revocationInfo.ocspResponseAttributes();
+            String ocspUrl = revocationInfo.ocspResponderUri().toString();
             OCSPReq ocspReq = (OCSPReq) ocspResponseAttributes.get(RevocationInfo.KEY_OCSP_REQUEST);
             OCSPResp ocspResp = (OCSPResp) ocspResponseAttributes.get(RevocationInfo.KEY_OCSP_RESPONSE);
             Exception exception = (Exception) ocspResponseAttributes.get(RevocationInfo.KEY_OCSP_ERROR);
@@ -203,7 +203,7 @@ public class IdCardLoginService {
         int httpStatusCode = -1;
         byte[] encodedOcspResp;
         try {
-            if (exception instanceof OcspClientException ocspClientException) {
+            if (exception instanceof OCSPClientException ocspClientException) {
                 encodedOcspResp = ocspClientException.getResponseBody();
                 httpStatusCode = ocspClientException.getStatusCode() != null
                         ? ocspClientException.getStatusCode()

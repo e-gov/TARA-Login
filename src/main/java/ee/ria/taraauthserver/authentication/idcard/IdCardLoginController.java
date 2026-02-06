@@ -45,10 +45,10 @@ public class IdCardLoginController {
                 .and(append("tara.webeid.native_app_version", data.nativeAppVersion))
                 .and(append("tara.webeid.status_duration_ms", data.statusDurationMs))
                 .and(append("tara.webeid.code", "SUCCESS"))
-                .and(append("tara.webeid.auth_token.unverified_certificate", authToken.getUnverifiedCertificate()))
-                .and(append("tara.webeid.auth_token.signature", authToken.getSignature()))
-                .and(append("tara.webeid.auth_token.algorithm", authToken.getAlgorithm()))
-                .and(append("tara.webeid.auth_token.format", authToken.getFormat()));
+                .and(append("tara.webeid.auth_token.unverified_certificate", authToken.unverifiedCertificate()))
+                .and(append("tara.webeid.auth_token.signature", authToken.signature()))
+                .and(append("tara.webeid.auth_token.algorithm", authToken.algorithm()))
+                .and(append("tara.webeid.auth_token.format", authToken.format()));
         log.info(marker, "Client-side Web eID operation successful");
     }
 
