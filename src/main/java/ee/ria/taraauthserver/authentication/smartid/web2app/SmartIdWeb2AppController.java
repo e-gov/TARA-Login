@@ -92,6 +92,22 @@ public class SmartIdWeb2AppController {
         }
     }
 
+    @PostMapping(value = "/auth/sid/web2app/poll/cancel", produces = MediaType.APPLICATION_JSON_VALUE)
+    public RedirectView authSidPollCancel(
+            @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+        log.info("Validating Smart-ID Web2App poll cancel endpoint");
+        validateSession(taraSession,
+                INIT_SID_WEB2APP,
+                POLL_SID_WEB2APP_STATUS,
+                POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED,
+                AUTHENTICATION_FAILED);
+        taraSession.accept(new CancelPollSmartIdWeb2AppAuthenticationSessionUpdate());
+        SessionUtils.getHttpSession().setAttribute(TARA_SESSION, taraSession);
+        log.warn("Smart ID authentication process has been canceled");
+        return new RedirectView("/auth/init?login_challenge="
+                + taraSession.getLoginRequestInfo().getChallenge() + RequestUtils.getLangParam(taraSession));
+    }
+
     @GetMapping(value = "/auth/sid/web2app/callback", produces = MediaType.TEXT_HTML_VALUE)
     public String authSidCallback(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
         log.info("Validating Smart-ID Web2App callback endpoint");

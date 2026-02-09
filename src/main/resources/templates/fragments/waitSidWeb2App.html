@@ -7,7 +7,12 @@
             <div role="heading" aria-level="2">
                 <h2 th:utext="${#messages.msg('label.smart-id.title')}"></h2>
             </div>
-            <p id="sid-web2app-wait-login" th:text="${#messages.msg('label.smart-id.wait-login')}"></p>
+            <div id="sid-web2app-wait-login">
+                <p th:text="${#messages.msg('label.smart-id.wait-login')}"></p>
+                <form method="post" th:action="@{/auth/sid/web2app/poll/cancel}" class="c-form">
+                    <button type="submit" class="c-btn c-btn--cancel" th:text="#{label.common.cancel}"></button>
+                </form>
+            </div>
             <p id="sid-web2app-login-success" th:utext="${#messages.msg('label.smart-id.success-close-window')}" class="hidden" aria-hidden="true"></p>
         </div>
     </div>

@@ -1,5 +1,8 @@
 (function () {
     let pollIntervalMs;
+    // In some rare cases an error might become visible for a short time after user manually cancels polling.
+    // Checking this variable can be used as a workaround to hide that error.
+    let cancelled = false;
 
     $("#sidWeb2AppLinkContainer").on("click", function (e) {
         // Workaround for Firefox: make request to /init endpoint without making the browser think we want to navigate
@@ -10,6 +13,10 @@
         hide(".c-layout--full > .container");
         hide(".link-back-mobile");
         show("#smart-id-web2app-wait");
+    });
+
+    $("#sid-web2app-wait-login form").on("submit", function (e) {
+        cancelled = true;
     });
 
     function initAuthenticationAndStartPolling() {
@@ -32,12 +39,17 @@
                 startPolling();
                 window.location.href = data.deviceLink;
             })
-            .catch(msg => {
+            .catch(err => {
+                if (cancelled) {
+                    return;
+                }
+                console.error(err.message);
                 hide("#smart-id-web2app-wait");
                 show("#login-form-error");
                 document.querySelector("#error-incident-number-wrapper").classList.add('hidden');
                 document.querySelector("#error-report-url").classList.add('hidden');
-                document.querySelector("#error-message").innerHTML = msg;
+                hide("#error-message");
+                show("#default-error-message");
             });
     }
 
@@ -61,7 +73,7 @@
     function checkAuthenticationStatus() {
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
-            if (this.readyState !== 4) {
+            if (this.readyState !== 4 || cancelled) {
                 return;
             }
 
