@@ -217,7 +217,7 @@ public class AuthSidNotificationBasedService {
                 value("tara.session.authentication_result.sid_document_number", sessionStatus.getResult().getDocumentNumber()),
                 value("tara.session.authentication_result.sid_state", sessionStatus.getState()));
 
-        // TODO: SidAuthenticationResult fields were previously populated *before* calling responseValidator.validate(),
+        // TODO (AUT-2604): SidAuthenticationResult fields were previously populated *before* calling responseValidator.validate(),
         //  so that this information would be available in case of validation failure and could be logged with full details.
         //  Since Smart ID v3, this is no longer possible, but the impact of missing information is not known yet.
         //  We need to populate as many taraAuthResult fields as possible before validation. This information needs
