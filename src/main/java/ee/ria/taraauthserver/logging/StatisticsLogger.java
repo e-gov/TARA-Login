@@ -12,6 +12,7 @@ import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraSession.AuthenticationResult;
 import ee.ria.taraauthserver.session.TaraSession.LegalPerson;
 import ee.ria.taraauthserver.session.TaraSession.LoginRequestInfo;
+import ee.sk.smartid.FlowType;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -65,6 +66,7 @@ public class StatisticsLogger {
         SessionStatisticsBuilder statisticsBuilder = SessionStatistics.builder();
         processAuthenticationRequest(taraSession, state, statisticsBuilder);
         processAuthenticationResult(taraSession, ex, statisticsBuilder);
+        processSmartIdFlowType(taraSession, statisticsBuilder);
         SessionStatistics sessionStatistics = statisticsBuilder.build();
         if (ex != null) {
             log.error(appendFields(sessionStatistics), "Authentication result: " + state, ex);
@@ -141,6 +143,10 @@ public class StatisticsLogger {
         }
     }
 
+    private void processSmartIdFlowType(TaraSession taraSession, SessionStatisticsBuilder statisticsBuilder) {
+        statisticsBuilder.smartIdFlowType(taraSession.getSmartIdFlowType());
+    }
+
     private Optional<TaraAuthenticationState> getStateToLog(TaraSession taraSession) {
         TaraAuthenticationState state = taraSession.getState();
         if (AUTHENTICATION_SUCCESS == state || AUTHENTICATION_FAILED == state) {
@@ -191,5 +197,8 @@ public class StatisticsLogger {
 
         @JsonProperty("authentication.error_code")
         private ErrorCode errorCode;
+
+        @JsonProperty("authentication.smart_id.flow_type")
+        private FlowType smartIdFlowType;
     }
 }

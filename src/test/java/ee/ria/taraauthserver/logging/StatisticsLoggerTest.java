@@ -102,7 +102,7 @@ class StatisticsLoggerTest extends BaseTest {
         statisticsLogger.log(taraSession);
 
         TaraAuthenticationState expectedState = (state == POLL_MID_STATUS_CANCELED || state == POLL_SID_STATUS_CANCELED) ? AUTHENTICATION_CANCELED : state;
-        assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=null, sector=public, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=%s, errorCode=null)", expectedState.name()));
+        assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=null, sector=public, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=%s, errorCode=null, smartIdFlowType=null)", expectedState.name()));
     }
 
     @ParameterizedTest
@@ -120,7 +120,7 @@ class StatisticsLoggerTest extends BaseTest {
         statisticsLogger.log(taraSession);
 
         TaraAuthenticationState expectedState = (state == POLL_MID_STATUS_CANCELED || state == POLL_SID_STATUS_CANCELED) ? AUTHENTICATION_CANCELED : state;
-        assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=%s, sector=private, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=null, authenticationType=EIDAS, authenticationState=%s, errorCode=null)", TEST_REQUESTER_ID, expectedState.name()));
+        assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=%s, sector=private, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=null, authenticationType=EIDAS, authenticationState=%s, errorCode=null, smartIdFlowType=null)", TEST_REQUESTER_ID, expectedState.name()));
     }
 
     @ParameterizedTest
@@ -137,7 +137,7 @@ class StatisticsLoggerTest extends BaseTest {
         statisticsLogger.log(taraSession);
 
         TaraAuthenticationState expectedState = (state == POLL_MID_STATUS_CANCELED || state == POLL_SID_STATUS_CANCELED) ? AUTHENTICATION_CANCELED : state;
-        assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=null, sector=public, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=null, authenticationType=EIDAS, authenticationState=%s, errorCode=null)", expectedState.name()));
+        assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=null, sector=public, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=null, authenticationType=EIDAS, authenticationState=%s, errorCode=null, smartIdFlowType=null)", expectedState.name()));
     }
 
     @ParameterizedTest
@@ -155,7 +155,7 @@ class StatisticsLoggerTest extends BaseTest {
         statisticsLogger.log(taraSession);
 
         TaraAuthenticationState expectedState = (state == POLL_MID_STATUS_CANCELED || state == POLL_SID_STATUS_CANCELED) ? AUTHENTICATION_CANCELED : state;
-        assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=null, sector=private, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=null, authenticationType=SMART_ID, authenticationState=%s, errorCode=null)", expectedState.name()));
+        assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=null, sector=private, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=null, authenticationType=SMART_ID, authenticationState=%s, errorCode=null, smartIdFlowType=null)", expectedState.name()));
     }
 
     @ParameterizedTest
@@ -171,7 +171,7 @@ class StatisticsLoggerTest extends BaseTest {
         statisticsLogger.log(taraSession);
 
         TaraAuthenticationState expectedState = (state == POLL_MID_STATUS_CANCELED || state == POLL_SID_STATUS_CANCELED) ? AUTHENTICATION_CANCELED : state;
-        assertStatisticsIsLoggedOnce(ERROR, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=null, sector=public, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=%s, errorCode=INTERNAL_ERROR)", expectedState.name()));
+        assertStatisticsIsLoggedOnce(ERROR, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=null, sector=public, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=%s, errorCode=INTERNAL_ERROR, smartIdFlowType=null)", expectedState.name()));
     }
 
     @Test
@@ -186,7 +186,7 @@ class StatisticsLoggerTest extends BaseTest {
 
         statisticsLogger.log(taraSession);
 
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=null, sector=public, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=https://test-ocsp, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=null, sector=public, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=https://test-ocsp, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null, smartIdFlowType=null)");
     }
 
     @Test
@@ -198,7 +198,7 @@ class StatisticsLoggerTest extends BaseTest {
 
         statisticsLogger.log(taraSession);
 
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=null, sector=public, registryCode=test_registry_code, legalPerson=true, country=EE, idCode=test_legal_person_id_code, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=null, sector=public, registryCode=test_registry_code, legalPerson=true, country=EE, idCode=test_legal_person_id_code, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null, smartIdFlowType=null)");
     }
 
     @ParameterizedTest
@@ -230,7 +230,7 @@ class StatisticsLoggerTest extends BaseTest {
 
         TaraAuthenticationState expectedState = (state == POLL_MID_STATUS_CANCELED || state == POLL_SID_STATUS_CANCELED) ? AUTHENTICATION_CANCELED : state;
         assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()),
-                format("StatisticsLogger.SessionStatistics(service=%s, clientId=%s, eidasRequesterId=null, sector=%s, registryCode=%s, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=%s, errorCode=null)",
+                format("StatisticsLogger.SessionStatistics(service=%s, clientId=%s, eidasRequesterId=null, sector=%s, registryCode=%s, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=%s, errorCode=null, smartIdFlowType=null)",
                         SERVICE_GOVSSO,
                         expectedClientId,
                         expectedSector,

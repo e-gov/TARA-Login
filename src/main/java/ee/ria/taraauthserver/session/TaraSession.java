@@ -15,6 +15,7 @@ import ee.ria.taraauthserver.error.exceptions.InvalidLoginRequestException;
 import ee.ria.taraauthserver.session.sid.devicelink.DeviceLinkAuthenticationSessionMapper;
 import ee.ria.taraauthserver.session.sid.devicelink.DeviceLinkAuthenticationSessionRequestSurrogate;
 import ee.ria.taraauthserver.session.update.TaraSessionUpdate;
+import ee.sk.smartid.FlowType;
 import ee.sk.smartid.RpChallenge;
 import ee.sk.smartid.rest.dao.DeviceLinkAuthenticationSessionRequest;
 import ee.sk.smartid.rest.dao.SessionStatus;
@@ -85,6 +86,7 @@ public class TaraSession implements Serializable {
     private ChallengeNonce webEidChallengeNonce;
     private String chosenLanguage;
     private SmartIdQrCodeSession smartIdQrCodeSession;
+    private FlowType smartIdFlowType;
 
     public void setState(@NonNull TaraAuthenticationState newState) {
         if (state.equals(newState)) {

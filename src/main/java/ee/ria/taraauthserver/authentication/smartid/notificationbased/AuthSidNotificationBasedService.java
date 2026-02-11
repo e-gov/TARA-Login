@@ -17,6 +17,7 @@ import ee.ria.taraauthserver.utils.ElasticApmUtil;
 import ee.sk.mid.MidNationalIdentificationCodeValidator;
 import ee.sk.smartid.AuthenticationCertificateLevel;
 import ee.sk.smartid.AuthenticationIdentity;
+import ee.sk.smartid.FlowType;
 import ee.sk.smartid.NotificationAuthenticationResponseValidator;
 import ee.sk.smartid.NotificationAuthenticationSessionRequestBuilder;
 import ee.sk.smartid.RpChallenge;
@@ -90,6 +91,7 @@ public class AuthSidNotificationBasedService {
         RpChallenge rpChallenge = rpChallengeService.getRpChallenge();
         String verificationCode = VerificationCodeCalculator.calculate(rpChallenge.value());
         NotificationAuthenticationSessionRequestBuilder requestBuilder = sidClient.createNotificationAuthentication();
+        taraSession.setSmartIdFlowType(FlowType.NOTIFICATION);
         taraSession.setState(INIT_SID);
         updateSession(taraSession);
 

@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.session.update;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
+import ee.sk.smartid.FlowType;
 import lombok.Value;
 
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
@@ -15,6 +16,7 @@ public class InitSmartIdQrCodeAuthenticationSessionUpdate implements TaraSession
     public void apply(TaraSession session) {
         SessionUtils.assertSessionInState(session, INIT_AUTH_PROCESS);
 
+        session.setSmartIdFlowType(FlowType.QR);
         TaraSession.SidAuthenticationResult authenticationResult =
                 new TaraSession.SidAuthenticationResult(null);
         authenticationResult.setAmr(AuthenticationType.SMART_ID);
