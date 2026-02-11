@@ -179,6 +179,7 @@ public class AuthSidQrCodeService {
             DeviceLinkSessionResponse initSmartIdSessionResponse = initSmartIdSessionBuilder.initAuthenticationSession();
             DeviceLinkAuthenticationSessionRequest initSmartIdSessionRequest =
                     initSmartIdSessionBuilder.getAuthenticationSessionRequest();
+            log.info("Started Smart-ID session {}", initSmartIdSessionResponse.sessionID());
             updateSession(session, new PollSmartIdQrCodeAuthenticationSessionUpdate(
                     Instant.now(clock),
                     rpChallenge,
@@ -205,6 +206,8 @@ public class AuthSidQrCodeService {
                 throw new IllegalStateException(
                         "Expected Smart-ID session to be in '" + SmartIdSessionStatus.COMPLETE + "' state.");
             }
+            log.info("Received final Smart-ID session {} status: {}",
+                    sessionId, sessionStatus.getResult().getEndResult());
             DeviceLinkAuthenticationSessionRequest request = smartIdQrCodeSession.getRequest();
             return responseValidator.validate(
                     sessionStatus, request, null, smartIdConfigurationProperties.getSchemaName());
