@@ -6,7 +6,7 @@ import lombok.Value;
 
 import java.util.Set;
 
-import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_SID_QR_CODE;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_QR_CODE;
 
@@ -18,7 +18,7 @@ public class CancelSmartIdQrCodeAuthenticationSessionUpdate implements TaraSessi
         SessionUtils.assertSessionInState(session, Set.of(INIT_SID_QR_CODE, POLL_SID_QR_CODE));
 
         session.setSmartIdQrCodeSession(null);
-        session.setState(INIT_AUTH_PROCESS);
+        session.setState(AUTHENTICATION_CANCELED);
     }
 
 }
