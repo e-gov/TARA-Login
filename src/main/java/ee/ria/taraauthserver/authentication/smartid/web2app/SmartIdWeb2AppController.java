@@ -28,6 +28,7 @@ import org.springframework.web.servlet.view.RedirectView;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
@@ -109,8 +110,11 @@ public class SmartIdWeb2AppController {
     }
 
     @GetMapping(value = "/auth/sid/web2app/callback", produces = MediaType.TEXT_HTML_VALUE)
-    public String authSidCallback(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+    public String authSidCallback(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession,
+                                  @RequestParam String value) {
         log.info("Validating Smart-ID Web2App callback endpoint");
+        // An additional "pre-validation" check to show user nicer error message in case they have cancelled the authentication
+        validateAuthenticationNotCancelled(taraSession, value);
         validateSession(taraSession,
                 POLL_SID_WEB2APP_STATUS,
                 POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED,
@@ -166,6 +170,16 @@ public class SmartIdWeb2AppController {
         log.warn("Smart ID authentication process has been canceled");
         return new RedirectView("/auth/init?login_challenge="
                 + taraSession.getLoginRequestInfo().getChallenge() + RequestUtils.getLangParam(taraSession));
+    }
+
+    private static void validateAuthenticationNotCancelled(TaraSession taraSession, String value) {
+        try {
+            Objects.requireNonNull(taraSession);
+            AuthSidWeb2AppService.assertCallbackUrlTokenMatchesInitialToken(taraSession, value);
+        } catch(Exception e) {
+            ErrorCode errorCode = ErrorCode.SID_USER_CANCEL;
+            throw new BadRequestException(errorCode, errorCode.getMessage());
+        }
     }
 
     private static RuntimeException getExceptionForAuthenticationFailureOnPoll(TaraSession taraSession) {

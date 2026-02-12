@@ -20,6 +20,7 @@ public enum ErrorCode {
     INTERNAL_ERROR("message.error.internal-error"),
     SID_INTERNAL_ERROR("message.smart-id.error.internal-error"),
     SID_USER_REFUSED("message.smart-id.error.user-refused-auth"),
+    SID_USER_CANCEL("message.smart-id.error.user-cancel"),
     SID_SESSION_TIMEOUT("message.smart-id.error.session-timed-out"),
     SID_REQUEST_TIMEOUT("message.smart-id.error.request-timed-out"),
     SID_DOCUMENT_UNUSABLE("message.smart-id.error.user-document-unusable"),

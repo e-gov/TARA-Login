@@ -154,6 +154,14 @@ public class AuthSidWeb2AppService {
         }
     }
 
+    public static void assertCallbackUrlTokenMatchesInitialToken(TaraSession taraSession, String initialUrlToken) {
+        if (initialUrlToken == null
+                || taraSession.getSmartIdWeb2AppSession() == null
+                || !initialUrlToken.equals(taraSession.getSmartIdWeb2AppSession().getUrlToken())) {
+            throw new SmartIdClientException("Token from actual callback URL does not match token from initial callback URL");
+        }
+    }
+
     private URI createDeviceLink(
             String interactions,
             DeviceLinkSessionResponse sessionResponse,
@@ -287,9 +295,7 @@ public class AuthSidWeb2AppService {
             String userChallengeVerifier,
             String sessionSecretDigest,
             String urlToken) {
-        if (urlToken == null || !urlToken.equals(taraSession.getSmartIdWeb2AppSession().getUrlToken())) {
-            throw new SmartIdClientException("Token from actual callback URL does not match token from initial callback URL");
-        }
+        assertCallbackUrlTokenMatchesInitialToken(taraSession, urlToken);
         CallbackUrlUtil.validateSessionSecretDigest(sessionSecretDigest, taraSession.getSmartIdWeb2AppSession().getSessionSecret());
         return responseValidator.validate(
                 sessionStatus,

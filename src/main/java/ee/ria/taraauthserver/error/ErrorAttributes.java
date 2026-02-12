@@ -56,6 +56,7 @@ import static ee.ria.taraauthserver.error.ErrorCode.SESSION_STATE_INVALID;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_DOCUMENT_UNUSABLE;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_SESSION_TIMEOUT;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_ACCOUNT_NOT_FOUND;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_CANCEL;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_CONFIRMATIONMESSAGE;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE;
@@ -90,6 +91,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
             MID_TRANSACTION_EXPIRED,
             NOT_MID_CLIENT,
             SID_USER_REFUSED,
+            SID_USER_CANCEL,
             SID_SESSION_TIMEOUT,
             SID_WRONG_VC,
             SID_USER_REFUSED_DISPLAYTEXTANDPIN,
