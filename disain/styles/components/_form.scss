@@ -194,3 +194,13 @@
   line-height: 16px;
   color: #5D6071;
 }
+hr.card-divider {
+  border: 0px solid #abaebb;
+  border-top-width: 2px;
+  margin: 16px 0;
+  @media (max-width: $breakpoint-mobile) {
+    border: 0px solid #dbdfe2;
+    border-top-width: 16px;
+    margin: 16px -16px;
+  }
+}

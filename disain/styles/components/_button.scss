@@ -11,7 +11,7 @@
     padding: 12px 35px;
     font-size: 18px;
   }
-  &.hidden {
+  &.hidden, &.hide-on-sid-device, &.show-on-sid-device {
     display: none;
   }
   &--primary {
@@ -52,4 +52,28 @@
     outline: 2px solid #337bb5;
     outline-offset: 1px;
   }
+}
+
+button.btn-link {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: #005f87;
+  font: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  &::after {
+    content: ">";
+    display: inline-block;
+    transform: scaleY(1.5);
+    font-weight: 400;
+    text-decoration: none;
+  }
+}
+button.btn-link span {
+  text-decoration: underline;
 }
