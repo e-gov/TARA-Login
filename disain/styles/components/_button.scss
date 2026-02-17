@@ -31,8 +31,9 @@
   }
   &--cancel {
     color: #344255;
+    font-weight: bold;
     background-color: #ffffff;
-    border: 2px solid #344255;
+    border: 3px solid #344255;
     &:hover {
       color: #fff;
       background-color: #344255;
@@ -42,7 +43,7 @@
     cursor: default;
     color: #aaaaaa;
     background-color: #ffffff;
-    border: 2px solid #aaaaaa;
+    border: 3px solid #aaaaaa;
   }
   &--from-link {
 	text-decoration: none;

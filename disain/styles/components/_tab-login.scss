@@ -185,6 +185,7 @@
       @media (max-width: $breakpoint-mobile) {
         font-size: 20px;
         margin-bottom: 20px;
+        font-weight: 500;
       }
     }
     p {
@@ -195,20 +196,25 @@
     }
   }
   &__qr-code-card {
-    border-radius: 8px;
-    padding: 24px;
-    background-color: #f2f3f3;
-    text-align: center;
+    @media (max-width: $breakpoint-mobile) {
+      padding: 0;
+      text-align: left;
+    }
+    @media (min-width: $breakpoint-mobile + 1) {
+      padding: 24px;
+      text-align: center;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-right: 150px;
+    }
   }
   &__qr-code {
-    $border-width: 1px;
     $padding: 8px;
     $qr-version: 11;
     $qr-module-size: 6px;
 
     $qr-modules: 17 + (4 * $qr-version);
-    $max-width: $qr-modules * $qr-module-size + 2 * ($border-width + $padding);
-    border: $border-width solid #000;
+    $max-width: $qr-modules * $qr-module-size + 2 * $padding;
     padding: $padding;
     background-color: #fff;
     margin-bottom: 25px;

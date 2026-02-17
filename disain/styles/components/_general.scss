@@ -97,6 +97,17 @@ body {
   @media (max-width: $breakpoint-mobile) {
     text-align: center;
   }
+  &.arrow-back {
+    &::before {
+      content: "<";
+      padding-right: 8px;
+      display: inline-block;
+      transform: scaleY(1.5);
+      text-decoration: none;
+      color: #005f87;
+      font-weight: 400;
+    }
+  }
 }
 
 // Mobile back link
