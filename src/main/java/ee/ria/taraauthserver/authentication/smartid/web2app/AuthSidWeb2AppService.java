@@ -4,6 +4,7 @@ import co.elastic.apm.api.ElasticApm;
 import co.elastic.apm.api.Scope;
 import co.elastic.apm.api.Span;
 import ee.ria.taraauthserver.authentication.RelyingParty;
+import ee.ria.taraauthserver.authentication.common.AuthenticationDisplayTextBuilder;
 import ee.ria.taraauthserver.authentication.smartid.RpChallengeService;
 import ee.ria.taraauthserver.authentication.smartid.SmartIdExceptionTranslator;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
@@ -98,15 +99,19 @@ public class AuthSidWeb2AppService {
     @Autowired
     private RpChallengeService rpChallengeService;
 
+    @Autowired
+    private AuthenticationDisplayTextBuilder authenticationDisplayTextBuilder;
+
     public URI startSidAuthSession(@NonNull TaraSession taraSession) throws URISyntaxException {
         RpChallenge rpChallenge = rpChallengeService.getRpChallenge();
         updateSession(taraSession, new InitSmartIdWeb2AppAuthenticationSessionUpdate());
 
         RelyingParty relyingParty = taraSession.getSmartIdRelyingParty()
                 .orElse(smartIdConfigurationProperties.getRelyingParty());
-        String shortName = defaultIfNull(
+        String baseShortName = defaultIfNull(
                 taraSession.getOriginalClient().getTranslatedShortName(),
                 smartIdConfigurationProperties.getDisplayText());
+        String shortName = authenticationDisplayTextBuilder.buildLoginDisplayText(baseShortName);
         String callbackUrl = authConfigurationProperties.getSiteOrigin()
                 .toURI()
                 .resolve(RELATIVE_CALLBACK_URL)

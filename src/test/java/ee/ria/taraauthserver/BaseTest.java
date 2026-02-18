@@ -151,7 +151,7 @@ public abstract class BaseTest {
     protected static void createMidApiAuthenticationStub(String response, int status, int delayInMilliseconds, String language, String shortName) {
         wireMockServer.stubFor(any(urlPathEqualTo("/mid-api/authentication"))
                 .withRequestBody(matchingJsonPath("$.language", WireMock.equalTo(language)))
-                .withRequestBody(matchingJsonPath("$.displayText", WireMock.equalTo(shortName)))
+                .withRequestBody(matchingJsonPath("$.displayText", WireMock.equalTo(expectedDisplayText(language, shortName))))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withStatus(status)
@@ -196,6 +196,16 @@ public abstract class BaseTest {
                         .withStatus(status)
                         .withFixedDelay(delayInMilliseconds)
                         .withBodyFile(response)));
+    }
+
+    private static String expectedDisplayText(String language, String shortName) {
+        String prefix = switch (language) {
+            case "EST" -> "Logi sisse:";
+            case "ENG" -> "Log in:";
+            case "RUS" -> "Войти:";
+            default -> throw new IllegalArgumentException("Unsupported language: " + language);
+        };
+        return prefix + " " + shortName;
     }
 
     @BeforeEach

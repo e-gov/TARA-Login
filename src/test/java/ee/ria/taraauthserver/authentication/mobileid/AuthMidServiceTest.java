@@ -24,10 +24,10 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import static ch.qos.logback.classic.Level.ERROR;
 import static ch.qos.logback.classic.Level.INFO;
@@ -66,7 +66,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-public class AuthMidServiceTest extends BaseTest {
+class AuthMidServiceTest extends BaseTest {
 
     // The hash below, signature.value and cert in mid_poll_response.json can be acquired by authenticating using MID
     // in local development environment with test parameters and checking the TARA Login service logs.
@@ -77,16 +77,16 @@ public class AuthMidServiceTest extends BaseTest {
             .withHashInBase64("7iG3DSOoETBiuvL3uKvCRTL0cmF0ciTXKMe88VgsLpw=").build();
     private final MidConnector midConnectorMock = Mockito.mock(MidConnector.class);
 
-    @SpyBean
+    @MockitoSpyBean
     private AuthMidService authMidService;
 
     @Autowired
     private SessionRepository<Session> sessionRepository;
 
-    @SpyBean
+    @MockitoSpyBean
     private MidAuthenticationResponseValidator midAuthenticationResponseValidator;
 
-    @SpyBean
+    @MockitoSpyBean
     private MidClient midClient;
 
     @BeforeEach
@@ -146,7 +146,7 @@ public class AuthMidServiceTest extends BaseTest {
     void correctDisplayTextFormatWhen_shortnameContainsOnlyGsm7Characters() {
         wireMockServer.stubFor(any(urlPathEqualTo("/mid-api/authentication"))
                 .withRequestBody(matchingJsonPath("$.language", WireMock.equalTo("EST")))
-                .withRequestBody(matchingJsonPath("$.displayText", WireMock.equalTo("short name et")))
+                .withRequestBody(matchingJsonPath("$.displayText", WireMock.equalTo("Logi sisse: short name et")))
                 .withRequestBody(matchingJsonPath("$.displayTextFormat", WireMock.equalTo("GSM-7")))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
@@ -167,7 +167,7 @@ public class AuthMidServiceTest extends BaseTest {
         LocaleContextHolder.setLocale(forLanguageTag("ru"));
         wireMockServer.stubFor(any(urlPathEqualTo("/mid-api/authentication"))
                 .withRequestBody(matchingJsonPath("$.language", WireMock.equalTo("RUS")))
-                .withRequestBody(matchingJsonPath("$.displayText", WireMock.equalTo("short name with õ")))
+                .withRequestBody(matchingJsonPath("$.displayText", WireMock.equalTo("Войти: short name with õ")))
                 .withRequestBody(matchingJsonPath("$.displayTextFormat", WireMock.equalTo("UCS-2")))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
