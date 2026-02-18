@@ -194,11 +194,34 @@
   line-height: 16px;
   color: #5D6071;
 }
-hr.card-divider {
-  border: 0px solid #abaebb;
-  border-top-width: 2px;
-  margin: 16px 0;
-  @media (max-width: $breakpoint-mobile) {
+@media (min-width: $breakpoint-mobile + 1) {
+  hr.card-divider {
+    display: block;
+    border: 0;
+    height: 48px;
+    background-color: #f2f3f3;
+    margin: 16px -40px 16px -190px;
+  }
+  hr.card-divider::before {
+    display: block;
+    height: 16px;
+    width: 100%;
+    background-color: white;
+    content: " ";
+    border-radius: 0 0 8px 8px;
+  }
+  hr.card-divider::after {
+    display: block;
+    height: 16px;
+    width: 100%;
+    background-color: white;
+    content: " ";
+    border-radius: 8px 8px 0 0;
+    margin-top: 16px;
+  }
+}
+@media (max-width: $breakpoint-mobile) {
+  hr.card-divider {
     border: 0px solid #dbdfe2;
     border-top-width: 16px;
     margin: 16px -16px;
