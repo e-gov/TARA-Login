@@ -62,8 +62,7 @@ gulp.task('build:css', function() {
   return gulp
     .src(config.SRC.SASS)
     .pipe(sourcemaps.init())
-    .pipe(sass({outputStyle: 'compressed'})
-    .on('error', sass.logError))
+    .pipe(sass({outputStyle: 'compressed'}))
     .pipe(autoprefixer())
     .pipe(concat('main.css'))
     .pipe(gulp.dest(config.DEST.CSS))
