@@ -124,6 +124,13 @@
         display: none;
       }
     }
+    & .alert {
+      margin-bottom: 20px;
+      text-align: center;
+      @media (max-width: $breakpoint-mobile) {
+        margin: 0 -15px;
+      }
+    }
   }
   &__warning {
       display: none;

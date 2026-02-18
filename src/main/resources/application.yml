@@ -97,6 +97,7 @@ tara:
     x-road-server-connect-timeout-in-milliseconds: 5000
   alerts:
     refresh-alerts-interval-in-milliseconds: 10000
+    smart-id-info-alert-enabled: false
 
 spring:
   application:

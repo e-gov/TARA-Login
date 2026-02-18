@@ -140,6 +140,10 @@ public class ThymeleafSupport {
         return getStaticAlert().isPresent();
     }
 
+    public boolean isSmartIdInfoAlertEnabled() {
+        return alertsConfigurationProperties.isSmartIdInfoAlertEnabled();
+    }
+
     public String getErrorReportEmail() {
         return authConfigurationProperties.getErrorReportEmail();
     }

@@ -168,6 +168,13 @@
     border-width: 2px;
   }
 }
+.alert-info {
+  background-color: #eaf6ff;
+  border: 4px solid #337bb5;
+  @media (max-width: $breakpoint-mobile) {
+    border-width: 2px;
+  }
+}
 .alert-neutral {
   background-color: #fff;
 }

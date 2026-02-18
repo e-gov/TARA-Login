@@ -33,6 +33,8 @@ public class AlertsConfigurationProperties {
 
     private StaticAlert staticAlert;
 
+    private boolean smartIdInfoAlertEnabled;
+
     @Data
     public static class StaticAlert {
         private List<MessageTemplate> messageTemplates = new ArrayList<>();

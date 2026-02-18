@@ -39,6 +39,14 @@
             </div>
         </div>
         <div class="logo-separator-mobile"></div>
+        <!--/* The following <div> element is temporary: it notifies the users of new ways of Smart-ID authentication */-->
+        <div th:if="${tab_id == 'smart-id' && @thymeleafSupport.isSmartIdInfoAlertEnabled()}">
+            <div class="alert alert-info">
+                <span th:attr="data-innerhtml-non-sid-device=#{message.smart-id.new-info-desktop},
+                               data-innerhtml-sid-device=#{message.smart-id.new-info-mobile}"></span>
+            </div>
+            <div class="logo-separator-mobile"></div>
+        </div>
         <div class="c-tab-login__content-wrap">
             <div class="c-tab-login__content-icon" aria-hidden="true">
                 <!--/* Fixing too long base64 string. Solution based on https://stackoverflow.com/a/76221681 */-->
