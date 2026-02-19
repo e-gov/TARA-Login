@@ -222,11 +222,13 @@
     // Use `unquote` to use run-time CSS `min` function instead of SCSS compile-time `min` function.
     width: unquote('min(#{$max-width}, 100%)');
     justify-content: center;
+    flex-wrap: wrap; // Required for `align-content` to work on iOS Safari
     align-content: center;
     aspect-ratio: 1;
   }
   &__qr-code svg {
     display: block;
+    width: 100%;
   }
   &__qr-code .loadersmall {
     margin: 0;

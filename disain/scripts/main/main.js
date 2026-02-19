@@ -36,6 +36,10 @@ jQuery(function ($) {
         const linkElement = $(this).find('.c-tab-login__nav-link');
         const tabId = linkElement.attr('data-tab');
         const enabledAuthMethodsElement = document.getElementById("enabled-auth-methods");
+        // If the element is not present, we aren't on a view where hiding certain auth methods is required.
+        if(enabledAuthMethodsElement == null) {
+            return;
+        }
         const enabledAuthMethods = JSON.parse(enabledAuthMethodsElement.textContent);
 
         // Keep ID-card hidden for mobile devices
