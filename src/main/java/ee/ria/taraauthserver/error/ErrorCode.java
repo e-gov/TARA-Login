@@ -30,6 +30,7 @@ public enum ErrorCode {
     SID_USER_ACCOUNT_NOT_FOUND("message.smart-id.error.user-account-not-found"),
     SID_USER_REFUSED_CONFIRMATIONMESSAGE("message.smart-id.error.user-refused-confirmation-message"),
     SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE("message.smart-id.error.user-refused-confirmation-message-with-vc-choice"),
+    SID_COUNTRY_NOT_ALLOWED("message.smart-id.error.country-not-allowed"),
     SID_VALIDATION_ERROR("message.error.general"),
     MID_INTEGRATION_ERROR("message.error.general"),
     MID_VALIDATION_ERROR("message.error.general"),

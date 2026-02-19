@@ -10,6 +10,7 @@ import ee.ria.taraauthserver.authentication.smartid.SmartIdExceptionTranslator;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
+import ee.ria.taraauthserver.error.exceptions.SidCountryNotAllowedException;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraSession.SidAuthenticationResult;
@@ -148,12 +149,13 @@ public class AuthSidWeb2AppService {
         try {
             AuthenticationIdentity authIdentity = validateFinalAuthenticationResult(
                     taraSession, sessionStatus, userChallengeVerifier, sessionSecretDigest, urlToken);
+            validateAuthenticationCountry(authIdentity);
             updateSession(taraSession, new SmartIdAuthenticationSuccessfulSessionUpdate(
                     authIdentity, smartIdConfigurationProperties.getLevelOfAssurance()));
-            statisticsLogger.logExternalTransaction(taraSession);
+            logSuccessToStatisticsLog(taraSession);
         } catch (Exception e) {
             handleSidAuthenticationException(taraSession, e);
-            handleStatisticsLogging(taraSession, e);
+            logErrorToStatisticsLog(taraSession, e);
         } finally {
             taraSession.setSmartIdWeb2AppSession(null);
         }
@@ -209,7 +211,7 @@ public class AuthSidWeb2AppService {
         } catch (Exception e) {
             updateSession(taraSession, new CreateNewSmartIdAuthenticationResultSessionUpdate(null));
             handleSidAuthenticationException(taraSession, e);
-            handleStatisticsLogging(taraSession, e);
+            logErrorToStatisticsLog(taraSession, e);
             throw e;
         } finally {
             span.end();
@@ -242,9 +244,9 @@ public class AuthSidWeb2AppService {
         span.setName(ElasticApmUtil.currentMethodName());
         span.setStartTimestamp(
                 now()
-                .plus(200, MILLIS)
-                .minus(smartIdConfigurationProperties.getDelayStatusPollingStart())
-                .toEpochMilli() * 1_000);
+                        .plus(200, MILLIS)
+                        .minus(smartIdConfigurationProperties.getDelayStatusPollingStart())
+                        .toEpochMilli() * 1_000);
         try (final Scope scope = span.activate()) {
             SessionStatusPoller sessionStatusPoller = sidClient.getSessionStatusPoller();
             log.info("Starting Smart-ID session status polling with id: {}",
@@ -254,7 +256,7 @@ public class AuthSidWeb2AppService {
             updateSession(taraSession, new SaveSmartIdWeb2AppSessionStatusSessionUpdate(sessionStatus));
         } catch (Exception ex) {
             handleSidAuthenticationException(taraSession, ex);
-            handleStatisticsLogging(taraSession, ex);
+            logErrorToStatisticsLog(taraSession, ex);
         } finally {
             span.end();
         }
@@ -309,6 +311,12 @@ public class AuthSidWeb2AppService {
                 smartIdConfigurationProperties.getSchemaName());
     }
 
+    private void validateAuthenticationCountry(AuthenticationIdentity authIdentity) {
+        if (!smartIdConfigurationProperties.isAuthenticationFromCountryAllowed(authIdentity.getCountry())) {
+            throw new SidCountryNotAllowedException(authIdentity.getCountry());
+        }
+    }
+
     private void handleSidAuthenticationException(TaraSession taraSession, Exception ex) {
         ErrorCode errorCode = SmartIdExceptionTranslator.getErrorCode(ex);
         if (SmartIdExceptionTranslator.isTechnicalError(errorCode)) {
@@ -323,8 +331,12 @@ public class AuthSidWeb2AppService {
         span.captureException(ex);
     }
 
-    private void handleStatisticsLogging(TaraSession taraSession, Exception ex) {
-        ErrorCode errorCode = taraSession.getAuthenticationResult().getErrorCode();
+    private void logSuccessToStatisticsLog(TaraSession session) {
+        statisticsLogger.logExternalTransaction(session);
+    }
+
+    private void logErrorToStatisticsLog(TaraSession taraSession, Exception ex) {
+        ErrorCode errorCode = SmartIdExceptionTranslator.getErrorCode(ex);
         if (SmartIdExceptionTranslator.isTechnicalError(errorCode)) {
             statisticsLogger.logExternalTransaction(taraSession, ex);
         } else {

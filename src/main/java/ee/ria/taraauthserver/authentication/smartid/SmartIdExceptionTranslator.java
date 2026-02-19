@@ -2,6 +2,7 @@ package ee.ria.taraauthserver.authentication.smartid;
 
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
+import ee.ria.taraauthserver.error.exceptions.SidCountryNotAllowedException;
 import ee.sk.smartid.exception.SessionSecretMismatchException;
 import ee.sk.smartid.exception.UnprocessableSmartIdResponseException;
 import ee.sk.smartid.exception.useraccount.CertificateLevelMismatchException;
@@ -22,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static ee.ria.taraauthserver.error.ErrorCode.ERROR_GENERAL;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_COUNTRY_NOT_ALLOWED;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_DOCUMENT_UNUSABLE;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_INTERACTION_NOT_SUPPORTED;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_INTERNAL_ERROR;
@@ -55,7 +57,8 @@ public class SmartIdExceptionTranslator {
             entry(ServiceNotAvailableException.class, SID_INTERNAL_ERROR),
             entry(UnprocessableSmartIdResponseException.class, SID_VALIDATION_ERROR),
             entry(CertificateLevelMismatchException.class, SID_VALIDATION_ERROR),
-            entry(SessionSecretMismatchException.class, SID_VALIDATION_ERROR)
+            entry(SessionSecretMismatchException.class, SID_VALIDATION_ERROR),
+            entry(SidCountryNotAllowedException.class, SID_COUNTRY_NOT_ALLOWED)
     );
 
     private static final Set<ErrorCode> TECHNICAL_ERRORS = Set.of(

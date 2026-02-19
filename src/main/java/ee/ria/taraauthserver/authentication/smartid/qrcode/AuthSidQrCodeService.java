@@ -11,6 +11,7 @@ import ee.ria.taraauthserver.authentication.smartid.SmartIdExceptionTranslator;
 import ee.ria.taraauthserver.authentication.smartid.SmartIdSessionStatus;
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
+import ee.ria.taraauthserver.error.exceptions.SidCountryNotAllowedException;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.update.AuthenticationFailedSessionUpdate;
@@ -126,6 +127,7 @@ public class AuthSidQrCodeService {
         try {
             initSmartIdSession(session);
             AuthenticationIdentity authenticationIdentity = fetchSmartIdAuthenticationResult(session);
+            validateAuthenticationCountry(authenticationIdentity);
             updateSession(session, new SmartIdAuthenticationSuccessfulSessionUpdate(
                     authenticationIdentity, smartIdConfigurationProperties.getLevelOfAssurance()
             ));
@@ -161,7 +163,7 @@ public class AuthSidQrCodeService {
         Span span = ElasticApm.currentSpan().startSpan("app", "SID", "poll")
                 .setName(ElasticApmUtil.currentMethodName())
                 .setStartTimestamp(ElasticApmUtil.currentTimeMicros(clock));
-        try(Scope scope = span.activate()) {
+        try (Scope scope = span.activate()) {
             Optional<RelyingParty> relyingParty = session.getSmartIdRelyingParty();
             String baseShortName = defaultIfNull(
                     session.getOriginalClient().getTranslatedShortName(),
@@ -201,7 +203,7 @@ public class AuthSidQrCodeService {
         Span span = ElasticApm.currentSpan().startSpan("app", "SID", "poll")
                 .setName(ElasticApmUtil.currentMethodName())
                 .setStartTimestamp(ElasticApmUtil.currentTimeMicros(clock));
-        try(Scope scope = span.activate()) {
+        try (Scope scope = span.activate()) {
             TaraSession.SmartIdQrCodeSession smartIdQrCodeSession = session.getSmartIdQrCodeSession();
             String sessionId = smartIdQrCodeSession.getSessionId();
             SessionStatus sessionStatus = smartIdClient.getSessionStatusPoller().fetchFinalSessionStatus(sessionId);
@@ -231,6 +233,12 @@ public class AuthSidQrCodeService {
         }
         session.setAttribute(TARA_SESSION, taraSession);
         sessionRepository.save(session);
+    }
+
+    private void validateAuthenticationCountry(AuthenticationIdentity authIdentity) {
+        if (!smartIdConfigurationProperties.isAuthenticationFromCountryAllowed(authIdentity.getCountry())) {
+            throw new SidCountryNotAllowedException(authIdentity.getCountry());
+        }
     }
 
     private void logSuccessToStatisticsLog(TaraSession session) {

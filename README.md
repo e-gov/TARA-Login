@@ -208,6 +208,7 @@ Table 1.4.3 - Integration with the [SK SID service](https://github.com/SK-EID/sm
 | `tara.auth-methods.smart-id.delay-initiate-sid-session-in-milliseconds` | No | Delay before initiating Smart-ID session after verification code is displayed. Default `3000` |
 | `tara.auth-methods.smart-id.delay-status-polling-start-in-milliseconds` | No | Delay before long polling. Default `500` |
 | `tara.auth-methods.smart-id.web2app.frontend-polling-interval-in-milliseconds` | No | Interval between status polling queries in Smart-ID Web2App flow (from UI to tara-login-service). Default `1000` |
+| `tara.auth-methods.smart-id.allowed-countries` | No | List of ISO 3166-1 alpha-2 country codes that are allowed to use Smart-ID QR and Web2App flows. If the list is empty, all countries are allowed. Example `EE, LV, LT` Default `EE` |
 
 <a name="esteid_conf"></a>
 ### 1.5 ID-card auth method

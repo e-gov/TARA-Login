@@ -305,6 +305,7 @@ public abstract class BaseTest {
     protected void assertMessageWithMarkerIsLogged(Class<?> loggerClass, Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String exactMessage, String markerValuePrefix, boolean loggedOnce) {
         Stream<ILoggingEvent> eventStream = mockAppender.list.stream()
                 .filter(e -> (loggerClass == null || e.getLoggerName().equals(loggerClass.getCanonicalName())) &&
+                        e.getLevel().equals(loggingLevel) &&
                         e.getMarker() != null &&
                         e.getFormattedMessage().equals(exactMessage));
         if (additionalFilter != null) {

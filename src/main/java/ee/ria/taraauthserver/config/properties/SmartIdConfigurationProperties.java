@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.config.properties;
 
 import ee.ria.taraauthserver.authentication.RelyingParty;
+import ee.ria.taraauthserver.utils.Iso3166Alpha2CountryCodes;
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -12,6 +13,8 @@ import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.Set;
 
 import static java.time.temporal.ChronoUnit.MILLIS;
 
@@ -65,6 +68,9 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
 
     private int delayInitiateSidSessionInMilliseconds = 3000;
 
+    @Iso3166Alpha2CountryCodes
+    private Set<String> allowedCountries;
+
     private int delayStatusPollingStartInMilliseconds = 500;
 
     public Duration getDelayInitiateSidSession() {
@@ -73,6 +79,13 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
 
     public Duration getDelayStatusPollingStart() {
         return Duration.of(delayStatusPollingStartInMilliseconds, MILLIS);
+    }
+
+    public boolean isAuthenticationFromCountryAllowed(String country) {
+        if (allowedCountries == null || allowedCountries.isEmpty()) {
+            return true;
+        }
+        return allowedCountries.contains(country);
     }
 
     @PostConstruct

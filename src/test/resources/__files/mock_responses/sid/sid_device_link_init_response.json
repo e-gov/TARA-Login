@@ -1,0 +1,6 @@
+{
+  "sessionID": "de305d54-75b4-431b-adb2-eb6b9e546014",
+  "sessionToken": "test-session-token",
+  "sessionSecret": "dGVzdC1zZWNyZXQ",
+  "deviceLinkBase": "https://localhost:9877/device-link"
+}
