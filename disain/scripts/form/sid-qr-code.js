@@ -1,6 +1,9 @@
 (function () {
 
     const POLL_INTERVAL_MS = 1000;
+    const RETRYABLE_HTTP_STATUS_CODES = new Set([408, 502, 503, 504]);
+    const MAX_RETRY_DURATION_MS = 30000;
+    const MAX_POLL_DURATION_MS = 300000;
     /* QR codes expire after a certain amount of time, scanning such QR codes with Smart-ID app will fail. The timeout
     *  is not documented, so we have to use our best guess. */
     const QR_CODE_MAX_AGE_MS = 5000;
@@ -8,7 +11,8 @@
     const csrfToken = document.querySelector('meta[name="_csrf"]').content;
     const qrCodeEl = document.getElementById('sidQrCode');
 
-    let pollStartMs = 0;
+    const pollSessionStartMs = Date.now();
+    let firstRetryMs = null;
     let qrCodeExpirationTimeout = null;
     let pollAbortController = new AbortController();
 
@@ -35,6 +39,23 @@
             ]),
             credentials: 'include'
         });
+    }
+
+    function scheduleNextPoll(pollStartMs) {
+        const pollDurationMs = Date.now() - pollStartMs;
+        setTimeout(doPoll, Math.max(0, POLL_INTERVAL_MS - pollDurationMs));
+    }
+
+    function scheduleRetry(pollStartMs) {
+        const now = Date.now();
+        if (firstRetryMs === null) {
+            firstRetryMs = now;
+        }
+        if (now - firstRetryMs >= MAX_RETRY_DURATION_MS) {
+            setErrorState({});
+            return;
+        }
+        scheduleNextPoll(pollStartMs);
     }
 
     function showQrCode(qrCodeHtml) {
@@ -107,15 +128,37 @@
         if (pollAbortController.signal.aborted) {
             return;
         }
-        pollStartMs = Date.now();
+        if (Date.now() - pollSessionStartMs >= MAX_POLL_DURATION_MS) {
+            setErrorState({});
+            return;
+        }
+        const pollStartMs = Date.now();
+        let response;
         try {
-            const response = await pollStatus();
-            if (!response.ok) {
-                throw new Error('Polling status returned HTTP error ' + response.status + ' ' + response.statusText);
+            response = await pollStatus();
+        } catch (fetchError) {
+            if (pollAbortController.signal.aborted) {
+                return;
             }
+            // Network errors and request timeouts are treated as transient — retry within the allowed window.
+            scheduleRetry(pollStartMs);
+            return;
+        }
+
+        if (!response.ok) {
+            if (RETRYABLE_HTTP_STATUS_CODES.has(response.status)) {
+                scheduleRetry(pollStartMs);
+            } else {
+                const errorBody = await response.json().catch(_ => ({}));
+                setErrorState(errorBody);
+            }
+            return;
+        }
+
+        try {
             const responseBody = await response.json();
             switch (responseBody.status) {
-                case 'PENDING':
+                case 'PENDING': {
                     const deviceLink = responseBody.deviceLink;
                     if (deviceLink == null) {
                         break;
@@ -123,23 +166,22 @@
                     const qrCodeHtml = await createQrCodePromise(deviceLink);
                     showQrCode(qrCodeHtml);
                     break;
+                }
                 case 'COMPLETED':
                     acceptAuthentication();
-                    break;
+                    return;
                 case 'FAILED':
                 default:
                     setErrorState(responseBody);
-                    break;
+                    return;
             }
         } catch (error) {
-            if (error != null && error.name === 'AbortError') {
-                return;
-            }
             // If any kind of unexpected JS Error is thrown, we don't want to display the technical message.
             setErrorState({});
+            return;
         }
-        const pollDurationMs = Date.now() - pollStartMs;
-        setTimeout(doPoll, Math.max(0, POLL_INTERVAL_MS - pollDurationMs));
+        firstRetryMs = null;
+        scheduleNextPoll(pollStartMs);
     }
 
     function hideEl(el) {
@@ -157,5 +199,3 @@
     doPoll();
 
 })();
-
-
