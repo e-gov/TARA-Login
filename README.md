@@ -284,13 +284,13 @@ Table 1.5.7.1 - Configuration that applies to both primary and fallback OCSP ser
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `tara.auth-methods.id-card.ocsp.certificate-chains[0].{primary-server\|first-fallback-server\|second-fallback-server}.url` | Yes | Required OCSP server URL. Example `http://ocsp-test.eidpki.ee` |
 | `tara.auth-methods.id-card.ocsp.certificate-chains[0].{primary-server\|first-fallback-server\|second-fallback-server}.nonce-enabled` | No |  Determines whether the OCSP nonce extension is enabled. When enabled a random nonce is sent with the OCSP request and verified in response. Default `true` |
 
 Table 1.5.7.2 - Configuration that applies to fallback OCSP servers.
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
+| `tara.auth-methods.id-card.ocsp.certificate-chains[0].{first-fallback-server\|second-fallback-server}.url` | Yes | Required OCSP server URL. Example `http://ocsp.sk.ee/` |
 | `tara.auth-methods.id-card.ocsp.certificate-chains[0].{first-fallback-server\|second-fallback-server}.responder-certificate-cn` | No | Responder certificate CN. Example `local-ocsp` |
 
 Example: using SK's AIA OCSP as the primary service, SK's commercial OCSP (with subscription only) as the first fallback

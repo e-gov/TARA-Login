@@ -6,9 +6,9 @@ import eu.webeid.ocsp.client.OcspClient;
 import eu.webeid.ocsp.client.OcspClientImpl;
 import eu.webeid.ocsp.exceptions.OCSPCertificateException;
 import eu.webeid.ocsp.service.AiaOcspServiceConfiguration;
+import eu.webeid.ocsp.service.FallbackOcspServiceConfiguration;
 import eu.webeid.ocsp.service.OcspServiceProvider;
 import eu.webeid.resilientocsp.ResilientOcspCertificateRevocationChecker;
-import eu.webeid.resilientocsp.service.FallbackOcspServiceConfiguration;
 import eu.webeid.security.certificate.CertificateValidator;
 import eu.webeid.security.challenge.ChallengeNonceGenerator;
 import eu.webeid.security.challenge.ChallengeNonceGeneratorBuilder;
@@ -160,10 +160,9 @@ public class IDCardConfiguration {
 
     private static AiaOcspServiceConfiguration getAiaOcspServiceConfiguration(AuthConfigurationProperties.Ocsp ocsp,
                                                                               Map<String, X509Certificate> trustedCertificatesMap) throws JceException {
-        // TODO Handle URLs ending/not ending with a slash
-        List<URI> nonceDisabledOcspUrls = ocsp.getCertificateChains().stream()
+        List<String> nonceDisabledIssuerCNs = ocsp.getCertificateChains().stream()
                 .filter(certificateChain -> !certificateChain.getPrimaryServer().isNonceEnabled())
-                .map(certificateChain -> URI.create(certificateChain.getPrimaryServer().getUrl()))
+                .map(AuthConfigurationProperties.CertificateChain::getIssuerCn)
                 .toList();
 
         Set<TrustAnchor> trustedCACertificateAnchors = CertificateValidator
@@ -171,7 +170,7 @@ public class IDCardConfiguration {
         CertStore trustedCACertificateCertStore = CertificateValidator
                 .buildCertStoreFromCertificates(trustedCertificatesMap.values());
         return new AiaOcspServiceConfiguration(
-                nonceDisabledOcspUrls,
+                nonceDisabledIssuerCNs,
                 trustedCACertificateAnchors,
                 trustedCACertificateCertStore
         );
@@ -190,30 +189,30 @@ public class IDCardConfiguration {
                 continue;
             }
 
+            AuthConfigurationProperties.FallbackOcspServer secondFallbackServer = chain.getSecondFallbackServer();
+            FallbackOcspServiceConfiguration secondFallbackConfiguration = null;
+            if (secondFallbackServer != null) {
+                secondFallbackConfiguration = new FallbackOcspServiceConfiguration(
+                        URI.create(secondFallbackServer.getUrl()),
+                        trustedCertificatesMap.get(getResponderCertificateCn(secondFallbackServer, chain)),
+                        secondFallbackServer.isNonceEnabled(),
+                        null
+                );
+            }
+
             FallbackOcspServiceConfiguration firstFallbackConfiguration = new FallbackOcspServiceConfiguration(
-                    URI.create(chain.getPrimaryServer().getUrl()),
                     URI.create(firstFallbackServer.getUrl()),
                     trustedCertificatesMap.get(getResponderCertificateCn(firstFallbackServer, chain)),
-                    firstFallbackServer.isNonceEnabled()
+                    firstFallbackServer.isNonceEnabled(),
+                    secondFallbackConfiguration
             );
             log.info("Found first fallback configuration for issuer {}", issuerCn);
             logFallbackOcspServiceConfiguration(firstFallbackConfiguration);
-            fallbackOcspServiceConfigurationList.add(firstFallbackConfiguration);
-
-            AuthConfigurationProperties.FallbackOcspServer secondFallbackServer = chain.getSecondFallbackServer();
-            if (secondFallbackServer == null) {
-                continue;
+            if (secondFallbackConfiguration != null) {
+                log.info("Found second fallback configuration for issuer {}", issuerCn);
+                logFallbackOcspServiceConfiguration(secondFallbackConfiguration);
             }
-
-            FallbackOcspServiceConfiguration secondFallbackConfiguration = new FallbackOcspServiceConfiguration(
-                    URI.create(firstFallbackServer.getUrl()),
-                    URI.create(secondFallbackServer.getUrl()),
-                    trustedCertificatesMap.get(getResponderCertificateCn(secondFallbackServer, chain)),
-                    secondFallbackServer.isNonceEnabled()
-            );
-            log.info("Found second fallback configuration for issuer {}", issuerCn);
-            logFallbackOcspServiceConfiguration(secondFallbackConfiguration);
-            fallbackOcspServiceConfigurationList.add(secondFallbackConfiguration);
+            fallbackOcspServiceConfigurationList.add(firstFallbackConfiguration);
         }
         return fallbackOcspServiceConfigurationList;
     }
@@ -226,9 +225,14 @@ public class IDCardConfiguration {
     }
 
     private static void logFallbackOcspServiceConfiguration(FallbackOcspServiceConfiguration configuration) {
-        log.info("Created a fallback configuration. Primary URL: {}, fallback URL: {}, does support nonce: {}",
-                configuration.getOcspServiceAccessLocation(),
-                configuration.getFallbackOcspServiceAccessLocation(),
+        String nextFallbackAccessLocation = null;
+        if (configuration.getNextFallbackConfiguration() != null
+                && configuration.getNextFallbackConfiguration().getAccessLocation() != null) {
+            nextFallbackAccessLocation = configuration.getNextFallbackConfiguration().getAccessLocation().toString();
+        }
+        log.info("Created a fallback configuration. Fallback URL: {}, next fallback URL: {}, does support nonce: {}",
+                configuration.getAccessLocation(),
+                nextFallbackAccessLocation,
                 configuration.doesSupportNonce()
         );
     }

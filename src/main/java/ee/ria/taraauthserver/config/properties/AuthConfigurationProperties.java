@@ -325,9 +325,6 @@ public class AuthConfigurationProperties {
     @Data
     public abstract static class OcspServer {
 
-        @NotEmpty
-        private String url;
-
         private boolean nonceEnabled = true;
     }
 
@@ -337,6 +334,9 @@ public class AuthConfigurationProperties {
     @EqualsAndHashCode(callSuper = true)
     @Data
     public static class FallbackOcspServer extends OcspServer {
+
+        @NotEmpty
+        private String url;
 
         private String responderCertificateCn;
     }
