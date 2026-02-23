@@ -54,6 +54,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 import static ee.ria.taraauthserver.session.SessionUtils.assertSessionInState;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_SID_QR_CODE;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_QR_CODE;
@@ -133,21 +134,24 @@ public class AuthSidQrCodeService {
             ));
             logSuccessToStatisticsLog(session);
         } catch (Exception e) {
-            ErrorCode errorCode = SmartIdExceptionTranslator.getErrorCode(e);
-            if (SmartIdExceptionTranslator.isTechnicalError(errorCode)) {
-                log.atError()
-                        .addMarker(append("error.code", errorCode.name()))
-                        .setCause(e)
-                        .log("Smart-ID authentication exception: {}",
-                                value("error.message", e.getMessage()));
-            } else {
-                log.atWarn()
-                        .log("Smart-ID authentication failed: {}, Error code: {}",
-                                value("error.message", e.getMessage()),
-                                value("error.code", errorCode.name()));
+            session = getSession(session.getSessionId());
+            if(session != null && session.getState() != AUTHENTICATION_CANCELED) {
+                ErrorCode errorCode = SmartIdExceptionTranslator.getErrorCode(e);
+                if (SmartIdExceptionTranslator.isTechnicalError(errorCode)) {
+                    log.atError()
+                            .addMarker(append("error.code", errorCode.name()))
+                            .setCause(e)
+                            .log("Smart-ID authentication exception: {}",
+                                    value("error.message", e.getMessage()));
+                } else {
+                    log.atWarn()
+                            .log("Smart-ID authentication failed: {}, Error code: {}",
+                                    value("error.message", e.getMessage()),
+                                    value("error.code", errorCode.name()));
+                }
+                updateSession(session, new AuthenticationFailedSessionUpdate(errorCode));
+                logErrorToStatisticsLog(session, errorCode, e);
             }
-            updateSession(session, new AuthenticationFailedSessionUpdate(errorCode));
-            logErrorToStatisticsLog(session, errorCode, e);
         }
     }
 
@@ -223,6 +227,14 @@ public class AuthSidQrCodeService {
         } finally {
             span.end(ElasticApmUtil.currentTimeMicros(clock));
         }
+    }
+
+    private TaraSession getSession(@NonNull String sessionId) {
+        Session session = sessionRepository.findById(sessionId);
+        if (session == null) {
+            return null;
+        }
+        return session.getAttribute(TARA_SESSION);
     }
 
     private void updateSession(@NonNull TaraSession taraSession, TaraSessionUpdate update) {
