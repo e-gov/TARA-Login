@@ -198,6 +198,9 @@ body.is-mobile-subview {
   white-space: nowrap;
   border: 0;
 }
+.nobr {
+  white-space: nowrap;
+}
 // Device-specific elements are initially hidden and made visible by JavaScript code after device detection.
 // Both hide-on-sid-device and show-on-sid-device classes use user-agent instead of screen width to detect
 // device type: phone and tablet are considered to be capable of running Smart-ID app, but desktop computer is not.

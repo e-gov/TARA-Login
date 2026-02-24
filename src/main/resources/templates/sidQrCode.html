@@ -20,10 +20,10 @@
                                         th:utext="{message.smart-id.qr-code.instructions}"></th:block>
                                 <th:block th:if="${!#strings.isEmpty(@thymeleafSupport.getServiceName())}"
                                           th:utext="${#messages.msg('message.smart-id.qr-code.instructions-with-service-name', @thymeleafSupport.getServiceName())}"></th:block>
-                                <br/>
                                 <a target="_blank"
                                    th:text="#{label.smart-id.qr-code.instructions.learn-more}"
-                                   th:href="#{link.smart-id.qr-code.instructions.learn-more}"></a>
+                                   th:href="#{link.smart-id.qr-code.instructions.learn-more}"
+                                   class="nobr"></a>
                             </p>
                             <div>
                                 <div id="sidQrCode" class="c-tab-login__qr-code">
