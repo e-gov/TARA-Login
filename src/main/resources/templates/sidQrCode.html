@@ -17,7 +17,7 @@
                         <div class="c-tab-login__qr-code-card">
                             <p>
                                 <th:block th:if="${#strings.isEmpty(@thymeleafSupport.getServiceName())}"
-                                        th:utext="{message.smart-id.qr-code.instructions}"></th:block>
+                                        th:utext="#{message.smart-id.qr-code.instructions}"></th:block>
                                 <th:block th:if="${!#strings.isEmpty(@thymeleafSupport.getServiceName())}"
                                           th:utext="${#messages.msg('message.smart-id.qr-code.instructions-with-service-name', @thymeleafSupport.getServiceName())}"></th:block>
                                 <a target="_blank"
