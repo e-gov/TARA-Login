@@ -13,7 +13,6 @@ import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.Set;
 
 import static java.time.temporal.ChronoUnit.MILLIS;
@@ -93,6 +92,11 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
         Assert.isTrue(readTimeoutMilliseconds >= longPollingTimeoutMilliseconds + 5000, "Smart-ID read timeout must be at least 5 seconds longer than its long polling timeout.");
         Assert.isTrue(notificationBased.isEnabled() || web2app.isEnabled() || qrCode.isEnabled(),
                 "If Smart-ID is enabled, then at least one of the Smart-ID authentication flows must be enabled: 'notification-based', 'web2app' or 'qr-code'");
+        Assert.isTrue(web2app.isEnabled() == qrCode.isEnabled(),
+                "Only enabling one of 'web2app' and 'qr-code' flows is currently not supported");
+        //TODO (AUT-2624): Remove
+        Assert.isTrue(notificationBased.isEnabled() && !(web2app.isEnabled() || qrCode.isEnabled()),
+                "Notification based flow can temporarily only be enabled when all other flows are disabled");
     }
 
     public RelyingParty getRelyingParty() {
