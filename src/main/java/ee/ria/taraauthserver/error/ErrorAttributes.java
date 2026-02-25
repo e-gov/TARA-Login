@@ -53,6 +53,7 @@ import static ee.ria.taraauthserver.error.ErrorCode.NOT_MID_CLIENT;
 import static ee.ria.taraauthserver.error.ErrorCode.NO_VALID_AUTHMETHODS_AVAILABLE;
 import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
 import static ee.ria.taraauthserver.error.ErrorCode.SESSION_STATE_INVALID;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_COUNTRY_NOT_ALLOWED;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_DOCUMENT_UNUSABLE;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_SESSION_TIMEOUT;
 import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_ACCOUNT_NOT_FOUND;
@@ -100,6 +101,7 @@ public class ErrorAttributes extends DefaultErrorAttributes {
             SID_USER_ACCOUNT_NOT_FOUND,
             SID_USER_REFUSED_CONFIRMATIONMESSAGE,
             SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE,
+            SID_COUNTRY_NOT_ALLOWED,
             IDC_CERT_EXPIRED,
             IDC_CERT_FORBIDDEN,
             IDC_REVOKED,
