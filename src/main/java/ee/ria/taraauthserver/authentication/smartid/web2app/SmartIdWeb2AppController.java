@@ -113,7 +113,7 @@ public class SmartIdWeb2AppController {
     public String authSidCallback(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession,
                                   @RequestParam String value) {
         log.info("Validating Smart-ID Web2App callback endpoint");
-        // An additional "pre-validation" check to show user nicer error message in case they have cancelled the authentication
+        // An additional "pre-validation" check to show user nicer error messages
         validateAuthenticationNotCancelled(taraSession, value);
         validateSession(taraSession,
                 POLL_SID_WEB2APP_STATUS,
@@ -173,12 +173,13 @@ public class SmartIdWeb2AppController {
     }
 
     private static void validateAuthenticationNotCancelled(TaraSession taraSession, String value) {
+        if (taraSession == null) {
+            throw new BadRequestException(ErrorCode.SID_WEB2APP_CALLBACK_SESSION_NOT_FOUND, "Session not found on Web2App callback");
+        }
         try {
-            Objects.requireNonNull(taraSession);
             AuthSidWeb2AppService.assertCallbackUrlTokenMatchesInitialToken(taraSession, value);
-        } catch(Exception e) {
-            ErrorCode errorCode = ErrorCode.SID_USER_CANCEL;
-            throw new BadRequestException(errorCode, errorCode.getMessage());
+        } catch (Exception e) {
+            throw new BadRequestException(ErrorCode.SID_WEB2APP_CALLBACK_VALUE_MISMATCH, e.getMessage());
         }
     }
 
