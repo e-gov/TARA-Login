@@ -140,7 +140,7 @@ tara:
       allowed-countries:
         - EE
       notification-based:
-        enabled: true
+        enabled: false
       web2app:
         enabled: true
         frontend-polling-interval-in-milliseconds: 1000

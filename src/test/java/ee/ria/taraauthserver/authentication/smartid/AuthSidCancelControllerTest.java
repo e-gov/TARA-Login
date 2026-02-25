@@ -11,6 +11,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
+import org.springframework.test.context.TestPropertySource;
 
 import static ch.qos.logback.classic.Level.ERROR;
 import static ch.qos.logback.classic.Level.INFO;
@@ -25,6 +26,13 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+@TestPropertySource(
+        locations = "classpath:application.yml",
+        properties = {
+                "tara.auth-methods.smart-id.notification-based.enabled=true",
+                "tara.auth-methods.smart-id.web2app.enabled=false",
+                "tara.auth-methods.smart-id.qr-code.enabled=false"
+        })
 class AuthSidCancelControllerTest extends BaseTest {
 
     @Autowired

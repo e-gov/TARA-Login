@@ -6,6 +6,7 @@ import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
 
 import static ch.qos.logback.classic.Level.ERROR;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.SMART_ID;
@@ -15,6 +16,13 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@TestPropertySource(
+        locations = "classpath:application.yml",
+        properties = {
+                "tara.auth-methods.smart-id.notification-based.enabled=true",
+                "tara.auth-methods.smart-id.web2app.enabled=false",
+                "tara.auth-methods.smart-id.qr-code.enabled=false"
+        })
 class ErrorHandlerTest extends BaseTest {
 
     @Test
