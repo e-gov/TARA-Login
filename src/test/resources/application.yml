@@ -105,6 +105,8 @@ tara:
       fallback-ocsp:
         - url: https://localhost:9877/ocsp
           issuer-cn: TEST of ESTEID-SK 2015, TEST of ESTEID2018
+      filter-for-eidas-proxy:
+        forbidden-issuer-cns: []
     mobile-id:
       enabled: true
       level-of-assurance: HIGH

@@ -31,6 +31,7 @@ import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.openssl.jcajce.JceOpenSSLPKCS8DecryptorProviderBuilder;
 import org.bouncycastle.operator.InputDecryptorProvider;
 import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -41,7 +42,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
-import org.springframework.test.annotation.DirtiesContext;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -132,6 +132,12 @@ class IdCardLoginControllerTest extends BaseTest {
         ocspResponseTransformer.setSignerKey(responderKeys.getPrivate());
         ocspResponseTransformer.setThisUpdateProvider(() -> Date.from(Instant.now()));
         ocspResponseTransformer.setNonceResolver(nonce -> nonce);
+    }
+
+    @AfterEach
+    void tearDown() {
+        configurationPropertiesReloader.reload(configurationProperties);
+        configurationPropertiesReloader.reload(filterForEidasProxy);
     }
 
     @Test
@@ -484,12 +490,11 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    @DirtiesContext
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     @Tag(value = "OCSP_DISABLED")
     @Tag(value = "IDCARD_AUTH_SUCCESSFUL")
     void handleRequest_OcspDisabled_Success() {
-        configurationProperties.setOcspEnabled(false); // TODO AUT-857
+        configurationProperties.setOcspEnabled(false);
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
         given()
                 .body(createRequestBody())
@@ -756,7 +761,6 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    @DirtiesContext
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     @Tag(value = "OCSP_FAILOVER_CONF")
     @Tag(value = "IDCARD_AUTH_SUCCESSFUL")
@@ -944,10 +948,9 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    @DirtiesContext
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     void handleRequest_forbiddenClientId_Succeeds() {
-        configurationProperties.setOcspEnabled(false); // TODO AUT-857
+        configurationProperties.setOcspEnabled(false);
         filterForEidasProxy.setClientId("openIdDemo");
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
         given()
@@ -964,7 +967,6 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    @DirtiesContext
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     void handleRequest_forbiddenCertificateIssuerCN_Succeeds() {
         configurationProperties.setOcspEnabled(false);
@@ -984,7 +986,6 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    @DirtiesContext
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     void handleRequest_forbiddenClientIdAndforbiddenCertificateIssuerCN_Fails() {
         filterForEidasProxy.setClientId("openIdDemo");
@@ -1007,10 +1008,9 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    @DirtiesContext
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     void handleRequest_nonForbiddenClientId_Succeeds() {
-        configurationProperties.setOcspEnabled(false); // TODO AUT-857
+        configurationProperties.setOcspEnabled(false);
         filterForEidasProxy.setClientId("testID");
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
         given()
@@ -1027,10 +1027,9 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
-    @DirtiesContext
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     void handleRequest_nonForbiddenCertificateIssuerCN_Succeeds() {
-        configurationProperties.setOcspEnabled(false); // TODO AUT-857
+        configurationProperties.setOcspEnabled(false);
         filterForEidasProxy.setForbiddenIssuerCns(List.of("TEST of ESTEID-SK 2015"));
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
         given()

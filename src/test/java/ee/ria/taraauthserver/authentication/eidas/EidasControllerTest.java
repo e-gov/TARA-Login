@@ -11,13 +11,13 @@ import ee.ria.taraauthserver.session.TaraSession.OidcClient;
 import io.restassured.RestAssured;
 import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.test.annotation.DirtiesContext;
 
 import javax.cache.Cache;
 import java.util.HashMap;
@@ -56,6 +56,11 @@ public class EidasControllerTest extends BaseTest {
 
     @Autowired
     private Cache<String, String> eidasRelayStateCache;
+
+    @AfterEach
+    void tearDown() {
+        configurationPropertiesReloader.reload(eidasConfigurationProperties);
+    }
 
     @Test
     @Tag("CSRF_PROTECTION")
@@ -147,7 +152,7 @@ public class EidasControllerTest extends BaseTest {
     void eidasAuthInit_request_country_public_not_supported() {
         HashMap<SPType, List<String>> availableCountries = new HashMap<>(AVAILABLE_COUNTRIES);
         availableCountries.put(SPType.PUBLIC, List.of("CA", "LV", "LT"));
-        eidasConfigurationProperties.setAvailableCountries(availableCountries); // TODO AUT-857
+        eidasConfigurationProperties.setAvailableCountries(availableCountries);
         createEidasCountryStub("mock_responses/eidas/eidas-countries-response.json", 200);
         createEidasLoginStub("mock_responses/eidas/eidas-login-response.json", 200);
 
@@ -175,7 +180,7 @@ public class EidasControllerTest extends BaseTest {
     @Tag(value = "EIDAS_AUTH_INIT_REQUEST_CHECKS")
     void eidasAuthInit_request_country_private_not_supported() {
         HashMap<SPType, List<String>> availableCountries = new HashMap<>(AVAILABLE_COUNTRIES);
-        eidasConfigurationProperties.setAvailableCountries(availableCountries); // TODO AUT-857
+        eidasConfigurationProperties.setAvailableCountries(availableCountries);
         createEidasCountryStub("mock_responses/eidas/eidas-countries-response.json", 200);
         createEidasLoginStub("mock_responses/eidas/eidas-login-response.json", 200);
 
@@ -202,10 +207,9 @@ public class EidasControllerTest extends BaseTest {
     }
 
     @Test
-    @DirtiesContext
     @Tag(value = "EIDAS_AUTH_INIT_GET_REQUEST")
     void eidasAuthInit_timeout_responds_with_502() {
-        eidasConfigurationProperties.setAvailableCountries(AVAILABLE_COUNTRIES); // TODO AUT-857
+        eidasConfigurationProperties.setAvailableCountries(AVAILABLE_COUNTRIES);
         createEidasCountryStub("mock_responses/eidas/eidas-countries-response.json", 200);
         wireMockServer.stubFor(any(urlPathMatching("/login"))
                 .willReturn(aResponse()
@@ -245,8 +249,6 @@ public class EidasControllerTest extends BaseTest {
                 .authenticationState(INIT_AUTH_PROCESS)
                 .authenticationResult(new TaraSession.EidasAuthenticationResult())
                 .clientAllowedScopes(List.of("eidas")).build();
-        await().atMost(FIVE_SECONDS)
-                .until(() -> eidasConfigurationProperties.getAvailableCountries().get(SPType.PUBLIC).size(), Matchers.equalTo(1)); // TODO AUT-857 Why is this needed? Side effect?
 
         given()
                 .filter(sessionFilter)
@@ -429,8 +431,6 @@ public class EidasControllerTest extends BaseTest {
     void eidasAuthInit_request_unsuccessful() {
         createEidasCountryStub("mock_responses/eidas/eidas-countries-response.json", 200);
         createEidasLoginStub(400);
-        await().atMost(TEN_SECONDS)
-                .until(() -> eidasConfigurationProperties.getAvailableCountries().get(SPType.PUBLIC).size(), Matchers.equalTo(1)); // TODO AUT-857 Why is this needed? Side effect?
 
         given()
                 .filter(MockSessionFilter.withTaraSession()
