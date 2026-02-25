@@ -173,40 +173,32 @@
                  layout:insert="~{fragments/logintabs :: content('smart-id')}"
                  aria-hidden="true" aria-labelledby="smart-id">
                 <th:block layout:fragment="login-form-content">
-                    <p th:attr="data-innerhtml-non-sid-device=${#messages.msg('label.smart-id.' + (#strings.isEmpty(@thymeleafSupport.getServiceName()) ? 'instruction-desktop' : 'instruction-desktop-with-short-name'), @thymeleafSupport.getServiceName())},
-                                data-innerhtml-sid-device=${#messages.msg('label.smart-id.' + (#strings.isEmpty(@thymeleafSupport.getServiceName()) ? 'instruction-mobile' : 'instruction-mobile-with-short-name'), @thymeleafSupport.getServiceName())}"
-                    ></p>
-                    <div class="c-form">
-                        <table role="presentation">
-                            <tbody>
-                            <tr id="sidWeb2AppLinkContainer" th:if="${enabledAuthMethods.smartIdFlows.web2app}" class="show-on-sid-device"
-                                th:attr="data-sid-web2app-poll-interval=${@environment.getProperty('tara.auth-methods.smart-id.web2app.frontend-polling-interval-in-milliseconds')}">
-                                <td></td>
-                                <td>
-                                    <button id="sidWeb2AppLink" class="c-btn c-btn--primary" th:text="#{label.common.login}"></button>
-                                </td>
-                            </tr>
-                            <tr th:if="${enabledAuthMethods.smartIdFlows.qrCode}">
-                                <td></td>
-                                <td>
-                                    <button type=submit form="sidQrCodeForm" class="hide-on-sid-device c-btn c-btn--primary"
-                                            th:text="#{label.common.login}"></button>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="c-form show-on-sid-device">
+                    <div th:if="${enabledAuthMethods.smartIdFlows.web2app && enabledAuthMethods.smartIdFlows.qrCode}"
+                         class="c-form show-on-sid-device">
+                        <p th:utext="${#messages.msg('label.smart-id.' + (#strings.isEmpty(@thymeleafSupport.getServiceName()) ? 'instruction-mobile' : 'instruction-mobile-with-short-name'), @thymeleafSupport.getServiceName())}"></p>
+                        <div id="sidWeb2AppLinkContainer" th:if="${enabledAuthMethods.smartIdFlows.web2app}"
+                            th:attr="data-sid-web2app-poll-interval=${@environment.getProperty('tara.auth-methods.smart-id.web2app.frontend-polling-interval-in-milliseconds')}">
+                            <button id="sidWeb2AppLink" class="c-btn c-btn--primary" th:text="#{label.common.login}"></button>
+                        </div>
                         <hr class="card-divider">
                         <h4 th:utext="#{label.smart-id.qr-code.account-in-another-device}"></h4>
                         <button type=submit form="sidQrCodeForm" class="btn-link">
                             <span th:text="#{label.smart-id.qr-code.show}"></span>
                         </button>
-                        <hr class="card-divider hide-in-desktop">
                     </div>
+                    <div th:if="${enabledAuthMethods.smartIdFlows.web2app && enabledAuthMethods.smartIdFlows.qrCode}"
+                         class="c-form hide-on-sid-device">
+                        <p th:utext="${#messages.msg('label.smart-id.' + (#strings.isEmpty(@thymeleafSupport.getServiceName()) ? 'instruction-desktop' : 'instruction-desktop-with-short-name'), @thymeleafSupport.getServiceName())}"></p>
+                        <div>
+                            <button type=submit form="sidQrCodeForm" class="c-btn c-btn--primary"
+                                    th:text="#{label.common.login}"></button>
+                        </div>
+                    </div>
+
                     <form id="sidQrCodeForm" method="POST" th:action="@{/auth/sid/qr-code/init}"></form>
 
                     <form th:if="${enabledAuthMethods.smartIdFlows.notificationBased}" th:action="@{/auth/sid/init}" method="post" id="smartIdForm" class="c-form">
+                        <p th:utext="${#messages.msg('label.smart-id.' + (#strings.isEmpty(@thymeleafSupport.getServiceName()) ? 'instruction-notification-flow' : 'instruction-notification-flow-with-short-name'), @thymeleafSupport.getServiceName())}"></p>
                         <table role="presentation">
                             <tbody>
                             <tr>
@@ -244,6 +236,7 @@
                             </tbody>
                         </table>
                     </form>
+                    <hr class="card-divider hide-in-desktop">
                 </th:block>
             </th:block>
 
