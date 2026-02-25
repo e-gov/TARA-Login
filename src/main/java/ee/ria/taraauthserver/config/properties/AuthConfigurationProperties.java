@@ -219,21 +219,33 @@ public class AuthConfigurationProperties {
     public static class IdCardAuthConfigurationProperties extends AuthMethodProperties {
 
         @NotNull
-        private String truststorePath;
-
-        private String truststoreType = "PKCS12";
-
-        @NotNull
-        private String truststorePassword;
+        @Valid
+        private TruststoreConfigurationProperties issuerTruststore;
 
         @NotNull
         private Ocsp ocsp;
 
         @PostConstruct
-        public void validateConfiguration() {
-            Assert.notNull(this.truststorePath, "Keystore location cannot be empty!");
-            Assert.notNull(this.truststorePassword, "Keystore password cannot be empty!");
+        public void logConfiguration() {
             log.info(append("tara.conf.auth-methods.id-card", this), "Using id-card configuration");
+        }
+    }
+
+    @Data
+    public static class TruststoreConfigurationProperties {
+
+        @NotNull
+        private String path;
+
+        private String type = "PKCS12";
+
+        @NotNull
+        private String password;
+
+        @PostConstruct
+        public void validateConfiguration() {
+            Assert.notNull(this.path, "Keystore location cannot be empty!");
+            Assert.notNull(this.password, "Keystore password cannot be empty!");
         }
     }
 
@@ -241,6 +253,10 @@ public class AuthConfigurationProperties {
     public static class Ocsp {
 
         private boolean enabled = true;
+
+        @NotNull
+        @Valid
+        private TruststoreConfigurationProperties responderTruststore;
 
         private Duration allowedResponseTimeSkew = Duration.ofMinutes(15);
 

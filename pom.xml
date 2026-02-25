@@ -37,7 +37,7 @@
         <smart-id.version>3.1</smart-id.version>
         <webeid.version>4.0.0-SNAPSHOT</webeid.version>
         <wiremock.version>3.13.2</wiremock.version>
-        <resilience4j.version>1.7.0</resilience4j.version>
+        <resilience4j.version>2.3.0</resilience4j.version>
     </properties>
 
     <dependencies>
@@ -68,6 +68,11 @@
                     <artifactId>resilience4j-timelimiter</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-vavr</artifactId>
+            <version>${resilience4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

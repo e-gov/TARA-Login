@@ -228,14 +228,13 @@ Table 1.5.2 - Assigning the Level of assurance to authentication method
 | :---------------- | :---------- | :----------------|
 | `tara.auth-methods.id-card.level-of-assurance` | Yes | Level of assurance of this auth method. Allowed values: `HIGH`, `SUBSTANTIAL`, `LOW`. |
 
-
-Table 1.5.3 - Configuring truststore for OCSP responder certificates
+Table 1.5.3 - Configuring truststore for issuer certificates
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `tara.auth-methods.id-card.truststore-path` | Yes | Path to truststore file. Example `file:src/test/resources/idcard-truststore-test.p12` |
-| `tara.auth-methods.id-card.truststore-type` | Yes | Type of the truststore from truststore-path. Example `PKCS12` |
-| `tara.auth-methods.id-card.truststore-password` | Yes | Password of the truststore from truststore-path. Example `changeit` |
+| `tara.auth-methods.id-card.issuer-truststore.path` | Yes | Path to truststore file. Example `file:src/test/resources/issuer-truststore-test.p12` |
+| `tara.auth-methods.id-card.issuer-truststore.type` | Yes | Type of the truststore from truststore path. Example `PKCS12` |
+| `tara.auth-methods.id-card.issuer-truststore.password` | Yes | Password of the truststore from truststore path. Example `changeit` |
 
 Table 1.5.4 - OCSP configuration
 
@@ -246,7 +245,15 @@ Table 1.5.4 - OCSP configuration
 | `tara.auth-methods.id-card.ocsp.primary-server-this-update-max-age` | No | Max age for OCSP response. Default `2m`. See [longer description](https://github.com/web-eid/web-eid-authtoken-validation-java/blob/v3.2.0/README.md?plain=1#L306). |
 | `tara.auth-methods.id-card.ocsp.request-timeout` | No | Max timeout for OCSP request. Default `3s`. See [longer description](https://github.com/web-eid/web-eid-authtoken-validation-java/blob/v3.2.0/README.md?plain=1#L302). |
 
-Table 1.5.5 - Explicit configuration of the primary OCSP server retry mechanism.
+Table 1.5.5 - Configuring truststore for OCSP responder certificates
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.auth-methods.id-card.ocsp.responder-truststore.path` | Yes | Path to OCSP responder truststore file. Example `file:src/test/resources/ocsp-responder-truststore-test.p12` |
+| `tara.auth-methods.id-card.ocsp.responder-truststore.type` | Yes | Type of the OCSP responder truststore from truststore path. Example `PKCS12` |
+| `tara.auth-methods.id-card.ocsp.responder-truststore.password` | Yes | Password of the OCSP responder truststore from truststore path. Example `changeit` |
+
+Table 1.5.6 - Explicit configuration of the primary OCSP server retry mechanism.
 See [more](https://resilience4j.readme.io/docs/retry#create-and-configure-retry) for longer parameter descriptions.
 
 | Parameter        | Mandatory | Description, example |
@@ -254,7 +261,7 @@ See [more](https://resilience4j.readme.io/docs/retry#create-and-configure-retry)
 | `tara.auth-methods.id-card.ocsp.retry.wait-duration` | No | A fixed wait duration between retry attempts. Default `500ms` |
 | `tara.auth-methods.id-card.ocsp.retry.max-attempts` | No | The maximum number of attempts (including the initial call as the first attempt). Default `2` |
 
-Table 1.5.6 - Explicit configuration of the circuit breaker.
+Table 1.5.7 - Explicit configuration of the circuit breaker.
 See [more](https://resilience4j.readme.io/docs/circuitbreaker#create-and-configure-a-circuitbreaker) for longer
 parameter descriptions.
 
@@ -266,7 +273,7 @@ parameter descriptions.
 | `tara.auth-methods.id-card.ocsp.circuit-breaker.permitted-number-of-calls-in-half-open-state` | No | Configures the number of permitted calls when the CircuitBreaker is half open. Default `10` |
 | `tara.auth-methods.id-card.ocsp.circuit-breaker.wait-duration-in-open-state` | No | 	The time that the CircuitBreaker should wait before transitioning from open to half-open. Default `60s` |
 
-Table 1.5.7 - Explicit configuration of the certificate chains
+Table 1.5.8 - Explicit configuration of the certificate chains
 
 The webapp allows multiple sets of certificate chain configurations to be defined by using the
 `tara.auth-methods.id-card.ocsp.certificate-chains[{index}]` notation.
@@ -280,13 +287,13 @@ Each certificate chain configuration can contain the following set of properties
 | `tara.auth-methods.id-card.ocsp.certificate-chains[0].first-fallback-server` | No | Optional first fallback OCSP server. |
 | `tara.auth-methods.id-card.ocsp.certificate-chains[0].second-fallback-server` | No | Optional second fallback OCSP server. |
 
-Table 1.5.7.1 - Configuration that applies to both primary and fallback OCSP servers.
+Table 1.5.8.1 - Configuration that applies to both primary and fallback OCSP servers.
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.auth-methods.id-card.ocsp.certificate-chains[0].{primary-server\|first-fallback-server\|second-fallback-server}.nonce-enabled` | No |  Determines whether the OCSP nonce extension is enabled. When enabled a random nonce is sent with the OCSP request and verified in response. Default `true` |
 
-Table 1.5.7.2 - Configuration that applies to fallback OCSP servers.
+Table 1.5.8.2 - Configuration that applies to fallback OCSP servers.
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
@@ -302,11 +309,16 @@ tara:
     id-card:
       enabled: true
       level-of-assurance: HIGH
-      truststore-path: file:src/test/resources/idcard-truststore-test.p12
-      truststore-type: PKCS12
-      truststore-password: changeit
+      issuer-truststore:
+        truststore-path: file:src/test/resources/issuer-truststore-test.p12
+        truststore-type: PKCS12
+        truststore-password: changeit
       ocsp:
         enabled: true
+        responder-truststore:
+          truststore-path: file:src/test/resources/ocsp-responder-truststore-test.p12
+          truststore-type: PKCS12
+          truststore-password: changeit
         allowed-response-time-skew: 15m
         primary-server-this-update-max-age: 2m
         request-timeout: 3s

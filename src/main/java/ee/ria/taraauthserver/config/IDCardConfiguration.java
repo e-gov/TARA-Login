@@ -52,34 +52,27 @@ public class IDCardConfiguration {
     private static final long CHALLENGE_NONCE_TTL_MINUTES = 5;
 
     @Bean
-    KeyStore idcardKeystore(ResourceLoader resourceLoader, IdCardAuthConfigurationProperties configurationProvider) {
-        try {
-            KeyStore keystore = KeyStore.getInstance(configurationProvider.getTruststoreType());
-            Resource resource = resourceLoader.getResource(configurationProvider.getTruststorePath());
-            try (InputStream inputStream = resource.getInputStream()) {
-                keystore.load(inputStream, configurationProvider.getTruststorePassword().toCharArray());
-            }
-            return keystore;
-        } catch (Exception e) {
-            throw new IllegalStateException("Could not load truststore of type " + configurationProvider.getTruststoreType() + " from " + configurationProvider.getTruststorePath() + "!", e);
-        }
+    KeyStore issuerKeystore(ResourceLoader resourceLoader, IdCardAuthConfigurationProperties configurationProvider) {
+        return buildKeystore(resourceLoader, configurationProvider.getIssuerTruststore());
     }
 
     @Bean
-    public Map<String, X509Certificate> idCardTrustedCertificatesMap(KeyStore idcardKeystore) {
-        try {
-            PKIXParameters params = new PKIXParameters(idcardKeystore);
-            Map<String, X509Certificate> trustedCertificates = params.getTrustAnchors().stream()
-                    .collect(toMap(trustAnchor -> X509Utils.getSubjectCNFromCertificate(trustAnchor.getTrustedCert()), TrustAnchor::getTrustedCert));
-            trustedCertificates.forEach((key, value) -> log.info("Trusted OCSP responder certificate added to configuration - CN: {}, serialnumber: {}, validFrom: {}, validTo: {}",
-                    value("x509.subject.common_name", key),
-                    value("x509.serial_number", value.getSerialNumber().toString()),
-                    value("x509.not_before", value.getNotBefore()),
-                    value("x509.not_after", value.getNotAfter())));
-            return trustedCertificates;
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Failed to read trusted certificates from id-card truststore: " + e.getMessage(), e);
-        }
+    KeyStore ocspResponderKeystore(ResourceLoader resourceLoader, IdCardAuthConfigurationProperties configurationProvider) {
+        return buildKeystore(resourceLoader, configurationProvider.getOcsp().getResponderTruststore());
+    }
+
+    @Bean
+    public Map<String, X509Certificate> issuerTrustedCertificatesMap(KeyStore issuerKeystore) {
+        Map<String, X509Certificate> trustedCertificates = buildTrustedCertificatesMap(issuerKeystore);
+        logTrustedCertificateMap(trustedCertificates, "issuer");
+        return trustedCertificates;
+    }
+
+    @Bean
+    public Map<String, X509Certificate> ocspResponderTrustedCertificatesMap(KeyStore ocspResponderKeystore) {
+        Map<String, X509Certificate> trustedCertificates = buildTrustedCertificatesMap(ocspResponderKeystore);
+        logTrustedCertificateMap(trustedCertificates, "OCSP responder");
+        return trustedCertificates;
     }
 
     @Bean
@@ -93,13 +86,14 @@ public class IDCardConfiguration {
     @Bean
     public AuthTokenValidator validator(AuthConfigurationProperties authConfigurationProperties,
                                         IdCardAuthConfigurationProperties idCardAuthConfigurationProperties,
-                                        Map<String, X509Certificate> trustedCertificatesMap) {
-        X509Certificate[] certificates = trustedCertificatesMap.values().toArray(new X509Certificate[0]);
+                                        Map<String, X509Certificate> issuerTrustedCertificatesMap,
+                                        Map<String, X509Certificate> ocspResponderTrustedCertificatesMap) {
+        X509Certificate[] issuerCertificates = issuerTrustedCertificatesMap.values().toArray(new X509Certificate[0]);
 
         try {
             AuthTokenValidatorBuilder validatorBuilder = new AuthTokenValidatorBuilder()
                     .withSiteOrigin(authConfigurationProperties.getSiteOrigin().toURI())
-                    .withTrustedCertificateAuthorities(certificates);
+                    .withTrustedCertificateAuthorities(issuerCertificates);
 
             AuthConfigurationProperties.Ocsp ocsp = idCardAuthConfigurationProperties.getOcsp();
 
@@ -110,11 +104,17 @@ public class IDCardConfiguration {
                         .build();
             }
 
+            Set<TrustAnchor> trustedCACertificateAnchors = CertificateValidator
+                    .buildTrustAnchorsFromCertificates(issuerTrustedCertificatesMap.values());
+            CertStore trustedCACertificateCertStore = CertificateValidator
+                    .buildCertStoreFromCertificates(issuerTrustedCertificatesMap.values());
+
             AiaOcspServiceConfiguration aiaOcspServiceConfiguration
-                    = getAiaOcspServiceConfiguration(ocsp, trustedCertificatesMap);
+                    = getAiaOcspServiceConfiguration(ocsp, trustedCACertificateAnchors, trustedCACertificateCertStore);
 
             List<FallbackOcspServiceConfiguration> fallbackOcspServiceConfigurations
-                    = getFallbackOcspServiceConfigurations(idCardAuthConfigurationProperties, trustedCertificatesMap);
+                    = getFallbackOcspServiceConfigurations(idCardAuthConfigurationProperties, trustedCACertificateAnchors,
+                    trustedCACertificateCertStore, ocspResponderTrustedCertificatesMap);
 
             OcspServiceProvider ocspServiceProvider = new OcspServiceProvider(
                     null,
@@ -159,16 +159,13 @@ public class IDCardConfiguration {
     }
 
     private static AiaOcspServiceConfiguration getAiaOcspServiceConfiguration(AuthConfigurationProperties.Ocsp ocsp,
-                                                                              Map<String, X509Certificate> trustedCertificatesMap) throws JceException {
+                                                                              Set<TrustAnchor> trustedCACertificateAnchors,
+                                                                              CertStore trustedCACertificateCertStore) throws JceException {
         List<String> nonceDisabledIssuerCNs = ocsp.getCertificateChains().stream()
                 .filter(certificateChain -> !certificateChain.getPrimaryServer().isNonceEnabled())
                 .map(AuthConfigurationProperties.CertificateChain::getIssuerCn)
                 .toList();
 
-        Set<TrustAnchor> trustedCACertificateAnchors = CertificateValidator
-                .buildTrustAnchorsFromCertificates(trustedCertificatesMap.values());
-        CertStore trustedCACertificateCertStore = CertificateValidator
-                .buildCertStoreFromCertificates(trustedCertificatesMap.values());
         return new AiaOcspServiceConfiguration(
                 nonceDisabledIssuerCNs,
                 trustedCACertificateAnchors,
@@ -177,7 +174,10 @@ public class IDCardConfiguration {
     }
 
     private static List<FallbackOcspServiceConfiguration> getFallbackOcspServiceConfigurations(IdCardAuthConfigurationProperties idCardAuthConfigurationProperties,
-                                                                                               Map<String, X509Certificate> trustedCertificatesMap) throws OCSPCertificateException {
+                                                                                               Set<TrustAnchor> trustedCACertificateAnchors,
+                                                                                               CertStore trustedCACertificateCertStore,
+                                                                                               Map<String, X509Certificate> ocspResponderTrustedCertificatesMap
+    ) throws OCSPCertificateException, JceException {
         List<FallbackOcspServiceConfiguration> fallbackOcspServiceConfigurationList = new ArrayList<>();
 
         for (AuthConfigurationProperties.CertificateChain chain : idCardAuthConfigurationProperties.getOcsp().getCertificateChains()) {
@@ -194,17 +194,23 @@ public class IDCardConfiguration {
             if (secondFallbackServer != null) {
                 secondFallbackConfiguration = new FallbackOcspServiceConfiguration(
                         URI.create(secondFallbackServer.getUrl()),
-                        trustedCertificatesMap.get(getResponderCertificateCn(secondFallbackServer, chain)),
+                        getResponderCertificate(secondFallbackServer, ocspResponderTrustedCertificatesMap),
                         secondFallbackServer.isNonceEnabled(),
-                        null
+                        null,
+                        chain.getIssuerCn(),
+                        trustedCACertificateAnchors,
+                        trustedCACertificateCertStore
                 );
             }
 
             FallbackOcspServiceConfiguration firstFallbackConfiguration = new FallbackOcspServiceConfiguration(
                     URI.create(firstFallbackServer.getUrl()),
-                    trustedCertificatesMap.get(getResponderCertificateCn(firstFallbackServer, chain)),
+                    getResponderCertificate(firstFallbackServer, ocspResponderTrustedCertificatesMap),
                     firstFallbackServer.isNonceEnabled(),
-                    secondFallbackConfiguration
+                    secondFallbackConfiguration,
+                    chain.getIssuerCn(),
+                    trustedCACertificateAnchors,
+                    trustedCACertificateCertStore
             );
             log.info("Found first fallback configuration for issuer {}", issuerCn);
             logFallbackOcspServiceConfiguration(firstFallbackConfiguration);
@@ -217,11 +223,11 @@ public class IDCardConfiguration {
         return fallbackOcspServiceConfigurationList;
     }
 
-    private static String getResponderCertificateCn(AuthConfigurationProperties.FallbackOcspServer fallbackOcspServer,
-                                                    AuthConfigurationProperties.CertificateChain certificateChain) {
-        return fallbackOcspServer.getResponderCertificateCn() == null
-                ? certificateChain.getIssuerCn()
-                : fallbackOcspServer.getResponderCertificateCn();
+    private static X509Certificate getResponderCertificate(AuthConfigurationProperties.FallbackOcspServer fallbackOcspServer,
+                                                           Map<String, X509Certificate> ocspResponderTrustedCertificatesMap) {
+        return fallbackOcspServer.getResponderCertificateCn() != null
+                ? ocspResponderTrustedCertificatesMap.get(fallbackOcspServer.getResponderCertificateCn())
+                : null;
     }
 
     private static void logFallbackOcspServiceConfiguration(FallbackOcspServiceConfiguration configuration) {
@@ -235,5 +241,38 @@ public class IDCardConfiguration {
                 nextFallbackAccessLocation,
                 configuration.doesSupportNonce()
         );
+    }
+
+    private static KeyStore buildKeystore(ResourceLoader resourceLoader,
+                                          AuthConfigurationProperties.TruststoreConfigurationProperties trustStore) {
+        try {
+            KeyStore keystore = KeyStore.getInstance(trustStore.getType());
+            Resource resource = resourceLoader.getResource(trustStore.getPath());
+            try (InputStream inputStream = resource.getInputStream()) {
+                keystore.load(inputStream, trustStore.getPassword().toCharArray());
+            }
+            return keystore;
+        } catch (Exception e) {
+            throw new IllegalStateException("Could not load truststore of type " + trustStore.getType() + " from " + trustStore.getPath() + "!", e);
+        }
+    }
+
+    private static Map<String, X509Certificate> buildTrustedCertificatesMap(KeyStore keystore) {
+        try {
+            PKIXParameters params = new PKIXParameters(keystore);
+            return params.getTrustAnchors().stream()
+                    .collect(toMap(trustAnchor -> X509Utils.getSubjectCNFromCertificate(trustAnchor.getTrustedCert()), TrustAnchor::getTrustedCert));
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Failed to read trusted certificates from id-card truststore: " + e.getMessage(), e);
+        }
+    }
+
+    private static void logTrustedCertificateMap(Map<String, X509Certificate> trustedCertificates, String certificateType) {
+        trustedCertificates.forEach((key, value) -> log.info("Trusted {} certificate added to configuration - CN: {}, serialnumber: {}, validFrom: {}, validTo: {}",
+                certificateType,
+                value("x509.subject.common_name", key),
+                value("x509.serial_number", value.getSerialNumber().toString()),
+                value("x509.not_before", value.getNotBefore()),
+                value("x509.not_after", value.getNotAfter())));
     }
 }

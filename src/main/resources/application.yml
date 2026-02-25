@@ -46,6 +46,7 @@ tara:
               nonce-enabled: true
             first-fallback-server:
               url: https://ocspcrl:14443/ocsp/test_esteid2018
+              nonce-enabled: true
               responder-certificate-cn: local-ocsp
 
           - issuer-cn: ESTEID2018
@@ -53,6 +54,7 @@ tara:
               nonce-enabled: true
             first-fallback-server:
               url: https://ocspcrl:14443/ocsp/esteid2018
+              nonce-enabled: true
               responder-certificate-cn: local-ocsp
 
           - issuer-cn: Test ESTEID2025
@@ -60,6 +62,7 @@ tara:
               nonce-enabled: true
             first-fallback-server:
               url: https://ocspcrl:14443/ocsp/test_esteid2025
+              nonce-enabled: true
               responder-certificate-cn: local-ocsp
 
           - issuer-cn: ESTEID2025
@@ -67,6 +70,7 @@ tara:
               nonce-enabled: true
             first-fallback-server:
               url: https://ocspcrl:14443/ocsp/esteid2025
+              nonce-enabled: true
               responder-certificate-cn: local-ocsp
     mobile-id:
       enabled: true
