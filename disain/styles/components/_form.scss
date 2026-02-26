@@ -26,6 +26,11 @@
             padding: 0;
           }
         }
+        .btn-container {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
       }
       &:last-child {
         td {

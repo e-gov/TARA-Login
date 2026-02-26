@@ -15,13 +15,11 @@ jQuery(function ($) {
 
     // Show different elements or text in Smart-ID views depending on device type
     if (supportsSmartIdApp()) { // Mobile device (capable of running Smart-ID app)
-        $('.show-on-sid-device').show();
         $('[data-innerhtml-sid-device]').each(function() {
             const innerHtml = $(this).data('innerhtmlSidDevice');
             $(this).html(innerHtml);
         });
     } else { // Desktop device (Smart-ID app not available)
-        $('.hide-on-sid-device').show();
         $('[data-innerhtml-non-sid-device]').each(function() {
             const innerHtml = $(this).data('innerhtmlNonSidDevice');
             $(this).html(innerHtml);
@@ -590,14 +588,6 @@ jQuery(function ($) {
 
     function isProbablyMobileDevice() {
         return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    }
-
-    function supportsSmartIdApp() {
-        const agent = navigator.userAgent || navigator.vendor || window.opera;
-        const isStandardMobile = /android|iphone|ipad|ipod/i.test(agent);
-        // iPadOS 13 and later claim to be Macintosh and have touch screen.
-        const isNewerIPad = (navigator.platform === 'MacIntel' || /Macintosh/i.test(agent)) && navigator.maxTouchPoints > 1;
-        return isStandardMobile || isNewerIPad;
     }
 
     $('.c-btn').on('click', function () {

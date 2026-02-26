@@ -11,7 +11,7 @@
     padding: 12px 35px;
     font-size: 18px;
   }
-  &.hidden, &.hide-on-sid-device, &.show-on-sid-device {
+  &.hidden {
     display: none;
   }
   &--primary {
@@ -55,7 +55,7 @@
   }
 }
 
-button.btn-link {
+.btn-link {
   background: none;
   border: none;
   padding: 0;
@@ -63,18 +63,26 @@ button.btn-link {
   color: #005f87;
   font: inherit;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-
-  &::after {
+  display: inline;
+  text-decoration: underline;
+  &__next::after {
     content: ">";
+    margin-left: 8px;
     display: inline-block;
     transform: scaleY(1.5);
     font-weight: 400;
     text-decoration: none;
+    padding-bottom: 4px;
+    margin-bottom: -4px;
   }
-}
-button.btn-link span {
-  text-decoration: underline;
+  &__back::before {
+    content: "<";
+    margin-right: 8px;
+    display: inline-block;
+    transform: scaleY(1.5);
+    font-weight: 400;
+    text-decoration: none;
+    padding-bottom: 4px;
+    margin-bottom: -4px;
+  }
 }
