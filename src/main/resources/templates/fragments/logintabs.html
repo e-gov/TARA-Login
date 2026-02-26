@@ -70,11 +70,11 @@
             </div>
         </div>
         <div class="c-tab-login__footer">
-            <div class="text"><a th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a>
+            <div class="text"><a rel="noopener" th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a>
             </div>
             <div class="text" th:if="${#messages.msgOrNull('label.' + tab_id + '.help') != null}">
                 <a th:href="${#messages.msg('link.' + tab_id + '.help')}"
-                   th:utext="${#messages.msg('label.' + tab_id + '.help')}" target="_blank" rel="noopener">Help</a>
+                   th:utext="${#messages.msg('label.' + tab_id + '.help')}" target="_blank">Help</a>
             </div>
         </div>
     </div>

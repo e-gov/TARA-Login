@@ -27,7 +27,7 @@
         </div>
         <div th:if="${redirect_to_service_provider}" class="link-back">
             <a th:if="${redirect_to_service_provider_url != null}" th:href="${redirect_to_service_provider_url}" th:text="#{label.common.home}">Home</a>
-            <a th:if="${redirect_to_service_provider_url == null}" th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a>
+            <a rel="noopener" th:if="${redirect_to_service_provider_url == null}" th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a>
         </div>
     </div>
     <script th:src="@{/scripts/main.js}" defer></script>

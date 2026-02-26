@@ -6,7 +6,7 @@
             </header>
             <nav class="d-flex" th:if="not ${hideHeaderLanguageSelection}">
                 <div class="accessibility">
-                    <a class="accessibility__link" th:href="#{link.header.accessibility}"
+                    <a rel="noopener" class="accessibility__link" th:href="#{link.header.accessibility}"
                        th:text="#{label.header.accessibility}">ACCESSIBILITY</a>
                 </div>
                 <ul class="c-lang-list" th:aria-label="#{label.aria.language-selection.navigation}">

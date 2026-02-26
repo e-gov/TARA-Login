@@ -43,7 +43,7 @@
     <form id="cancelForm" method="post" th:action="@{/auth/sid/qr-code/cancel}"></form>
     <div id="sid-error" th:insert="~{fragments/error}" th:class="hidden"/>
     <p class="link-back-mobile" xmlns:th="http://www.w3.org/1999/xhtml">
-        <a th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a>
+        <a rel="noopener" th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a>
     </p>
     <script th:src="@{/scripts/main.js}" defer></script>
     <script th:src="@{/scripts/sid-qr-code.js}" defer></script>
