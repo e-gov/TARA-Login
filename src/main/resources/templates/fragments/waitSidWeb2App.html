@@ -8,7 +8,7 @@
                 <h2 th:utext="${#messages.msg('label.smart-id.title')}"></h2>
             </div>
             <div id="sid-web2app-wait-login">
-                <p th:text="${#messages.msg('label.smart-id.wait-login')}"></p>
+                <p th:utext="${#messages.msg('label.smart-id.wait-login')}"></p>
                 <form method="post" th:action="@{/auth/sid/web2app/poll/cancel}" class="c-form">
                     <button type="submit" class="c-btn c-btn--cancel" th:text="#{label.common.cancel}"></button>
                 </form>
