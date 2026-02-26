@@ -93,7 +93,7 @@ class IdCardErrorControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", startsWith("Palun uuendage ID-tarkvara <a href=\"https://www.id.ee/artikkel/paigalda-id-tarkvara/\">id.ee veebilehelt</a> ja järgige seal kirjeldatud veebibrauseri seadistamise juhiseid.<br>Uuendamata ID-tarkvaraga ei ole võimalik ID-kaardiga sisse logida "))
+                .body("message", startsWith("Palun uuendage ID-tarkvara <a target=\"_blank\" href=\"https://www.id.ee/artikkel/paigalda-id-tarkvara/\">id.ee veebilehelt</a> ja järgige seal kirjeldatud veebibrauseri seadistamise juhiseid.<br>Uuendamata ID-tarkvaraga ei ole võimalik ID-kaardiga sisse logida "))
                 .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(false));
 
@@ -126,7 +126,7 @@ class IdCardErrorControllerTest extends BaseTest {
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .body("message", startsWith("ID-kaardiga veebis sisselogimiseks ja allkirjastamiseks vajalik<span translate=\"no\"> Web eID </span>laiendus ei ole Teie arvutis töökorras.<br>Palun kontrollige vastavalt <a href=\"https://www.id.ee/artikkel/id-kaardiga-sisenemine-voi-allkirjastamine-e-teenustes-ebaonnestub/\">id.ee juhendile</a>, kas ID-tarkvara on ajakohane ja veebilehitseja õigesti seadistatud.<br>Uuendamata ID-tarkvaraga ja valesti seadistatud veebilehitsejaga ei ole võimalik ID-kaardiga sisse logida "))
+                .body("message", startsWith("ID-kaardiga veebis sisselogimiseks ja allkirjastamiseks vajalik<span translate=\"no\"> Web eID </span>laiendus ei ole Teie arvutis töökorras.<br>Palun kontrollige vastavalt <a target=\"_blank\" href=\"https://www.id.ee/artikkel/id-kaardiga-sisenemine-voi-allkirjastamine-e-teenustes-ebaonnestub/\">id.ee juhendile</a>, kas ID-tarkvara on ajakohane ja veebilehitseja õigesti seadistatud.<br>Uuendamata ID-tarkvaraga ja valesti seadistatud veebilehitsejaga ei ole võimalik ID-kaardiga sisse logida "))
                 .body("message", endsWithIgnoringCase(" Autentimisteenuse kaudu.<br>Vea kood<span translate=\"no\"> ERR_WEBEID_UNKNOWN_ERROR</span>"))
                 .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
                 .body("reportable", equalTo(true));
