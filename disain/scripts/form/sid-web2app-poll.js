@@ -81,6 +81,7 @@
             try {
                 pollResponse = JSON.parse(this.responseText);
             } catch (e) {
+                hide("#smart-id-web2app-wait");
                 document.querySelector(".c-tab-login__main").classList.add('hidden');
                 document.querySelector("#login-form-error").classList.remove('hidden');
                 document.querySelector("#error-incident-number-wrapper").classList.add('hidden');
