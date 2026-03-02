@@ -12,8 +12,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 
+import java.net.URL;
 import java.time.Duration;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.time.temporal.ChronoUnit.MILLIS;
 
@@ -130,6 +134,11 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
         private boolean enabled;
 
         private int frontendPollingIntervalInMilliseconds = 1000;
+
+        @Valid
+        @NotNull
+        private Web2AppCustomCallback customCallback;
+
     }
 
     @Data
@@ -138,5 +147,41 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
         @NotNull
         private boolean enabled;
     }
+
+    @Data
+    public static class Web2AppCustomCallback {
+
+        @NotNull
+        private Boolean enabled;
+        private List<Web2AppCustomCallbackClient> clients = List.of();
+
+        @PostConstruct
+        public void validateConfiguration() {
+            Set<String> duplicateClientIds = getDuplicateClientIds();
+            Assert.isTrue(duplicateClientIds.isEmpty(),
+                    "Multiple Smart-ID Web2App custom callback registrations for clients: " + duplicateClientIds + ".");
+        }
+
+        private Set<String> getDuplicateClientIds() {
+            Set<String> seen = new HashSet<>();
+            return clients.stream()
+                    .map(Web2AppCustomCallbackClient::getClientId)
+                    .filter(cn -> !seen.add(cn))
+                    .collect(Collectors.toSet());
+        }
+
+    }
+
+    @Data
+    public static class Web2AppCustomCallbackClient {
+
+        @NotNull
+        private String clientId;
+        @NotNull
+        private URL callbackUrl;
+        private boolean authenticationRequestAppFlagRequired = false;
+
+    }
+
 
 }

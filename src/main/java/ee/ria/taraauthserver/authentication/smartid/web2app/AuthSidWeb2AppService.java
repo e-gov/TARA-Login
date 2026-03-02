@@ -51,6 +51,7 @@ import org.springframework.stereotype.Service;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
@@ -113,11 +114,8 @@ public class AuthSidWeb2AppService {
                 taraSession.getOriginalClient().getTranslatedShortName(),
                 smartIdConfigurationProperties.getDisplayText());
         String shortName = authenticationDisplayTextBuilder.buildLoginDisplayText(baseShortName);
-        String callbackUrl = authConfigurationProperties.getSiteOrigin()
-                .toURI()
-                .resolve(RELATIVE_CALLBACK_URL)
-                .toString();
-        CallbackUrl callbackUrlWithToken = CallbackUrlUtil.createCallbackUrl(callbackUrl);
+        String callbackBaseUrl = getCallbackBaseUrl(taraSession).toString();
+        CallbackUrl callbackUrlWithToken = CallbackUrlUtil.createCallbackUrl(callbackBaseUrl);
         DeviceLinkAuthenticationSessionRequestBuilder requestBuilder = sidClient
                 .createDeviceLinkAuthentication()
                 .withInitialCallbackUrl(callbackUrlWithToken.initialCallbackUri().toString())
@@ -138,6 +136,39 @@ public class AuthSidWeb2AppService {
                 callbackUrlWithToken.initialCallbackUri().toString());
         startPollingAuthenticationResult(taraSession);
         return deviceLink;
+    }
+
+    private URI getCallbackBaseUrl(@NonNull TaraSession taraSession) throws URISyntaxException {
+        URI defaultCallbackUrl = authConfigurationProperties.getSiteOrigin()
+                .toURI()
+                .resolve(RELATIVE_CALLBACK_URL);
+        SmartIdConfigurationProperties.Web2AppCustomCallback customCallbackConfig =
+                smartIdConfigurationProperties.getWeb2app().getCustomCallback();
+        if (!customCallbackConfig.getEnabled()) {
+            return defaultCallbackUrl;
+        }
+        String clientId = taraSession.getOriginalClient().getClientId();
+        Optional<SmartIdConfigurationProperties.Web2AppCustomCallbackClient> optionalClientConfig =
+                customCallbackConfig.getClients()
+                        .stream()
+                        .filter(clientConfig -> clientId.equals(clientConfig.getClientId()))
+                        .findAny();
+        if (optionalClientConfig.isEmpty()) {
+            return defaultCallbackUrl;
+        }
+        SmartIdConfigurationProperties.Web2AppCustomCallbackClient clientConfig = optionalClientConfig.get();
+        if (clientConfig.isAuthenticationRequestAppFlagRequired() && !hasAuthenticationRequestAppFlag(taraSession)) {
+            return defaultCallbackUrl;
+        }
+        return clientConfig.getCallbackUrl().toURI();
+    }
+
+    private boolean hasAuthenticationRequestAppFlag(@NonNull TaraSession taraSession) {
+        TaraSession.LoginRequestInfo govSsoLoginRequestInfo = taraSession.getGovSsoLoginRequestInfo();
+        if (govSsoLoginRequestInfo != null) {
+            return govSsoLoginRequestInfo.hasAppSupportSidWorkaroundFlag();
+        }
+        return taraSession.getLoginRequestInfo().hasAppSupportSidWorkaroundFlag();
     }
 
     public void handleFinalAuthenticationResult(

@@ -146,6 +146,8 @@ tara:
       web2app:
         enabled: true
         frontend-polling-interval-in-milliseconds: 1000
+        custom-callback:
+          enabled: false
       qr-code:
         enabled: true
     eidas:

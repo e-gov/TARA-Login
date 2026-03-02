@@ -37,11 +37,13 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.util.StringUtils;
 import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.net.URIBuilder;
 import org.apache.hc.core5.net.URLEncodedUtils;
 import org.springframework.context.i18n.LocaleContextHolder;
 
 import java.io.Serializable;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.time.Instant;
@@ -199,6 +201,8 @@ public class TaraSession implements Serializable {
     @Data
     public static class LoginRequestInfo implements Serializable {
 
+        public static final String APP_FLAG_NAME = "app";
+        public static final String APP_FLAG_VALUE = "true";
         @NotNull
         @JsonProperty("challenge")
         private String challenge;
@@ -360,6 +364,19 @@ public class TaraSession implements Serializable {
                 log.error("Invalid ACR value '{}' configured for client", acrName);
             }
             return acr;
+        }
+
+        public boolean hasAppSupportSidWorkaroundFlag() {
+            try {
+                List<NameValuePair> queryParams = new URIBuilder(url.toString()).getQueryParams();
+                return queryParams.stream()
+                        .anyMatch(queryParam ->
+                                APP_FLAG_NAME.equals(queryParam.getName()) &&
+                                        APP_FLAG_VALUE.equalsIgnoreCase(queryParam.getValue()));
+            } catch (URISyntaxException e) {
+                log.warn("Unable to parse url '{}'", url);
+                return false;
+            }
         }
 
         private List<AuthenticationType> getRequestedAuthenticationMethodList(AuthConfigurationProperties taraProperties) {
