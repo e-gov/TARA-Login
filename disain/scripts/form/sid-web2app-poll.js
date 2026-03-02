@@ -4,7 +4,7 @@
     // Checking this variable can be used as a workaround to hide that error.
     let cancelled = false;
 
-    $("#sidWeb2AppLinkContainer").on("click", function (e) {
+    $("#sidWeb2AppLink").on("click", function (e) {
         // Workaround for Firefox: make request to /init endpoint without making the browser think we want to navigate
         // away from the current page. If we would initiate the request using a common HTML link, then Firefox would stop
         // setTimeout() timers required for polling.
