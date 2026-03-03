@@ -23,7 +23,7 @@
         return QRCode.toString(deviceLink, {
             version: 11,
             errorCorrectionLevel: 'low',
-            margin: 0,
+            margin: 1,
             scale: 1
         });
     }
