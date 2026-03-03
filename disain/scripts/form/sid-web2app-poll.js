@@ -3,6 +3,7 @@
     // In some rare cases an error might become visible for a short time after user manually cancels polling.
     // Checking this variable can be used as a workaround to hide that error.
     let cancelled = false;
+    let sessionToken = "";
 
     $("#sidWeb2AppLink").on("click", function (e) {
         // Workaround for Firefox: make request to /init endpoint without making the browser think we want to navigate
@@ -36,6 +37,7 @@
                 return response.json();
             })
             .then(data => {
+                parseSessionTokenFromDeviceLink(data.deviceLink);
                 startPolling();
                 window.location.href = data.deviceLink;
             })
@@ -56,6 +58,11 @@
     function startPolling() {
         pollIntervalMs = parseInt($("#sidWeb2AppLinkContainer").attr("data-sid-web2app-poll-interval"));
         setTimeout(checkAuthenticationStatus, pollIntervalMs);
+    }
+
+    function parseSessionTokenFromDeviceLink(deviceLink) {
+        const url = new URL(deviceLink);
+        sessionToken = url.searchParams.get("sessionToken");
     }
 
     function show(selector) {
@@ -124,7 +131,7 @@
                 window.scrollTo(0, 0);
             }
         };
-        xhttp.open('GET', '/auth/sid/web2app/poll', true);
+        xhttp.open('GET', `/auth/sid/web2app/poll?sessionToken=${encodeURIComponent(sessionToken)}`, true);
         xhttp.setRequestHeader('Accept', 'application/json;charset=UTF-8');
         xhttp.send();
     }

@@ -5,6 +5,7 @@ import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
+import ee.ria.taraauthserver.error.exceptions.SessionResetException;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
@@ -28,7 +29,6 @@ import org.springframework.web.servlet.view.RedirectView;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
@@ -74,8 +74,10 @@ public class SmartIdWeb2AppController {
 
     @ResponseBody
     @GetMapping(value = "/auth/sid/web2app/poll", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Map<String, String> authSidPoll(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+    public Map<String, String> authSidPoll(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession,
+                                           @RequestParam String sessionToken) {
         log.info("Validating Smart-ID Web2App poll endpoint");
+        validateSessionNotReset(taraSession, sessionToken);
         validateSession(taraSession,
                 INIT_SID_WEB2APP,
                 POLL_SID_WEB2APP_STATUS,
@@ -170,6 +172,16 @@ public class SmartIdWeb2AppController {
         log.warn("Smart ID authentication process has been canceled");
         return new RedirectView("/auth/init?login_challenge="
                 + taraSession.getLoginRequestInfo().getChallenge() + RequestUtils.getLangParam(taraSession));
+    }
+
+    private static void validateSessionNotReset(TaraSession taraSession, String sessionToken) {
+        if (taraSession == null) {
+            return;
+        }
+        if (taraSession.getSmartIdWeb2AppSession() == null
+                || !sessionToken.equals(taraSession.getSmartIdWeb2AppSession().getSessionToken())) {
+            throw new SessionResetException("Session was reset while polling");
+        }
     }
 
     private static void validateAuthenticationNotCancelled(TaraSession taraSession, String value) {

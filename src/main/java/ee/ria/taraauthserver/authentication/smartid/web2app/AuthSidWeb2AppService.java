@@ -234,6 +234,7 @@ public class AuthSidWeb2AppService {
             updateSession(taraSession, new PollSmartIdWeb2AppAuthenticationSessionUpdate(
                     sidSessionId,
                     authenticationSessionResponse.sessionSecret(),
+                    authenticationSessionResponse.sessionToken(),
                     requestBuilder.getAuthenticationSessionRequest(),
                     callbackUrlWithToken.urlToken()
             ));

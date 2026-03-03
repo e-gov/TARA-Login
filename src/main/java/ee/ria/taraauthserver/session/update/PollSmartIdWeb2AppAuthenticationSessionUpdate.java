@@ -11,6 +11,7 @@ public class PollSmartIdWeb2AppAuthenticationSessionUpdate implements TaraSessio
 
     String sidSessionId;
     String sessionSecret;
+    String sessionToken;
     DeviceLinkAuthenticationSessionRequest authenticationSessionRequest;
     String urlToken;
 
@@ -19,6 +20,7 @@ public class PollSmartIdWeb2AppAuthenticationSessionUpdate implements TaraSessio
         TaraSession.SmartIdWeb2AppSession smartIdWeb2AppSession = new TaraSession.SmartIdWeb2AppSession(
                 sidSessionId,
                 sessionSecret,
+                sessionToken,
                 authenticationSessionRequest,
                 urlToken
         );
