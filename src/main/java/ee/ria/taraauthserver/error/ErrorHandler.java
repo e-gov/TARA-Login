@@ -6,6 +6,7 @@ import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.error.exceptions.InvalidLoginRequestException;
 import ee.ria.taraauthserver.error.exceptions.NotFoundException;
 import ee.ria.taraauthserver.error.exceptions.ServiceNotAvailableException;
+import ee.ria.taraauthserver.error.exceptions.SessionResetException;
 import ee.ria.taraauthserver.error.exceptions.TaraException;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.TaraSession;
@@ -80,6 +81,13 @@ public class ErrorHandler {
                 taraSession.getAuthenticationResult().getErrorCode() == null) {
             taraSession.getAuthenticationResult().setErrorCode(INTERNAL_ERROR);
         }
+    }
+
+    @ExceptionHandler({SessionResetException.class})
+    public void handleSessionResetException(SessionResetException ex, HttpServletResponse response) throws IOException {
+        log.error("Session was reset before accessing resource: {}", ex.getMessage());
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+        // Do NOT invalidate the session - this exception is only used when the session has already been reset
     }
 
     @ExceptionHandler({BadRequestException.class})
