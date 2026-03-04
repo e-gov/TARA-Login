@@ -57,10 +57,4 @@ public class TestIDCardConfiguration {
         }
     }
 
-//    @Bean
-//    @Primary
-//    @ConditionalOnProperty("tara.auth-methods.id-card.enabled")
-//    OCSPValidator mockOCSPValidator() {
-//        return Mockito.mock(OCSPValidator.class);
-//    }
 }
