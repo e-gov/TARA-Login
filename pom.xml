@@ -34,8 +34,9 @@
         <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
         <logstash-logback-encoder.version>8.1</logstash-logback-encoder.version><!-- TODO Upgrade to logstash-logback-encoder 9.x with Spring Boot 4.x, both upgrade to Jackson 3 -->
         <mid-rest.version>1.6</mid-rest.version>
+        <resilience4j.version>2.3.0</resilience4j.version>
         <smart-id.version>3.1</smart-id.version>
-        <webeid.version>3.2.0</webeid.version>
+        <webeid.version>4.0.0-SNAPSHOT</webeid.version>
         <wiremock.version>3.13.2</wiremock.version>
     </properties>
 
@@ -44,6 +45,34 @@
             <groupId>eu.webeid.security</groupId>
             <artifactId>authtoken-validation</artifactId>
             <version>${webeid.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-all</artifactId>
+            <version>${resilience4j.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.github.resilience4j</groupId>
+                    <artifactId>resilience4j-bulkhead</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.github.resilience4j</groupId>
+                    <artifactId>resilience4j-cache</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.github.resilience4j</groupId>
+                    <artifactId>resilience4j-ratelimiter</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.github.resilience4j</groupId>
+                    <artifactId>resilience4j-timelimiter</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-vavr</artifactId>
+            <version>${resilience4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -203,6 +232,10 @@
         <repository>
             <id>gitlab</id>
             <url>https://gitlab.com/api/v4/projects/19948337/packages/maven</url>
+        </repository>
+        <repository>
+            <id>local-repo</id>
+            <url>file://${project.basedir}/libs</url>
         </repository>
     </repositories>
 

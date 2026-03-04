@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.health;
 
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.HealthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.IdCardAuthConfigurationProperties;
 import jakarta.annotation.PostConstruct;
@@ -81,9 +82,14 @@ public class TruststoreHealthIndicator extends AbstractHealthIndicator {
 
     @PostConstruct
     private void setupTruststoreCertificatesInfo() throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException {
-        KeyStore keyStore = KeyStore.getInstance(idCardConfiguration.getTruststoreType());
-        Resource resource = resourceLoader.getResource(idCardConfiguration.getTruststorePath());
-        keyStore.load(resource.getInputStream(), idCardConfiguration.getTruststorePassword().toCharArray());
+        handleTrustStore(idCardConfiguration.getIssuerTruststore());
+        handleTrustStore(idCardConfiguration.getOcsp().getResponderTruststore());
+    }
+
+    private void handleTrustStore(AuthConfigurationProperties.TruststoreConfigurationProperties configuration) throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException {
+        KeyStore keyStore = KeyStore.getInstance(configuration.getType());
+        Resource resource = resourceLoader.getResource(configuration.getPath());
+        keyStore.load(resource.getInputStream(), configuration.getPassword().toCharArray());
         Enumeration<String> aliases = keyStore.aliases();
         while (aliases.hasMoreElements()) {
             String alias = aliases.nextElement();
@@ -93,7 +99,7 @@ public class TruststoreHealthIndicator extends AbstractHealthIndicator {
                     X509Certificate x509 = (X509Certificate) certificate;
                     trustStoreCertificates.put(alias, CertificateInfo.builder()
                             .validTo(x509.getNotAfter().toInstant())
-                            .subjectDN(x509.getSubjectDN().getName())
+                            .subjectDN(x509.getSubjectX500Principal().getName())
                             .serialNumber(x509.getSerialNumber().toString())
                             .build());
                 }
