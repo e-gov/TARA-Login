@@ -2,69 +2,110 @@
           layout:insert="~{fragments/logintabs :: content('smart-id')}"
           aria-hidden="true" aria-labelledby="smart-id">
     <th:block layout:fragment="login-form-content">
-        <div th:if="${enabledAuthMethods.smartIdFlows.web2app && enabledAuthMethods.smartIdFlows.qrCode}"
-             class="c-form show-on-sid-device">
-            <p th:utext="${#messages.msg('label.smart-id.' + (#strings.isEmpty(@thymeleafSupport.getServiceName()) ? 'instruction-mobile' : 'instruction-mobile-with-short-name'), @thymeleafSupport.getServiceName())}"></p>
-            <div id="sidWeb2AppLinkContainer" th:if="${enabledAuthMethods.smartIdFlows.web2app}"
-                 th:attr="data-sid-web2app-poll-interval=${@environment.getProperty('tara.auth-methods.smart-id.web2app.frontend-polling-interval-in-milliseconds')}">
-                <button id="sidWeb2AppLink" class="c-btn c-btn--primary" th:text="#{label.common.login}"></button>
-            </div>
-            <hr class="card-divider">
-            <h4 th:utext="#{label.smart-id.qr-code.account-in-another-device}"></h4>
-            <button type=submit form="sidQrCodeForm" class="btn-link">
-                <span th:text="#{label.smart-id.qr-code.show}"></span>
-            </button>
-        </div>
-        <div th:if="${enabledAuthMethods.smartIdFlows.web2app && enabledAuthMethods.smartIdFlows.qrCode}"
-             class="c-form hide-on-sid-device">
-            <p th:utext="${#messages.msg('label.smart-id.' + (#strings.isEmpty(@thymeleafSupport.getServiceName()) ? 'instruction-desktop' : 'instruction-desktop-with-short-name'), @thymeleafSupport.getServiceName())}"></p>
-            <div>
-                <button type=submit form="sidQrCodeForm" class="c-btn c-btn--primary"
-                        th:text="#{label.common.login}"></button>
-            </div>
-        </div>
-
-        <form id="sidQrCodeForm" method="POST" th:action="@{/auth/sid/qr-code/init}"></form>
-
-        <form th:if="${enabledAuthMethods.smartIdFlows.notificationBased}" th:action="@{/auth/sid/init}" method="post" id="smartIdForm" class="c-form">
-            <p th:utext="${#messages.msg('label.smart-id.' + (#strings.isEmpty(@thymeleafSupport.getServiceName()) ? 'instruction-notification-flow' : 'instruction-notification-flow-with-short-name'), @thymeleafSupport.getServiceName())}"></p>
-            <table role="presentation">
-                <tbody>
-                <tr>
-                    <td class="col-label">
-                        <label for="sid-personal-code" class="form-label"
-                               th:text="#{label.common.personal-code}"></label>
-                    </td>
-                    <td>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                            <span class="input-group-text"
-                                                  th:text="#{label.smart-id.personal-code-prefix}"></span>
-                            </div>
-                            <input type="text" inputmode="numeric" id="sid-personal-code"
-                                   class="form-control" name="idCode" autocomplete="on">
-                            <div class="input-group-append d-flex">
-                                <img src="/assets/warning.svg" class="invalid-feedback-warning is-hidden"
-                                     alt="warning">
-                            </div>
+        <th:block th:if="!${enabledAuthMethods.smartIdFlows.web2app || enabledAuthMethods.smartIdFlows.qrCode}"
+                  layout:insert="~{fragments/sidLoginform :: notificationBasedView}"></th:block>
+        <th:block th:if="${enabledAuthMethods.smartIdFlows.web2app || enabledAuthMethods.smartIdFlows.qrCode}">
+            <!--/* The content of this element is managed by `sid-view-manager.js` */-->
+            <div data-smart-id-login-form class="hidden">
+                <div data-smart-id-login-form-view="init">
+                    <div data-smart-id-login-form-component="primary-qrCode"
+                         class="c-form">
+                        <p th:utext="${#messages.msg('label.smart-id.' + (#strings.isEmpty(@thymeleafSupport.getServiceName()) ? 'instruction-desktop' : 'instruction-desktop-with-short-name'), @thymeleafSupport.getServiceName())}"></p>
+                        <div>
+                            <button type=submit form="sidQrCodeForm" class="c-btn c-btn--primary"
+                                    th:text="#{label.common.login}"></button>
                         </div>
-                        <div role="alert" class="invalid-feedback is-hidden personal-code-short"
-                             th:utext="#{message.common.personal-code-short}"></div>
-                        <div role="alert" class="invalid-feedback is-hidden personal-code-invalid"
-                             th:utext="#{message.common.personal-code-invalid}"></div>
-                    </td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td>
-                        <button type="button" class="c-btn c-btn--primary"
-                                th:text="#{label.common.login}">Login
-                        </button>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </form>
-        <hr class="card-divider hide-in-desktop">
+                    </div>
+                    <div data-smart-id-login-form-component="primary-web2app"
+                         class="c-form">
+                        <p th:utext="${#messages.msg('label.smart-id.' + (#strings.isEmpty(@thymeleafSupport.getServiceName()) ? 'instruction-mobile' : 'instruction-mobile-with-short-name'), @thymeleafSupport.getServiceName())}"></p>
+                        <div id="sidWeb2AppLinkContainer" th:if="${enabledAuthMethods.smartIdFlows.web2app}"
+                             th:attr="data-sid-web2app-poll-interval=${@environment.getProperty('tara.auth-methods.smart-id.web2app.frontend-polling-interval-in-milliseconds')}">
+                            <button id="sidWeb2AppLink" class="c-btn c-btn--primary" th:text="#{label.common.login}"></button>
+                        </div>
+                    </div>
+                    <!--/* The case where notification flow is handled at the top of this file */-->
+
+                    <div data-smart-id-login-form-component="secondaries">
+                        <div data-smart-id-login-form-component="secondary-qrCode">
+                            <hr class="card-divider">
+                            <h4 th:utext="#{label.smart-id.qr-code.account-in-another-device}"></h4>
+                            <button type="submit" form="sidQrCodeForm" class="btn-link">
+                                <span th:text="#{label.smart-id.qr-code.show}"></span>
+                            </button>
+                        </div>
+                        <div data-smart-id-login-form-component="secondary-notificationBased">
+                            <hr class="card-divider">
+                            <h4 th:utext="#{FIXME}"></h4> <!-- FIXME -->
+                            <button data-smart-id-login-form-action="init-notificationBased"
+                                    type="button" class="btn-link">
+                                <span th:text="#{FIXME}"></span> <!-- FIXME -->
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div data-smart-id-login-form-view="init-notificationBased">
+                    <th:block layout:insert="~{fragments/sidLoginform :: notificationBasedView}"></th:block>
+                    <table role="presentation">
+                        <tbody>
+                        <tr>
+                            <td class="col-label"></td>
+                            <td>
+                                <button data-smart-id-login-form-action="back"
+                                        type="button" class="btn-link link-back arrow-back">
+                                    <span th:text="#{label.common.back}"></span>
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <hr class="card-divider hide-in-desktop">
+                <form id="sidQrCodeForm" method="POST" th:action="@{/auth/sid/qr-code/init}"></form>
+            </div>
+        </th:block>
     </th:block>
+</th:block>
+
+
+<th:block th:fragment="notificationBasedView">
+    <form th:action="@{/auth/sid/init}" method="post" id="smartIdForm" class="c-form">
+        <p th:utext="${#messages.msg('label.smart-id.' + (#strings.isEmpty(@thymeleafSupport.getServiceName()) ? 'instruction-notification-flow' : 'instruction-notification-flow-with-short-name'), @thymeleafSupport.getServiceName())}"></p>
+        <table role="presentation">
+            <tbody>
+            <tr>
+                <td class="col-label">
+                    <label for="sid-personal-code" class="form-label"
+                           th:text="#{label.common.personal-code}"></label>
+                </td>
+                <td>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                                                    <span class="input-group-text"
+                                                          th:text="#{label.smart-id.personal-code-prefix}"></span>
+                        </div>
+                        <input type="text" inputmode="numeric" id="sid-personal-code"
+                               class="form-control" name="idCode" autocomplete="on">
+                        <div class="input-group-append d-flex">
+                            <img src="/assets/warning.svg" class="invalid-feedback-warning is-hidden"
+                                 alt="warning">
+                        </div>
+                    </div>
+                    <div role="alert" class="invalid-feedback is-hidden personal-code-short"
+                         th:utext="#{message.common.personal-code-short}"></div>
+                    <div role="alert" class="invalid-feedback is-hidden personal-code-invalid"
+                         th:utext="#{message.common.personal-code-invalid}"></div>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <button type="button" class="c-btn c-btn--primary"
+                            th:text="#{label.common.login}">Login
+                    </button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </form>
 </th:block>

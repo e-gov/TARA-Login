@@ -11,7 +11,7 @@
     padding: 12px 35px;
     font-size: 18px;
   }
-  &.hidden, &.hide-on-sid-device, &.show-on-sid-device {
+  &.hidden {
     display: none;
   }
   &--primary {
