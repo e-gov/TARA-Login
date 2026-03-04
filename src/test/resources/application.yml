@@ -85,26 +85,45 @@ tara:
   auth-methods:
     id-card:
       enabled: true
-      ocsp-enabled: true
       level-of-assurance: HIGH
-      truststore-path: file:src/test/resources/idcard-truststore-test.p12
-      truststore-type: PKCS12
-      truststore-password: changeit
+      issuer-truststore:
+        path: file:src/test/resources/idcard-truststore-test.p12
+        type: PKCS12
+        password: changeit
       ocsp:
-
-        - issuer-cn: TEST of ESTEID-SK 2015
-          url: https://localhost:9877/esteid2015
-          connect-timeout-in-milliseconds: 500
-
-        - issuer-cn: TEST of ESTEID-SK2018
-          url: http://aia.demo.sk.ee/esteid2018
-
-        - issuer-cn: TEST of ESTEID2018
-          url: https://localhost:9877/esteid2018
-
-      fallback-ocsp:
-        - url: https://localhost:9877/ocsp
-          issuer-cn: TEST of ESTEID-SK 2015, TEST of ESTEID2018
+        responder-truststore:
+          path: file:src/test/resources/idcard-truststore-test.p12 # TODO Fix this.
+          type: pkcs12
+          password: changeit
+        certificate-chains:
+          - issuer-cn: ESTEID2018
+            primary-server:
+              nonce-enabled: true
+            first-fallback-server:
+              url: https://ocspcrl:14443/ocsp/esteid2018
+              nonce-enabled: true
+              responder-certificate-cn: local-ocsp
+          - issuer-cn: ESTEID2025
+            primary-server:
+              nonce-enabled: true
+            first-fallback-server:
+              url: https://ocspcrl:14443/ocsp/esteid2025
+              nonce-enabled: true
+              responder-certificate-cn: local-ocsp
+          - issuer-cn: TEST of ESTEID2018
+            primary-server:
+              nonce-enabled: true
+            first-fallback-server:
+              url: https://ocspcrl:14443/ocsp/test_esteid2018
+              nonce-enabled: true
+              responder-certificate-cn: local-ocsp
+          - issuer-cn: Test ESTEID2025
+            primary-server:
+              nonce-enabled: true
+            first-fallback-server:
+              url: https://ocspcrl:14443/ocsp/test_esteid2025
+              nonce-enabled: true
+              responder-certificate-cn: local-ocsp
       filter-for-eidas-proxy:
         forbidden-issuer-cns: []
     mobile-id:

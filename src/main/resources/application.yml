@@ -41,14 +41,6 @@ tara:
       level-of-assurance: HIGH
       ocsp:
         certificate-chains:
-          - issuer-cn: TEST of ESTEID2018
-            primary-server:
-              nonce-enabled: true
-            first-fallback-server:
-              url: https://ocspcrl:14443/ocsp/test_esteid2018
-              nonce-enabled: true
-              responder-certificate-cn: local-ocsp
-
           - issuer-cn: ESTEID2018
             primary-server:
               nonce-enabled: true
@@ -56,20 +48,25 @@ tara:
               url: https://ocspcrl:14443/ocsp/esteid2018
               nonce-enabled: true
               responder-certificate-cn: local-ocsp
-
-          - issuer-cn: Test ESTEID2025
-            primary-server:
-              nonce-enabled: true
-            first-fallback-server:
-              url: https://ocspcrl:14443/ocsp/test_esteid2025
-              nonce-enabled: true
-              responder-certificate-cn: local-ocsp
-
           - issuer-cn: ESTEID2025
             primary-server:
               nonce-enabled: true
             first-fallback-server:
               url: https://ocspcrl:14443/ocsp/esteid2025
+              nonce-enabled: true
+              responder-certificate-cn: local-ocsp
+          - issuer-cn: TEST of ESTEID2018
+            primary-server:
+              nonce-enabled: true
+            first-fallback-server:
+              url: https://ocspcrl:14443/ocsp/test_esteid2018
+              nonce-enabled: true
+              responder-certificate-cn: local-ocsp
+          - issuer-cn: Test ESTEID2025
+            primary-server:
+              nonce-enabled: true
+            first-fallback-server:
+              url: https://ocspcrl:14443/ocsp/test_esteid2025
               nonce-enabled: true
               responder-certificate-cn: local-ocsp
     mobile-id:
