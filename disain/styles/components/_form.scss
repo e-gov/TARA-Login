@@ -238,3 +238,22 @@
     margin: 16px -16px;
   }
 }
+#sid-web2app-loader {
+  display: inline-flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  align-content: center;
+
+  // Settings to cover the entire page:
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  z-index: 1000;
+
+  &.hidden {
+    display: none;
+  }
+}

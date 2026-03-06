@@ -121,7 +121,7 @@
     }
 
     function showLoader() {
-        qrCodeEl.innerHTML = '<div class="loadersmall"></div>';
+        qrCodeEl.innerHTML = '<div class="loader__small"></div>';
     }
 
     async function doPoll() {

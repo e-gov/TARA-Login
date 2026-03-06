@@ -1,7 +1,7 @@
 <div th:if="${@thymeleafSupport.getEnabledAuthMethods().idCard OR @thymeleafSupport.getEnabledAuthMethods().smartIdFlows.web2app}">
     <div id="login-form-error" th:insert="~{fragments/error}" th:class="hidden"/>
     <div id="id-card-wait" th:insert="~{fragments/waitIdCard}" th:class="hidden"/>
-    <div id="smart-id-web2app-wait" th:insert="~{fragments/waitSidWeb2App}" th:class="hidden"/>
+    <div id="sid-web2app-wait" th:insert="~{fragments/waitSidWeb2App}" th:class="hidden"/>
 </div>
 <div class="container" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
         th:with="enabledAuthMethods=${@thymeleafSupport.getEnabledAuthMethods()}">

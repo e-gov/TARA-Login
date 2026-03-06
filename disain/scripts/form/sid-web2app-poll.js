@@ -1,4 +1,6 @@
 (function () {
+    const CANCEL_BUTTON_DELAY_MS = 5000; // Time in milliseconds for "Cancel" button and detailed page to appear while polling
+
     let pollIntervalMs;
     // In some rare cases an error might become visible for a short time after user manually cancels polling.
     // Checking this variable can be used as a workaround to hide that error.
@@ -13,12 +15,19 @@
         initAuthenticationAndStartPolling();
         hide(".c-layout--full > .container");
         hide(".link-back-mobile");
-        show("#smart-id-web2app-wait");
+        show("#sid-web2app-wait");
+        // After showing the spinner for a while, add explanatory text and "Cancel" button to the page
+        setTimeout(showCancelButton, CANCEL_BUTTON_DELAY_MS);
     });
 
     $("#sid-web2app-wait-login form").on("submit", function (e) {
         cancelled = true;
     });
+
+    function showCancelButton() {
+        hide("#sid-web2app-loader");
+        window.scrollTo(0, 0);
+    }
 
     function initAuthenticationAndStartPolling() {
         const csrfToken = document.querySelector("input[name='_csrf']").getAttribute("value");
@@ -46,7 +55,7 @@
                     return;
                 }
                 console.error(err.message);
-                hide("#smart-id-web2app-wait");
+                hide("#sid-web2app-wait");
                 show("#login-form-error");
                 document.querySelector("#error-incident-number-wrapper").classList.add('hidden');
                 document.querySelector("#error-report-url").classList.add('hidden');
@@ -88,7 +97,7 @@
             try {
                 pollResponse = JSON.parse(this.responseText);
             } catch (e) {
-                hide("#smart-id-web2app-wait");
+                hide("#sid-web2app-wait");
                 document.querySelector(".c-tab-login__main").classList.add('hidden');
                 document.querySelector("#login-form-error").classList.remove('hidden');
                 document.querySelector("#error-incident-number-wrapper").classList.add('hidden');
@@ -97,39 +106,48 @@
                 return;
             }
 
+            if (this.status === 200 && pollResponse["status"] === 'PENDING') {
+                setTimeout(checkAuthenticationStatus, pollIntervalMs);
+                return;
+            }
+
+            // If status is not PENDING, the polling has been finished, so we hide the loader divs
+            $("#sid-web2app-loader").hide();
+            $(".loader-container").hide();
+
             if (this.status === 200 && pollResponse["status"] === 'COMPLETED') {
                 $("#sid-web2app-wait-login").hide();
                 $("#sid-web2app-login-success").show();
-            } else if (this.status === 200 && pollResponse["status"] === 'PENDING') {
-                setTimeout(checkAuthenticationStatus, pollIntervalMs);
-            } else { // Failure
-                hide("#smart-id-web2app-wait");
-                show("#login-form-error");
-                document.querySelector("#error-message").innerHTML = pollResponse["message"];
-
-                if (pollResponse["reportable"]) {
-                    var timeFormat = document.querySelector("#error-incident-time").getAttribute("data-time-format");
-                    var formattedDateTimeWithOffset = formatDateTimeWithBrowserOffset(
-                        pollResponse["timestamp"], timeFormat);
-
-                    document.querySelector("#error-incident-number").innerHTML = pollResponse["incident_nr"];
-                    document.querySelector("#error-incident-time").innerHTML = formattedDateTimeWithOffset;
-
-                    var errorReportUrl = document.querySelector("#error-report-url").href;
-                    errorReportUrl = errorReportUrl.replace("{1}", pollResponse["message"]);
-                    errorReportUrl = errorReportUrl.replace("{2}", pollResponse["incident_nr"]);
-                    document.querySelector("#error-report-url").href = errorReportUrl;
-
-                    var errorReportNotification = document.querySelector("#error-report-notification").innerHTML;
-                    errorReportNotification = errorReportNotification.replace("{1}", pollResponse["incident_nr"]);
-                    document.querySelector("#error-report-notification").innerHTML = errorReportNotification;
-                } else {
-                    document.querySelector("#error-incident-number-wrapper").classList.add('hidden');
-                    document.querySelector("#error-report-url").classList.add('hidden');
-                }
-                // Error message appears on top of the page and might not be visible to the user without scrolling to top
-                window.scrollTo(0, 0);
+                return;
             }
+
+            // If we reach here, there is a failure, so we need to show an error
+            hide("#sid-web2app-wait");
+            show("#login-form-error");
+            document.querySelector("#error-message").innerHTML = pollResponse["message"];
+
+            if (pollResponse["reportable"]) {
+                var timeFormat = document.querySelector("#error-incident-time").getAttribute("data-time-format");
+                var formattedDateTimeWithOffset = formatDateTimeWithBrowserOffset(
+                    pollResponse["timestamp"], timeFormat);
+
+                document.querySelector("#error-incident-number").innerHTML = pollResponse["incident_nr"];
+                document.querySelector("#error-incident-time").innerHTML = formattedDateTimeWithOffset;
+
+                var errorReportUrl = document.querySelector("#error-report-url").href;
+                errorReportUrl = errorReportUrl.replace("{1}", pollResponse["message"]);
+                errorReportUrl = errorReportUrl.replace("{2}", pollResponse["incident_nr"]);
+                document.querySelector("#error-report-url").href = errorReportUrl;
+
+                var errorReportNotification = document.querySelector("#error-report-notification").innerHTML;
+                errorReportNotification = errorReportNotification.replace("{1}", pollResponse["incident_nr"]);
+                document.querySelector("#error-report-notification").innerHTML = errorReportNotification;
+            } else {
+                document.querySelector("#error-incident-number-wrapper").classList.add('hidden');
+                document.querySelector("#error-report-url").classList.add('hidden');
+            }
+            // Error message appears on top of the page and might not be visible to the user without scrolling to top
+            window.scrollTo(0, 0);
         };
         xhttp.open('GET', `/auth/sid/web2app/poll?sessionToken=${encodeURIComponent(sessionToken)}`, true);
         xhttp.setRequestHeader('Accept', 'application/json;charset=UTF-8');

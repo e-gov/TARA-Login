@@ -204,16 +204,27 @@ body.is-mobile-subview {
 .hidden {
   display: none;
 }
-.loadersmall {
-    border: 3px solid #f3f3f3;
-    -webkit-animation: spin 1s linear infinite;
-    animation: spin 1s linear infinite;
-    border-top: 3px solid #555;
+.loader-container {
+  display: inline-flex;
+  width: 100%;
+  margin-bottom: 30px;
+}
+.loader {
+  border: 8px solid #dbdfe2;
+  border-top: 8px solid #003168;
   border-radius: 50%;
-  width: 18px;
-  height: 18px;
+  width: 48px;
+  height: 48px;
   float: left;
-  margin: 5px 5px auto auto
+  margin: 5px auto;
+  -webkit-animation: spin 1s linear infinite;
+  animation: spin 1s linear infinite;
+  &__small {
+    border-width: 3px;
+    border-top-width: 3px;
+    width: 18px;
+    height: 18px;
+  }
 }
 
 @keyframes spin {
