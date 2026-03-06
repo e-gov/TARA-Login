@@ -207,8 +207,18 @@ Table 1.4.3 - Integration with the [SK SID service](https://github.com/SK-EID/sm
 | `tara.auth-methods.smart-id.long-polling-timeout-milliseconds` | No | Long polling timeout period used for SID session status requests. Default `30000` |
 | `tara.auth-methods.smart-id.delay-initiate-sid-session-in-milliseconds` | No | Delay before initiating Smart-ID session after verification code is displayed. Default `3000` |
 | `tara.auth-methods.smart-id.delay-status-polling-start-in-milliseconds` | No | Delay before long polling. Default `500` |
-| `tara.auth-methods.smart-id.web2app.frontend-polling-interval-in-milliseconds` | No | Interval between status polling queries in Smart-ID Web2App flow (from UI to tara-login-service). Default `1000` |
 | `tara.auth-methods.smart-id.allowed-countries` | No | List of ISO 3166-1 alpha-2 country codes that are allowed to use Smart-ID QR and Web2App flows. If the list is empty, all countries are allowed. Example `EE, LV, LT` Default `EE` |
+
+Table 1.4.4 - Smart-ID Web2App flow settings
+
+| Parameter | Mandatory | Description, example |
+| :-------- | :-------- | :--------------------|
+| `tara.auth-methods.smart-id.web2app.frontend-polling-interval-in-milliseconds` | No | Interval between status polling queries in Smart-ID Web2App flow (from UI to tara-login-service). Default `1000` |
+| `tara.auth-methods.smart-id.web2app.custom-callback.enabled` | No | Enable or disable setting custom Web2App callback URLs for specific clients |
+| `tara.auth-methods.smart-id.web2app.custom-callback.clients[].client-id` | Yes | The client application client ID |
+| `tara.auth-methods.smart-id.web2app.custom-callback.clients[].callback-url` | Yes | The URL which the Smart-ID application should open after successful authentication |
+| `tara.auth-methods.smart-id.web2app.custom-callback.clients[].authentication-request-app-flag-required` | No | If set to `true`, the custom callback URL will only be used if the authentication request has query parameter `app=true`. Defaults to `false` |
+
 
 <a name="esteid_conf"></a>
 ### 1.5 ID-card auth method
