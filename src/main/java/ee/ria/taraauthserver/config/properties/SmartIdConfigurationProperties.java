@@ -153,6 +153,7 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
 
         @NotNull
         private Boolean enabled;
+        @Valid
         private List<Web2AppCustomCallbackClient> clients = List.of();
 
         @PostConstruct
