@@ -1,6 +1,8 @@
 package ee.ria.taraauthserver.logging;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import ee.ria.taraauthserver.authentication.idcard.IdCardLoggingContextMapper;
+import ee.ria.taraauthserver.authentication.idcard.IdCardLoginService;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.config.properties.TaraScope;
@@ -15,7 +17,9 @@ import ee.ria.taraauthserver.session.TaraSession.LoginRequestInfo;
 import ee.sk.smartid.FlowType;
 import lombok.Builder;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.logstash.logback.marker.LogstashMarker;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumSet;
@@ -35,7 +39,10 @@ import static net.logstash.logback.marker.Markers.appendFields;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class StatisticsLogger {
+
+    private final IdCardLoggingContextMapper idCardLoggingContextMapper;
 
     public static final String SERVICE_GOVSSO = "GOVSSO";
     private static final EnumSet<TaraAuthenticationState> CANCELED_STATES = EnumSet.of(
@@ -50,31 +57,45 @@ public class StatisticsLogger {
     public void log(TaraSession taraSession, Exception ex) {
         if (taraSession != null && taraSession.getLoginRequestInfo() != null) {
             getStateToLog(taraSession)
-                    .ifPresent(state -> log(taraSession, state, ex));
+                    .ifPresent(state -> log(taraSession, state, ex, null));
         }
     }
 
     public void logExternalTransaction(TaraSession taraSession) {
-        log(taraSession, EXTERNAL_TRANSACTION, null);
+        log(taraSession, EXTERNAL_TRANSACTION, null, null);
     }
 
     public void logExternalTransaction(TaraSession taraSession, Exception ex) {
-        log(taraSession, EXTERNAL_TRANSACTION, ex);
+        log(taraSession, EXTERNAL_TRANSACTION, ex, null);
     }
 
-    private void log(TaraSession taraSession, TaraAuthenticationState state, Exception ex) {
+    public void logExternalTransaction(TaraSession taraSession, IdCardLoginService.OcspInfo ocspInfo) {
+        log(taraSession, EXTERNAL_TRANSACTION, null, ocspInfo);
+    }
+
+    public void logExternalTransaction(TaraSession taraSession, Exception ex, IdCardLoginService.OcspInfo ocspInfo) {
+        log(taraSession, EXTERNAL_TRANSACTION, ex, ocspInfo);
+    }
+
+    private void log(TaraSession taraSession, TaraAuthenticationState state, Exception ex, IdCardLoginService.OcspInfo ocspInfo) {
         SessionStatisticsBuilder statisticsBuilder = SessionStatistics.builder();
         processAuthenticationRequest(taraSession, state, statisticsBuilder);
         processAuthenticationResult(taraSession, ex, statisticsBuilder);
         processSmartIdFlowType(taraSession, statisticsBuilder);
+
         SessionStatistics sessionStatistics = statisticsBuilder.build();
+        LogstashMarker toLog = appendFields(sessionStatistics);
+        IdCardLoggingContextMapper.IdCardLoggingContext idCardLoggingContext = idCardLoggingContextMapper.toIdCardLoggingContext(ocspInfo);
+        if (idCardLoggingContext != null) {
+            toLog.add(appendFields(idCardLoggingContext));
+        }
         if (ex != null) {
-            log.error(appendFields(sessionStatistics), "Authentication result: " + state, ex);
+            log.error(toLog, "Authentication result: " + state, ex);
         } else if (taraSession.getAuthenticationResult() != null
                 && taraSession.getAuthenticationResult().getErrorCode() != null) {
-            log.error(appendFields(sessionStatistics), "Authentication result: {}", state);
+            log.error(toLog, "Authentication result: {}", state);
         } else {
-            log.info(appendFields(sessionStatistics), "Authentication result: {}", state);
+            log.info(toLog, "Authentication result: {}", state);
         }
     }
 
