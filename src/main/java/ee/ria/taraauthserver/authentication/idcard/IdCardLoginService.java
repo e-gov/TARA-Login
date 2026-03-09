@@ -11,6 +11,7 @@ import ee.ria.taraauthserver.utils.EstonianIdCodeUtil;
 import ee.ria.taraauthserver.utils.X509Utils;
 import ee.sk.mid.MidNationalIdentificationCodeValidator;
 import eu.webeid.ocsp.exceptions.OCSPClientException;
+import eu.webeid.resilientocsp.ResilientOcspCertificateRevocationChecker;
 import eu.webeid.resilientocsp.exceptions.ResilientUserCertificateOCSPCheckFailedException;
 import eu.webeid.resilientocsp.exceptions.ResilientUserCertificateRevokedException;
 import eu.webeid.security.challenge.ChallengeNonceStore;
@@ -31,6 +32,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.security.cert.X509Certificate;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.Iterator;
 import java.util.List;
@@ -121,14 +124,15 @@ public class IdCardLoginService {
         }
     }
 
-    private void handleStatisticsLogging(TaraSession taraSession, X509Certificate certificate, ErrorCode errorCode, String ocspUrl, Exception e) {
+    private void handleStatisticsLogging(TaraSession taraSession, X509Certificate certificate, ErrorCode errorCode,
+                                         String ocspUrl, Exception e, OcspInfo ocspInfo) {
         TaraSession.IdCardAuthenticationResult authenticationResult = (TaraSession.IdCardAuthenticationResult) taraSession.getAuthenticationResult();
         updateAuthenticationResult(taraSession, certificate, ocspUrl);
         authenticationResult.setErrorCode(errorCode);
         if (e == null) {
-            statisticsLogger.logExternalTransaction(taraSession);
+            statisticsLogger.logExternalTransaction(taraSession, ocspInfo);
         } else {
-            statisticsLogger.logExternalTransaction(taraSession, e);
+            statisticsLogger.logExternalTransaction(taraSession, e, ocspInfo);
         }
     }
 
@@ -160,8 +164,10 @@ public class IdCardLoginService {
                 value("x509.subject.distinguished_name", certificate.getSubjectX500Principal().getName()),
                 value("x509.issuer.distinguished_name", certificate.getIssuerX500Principal().getName()));
 
+        int requestCount = 0;
         Iterator<RevocationInfo> iterator = validationInfo.revocationInfoList().iterator();
         while(iterator.hasNext()) {
+            requestCount++;
             RevocationInfo revocationInfo = iterator.next();
             if (revocationInfo == null) {
                 throw new IllegalArgumentException("Revocation info cannot be null");
@@ -169,19 +175,32 @@ public class IdCardLoginService {
             Map<String, Object> ocspResponseAttributes = revocationInfo.ocspResponseAttributes();
             String ocspUrl = revocationInfo.ocspResponderUri().toString();
             OCSPReq ocspReq = (OCSPReq) ocspResponseAttributes.get(RevocationInfo.KEY_OCSP_REQUEST);
-            OCSPResp ocspResp = (OCSPResp) ocspResponseAttributes.get(RevocationInfo.KEY_OCSP_RESPONSE);
+            OCSPResp ocspResp = null;
+            try {
+                ocspResp = (OCSPResp) ocspResponseAttributes.get(RevocationInfo.KEY_OCSP_RESPONSE);
+            } catch (ClassCastException e) {
+                log.atWarn()
+                        .setCause(e)
+                        .log("Failed to parse OCSP response");
+            }
             Exception exception = (Exception) ocspResponseAttributes.get(RevocationInfo.KEY_OCSP_ERROR);
+            Duration requestDuration = (Duration) ocspResponseAttributes.get(RevocationInfo.KEY_REQUEST_DURATION);
+            boolean isLastRequest = !iterator.hasNext();
+            ResilientOcspCertificateRevocationChecker.CircuitBreakerStatistics circuitBreakerStatistics
+                    = (ResilientOcspCertificateRevocationChecker.CircuitBreakerStatistics) ocspResponseAttributes.get(RevocationInfo.KEY_CIRCUIT_BREAKER_STATISTICS);
+            Instant responseTime = (Instant) ocspResponseAttributes.get(RevocationInfo.KEY_OCSP_RESPONSE_TIME);
+            OcspInfo ocspInfo = new OcspInfo(ocspResp, requestCount, requestDuration, isLastRequest, circuitBreakerStatistics, responseTime);
             if (exception == null) {
-                if (iterator.hasNext()) {
+                if (!isLastRequest) {
                     throw new IllegalStateException("Only the last response can be successful");
                 }
                 updateAuthenticationResult(taraSession, certificate, ocspUrl);
                 taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
-                statisticsLogger.logExternalTransaction(taraSession);
+                statisticsLogger.logExternalTransaction(taraSession, ocspInfo);
                 logOcspSuccess(ocspUrl, ocspReq, ocspResp);
             } else {
                 ErrorCode errorCode = getErrorCodeByExceptionType(exception);
-                handleStatisticsLogging(taraSession, certificate, errorCode, ocspUrl, exception);
+                handleStatisticsLogging(taraSession, certificate, errorCode, ocspUrl, exception, ocspInfo);
                 logOcspFailure(ocspReq, ocspUrl, exception, ocspResp);
             }
         }
@@ -238,5 +257,15 @@ public class IdCardLoginService {
                     .setCause(e)
                     .log("Failed to encode OCSP response");
         }
+    }
+
+    public record OcspInfo(
+            OCSPResp ocspResp,
+            Integer requestCount,
+            Duration requestDuration,
+            boolean isLastRequest,
+            ResilientOcspCertificateRevocationChecker.CircuitBreakerStatistics circuitBreakerStatistics,
+            Instant responseTime
+    ) {
     }
 }

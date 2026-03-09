@@ -96,6 +96,7 @@
             <mode>STATISTICS_ONLY</mode>
         </filter>
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <jsonFactoryDecorator class="ee.ria.taraauthserver.logging.LogbackJsonFactoryDecorator"/>
             <providers>
                 <timestamp>
                     <fieldName>@timestamp</fieldName>

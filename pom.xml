@@ -36,7 +36,7 @@
         <mid-rest.version>1.6</mid-rest.version>
         <resilience4j.version>2.3.0</resilience4j.version>
         <smart-id.version>3.1</smart-id.version>
-        <webeid.version>4.0.0-SNAPSHOT</webeid.version>
+        <webeid.version>4.0.0-202603201458</webeid.version>
         <wiremock.version>3.13.2</wiremock.version>
     </properties>
 
