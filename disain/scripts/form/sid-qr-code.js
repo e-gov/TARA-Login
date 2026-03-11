@@ -17,15 +17,37 @@
     let pollAbortController = new AbortController();
 
     function createQrCodePromise(deviceLink) {
-        /* QR code version 11 with error correction level LOW can fit up to 321 bytes of data. The example device
-         * link provided on https://sk-eid.github.io/smart-id-documentation/rp-api/3.0.3/dynamic_link_flows.html#_qr
-         * is 213 characters long, which leaves us more than a 50% buffer. */
-        return QRCode.toString(deviceLink, {
-            version: 11,
+        const qrVersion = getSmallestVersion(deviceLink);
+        const qrMargin = 1;
+        const qrModuleSize = 6;
+        const qrModules = 17 + (4 * qrVersion);
+        const calculatedMaxWidth = qrModuleSize * (qrModules + 2 * qrMargin);
+        let qrCodeElement = QRCode.toString(deviceLink, {
+            version: qrVersion,
             errorCorrectionLevel: 'low',
-            margin: 1,
-            scale: 1
+            margin: qrMargin,
+            width: calculatedMaxWidth
         });
+
+        return qrCodeElement;
+    }
+
+    // Values from: https://www.qrcode.com/en/about/version.html
+    // There does not seem to be a good formula to calculate these.
+    const QR_BYTE_CAPACITY = [
+        17,32,53,78,106,134,154,192,230,271,321,367,425,458,520,586,644,718,792,858,929,1003,1091,
+        1171,1273,1367,1465,1528,1628,1732,1840,1952,2068,2188,2303,2431,2563,2699,2809,2953
+    ];
+
+    function getSmallestVersion(deviceLink) {
+        const encoder = new TextEncoder();
+        const bytes = encoder.encode(deviceLink).length;
+        for (let versionIndex = 0; versionIndex < QR_BYTE_CAPACITY.length; versionIndex++) {
+            if (bytes <= QR_BYTE_CAPACITY[versionIndex]) {
+                return versionIndex + 1;
+            }
+        }
+        throw new Error(`Device link is too long (${bytes} bytes).`);
     }
 
     function pollStatus() {
