@@ -216,18 +216,9 @@
     }
   }
   &__qr-code {
-    $padding: 0;
-    $qr-version: 11;
-    $qr-module-size: 6px;
-
-    $qr-modules: 17 + (4 * $qr-version);
-    $max-width: $qr-modules * $qr-module-size + 2 * $padding;
-    padding: $padding;
     background-color: #fff;
     margin-bottom: 25px;
     display: inline-flex;
-    // Use `unquote` to use run-time CSS `min` function instead of SCSS compile-time `min` function.
-    width: unquote('min(#{$max-width}, 100%)');
     justify-content: center;
     flex-wrap: wrap; // Required for `align-content` to work on iOS Safari
     align-content: center;
@@ -236,6 +227,7 @@
   &__qr-code svg {
     display: block;
     width: 100%;
+    height: auto;
   }
   &__qr-code .loader__small {
     margin: 0;
