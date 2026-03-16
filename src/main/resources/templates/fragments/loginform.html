@@ -1,4 +1,5 @@
 <div th:if="${@thymeleafSupport.getEnabledAuthMethods().idCard OR @thymeleafSupport.getEnabledAuthMethods().smartIdFlows.web2app}">
+    <div id="sid-mobile-tab-context" th:insert="~{fragments/mobileTabContext :: mobileTabContext('smart-id', 'en')}" th:class="hidden"/>
     <div id="login-form-error" th:insert="~{fragments/error}" th:class="hidden"/>
     <div id="id-card-wait" th:insert="~{fragments/waitIdCard}" th:class="hidden"/>
     <div id="sid-web2app-wait" th:insert="~{fragments/waitSidWeb2App}" th:class="hidden"/>

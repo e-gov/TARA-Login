@@ -16,6 +16,7 @@
         hide(".c-layout--full > .container");
         hide(".link-back-mobile");
         show("#sid-web2app-wait");
+        show("#sid-mobile-tab-context");
         // After showing the spinner for a while, add explanatory text and "Cancel" button to the page
         setTimeout(showCancelButton, CANCEL_BUTTON_DELAY_MS);
     });
@@ -23,6 +24,12 @@
     $("#sid-web2app-wait-login form").on("submit", function (e) {
         cancelled = true;
     });
+
+    function setupErrorBackLinkHandler() {
+        $("#login-form-error .link-back a").one("click", function() {
+            $("#sid-mobile-tab-context").hide(); 
+        });
+    }
 
     function showCancelButton() {
         hide("#sid-web2app-loader");
@@ -56,6 +63,8 @@
                 }
                 console.error(err.message);
                 hide("#sid-web2app-wait");
+                show("#sid-mobile-tab-context");
+                setupErrorBackLinkHandler();
                 show("#login-form-error");
                 document.querySelector("#error-incident-number-wrapper").classList.add('hidden');
                 document.querySelector("#error-report-url").classList.add('hidden');
@@ -98,6 +107,8 @@
                 pollResponse = JSON.parse(this.responseText);
             } catch (e) {
                 hide("#sid-web2app-wait");
+                show("#sid-mobile-tab-context");
+                setupErrorBackLinkHandler();
                 document.querySelector(".c-tab-login__main").classList.add('hidden');
                 document.querySelector("#login-form-error").classList.remove('hidden');
                 document.querySelector("#error-incident-number-wrapper").classList.add('hidden');
@@ -124,6 +135,8 @@
             // If we reach here, there is a failure, so we need to show an error
             hide("#sid-web2app-wait");
             show("#login-form-error");
+            show("#sid-mobile-tab-context");
+            setupErrorBackLinkHandler();
             document.querySelector("#error-message").innerHTML = pollResponse["message"];
 
             if (pollResponse["reportable"]) {

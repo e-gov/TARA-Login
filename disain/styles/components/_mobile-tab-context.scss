@@ -1,0 +1,23 @@
+.mobile-tab-context {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  position: relative;
+  left: 50%;
+  right: 50%;
+
+  width: 100vw;
+  height: 60px;
+
+  margin-left: -50vw;
+  margin-right: -50vw;
+
+  background-color: #344255;
+  color: #fff;
+
+  &__label {
+    font-size: 20px;
+    font-weight: 500;
+  }
+}
