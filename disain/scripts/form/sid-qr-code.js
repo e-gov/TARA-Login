@@ -17,7 +17,7 @@
     let pollAbortController = new AbortController();
 
     function createQrCodePromise(deviceLink) {
-        const qrVersion = getSmallestVersion(deviceLink);
+        const qrVersion = getRequiredQrVersionEccLow(deviceLink);
         const qrMargin = 1;
         const qrModuleSize = 6;
         const qrModules = 17 + (4 * qrVersion);
@@ -34,17 +34,19 @@
 
     // Values from: https://www.qrcode.com/en/about/version.html
     // There does not seem to be a good formula to calculate these.
-    const QR_BYTE_CAPACITY = [
-        17,32,53,78,106,134,154,192,230,271,321,367,425,458,520,586,644,718,792,858,929,1003,1091,
-        1171,1273,1367,1465,1528,1628,1732,1840,1952,2068,2188,2303,2431,2563,2699,2809,2953
+    const QR_BYTE_CAPACITY_ECC_LOW = [
+        0,17,32,53,78,106,134,154,192,230,271,
+        321,367,425,458,520,586,644,718,792,858,
+        929,1003,1091,1171,1273,1367,1465,1528,1628,1732,
+        1840,1952,2068,2188,2303,2431,2563,2699,2809,2953
     ];
 
-    function getSmallestVersion(deviceLink) {
+    function getRequiredQrVersionEccLow(data) {
         const encoder = new TextEncoder();
-        const bytes = encoder.encode(deviceLink).length;
-        for (let versionIndex = 0; versionIndex < QR_BYTE_CAPACITY.length; versionIndex++) {
-            if (bytes <= QR_BYTE_CAPACITY[versionIndex]) {
-                return versionIndex + 1;
+        const bytes = encoder.encode(data).length;
+        for (let version = 1; version < QR_BYTE_CAPACITY_ECC_LOW.length; version++) {
+            if (bytes <= QR_BYTE_CAPACITY_ECC_LOW[version]) {
+                return version;
             }
         }
         throw new Error(`Device link is too long (${bytes} bytes).`);
