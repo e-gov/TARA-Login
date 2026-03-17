@@ -1,4 +1,5 @@
 <div class="container" xmlns:th="http://www.w3.org/1999/xhtml">
+    <div th:replace="~{fragments/mobileTabContext :: mobileTabContext('smart-id', 'en', false)}" th:class="hidden" />
     <div class="c-tab-login__content-wrap">
         <div class="c-tab-login__content-icon" aria-hidden="true">
             <img id="client-logo-wait" th:if="${@thymeleafSupport.getServiceLogo() != null}" class="icon" th:alt="#{label.logo.client}">

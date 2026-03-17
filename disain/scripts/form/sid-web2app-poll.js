@@ -11,7 +11,7 @@
         // setTimeout() timers required for polling.
         e.preventDefault();
         initAuthenticationAndStartPolling();
-        hide("#tab-form-content");
+        hide(".c-layout--full > .container");
         hide(".link-back-mobile");
         show("#smart-id-web2app-wait");
     });
