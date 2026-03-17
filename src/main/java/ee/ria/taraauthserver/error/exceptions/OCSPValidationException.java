@@ -15,7 +15,7 @@ public class OCSPValidationException extends TaraException {
         errorMap = new HashMap<>();
         errorMap.put(CertificateStatus.GOOD, ErrorCode.IDC_VALIDATION_ERROR_RESULT_GOOD);
         errorMap.put(CertificateStatus.REVOKED, ErrorCode.IDC_VALIDATION_ERROR_RESULT_REVOKED);
-        errorMap.put(CertificateStatus.UNKNOWN, ErrorCode.IDC_VALIDATION_ERROR_RESULT_UNKNOWN);
+        errorMap.put(CertificateStatus.UNKNOWN, ErrorCode.IDC_VALIDATION_ERROR_RESULT_OTHER);
     }
 
     private final String ocspUrl;
