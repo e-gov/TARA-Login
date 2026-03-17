@@ -46,7 +46,7 @@ public enum ErrorCode {
     IDC_WEBEID_ERROR("message.idc.webeid.error"),
     IDC_VALIDATION_ERROR_RESULT_GOOD("message.error.general"),
     IDC_VALIDATION_ERROR_RESULT_REVOKED("message.error.general"),
-    IDC_VALIDATION_ERROR_RESULT_UNKNOWN("message.error.general"),
+    IDC_VALIDATION_ERROR_RESULT_OTHER("message.error.general"),
     ERROR_GENERAL("message.error.general"),
     SESSION_NOT_FOUND("message.error.session-not-found"),
     SESSION_STATE_INVALID("message.error.session-state-invalid"),
