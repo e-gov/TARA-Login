@@ -14,11 +14,21 @@
         hide(".c-layout--full > .container");
         hide(".link-back-mobile");
         show("#smart-id-web2app-wait");
+        show("#sid-mobile-tab-context");
     });
 
     $("#sid-web2app-wait-login form").on("submit", function (e) {
         cancelled = true;
     });
+
+    function setupErrorBackLinkHandler() {
+        const errorBackLink = document.querySelector("#login-form-error .link-back a");
+        if (errorBackLink) {
+            errorBackLink.addEventListener("click", function() {
+                hide("#sid-mobile-tab-context");
+            }, { once: true });
+        }
+    }
 
     function initAuthenticationAndStartPolling() {
         const csrfToken = document.querySelector("input[name='_csrf']").getAttribute("value");
@@ -47,6 +57,8 @@
                 }
                 console.error(err.message);
                 hide("#smart-id-web2app-wait");
+                show("#sid-mobile-tab-context");
+                setupErrorBackLinkHandler();
                 show("#login-form-error");
                 document.querySelector("#error-incident-number-wrapper").classList.add('hidden');
                 document.querySelector("#error-report-url").classList.add('hidden');
@@ -89,6 +101,8 @@
                 pollResponse = JSON.parse(this.responseText);
             } catch (e) {
                 hide("#smart-id-web2app-wait");
+                show("#sid-mobile-tab-context");
+                show("#login-form-error");
                 document.querySelector(".c-tab-login__main").classList.add('hidden');
                 document.querySelector("#login-form-error").classList.remove('hidden');
                 document.querySelector("#error-incident-number-wrapper").classList.add('hidden');
@@ -104,6 +118,8 @@
                 setTimeout(checkAuthenticationStatus, pollIntervalMs);
             } else { // Failure
                 hide("#smart-id-web2app-wait");
+                show("#sid-mobile-tab-context");
+                setupErrorBackLinkHandler();
                 show("#login-form-error");
                 document.querySelector("#error-message").innerHTML = pollResponse["message"];
 

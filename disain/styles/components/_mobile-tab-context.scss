@@ -16,51 +16,8 @@
   background-color: #344255;
   color: #fff;
 
-  &__title {
+  &__label {
     font-size: 20px;
     font-weight: 500;
-  }
-
-  // #####################################################
-  // The following code can be removed if mobileTabContext
-  // is only used in waitSidWeb2App.
-  // #####################################################
-
-  &__back-link {
-    display: none;
-
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    z-index: 2;
-
-    width: 60px;
-    height: 60px;
-
-    cursor: pointer;
-
-    &::before {
-      content: "";
-      display: block;
-
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-
-      width: 0;
-      height: 0;
-
-      border-top: 10px solid transparent;
-      border-bottom: 10px solid transparent;
-      border-right: 10px solid #fff;
-    }
-  }
-
-  &--active {
-    .mobile-tab-context__back-link {
-      display: block;
-    }
   }
 }

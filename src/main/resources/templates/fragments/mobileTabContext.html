@@ -1,15 +1,8 @@
-<div 
-  xmlns:th="http://www.w3.org/1999/xhtml"
-  th:fragment="mobileTabContext(tab_id, lang, show_back_link)"
-  class="mobile-tab-context"
-  th:classappend="${show_back_link} ? 'mobile-tab-context--active' : ''"
->
-    <!-- Back Link can be removed if mobileTabContext is only used in waitSidWeb2App -->
-    <span th:if="${show_back_link}" class="mobile-tab-context__back-link"></span>
-    <h2
-      class="mobile-tab-context__title" 
-      th:utext="${#messages.msg('label.' + tab_id + '.title')}"
-    >
-      Tab Title Placeholder
-    </h2>
+<div xmlns:th="http://www.w3.org/1999/xhtml"
+     th:fragment="mobileTabContext(tab_id, lang)"
+     class="mobile-tab-context">
+    <span class="mobile-tab-context__label" 
+          th:utext="${#messages.msg('label.' + tab_id + '.title')}">
+        Tab Title Placeholder
+    </span>
 </div>
