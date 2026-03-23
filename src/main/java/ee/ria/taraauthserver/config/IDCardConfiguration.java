@@ -271,7 +271,7 @@ public class IDCardConfiguration {
         trustedCertificates.forEach((key, value) -> log.info("Trusted {} certificate added to configuration - CN: {}, serialnumber: {}, validFrom: {}, validTo: {}",
                 certificateType,
                 value("x509.subject.common_name", key),
-                value("x509.serial_number", value.getSerialNumber().toString()),
+                value("x509.serial_number", value.getSerialNumber().toString(16)),
                 value("x509.not_before", value.getNotBefore()),
                 value("x509.not_after", value.getNotAfter())));
     }
