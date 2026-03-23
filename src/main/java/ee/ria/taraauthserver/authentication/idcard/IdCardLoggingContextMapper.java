@@ -91,6 +91,9 @@ public class IdCardLoggingContextMapper {
 
     private void addCircuitBreakerStatistics(IdCardLoggingContext.IdCardLoggingContextBuilder builder,
                                              ResilientOcspCertificateRevocationChecker.CircuitBreakerStatistics circuitBreakerStatistics) {
+        if (circuitBreakerStatistics == null) {
+            return;
+        }
         builder
                 .state(circuitBreakerStatistics.state())
                 .failureRate(circuitBreakerStatistics.failureRate())
