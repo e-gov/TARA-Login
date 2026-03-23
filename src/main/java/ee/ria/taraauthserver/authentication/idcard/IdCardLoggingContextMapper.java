@@ -27,7 +27,9 @@ public class IdCardLoggingContextMapper {
         if (ocspInfo == null) {
             return null;
         }
-        idCardLoggingContextBuilder.requestDuration(ocspInfo.requestDuration().toNanos());
+        if (ocspInfo.requestDuration() != null) {
+            idCardLoggingContextBuilder.requestDuration(ocspInfo.requestDuration().toNanos());
+        }
         idCardLoggingContextBuilder.requestCount(ocspInfo.requestCount());
         idCardLoggingContextBuilder.isLastRequest(ocspInfo.isLastRequest());
         addCircuitBreakerStatistics(idCardLoggingContextBuilder, ocspInfo.circuitBreakerStatistics());
