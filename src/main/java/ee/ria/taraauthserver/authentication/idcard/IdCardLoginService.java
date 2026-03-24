@@ -203,7 +203,7 @@ public class IdCardLoginService {
     private void logValidationInfo(ValidationInfo validationInfo, TaraSession taraSession) {
         X509Certificate certificate = validationInfo.subjectCertificate();
         log.info("OCSP certificate info: Serialnumber=<{}>, SubjectDN=<{}>, issuerDN=<{}>",
-                value("x509.serial_number", certificate.getSerialNumber().toString()),
+                value("x509.serial_number", certificate.getSerialNumber().toString(16)),
                 value("x509.subject.distinguished_name", certificate.getSubjectX500Principal().getName()),
                 value("x509.issuer.distinguished_name", certificate.getIssuerX500Principal().getName()));
 
