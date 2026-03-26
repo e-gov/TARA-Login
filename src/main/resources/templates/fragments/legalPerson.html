@@ -14,7 +14,7 @@
             <div th:if="${session.containsKey('authentication')}">
                 <div id="results-container" class="alert alert-neutral">
                     <div id="results-loading" class="hidden">
-                        <div class="loader__small"></div>
+                        <div th:replace="~{fragments/loader :: loader(id=null, textId=null, textKey=null, isFullPage=false)}"></div>
                         <div th:utext="#{label.legal-person.loading}"></div>
                     </div>
                     <div id="results-summary" class="hidden">

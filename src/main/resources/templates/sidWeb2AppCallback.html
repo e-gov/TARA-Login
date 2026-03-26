@@ -5,7 +5,8 @@
 <body class="is-mobile-subview"
       th:attr="data-sid-web2app-poll-interval=${@environment.getProperty('tara.auth-methods.smart-id.web2app.frontend-polling-interval-in-milliseconds')}">
 <div layout:fragment="content" th:with="hideHeaderLanguageSelection=true" th:remove="tag">
-    <div class="container">
+    <div th:replace="~{fragments/loader :: loader(id='sid-web2app-loader', textId='sid-web2app-longer-expected-text', textKey='label.common.loading-longer-than-expected', isFullPage=true)}"></div>
+    <div id="sid-web2app-callback-container" class="container" th:class="hidden">
         <div class="c-tab-login">
             <div class="c-tab-login__header hide-in-desktop">
                 <ul class="c-tab-login__nav" role="tablist">

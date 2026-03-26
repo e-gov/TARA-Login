@@ -124,7 +124,7 @@
 
             // If status is not PENDING, the polling has been finished, so we hide the loader divs
             $("#sid-web2app-loader").hide();
-            $(".loader-container").hide();
+            $("#sid-web2app-inner-loader").hide();
 
             if (this.status === 200 && pollResponse["status"] === 'COMPLETED') {
                 $("#sid-web2app-wait-login").hide();

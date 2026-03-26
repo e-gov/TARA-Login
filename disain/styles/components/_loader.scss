@@ -1,0 +1,57 @@
+.c-loader-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 32px;
+
+  // Modifer class to cover the entire page:
+  &--full-page {
+    position: fixed;
+    z-index: 1000;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #fff; 
+  }
+
+  &.hidden {
+    display: none !important;
+  }
+
+  p {
+    position: absolute;
+    // The Loader icon should always be in the middle of the page.
+    // Therefore the text placement is:
+    //   in the middle of the page (50%) + 
+    //   half of the loader height (24px) + 
+    //   padding between icon and text (96px)
+    top: calc(50% + 24px + 96px);
+    width: 100%;
+    margin: 0;
+    text-align: center;
+  }
+
+  .loader {
+    float: left;
+    width: 48px;
+    height: 48px;
+    margin: 5px auto;
+    border: 8px solid #dbdfe2;
+    border-top: 8px solid #003168;
+    border-radius: 50%;
+    -webkit-animation: spin 1s linear infinite;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+}

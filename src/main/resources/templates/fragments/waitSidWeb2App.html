@@ -1,7 +1,5 @@
 <div class="container" xmlns:th="http://www.w3.org/1999/xhtml">
-    <div id="sid-web2app-loader">
-        <div class="loader"></div>
-    </div>
+    <div th:replace="~{fragments/loader :: loader(id='sid-web2app-loader', textId=null, textKey=null, isFullPage=true)}"></div>
     <div class="c-tab-login__content-wrap">
         <div class="c-tab-login__content-icon" aria-hidden="true">
             <img id="client-logo-wait" th:if="${@thymeleafSupport.getServiceLogo() != null}" class="icon" th:alt="#{label.logo.client}">
@@ -12,9 +10,7 @@
             </div>
             <div id="sid-web2app-wait-login">
                 <p th:utext="${#messages.msg('label.smart-id.wait-login')}"></p>
-                <div class="loader-container">
-                    <div class="loader"></div>
-                </div>
+                <div th:replace="~{fragments/loader :: loader(id='sid-web2app-inner-loader', textId=null, textKey=null, isFullPage=false)}"></div>
                 <p th:utext="${#messages.msg('label.smart-id.wait-login-details', @thymeleafSupport.getServiceName())}"></p>
                 <form method="post" th:action="@{/auth/sid/web2app/poll/cancel}" class="c-form">
                     <button type="submit" class="c-btn c-btn--cancel" th:text="#{label.common.cancel}"></button>

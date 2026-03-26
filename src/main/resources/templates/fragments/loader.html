@@ -1,0 +1,7 @@
+<div th:fragment="loader(id, textId, textKey, isFullPage)" 
+     th:id="${id}" 
+     class="c-loader-container"
+     th:classappend="${isFullPage == true ? 'c-loader-container--full-page' : ''}">
+    <div class="loader"></div>
+    <p th:if="${textId != null}" th:id="${textId}" th:utext="${#messages.msg(textKey)}" class="hidden"></p>
+</div>
