@@ -128,7 +128,7 @@ public class IdCardLoggingContextMapper {
         @JsonProperty("tara.ocsp.request_number")
         private Integer requestCount;
 
-        @JsonProperty("http.request.body.bytes")
+        @JsonProperty("http.response.body.bytes")
         private Integer ocspResponseSize;
 
         @JsonProperty("event.duration")
