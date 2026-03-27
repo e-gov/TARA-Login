@@ -120,13 +120,18 @@ public class IdCardLoginService {
     private static ErrorCode handleResilientUserCertificateOCSPCheckFailedException(ResilientUserCertificateOCSPCheckFailedException e) {
         List<RevocationInfo> revocationInfoList = e.getValidationInfo().revocationInfoList();
         if (revocationInfoList.isEmpty()) {
-            throw new IllegalArgumentException("Revocation info cannot be empty");
+            throw new IllegalArgumentException("Revocation info list cannot be empty");
         }
         RevocationInfo revocationInfo = revocationInfoList.get(revocationInfoList.size() - 1);
         if (revocationInfo == null) {
             throw new IllegalArgumentException("Revocation info cannot be null");
         }
-        OCSPResp ocspResp = (OCSPResp) revocationInfo.ocspResponseAttributes().get(RevocationInfo.KEY_OCSP_RESPONSE);
+        OCSPResp ocspResp;
+        try {
+            ocspResp = (OCSPResp) revocationInfo.ocspResponseAttributes().get(RevocationInfo.KEY_OCSP_RESPONSE);
+        } catch (ClassCastException exception) {
+            return IDC_OCSP_NOT_AVAILABLE;
+        }
         return getErrorCodeFromOcspResponse(ocspResp);
     }
 
