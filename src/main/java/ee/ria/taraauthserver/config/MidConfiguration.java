@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.config;
 
+import ee.ria.taraauthserver.authentication.common.AuthenticationDisplayTextFactory;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.MidAuthConfigurationProperties;
 import ee.ria.taraauthserver.logging.JaxRsClientRequestLogger;
 import ee.sk.mid.MidAuthenticationResponseValidator;
@@ -8,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
@@ -56,5 +58,11 @@ public class MidConfiguration {
         clientConfig.property(ClientProperties.READ_TIMEOUT, properties.getReadTimeoutMilliseconds());
         clientConfig.register(new JaxRsClientRequestLogger("Mobile-ID"));
         return clientConfig;
+    }
+
+    @Bean
+    AuthenticationDisplayTextFactory midDisplayTextFactory(
+            MessageSource messageSource, MidAuthConfigurationProperties properties) {
+        return new AuthenticationDisplayTextFactory(messageSource, properties.getDisplayText());
     }
 }

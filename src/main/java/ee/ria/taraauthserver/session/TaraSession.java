@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.authentication.RelyingParty;
+import ee.ria.taraauthserver.authentication.smartid.SmartIdDeviceLinkSession;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
@@ -32,6 +33,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.SneakyThrows;
 import lombok.ToString;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -87,6 +89,8 @@ public class TaraSession implements Serializable {
     private String consentChallenge;
     private ChallengeNonce webEidChallengeNonce;
     private String chosenLanguage;
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
     private SmartIdQrCodeSession smartIdQrCodeSession;
     private FlowType smartIdFlowType;
 
@@ -120,6 +124,21 @@ public class TaraSession implements Serializable {
                 .map(TaraSession.LoginRequestInfo::getRequestedScopes)
                 .filter(scopes -> scopes.contains(scope.getFormalName()))
                 .stream().findFirst().isPresent();
+    }
+
+    public void setSmartIdQrCodeSession(SmartIdDeviceLinkSession session) {
+        if (session != null) {
+            this.smartIdQrCodeSession = new SmartIdQrCodeSession(session);
+        } else {
+            this.smartIdQrCodeSession = null;
+        }
+    }
+
+    public SmartIdDeviceLinkSession getSmartIdQrCodeSession() {
+        if (this.smartIdQrCodeSession != null) {
+            return this.smartIdQrCodeSession.toDomain();
+        }
+        return null;
     }
 
     @Data
@@ -622,33 +641,27 @@ public class TaraSession implements Serializable {
         @Getter(AccessLevel.NONE)
         private final DeviceLinkAuthenticationSessionRequestSurrogate requestSurrogate;
 
-        public SmartIdQrCodeSession(@NonNull Instant startTime, @NonNull RpChallenge rpChallenge,
-                                    @NonNull String deviceLinkBase, @NonNull String sessionId,
-                                    @NonNull String sessionToken, @NonNull String sessionSecret,
-                                    @NonNull DeviceLinkAuthenticationSessionRequest request) {
-            this.startTime = startTime;
-            this.rpChallengeBytes = rpChallenge.value();
-            this.deviceLinkBase = deviceLinkBase;
-            this.sessionId = sessionId;
-            this.sessionToken = sessionToken;
-            this.sessionSecret = sessionSecret;
-            this.requestSurrogate = DeviceLinkAuthenticationSessionMapper.toSurrogate(request);
+        public SmartIdQrCodeSession(@NonNull SmartIdDeviceLinkSession domainObj) {
+            this.startTime = domainObj.startTime();
+            this.rpChallengeBytes = domainObj.rpChallenge().value();
+            this.deviceLinkBase = domainObj.deviceLinkBase().toString();
+            this.sessionId = domainObj.sessionId();
+            this.sessionToken = domainObj.sessionToken();
+            this.sessionSecret = domainObj.sessionSecret();
+            this.requestSurrogate = DeviceLinkAuthenticationSessionMapper.toSurrogate(domainObj.request());
         }
 
-        public RpChallenge getRpChallenge() {
-            return new RpChallenge(rpChallengeBytes);
-        }
-
-        public String getRelyingPartyName() {
-            return requestSurrogate.getRelyingPartyName();
-        }
-
-        public String getInteractions() {
-            return requestSurrogate.getInteractions();
-        }
-
-        public DeviceLinkAuthenticationSessionRequest getRequest() {
-            return DeviceLinkAuthenticationSessionMapper.toRecord(requestSurrogate);
+        @SneakyThrows
+        public SmartIdDeviceLinkSession toDomain() {
+            return SmartIdDeviceLinkSession.builder()
+                    .startTime(startTime)
+                    .rpChallenge(new RpChallenge(rpChallengeBytes))
+                    .request(DeviceLinkAuthenticationSessionMapper.toRecord(requestSurrogate))
+                    .deviceLinkBase(new URI(deviceLinkBase))
+                    .sessionId(sessionId)
+                    .sessionToken(sessionToken)
+                    .sessionSecret(sessionSecret)
+                    .build();
         }
 
     }
