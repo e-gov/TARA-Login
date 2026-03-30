@@ -5,14 +5,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.context.i18n.LocaleContextHolder;
 
 @Component
-public class AuthenticationDisplayTextBuilder {
+public class AuthenticationDisplayTextFactory {
 
     private static final String LOGIN_DISPLAY_TEXT_KEY =
             "message.authentication.display-text";
 
     private final MessageSource messageSource;
 
-    public AuthenticationDisplayTextBuilder(MessageSource messageSource) {
+    public AuthenticationDisplayTextFactory(MessageSource messageSource) {
         this.messageSource = messageSource;
     }
 

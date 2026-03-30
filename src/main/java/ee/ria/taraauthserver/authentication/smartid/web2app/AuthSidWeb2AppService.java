@@ -4,7 +4,7 @@ import co.elastic.apm.api.ElasticApm;
 import co.elastic.apm.api.Scope;
 import co.elastic.apm.api.Span;
 import ee.ria.taraauthserver.authentication.RelyingParty;
-import ee.ria.taraauthserver.authentication.common.AuthenticationDisplayTextBuilder;
+import ee.ria.taraauthserver.authentication.common.AuthenticationDisplayTextFactory;
 import ee.ria.taraauthserver.authentication.smartid.RpChallengeService;
 import ee.ria.taraauthserver.authentication.smartid.SmartIdExceptionTranslator;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
@@ -102,7 +102,7 @@ public class AuthSidWeb2AppService {
     private RpChallengeService rpChallengeService;
 
     @Autowired
-    private AuthenticationDisplayTextBuilder authenticationDisplayTextBuilder;
+    private AuthenticationDisplayTextFactory authenticationDisplayTextFactory;
 
     public URI startSidAuthSession(@NonNull TaraSession taraSession) throws URISyntaxException {
         RpChallenge rpChallenge = rpChallengeService.getRpChallenge();
@@ -113,7 +113,7 @@ public class AuthSidWeb2AppService {
         String baseShortName = defaultIfNull(
                 taraSession.getOriginalClient().getTranslatedShortName(),
                 smartIdConfigurationProperties.getDisplayText());
-        String shortName = authenticationDisplayTextBuilder.buildLoginDisplayText(baseShortName);
+        String shortName = authenticationDisplayTextFactory.buildLoginDisplayText(baseShortName);
         String callbackBaseUrl = getCallbackBaseUrl(taraSession).toString();
         CallbackUrl callbackUrlWithToken = CallbackUrlUtil.createCallbackUrl(callbackBaseUrl);
         DeviceLinkAuthenticationSessionRequestBuilder requestBuilder = sidClient

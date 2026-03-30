@@ -5,7 +5,7 @@ import co.elastic.apm.api.Outcome;
 import co.elastic.apm.api.Scope;
 import co.elastic.apm.api.Span;
 import ee.ria.taraauthserver.authentication.RelyingParty;
-import ee.ria.taraauthserver.authentication.common.AuthenticationDisplayTextBuilder;
+import ee.ria.taraauthserver.authentication.common.AuthenticationDisplayTextFactory;
 import ee.ria.taraauthserver.authentication.smartid.RpChallengeService;
 import ee.ria.taraauthserver.authentication.smartid.SmartIdExceptionTranslator;
 import ee.ria.taraauthserver.authentication.smartid.SmartIdSessionStatus;
@@ -83,7 +83,7 @@ public class AuthSidQrCodeService {
     private final SmartIdConfigurationProperties smartIdConfigurationProperties;
     private final StatisticsLogger statisticsLogger;
     private final Clock clock;
-    private final AuthenticationDisplayTextBuilder authenticationDisplayTextBuilder;
+    private final AuthenticationDisplayTextFactory authenticationDisplayTextFactory;
 
     public void startAuthentication(@NonNull TaraSession session) {
         assertSessionInState(session, INIT_AUTH_PROCESS);
@@ -168,7 +168,7 @@ public class AuthSidQrCodeService {
             String baseShortName = defaultIfNull(
                     session.getOriginalClient().getTranslatedShortName(),
                     smartIdConfigurationProperties.getDisplayText());
-            String shortName = authenticationDisplayTextBuilder.buildLoginDisplayText(baseShortName);
+            String shortName = authenticationDisplayTextFactory.buildLoginDisplayText(baseShortName);
             RpChallenge rpChallenge = rpChallengeService.getRpChallenge();
             List<DeviceLinkInteraction> interactions = List.of(DeviceLinkInteraction.confirmationMessage(shortName));
 
