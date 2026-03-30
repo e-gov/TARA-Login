@@ -62,7 +62,6 @@ import static java.time.Instant.now;
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static net.logstash.logback.marker.Markers.append;
-import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 
 @Slf4j
 @Service
@@ -102,7 +101,7 @@ public class AuthSidWeb2AppService {
     private RpChallengeService rpChallengeService;
 
     @Autowired
-    private AuthenticationDisplayTextFactory authenticationDisplayTextFactory;
+    private AuthenticationDisplayTextFactory smartIdDisplayTextFactory;
 
     public URI startSidAuthSession(@NonNull TaraSession taraSession) throws URISyntaxException {
         RpChallenge rpChallenge = rpChallengeService.getRpChallenge();
@@ -110,10 +109,8 @@ public class AuthSidWeb2AppService {
 
         RelyingParty relyingParty = taraSession.getSmartIdRelyingParty()
                 .orElse(smartIdConfigurationProperties.getRelyingParty());
-        String baseShortName = defaultIfNull(
-                taraSession.getOriginalClient().getTranslatedShortName(),
-                smartIdConfigurationProperties.getDisplayText());
-        String shortName = authenticationDisplayTextFactory.buildLoginDisplayText(baseShortName);
+        String shortName = smartIdDisplayTextFactory.createLoginDisplayText(
+                taraSession.getOriginalClient().getTranslatedShortName());
         String callbackBaseUrl = getCallbackBaseUrl(taraSession).toString();
         CallbackUrl callbackUrlWithToken = CallbackUrlUtil.createCallbackUrl(callbackBaseUrl);
         DeviceLinkAuthenticationSessionRequestBuilder requestBuilder = sidClient

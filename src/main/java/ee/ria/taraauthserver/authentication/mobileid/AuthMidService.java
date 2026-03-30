@@ -81,7 +81,6 @@ import static java.util.concurrent.CompletableFuture.delayedExecutor;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static net.logstash.logback.marker.Markers.append;
-import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 
 @Slf4j
 @Service
@@ -135,7 +134,7 @@ public class AuthMidService {
     private StatisticsLogger statisticsLogger;
 
     @Autowired
-    private AuthenticationDisplayTextFactory authenticationDisplayTextFactory;
+    private AuthenticationDisplayTextFactory midDisplayTextFactory;
 
     public MidAuthenticationHashToSign startMidAuthSession(TaraSession taraSession, String idCode, String telephoneNumber) {
         taraSession.setState(INIT_MID);
@@ -165,8 +164,7 @@ public class AuthMidService {
                                 .minus(midAuthConfigurationProperties.getDelayInitiateMidSession())
                                 .toEpochMilli() * 1_000);
         try (final Scope scope = span.activate()) {
-            String baseShortName = defaultIfNull(taraSession.getOriginalClient().getTranslatedShortName(), midAuthConfigurationProperties.getDisplayText());
-            String shortName = authenticationDisplayTextFactory.buildLoginDisplayText(baseShortName);
+            String shortName = midDisplayTextFactory.createLoginDisplayText(taraSession.getOriginalClient().getTranslatedShortName());
             MidClient midClient = getAppropriateMidClient(taraSession);
             MidAuthenticationRequest midRequest = createMidAuthenticationRequest(idCode, telephoneNumber, authenticationHash, shortName, midClient, midLanguage);
             MidAuthenticationResponse response = midClient.getMobileIdConnector().authenticate(midRequest);

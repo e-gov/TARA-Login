@@ -1,5 +1,6 @@
 package ee.ria.taraauthserver.config;
 
+import ee.ria.taraauthserver.authentication.common.AuthenticationDisplayTextFactory;
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import ee.ria.taraauthserver.logging.JaxRsClientRequestLogger;
 import ee.sk.smartid.CertificateValidatorImpl;
@@ -13,6 +14,7 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
@@ -60,6 +62,11 @@ public class SmartIdConfiguration {
         clientConfig.property(ClientProperties.READ_TIMEOUT, smartIdConfigurationProperties.getReadTimeoutMilliseconds());
         clientConfig.register(new JaxRsClientRequestLogger("Smart-ID"));
         return clientConfig;
+    }
+
+    @Bean
+    AuthenticationDisplayTextFactory smartIdDisplayTextFactory(MessageSource messageSource) {
+        return new AuthenticationDisplayTextFactory(messageSource, smartIdConfigurationProperties.getDisplayText());
     }
 
     @Bean

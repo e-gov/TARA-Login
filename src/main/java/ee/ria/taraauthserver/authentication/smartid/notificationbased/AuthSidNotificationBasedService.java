@@ -54,7 +54,6 @@ import static java.util.concurrent.CompletableFuture.delayedExecutor;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static net.logstash.logback.marker.Markers.append;
-import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 
 @Slf4j
 @Service
@@ -89,7 +88,7 @@ public class AuthSidNotificationBasedService {
     private RpChallengeService rpChallengeService;
 
     @Autowired
-    private AuthenticationDisplayTextFactory authenticationDisplayTextFactory;
+    private AuthenticationDisplayTextFactory smartIdDisplayTextFactory;
 
     public String startSidAuthSession(TaraSession taraSession, String idCode) {
         RpChallenge rpChallenge = rpChallengeService.getRpChallenge();
@@ -166,10 +165,8 @@ public class AuthSidNotificationBasedService {
 
     private List<NotificationInteraction> getAppropriateAllowedInteractions(TaraSession taraSession) {
         List<NotificationInteraction> allowedInteractions = new ArrayList<>();
-        String baseShortName = defaultIfNull(
-                taraSession.getOriginalClient().getTranslatedShortName(),
-                smartIdConfigurationProperties.getDisplayText());
-        String shortName = authenticationDisplayTextFactory.buildLoginDisplayText(baseShortName);
+        String shortName = smartIdDisplayTextFactory.createLoginDisplayText(
+                taraSession.getOriginalClient().getTranslatedShortName());
         if (taraSession.isAdditionalSmartIdVerificationCodeCheckNeeded()) {
             allowedInteractions.add(NotificationInteraction.confirmationMessageAndVerificationCodeChoice(shortName));
         }
