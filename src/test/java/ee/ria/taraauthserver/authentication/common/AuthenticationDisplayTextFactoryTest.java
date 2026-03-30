@@ -14,12 +14,12 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class AuthenticationDisplayTextBuilderTest {
+class AuthenticationDisplayTextFactoryTest {
 
     private static final String PREFIX_KEY = "message.authentication.display-text";
 
     private final MessageSource messageSource = mock(MessageSource.class);
-    private final AuthenticationDisplayTextBuilder builder = new AuthenticationDisplayTextBuilder(messageSource);
+    private final AuthenticationDisplayTextFactory builder = new AuthenticationDisplayTextFactory(messageSource);
 
     @AfterEach
     void tearDown() {

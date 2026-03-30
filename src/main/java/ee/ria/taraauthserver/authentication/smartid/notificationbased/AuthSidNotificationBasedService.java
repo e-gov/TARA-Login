@@ -4,7 +4,7 @@ import co.elastic.apm.api.ElasticApm;
 import co.elastic.apm.api.Scope;
 import co.elastic.apm.api.Span;
 import ee.ria.taraauthserver.authentication.RelyingParty;
-import ee.ria.taraauthserver.authentication.common.AuthenticationDisplayTextBuilder;
+import ee.ria.taraauthserver.authentication.common.AuthenticationDisplayTextFactory;
 import ee.ria.taraauthserver.authentication.smartid.RpChallengeService;
 import ee.ria.taraauthserver.authentication.smartid.SmartIdExceptionTranslator;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
@@ -89,7 +89,7 @@ public class AuthSidNotificationBasedService {
     private RpChallengeService rpChallengeService;
 
     @Autowired
-    private AuthenticationDisplayTextBuilder authenticationDisplayTextBuilder;
+    private AuthenticationDisplayTextFactory authenticationDisplayTextFactory;
 
     public String startSidAuthSession(TaraSession taraSession, String idCode) {
         RpChallenge rpChallenge = rpChallengeService.getRpChallenge();
@@ -169,7 +169,7 @@ public class AuthSidNotificationBasedService {
         String baseShortName = defaultIfNull(
                 taraSession.getOriginalClient().getTranslatedShortName(),
                 smartIdConfigurationProperties.getDisplayText());
-        String shortName = authenticationDisplayTextBuilder.buildLoginDisplayText(baseShortName);
+        String shortName = authenticationDisplayTextFactory.buildLoginDisplayText(baseShortName);
         if (taraSession.isAdditionalSmartIdVerificationCodeCheckNeeded()) {
             allowedInteractions.add(NotificationInteraction.confirmationMessageAndVerificationCodeChoice(shortName));
         }

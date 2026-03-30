@@ -4,7 +4,7 @@ import co.elastic.apm.api.ElasticApm;
 import co.elastic.apm.api.Scope;
 import co.elastic.apm.api.Span;
 import ee.ria.taraauthserver.authentication.RelyingParty;
-import ee.ria.taraauthserver.authentication.common.AuthenticationDisplayTextBuilder;
+import ee.ria.taraauthserver.authentication.common.AuthenticationDisplayTextFactory;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties.MidAuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.error.ErrorCode;
@@ -44,7 +44,6 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
@@ -136,7 +135,7 @@ public class AuthMidService {
     private StatisticsLogger statisticsLogger;
 
     @Autowired
-    private AuthenticationDisplayTextBuilder authenticationDisplayTextBuilder;
+    private AuthenticationDisplayTextFactory authenticationDisplayTextFactory;
 
     public MidAuthenticationHashToSign startMidAuthSession(TaraSession taraSession, String idCode, String telephoneNumber) {
         taraSession.setState(INIT_MID);
@@ -167,7 +166,7 @@ public class AuthMidService {
                                 .toEpochMilli() * 1_000);
         try (final Scope scope = span.activate()) {
             String baseShortName = defaultIfNull(taraSession.getOriginalClient().getTranslatedShortName(), midAuthConfigurationProperties.getDisplayText());
-            String shortName = authenticationDisplayTextBuilder.buildLoginDisplayText(baseShortName);
+            String shortName = authenticationDisplayTextFactory.buildLoginDisplayText(baseShortName);
             MidClient midClient = getAppropriateMidClient(taraSession);
             MidAuthenticationRequest midRequest = createMidAuthenticationRequest(idCode, telephoneNumber, authenticationHash, shortName, midClient, midLanguage);
             MidAuthenticationResponse response = midClient.getMobileIdConnector().authenticate(midRequest);
