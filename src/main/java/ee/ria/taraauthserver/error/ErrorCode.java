@@ -40,7 +40,6 @@ public enum ErrorCode {
     IDC_CERT_EXPIRED("message.idc.cert-expired"),
     IDC_CERT_FORBIDDEN("message.idc.cert-forbidden"),
     IDC_REVOKED("message.idc.revoked"),
-    IDC_UNKNOWN("message.idc.unknown"),
     IDC_WEBEID_NOT_AVAILABLE("message.idc.webeid.not-available"),
     IDC_WEBEID_USER_TIMEOUT("message.idc.webeid.user-timeout"),
     IDC_WEBEID_ERROR("message.idc.webeid.error"),
