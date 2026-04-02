@@ -252,7 +252,8 @@ Table 1.5.4 - OCSP configuration
 | :---------------- | :---------- | :----------------|
 | `tara.auth-methods.id-card.ocsp.enabled` | No | Enable or disable OCSP. Default `true` |
 | `tara.auth-methods.id-card.ocsp.allowed-response-time-skew` | No | Max time skew when checking OCSP response age. Default `15m`. See [longer description](https://github.com/web-eid/web-eid-authtoken-validation-java/blob/v3.2.0/README.md?plain=1#L305). |
-| `tara.auth-methods.id-card.ocsp.primary-server-this-update-max-age` | No | Max age for OCSP response. Default `2m`. See [longer description](https://github.com/web-eid/web-eid-authtoken-validation-java/blob/v3.2.0/README.md?plain=1#L306). |
+| `tara.auth-methods.id-card.ocsp.primary-server-this-update-max-age` | No | Max age for OCSP response from primary server. Default `2m`. See [longer description](https://github.com/web-eid/web-eid-authtoken-validation-java/blob/v3.2.0/README.md?plain=1#L306). |
+| `tara.auth-methods.id-card.ocsp.fallback-server-this-update-max-age` | No | Max age for OCSP response from fallback server. Default `24h`. TODO Add a link after Web eID documentation update. |
 | `tara.auth-methods.id-card.ocsp.request-timeout` | No | Max timeout for OCSP request. Default `3s`. See [longer description](https://github.com/web-eid/web-eid-authtoken-validation-java/blob/v3.2.0/README.md?plain=1#L302). |
 
 Table 1.5.5 - Configuring truststore for OCSP responder certificates
@@ -292,7 +293,7 @@ Each certificate chain configuration can contain the following set of properties
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `tara.auth-methods.id-card.ocsp.certificate-chains[0].issuer-cn` | Yes | Required issuer CN. Example `Test ESTEID2025` |
+| `tara.auth-methods.id-card.ocsp.certificate-chains[0].issuer-dn` | Yes | Required issuer DN. Example `CN=Test ESTEID2025, organizationIdentifier=NTREE-17066049, O=Zetes Estonia OÜ, C=EE` |
 | `tara.auth-methods.id-card.ocsp.certificate-chains[0].primary-server` | Yes | Required primary OCSP server. |
 | `tara.auth-methods.id-card.ocsp.certificate-chains[0].first-fallback-server` | No | Optional first fallback OCSP server. |
 | `tara.auth-methods.id-card.ocsp.certificate-chains[0].second-fallback-server` | No | Optional second fallback OCSP server. |
@@ -331,6 +332,7 @@ tara:
           truststore-password: changeit
         allowed-response-time-skew: 15m
         primary-server-this-update-max-age: 2m
+        fallback-server-this-update-max-age: 24h
         request-timeout: 3s
         retry:
           wait-duration: 500ms
@@ -342,7 +344,7 @@ tara:
           permitted-number-of-calls-in-half-open-state: 10
           wait-duration-in-open-state: 60s
         certificate-chains:
-          - issuer-cn: TEST of ESTEID2018
+          - issuer-dn: C=EE, O=SK ID Solutions AS, organizationIdentifier=NTREE-10747013, CN=TEST of ESTEID2018
             primary-server:
               url: http://aia.demo.sk.ee/esteid2018
             first-fallback-server:

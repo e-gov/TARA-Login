@@ -20,6 +20,7 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.core.IntervalFunction;
 import io.github.resilience4j.retry.RetryConfig;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.asn1.x500.X500Name;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -146,6 +147,7 @@ public class IDCardConfiguration {
                     retryConfig,
                     ocsp.getAllowedResponseTimeSkew(),
                     ocsp.getPrimaryServerThisUpdateMaxAge(),
+                    ocsp.getFallbackServerThisUpdateMaxAge(),
                     true
             );
 
@@ -161,13 +163,13 @@ public class IDCardConfiguration {
     private static AiaOcspServiceConfiguration getAiaOcspServiceConfiguration(AuthConfigurationProperties.Ocsp ocsp,
                                                                               Set<TrustAnchor> trustedCACertificateAnchors,
                                                                               CertStore trustedCACertificateCertStore) throws JceException {
-        List<String> nonceDisabledIssuerCNs = ocsp.getCertificateChains().stream()
+        List<X500Name> nonceDisabledIssuerDNs = ocsp.getCertificateChains().stream()
                 .filter(certificateChain -> !certificateChain.getPrimaryServer().isNonceEnabled())
-                .map(AuthConfigurationProperties.CertificateChain::getIssuerCn)
+                .map(AuthConfigurationProperties.CertificateChain::getIssuerDn)
                 .toList();
 
         return new AiaOcspServiceConfiguration(
-                nonceDisabledIssuerCNs,
+                nonceDisabledIssuerDNs,
                 trustedCACertificateAnchors,
                 trustedCACertificateCertStore
         );
@@ -181,11 +183,11 @@ public class IDCardConfiguration {
         List<FallbackOcspServiceConfiguration> fallbackOcspServiceConfigurationList = new ArrayList<>();
 
         for (AuthConfigurationProperties.CertificateChain chain : idCardAuthConfigurationProperties.getOcsp().getCertificateChains()) {
-            String issuerCn = chain.getIssuerCn();
+            X500Name issuerDn = chain.getIssuerDn();
             AuthConfigurationProperties.FallbackOcspServer firstFallbackServer = chain.getFirstFallbackServer();
 
             if (firstFallbackServer == null) {
-                log.info("No fallback configurations found for issuer {}", issuerCn);
+                log.info("No fallback configurations found for issuer {}", issuerDn);
                 continue;
             }
 
@@ -197,7 +199,7 @@ public class IDCardConfiguration {
                         getResponderCertificate(secondFallbackServer, ocspResponderTrustedCertificatesMap),
                         secondFallbackServer.isNonceEnabled(),
                         null,
-                        chain.getIssuerCn(),
+                        issuerDn,
                         trustedCACertificateAnchors,
                         trustedCACertificateCertStore
                 );
@@ -208,14 +210,14 @@ public class IDCardConfiguration {
                     getResponderCertificate(firstFallbackServer, ocspResponderTrustedCertificatesMap),
                     firstFallbackServer.isNonceEnabled(),
                     secondFallbackConfiguration,
-                    chain.getIssuerCn(),
+                    issuerDn,
                     trustedCACertificateAnchors,
                     trustedCACertificateCertStore
             );
-            log.info("Found first fallback configuration for issuer {}", issuerCn);
+            log.info("Found first fallback configuration for issuer {}", issuerDn);
             logFallbackOcspServiceConfiguration(firstFallbackConfiguration);
             if (secondFallbackConfiguration != null) {
-                log.info("Found second fallback configuration for issuer {}", issuerCn);
+                log.info("Found second fallback configuration for issuer {}", issuerDn);
                 logFallbackOcspServiceConfiguration(secondFallbackConfiguration);
             }
             fallbackOcspServiceConfigurationList.add(firstFallbackConfiguration);

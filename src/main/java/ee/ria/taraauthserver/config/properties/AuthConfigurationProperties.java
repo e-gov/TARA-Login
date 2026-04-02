@@ -14,6 +14,7 @@ import jakarta.validation.constraints.Positive;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.asn1.x500.X500Name;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.Assert;
@@ -262,6 +263,8 @@ public class AuthConfigurationProperties {
 
         private Duration primaryServerThisUpdateMaxAge = Duration.ofMinutes(2);
 
+        private Duration fallbackServerThisUpdateMaxAge = Duration.ofHours(24);
+
         private Duration requestTimeout = Duration.ofSeconds(5);
 
         private OcspRetryConfig retry = new OcspRetryConfig();
@@ -275,18 +278,18 @@ public class AuthConfigurationProperties {
         public void validateConfiguration() {
             if (this.enabled) {
                 Assert.notEmpty(certificateChains, "At least one certificate chain configuration must be defined!");
-                Set<String> duplicateNames = getFindDuplicateConfigurations();
+                Set<X500Name> duplicateNames = getFindDuplicateConfigurations();
                 Assert.isTrue(duplicateNames.isEmpty(), "Multiple certificate chain configurations detected for issuer's with CN's: " + duplicateNames + ". Please check your configuration!");
             } else {
                 log.warn("OCSP verification has been DISABLED! User certificates will not be checked for revocation!");
             }
         }
 
-        private Set<String> getFindDuplicateConfigurations() {
-            Set<String> names = new HashSet<>();
+        private Set<X500Name> getFindDuplicateConfigurations() {
+            Set<X500Name> names = new HashSet<>();
             return certificateChains.stream()
-                    .map(CertificateChain::getIssuerCn)
-                    .filter(cn -> !names.add(cn))
+                    .map(CertificateChain::getIssuerDn)
+                    .filter(dn -> !names.add(dn))
                     .collect(Collectors.toSet());
         }
     }
@@ -323,7 +326,7 @@ public class AuthConfigurationProperties {
     public static class CertificateChain {
 
         @NotEmpty
-        private String issuerCn;
+        private X500Name issuerDn;
 
         @NotNull
         private PrimaryOcspServer primaryServer;

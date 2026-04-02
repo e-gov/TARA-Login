@@ -44,28 +44,28 @@ tara:
           # The maximum number of attempts (including the initial call as the first attempt).
           max-attempts: 2
         certificate-chains:
-          - issuer-cn: ESTEID2018
+          - issuer-dn: C=EE, O=SK ID Solutions AS, organizationIdentifier=NTREE-10747013, CN=ESTEID2018
             primary-server:
               nonce-enabled: true
             first-fallback-server:
               url: https://ocspcrl:14443/ocsp/esteid2018
               nonce-enabled: true
               responder-certificate-cn: local-ocsp
-          - issuer-cn: ESTEID2025
+          - issuer-dn: CN=ESTEID2025, organizationIdentifier=NTREE-17066049, O=Zetes Estonia OÜ, C=EE
             primary-server:
               nonce-enabled: true
             first-fallback-server:
               url: https://ocspcrl:14443/ocsp/esteid2025
               nonce-enabled: true
               responder-certificate-cn: local-ocsp
-          - issuer-cn: TEST of ESTEID2018
+          - issuer-dn: C=EE, O=SK ID Solutions AS, organizationIdentifier=NTREE-10747013, CN=TEST of ESTEID2018
             primary-server:
               nonce-enabled: true
             first-fallback-server:
               url: https://ocspcrl:14443/ocsp/test_esteid2018
               nonce-enabled: true
               responder-certificate-cn: local-ocsp
-          - issuer-cn: Test ESTEID2025
+          - issuer-dn: CN=Test ESTEID2025, organizationIdentifier=NTREE-17066049, O=Zetes Estonia OÜ, C=EE
             primary-server:
               nonce-enabled: true
             first-fallback-server:
