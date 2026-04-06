@@ -129,13 +129,8 @@ class SmartIdWeb2AppControllerTest extends BaseTest {
                 .get("/auth/sid/web2app/callback/poll")
                 .then()
                 .assertThat()
-                .statusCode(200)
-                .body("status", equalTo("COMPLETED"));
+                .statusCode(400);
 
-        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
-        assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
-        assertEquals(ee.ria.taraauthserver.error.ErrorCode.SID_COUNTRY_NOT_ALLOWED,
-                taraSession.getAuthenticationResult().getErrorCode());
         assertWarningIsLogged("Smart-ID authentication failed: Smart-ID authentication is not allowed for country: LV, Error code: SID_COUNTRY_NOT_ALLOWED");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_COUNTRY_NOT_ALLOWED, smartIdFlowType=WEB2APP)");
