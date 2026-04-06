@@ -40,6 +40,9 @@ tara:
       enabled: true
       level-of-assurance: HIGH
       ocsp:
+        retry:
+          # The maximum number of attempts (including the initial call as the first attempt).
+          max-attempts: 2
         certificate-chains:
           - issuer-cn: ESTEID2018
             primary-server:
