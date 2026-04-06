@@ -137,7 +137,13 @@
             show("#login-form-error");
             show("#sid-mobile-tab-context");
             setupErrorBackLinkHandler();
-            document.querySelector("#error-message").innerHTML = pollResponse["message"];
+
+            if (pollResponse["message"]) {
+                document.querySelector("#error-message").innerHTML = pollResponse["message"];
+            } else {
+                document.querySelector("#error-message").classList.add('hidden');
+                document.querySelector("#default-error-message").classList.remove('hidden');
+            }
 
             if (pollResponse["reportable"]) {
                 var timeFormat = document.querySelector("#error-incident-time").getAttribute("data-time-format");

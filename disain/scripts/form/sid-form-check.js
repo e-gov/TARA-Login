@@ -12,7 +12,9 @@
     } catch (e) {
     }
 
-    setTimeout(stopPolling, 120000);
+    // If the Smart-ID service max timeout is 120 seconds, we should stop polling a bit later (i.e 125s) to avoid
+    // a race condition where the client side code stops polling before the server has sent TIMEOUT response.
+    setTimeout(stopPolling, 125000);
 
     function stopPolling() {
         isPolling = false;
@@ -64,7 +66,13 @@
             } else {
                 document.querySelector(".c-tab-login__main").classList.add('hidden');
                 document.querySelector("#sid-error").classList.remove('hidden');
-                document.querySelector("#error-message").innerHTML = pollResponse["message"];
+
+                if (pollResponse["message"]) {
+                    document.querySelector("#error-message").innerHTML = pollResponse["message"];
+                } else {
+                    document.querySelector("#error-message").classList.add('hidden');
+                    document.querySelector("#default-error-message").classList.remove('hidden');
+                }
 
                 if (pollResponse["reportable"]) {
                     var timeFormat = document.querySelector("#error-incident-time").getAttribute("data-time-format");
