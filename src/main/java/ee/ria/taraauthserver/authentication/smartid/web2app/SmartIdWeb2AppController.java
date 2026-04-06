@@ -135,21 +135,22 @@ public class SmartIdWeb2AppController {
                 POLL_SID_WEB2APP_STATUS,
                 POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED,
                 AUTHENTICATION_FAILED);
-        switch (taraSession.getState()) {
-            case AUTHENTICATION_FAILED:
-                throw getExceptionForAuthenticationFailureOnPoll(taraSession);
-            case POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED:
-                SessionStatus sessionStatus = taraSession.getSmartIdWeb2AppSession().getSessionStatus();
-                if (SmartIdSessionStatus.COMPLETE.equals(sessionStatus.getState())) {
-                    authSidWeb2AppService.handleFinalAuthenticationResult(
-                            taraSession, sessionStatus, userChallengeVerifier, sessionSecretDigest, value);
-                    return Map.of("status", "COMPLETED");
-                }
+        if(taraSession.getState() == POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED) {
+            SessionStatus sessionStatus = taraSession.getSmartIdWeb2AppSession().getSessionStatus();
+            if (!SmartIdSessionStatus.COMPLETE.equals(sessionStatus.getState())) {
                 throw new IllegalStateException("Unexpected session status: " + sessionStatus.getState());
-            default: // POLL_SID_WEB2APP_STATUS
-                return Map.of("status", "PENDING");
+            }
+            // `authSidWeb2AppService.handleFinalAuthenticationResult` will trigger a state change.         
+            authSidWeb2AppService.handleFinalAuthenticationResult(
+                    taraSession, sessionStatus, userChallengeVerifier, sessionSecretDigest, value);
         }
-    }
+        return switch (taraSession.getState()) {
+            case AUTHENTICATION_FAILED -> throw getExceptionForAuthenticationFailureOnPoll(taraSession);
+            case POLL_SID_WEB2APP_STATUS -> Map.of("status", "PENDING");
+            case NATURAL_PERSON_AUTHENTICATION_COMPLETED -> Map.of("status", "COMPLETED");
+            default -> throw new IllegalStateException("Unexpected state \"%s\"".formatted(taraSession.getState()));
+        };
+   }
 
     @PostMapping(value = "/auth/sid/web2app/callback/poll/cancel", produces = MediaType.APPLICATION_JSON_VALUE)
     public RedirectView authSidCallbackPollCancel(
