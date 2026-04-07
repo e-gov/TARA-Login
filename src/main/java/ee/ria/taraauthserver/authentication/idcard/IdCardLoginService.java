@@ -91,10 +91,18 @@ public class IdCardLoginService {
         ValidationInfo validationInfo = handleTokenValidation(data.getAuthToken(), nonce, taraSession);
         logValidationInfo(validationInfo, taraSession);
 
+        boolean isOcspEnabled = configurationProperties.getOcsp().isEnabled();
+        if (!isOcspEnabled) {
+            log.info("Skipping OCSP validation because OCSP is disabled.");
+        }
+
         String eidasClientId = filterForEidasProxy.getClientId();
         X509Certificate certificate = validationInfo.subjectCertificate();
         if (taraSession.getOriginalClient().getClientId().equals(eidasClientId)) {
             validateIdCardValidForEidasAuthentication(certificate);
+        }
+        if (!isOcspEnabled) {
+            updateAuthenticationResult(taraSession, certificate, null);
         }
         taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
     }
