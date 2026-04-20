@@ -1,9 +1,16 @@
-<div th:if="${@thymeleafSupport.getEnabledAuthMethods().idCard OR @thymeleafSupport.getEnabledAuthMethods().smartIdFlows.web2app}">
-    <div id="sid-mobile-tab-context" th:insert="~{fragments/mobileTabContext :: mobileTabContext('smart-id', 'en')}" th:class="hidden"/>
-    <div id="login-form-error" th:insert="~{fragments/error}" th:class="hidden"/>
-    <div id="id-card-wait" th:insert="~{fragments/waitIdCard}" th:class="hidden"/>
-    <div id="sid-web2app-wait" th:insert="~{fragments/waitSidWeb2App}" th:class="hidden"/>
-</div>
+<th:block th:if="${@thymeleafSupport.getEnabledAuthMethods().smartIdFlows.web2app}">
+    <div id="sid-mobile-tab-context" th:insert="~{fragments/mobileTabContext :: mobileTabContext('smart-id', 'en')}" class="hidden"/>
+</th:block>
+<th:block th:if="${@thymeleafSupport.getEnabledAuthMethods().idCard OR @thymeleafSupport.getEnabledAuthMethods().smartIdFlows.web2app}">
+    <div id="login-form-error" th:insert="~{fragments/error}" class="hidden"/>
+</th:block>
+<th:block th:if="${@thymeleafSupport.getEnabledAuthMethods().idCard}">
+    <div id="id-card-wait" th:insert="~{fragments/waitIdCard}" class="hidden"/>
+</th:block>
+<th:block th:if="${@thymeleafSupport.getEnabledAuthMethods().smartIdFlows.web2app}">
+    <div id="sid-web2app-wait" th:insert="~{fragments/waitSidWeb2App}" class="hidden"/>
+</th:block>
+
 <div class="container" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
         th:with="enabledAuthMethods=${@thymeleafSupport.getEnabledAuthMethods()}">
     <noscript>
@@ -170,7 +177,9 @@
                 </th:block>
             </div>
 
-            <th:block th:if="${enabledAuthMethods.smartId}" th:replace="~{fragments/sidLoginform}"></th:block>
+            <th:block th:if="${enabledAuthMethods.smartId}">
+                <th:block th:replace="~{fragments/sidLoginform}"></th:block>
+            </th:block>
 
             <div th:if="${enabledAuthMethods.eidas}"
                  layout:insert="~{fragments/logintabs :: content(tab_id = 'eu-citizen', title = 'title-long')}"
