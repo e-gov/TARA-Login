@@ -58,19 +58,13 @@ public class X509Utils {
         }
     }
 
-    public String getSubjectCNFromCertificate(X509Certificate certificate) {
-        try {
-            return getFirstCNFromX500Name(
-                    new JcaX509CertificateHolder(certificate).getSubject()
-            );
-        } catch (CertificateEncodingException e) {
-            throw new IllegalStateException("Unable to get subject CN from certificate", e);
-        }
-    }
-
     public String getFirstCNFromX500Name(X500Name x500Name) {
         final RDN cn = x500Name.getRDNs(BCStyle.CN)[0];
         return IETFUtils.valueToString(cn.getFirst().getValue());
+    }
+
+    public static X500Name getSubjectDN(X509Certificate certificate) {
+        return X500Name.getInstance(certificate.getSubjectX500Principal().getEncoded());
     }
 
     public String getRfc822NameSubjectAltName(X509Certificate certificate) {
