@@ -165,11 +165,12 @@ public class IDCardConfiguration {
 
             AuthConfigurationProperties.OcspCircuitBreakerConfig ocspCircuitBreakerConfig = ocsp.getCircuitBreaker();
             CircuitBreakerConfig circuitBreakerConfig = CircuitBreakerConfig.custom()
+                    .slidingWindowType(ocspCircuitBreakerConfig.getSlidingWindowType())
                     .slidingWindowSize(ocspCircuitBreakerConfig.getSlidingWindowSize())
                     .minimumNumberOfCalls(ocspCircuitBreakerConfig.getMinimumNumberOfCalls())
                     .failureRateThreshold(ocspCircuitBreakerConfig.getFailureRateThreshold())
                     .permittedNumberOfCallsInHalfOpenState(ocspCircuitBreakerConfig.getPermittedNumberOfCallsInHalfOpenState())
-                    .waitIntervalFunctionInOpenState(IntervalFunction.of(ocspCircuitBreakerConfig.getWaitDurationInOpenState()))
+                    .waitDurationInOpenState(ocspCircuitBreakerConfig.getWaitDurationInOpenState())
                     .build();
 
             AuthConfigurationProperties.OcspRetryConfig ocspRetryConfig = ocsp.getRetry();

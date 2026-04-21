@@ -1,7 +1,6 @@
 package ee.ria.taraauthserver.config.properties;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
-import io.github.resilience4j.retry.RetryConfig;
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -297,7 +296,7 @@ public class AuthConfigurationProperties {
     @Data
     public static class OcspRetryConfig {
 
-        private Duration waitDuration = Duration.ofMillis(RetryConfig.DEFAULT_WAIT_DURATION);
+        private Duration waitDuration = Duration.ofMillis(500);
 
         @Positive
         private int maxAttempts = 2;
@@ -306,20 +305,22 @@ public class AuthConfigurationProperties {
     @Data
     public static class OcspCircuitBreakerConfig {
 
-        @Positive
-        private int slidingWindowSize = CircuitBreakerConfig.DEFAULT_SLIDING_WINDOW_SIZE;
+        private CircuitBreakerConfig.SlidingWindowType slidingWindowType = CircuitBreakerConfig.SlidingWindowType.TIME_BASED;
 
         @Positive
-        private int minimumNumberOfCalls = CircuitBreakerConfig.DEFAULT_MINIMUM_NUMBER_OF_CALLS;
+        private int slidingWindowSize = 60;
+
+        @Positive
+        private int minimumNumberOfCalls = 15;
 
         @Min(1)
         @Max(100)
-        private int failureRateThreshold = CircuitBreakerConfig.DEFAULT_FAILURE_RATE_THRESHOLD;
+        private int failureRateThreshold = 70;
 
         @Positive
-        private int permittedNumberOfCallsInHalfOpenState = CircuitBreakerConfig.DEFAULT_PERMITTED_CALLS_IN_HALF_OPEN_STATE;
+        private int permittedNumberOfCallsInHalfOpenState = 15;
 
-        private Duration waitDurationInOpenState = Duration.ofSeconds(CircuitBreakerConfig.DEFAULT_WAIT_DURATION_IN_OPEN_STATE);
+        private Duration waitDurationInOpenState = Duration.ofSeconds(10);
     }
 
     @Data
