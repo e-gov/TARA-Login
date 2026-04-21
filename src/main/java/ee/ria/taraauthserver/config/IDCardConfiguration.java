@@ -64,15 +64,15 @@ public class IDCardConfiguration {
 
     @Bean
     public Map<String, X509Certificate> issuerTrustedCertificatesMap(KeyStore issuerKeystore) {
-        Map<String, X509Certificate> trustedCertificates = buildIssuerTrustedCertificateMap(issuerKeystore);
-        logTrustedCertificateMap(trustedCertificates, "issuer");
+        Map<String, X509Certificate> trustedCertificates = buildIssuerTrustedCertificatesMap(issuerKeystore);
+        logIssuerTrustedCertificatesMap(trustedCertificates);
         return trustedCertificates;
     }
 
     @Bean
     public Map<X500Name, X509Certificate> ocspResponderTrustedCertificatesMap(KeyStore ocspResponderKeystore) {
-        Map<X500Name, X509Certificate> trustedCertificates = buildOcspResponderTrustedCertificateMap(ocspResponderKeystore);
-        logTrustedCertificateMap(trustedCertificates, "OCSP responder");
+        Map<X500Name, X509Certificate> trustedCertificates = buildOcspResponderTrustedCertificatesMap(ocspResponderKeystore);
+        logOcspResponderTrustedCertificatesMap(trustedCertificates);
         return trustedCertificates;
     }
 
@@ -259,7 +259,7 @@ public class IDCardConfiguration {
         }
     }
 
-    private static Map<String, X509Certificate> buildIssuerTrustedCertificateMap(KeyStore keystore) {
+    private static Map<String, X509Certificate> buildIssuerTrustedCertificatesMap(KeyStore keystore) {
         try {
             PKIXParameters params = new PKIXParameters(keystore);
             return params.getTrustAnchors().stream()
@@ -269,7 +269,7 @@ public class IDCardConfiguration {
         }
     }
 
-    private static Map<X500Name, X509Certificate> buildOcspResponderTrustedCertificateMap(KeyStore keystore) {
+    private static Map<X500Name, X509Certificate> buildOcspResponderTrustedCertificatesMap(KeyStore keystore) {
         try {
             PKIXParameters params = new PKIXParameters(keystore);
             return params.getTrustAnchors().stream()
@@ -279,14 +279,22 @@ public class IDCardConfiguration {
         }
     }
 
-    private static void logTrustedCertificateMap(Map<?, X509Certificate> trustedCertificates, String certificateType) {
-        trustedCertificates.forEach((key, value) -> log.info("Trusted {} certificate added to configuration - CN: {}, serialnumber: {}, validFrom: {}, validTo: {}",
+    private static void logIssuerTrustedCertificatesMap(Map<String, X509Certificate> trustedCertificates) {
+        trustedCertificates.forEach((subjectCn, certificate) ->
+                logTrustedCertificate(subjectCn, certificate, "issuer"));
+    }
+
+    private static void logOcspResponderTrustedCertificatesMap(Map<X500Name, X509Certificate> trustedCertificates) {
+        trustedCertificates.forEach((subjectDn, certificate) ->
+                logTrustedCertificate(X509Utils.getFirstCNFromX500Name(subjectDn), certificate, "OCSP responder"));
+    }
+
+    private static void logTrustedCertificate(String subjectCn, X509Certificate certificate, String certificateType) {
+        log.info("Trusted {} certificate added to configuration - CN: {}, serialnumber: {}, validFrom: {}, validTo: {}",
                 certificateType,
-                // TODO In case of OCSP responder certificates, this results in
-                //  CN: C=EE,O=Information System Authority,CN=local-ocsp
-                value("x509.subject.common_name", key),
-                value("x509.serial_number", value.getSerialNumber().toString(16)),
-                value("x509.not_before", value.getNotBefore()),
-                value("x509.not_after", value.getNotAfter())));
+                value("x509.subject.common_name", subjectCn),
+                value("x509.serial_number", certificate.getSerialNumber().toString(16)),
+                value("x509.not_before", certificate.getNotBefore()),
+                value("x509.not_after", certificate.getNotAfter()));
     }
 }
