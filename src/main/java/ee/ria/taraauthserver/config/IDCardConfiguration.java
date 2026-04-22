@@ -263,7 +263,7 @@ public class IDCardConfiguration {
         try {
             PKIXParameters params = new PKIXParameters(keystore);
             return params.getTrustAnchors().stream()
-                    .collect(toMap(trustAnchor -> X509Utils.getIssuerCNFromCertificate(trustAnchor.getTrustedCert()), TrustAnchor::getTrustedCert));
+                    .collect(toMap(trustAnchor -> X509Utils.getSubjectCNFromCertificate(trustAnchor.getTrustedCert()), TrustAnchor::getTrustedCert));
         } catch (Exception e) {
             throw new IllegalArgumentException("Failed to read trusted certificates from id-card truststore: " + e.getMessage(), e);
         }
