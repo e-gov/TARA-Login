@@ -4,6 +4,7 @@ import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.logging.RestTemplateErrorLogger;
 import ee.ria.taraauthserver.session.TaraSession;
+import ee.sk.smartid.FlowType;
 import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
@@ -88,11 +89,7 @@ class AuthRejectControllerTest extends BaseTest {
     @Test
     @Tag(value = "LOG_EVENT_UNIQUE_STATUS")
     void authReject_success() {
-        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/login/reject?login_challenge=" + MOCK_LOGIN_CHALLENGE))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/mockLoginAcceptResponse.json")));
+        stubLoginReject(200, "mock_responses/mockLoginAcceptResponse.json");
         String sessionId = createSession();
 
         given()
@@ -116,12 +113,7 @@ class AuthRejectControllerTest extends BaseTest {
 
     @Test
     void authReject_oidcRespondsWithError() {
-        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/login/reject?login_challenge=" + MOCK_LOGIN_CHALLENGE))
-                .willReturn(aResponse()
-                        .withStatus(400)
-                        .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/incorrectMockLoginAcceptResponse.json")));
-
+        stubLoginReject(400, "mock_responses/incorrectMockLoginAcceptResponse.json");
         String sessionId = createSession();
 
         given()
@@ -143,12 +135,7 @@ class AuthRejectControllerTest extends BaseTest {
 
     @Test
     void authReject_redirectUrlMissing() {
-        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/login/reject?login_challenge=" + MOCK_LOGIN_CHALLENGE))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/incorrectMockLoginAcceptResponse.json")));
-
+        stubLoginReject(200, "mock_responses/incorrectMockLoginAcceptResponse.json");
         String sessionId = createSession();
 
         given()
@@ -172,12 +159,7 @@ class AuthRejectControllerTest extends BaseTest {
     @Test
     @Tag(value = "AUTH_REJECT_HYDRA_FAILURE")
     void authReject_hydraRequestFails() {
-        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/login/reject?login_challenge=" + MOCK_LOGIN_CHALLENGE))
-            .willReturn(aResponse()
-                .withStatus(200)
-                .withHeader("Content-Type", "application/json; charset=UTF-8")
-                .withBody("{}")));
-
+        stubLoginReject(200, "mock_responses/incorrectMockLoginAcceptResponse.json");
         String sessionId = createSession();
 
         given()
@@ -197,14 +179,50 @@ class AuthRejectControllerTest extends BaseTest {
             "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
     }
 
+    @Test
+    @Tag(value = "LOG_EVENT_UNIQUE_STATUS")
+    void authReject_sidQrCodeSession_success() {
+        stubLoginReject(200, "mock_responses/mockLoginAcceptResponse.json");
+        String sessionId = createSession(FlowType.QR);
+
+        given()
+                .when()
+                .sessionId(TARA_SESSION_COOKIE_NAME, sessionId)
+                .param("error_code", "user_cancel")
+                .get("/auth/reject")
+                .then()
+                .assertThat()
+                .statusCode(302)
+                .header("Location", Matchers.endsWith("some/test/url"));
+
+        assertNull(sessionRepository.findById(sessionId));
+        assertInfoIsLogged("State: NOT_SET -> AUTHENTICATION_CANCELED");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED",
+                "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_CANCELED, errorCode=null, smartIdFlowType=QR)");
+    }
+
+    private void stubLoginReject(int status, String bodyFile) {
+        wireMockServer.stubFor(put(urlEqualTo("/admin/oauth2/auth/requests/login/reject?login_challenge=" + MOCK_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(status)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile(bodyFile)));
+    }
+
     @NotNull
     private String createSession() {
+        return createSession(null);
+    }
+
+    @NotNull
+    private String createSession(FlowType smartIdFlowType) {
         Session session = sessionRepository.createSession();
         TaraSession authSession = new TaraSession(session.getId());
         TaraSession.LoginRequestInfo lri = new TaraSession.LoginRequestInfo();
         lri.setChallenge(MOCK_LOGIN_CHALLENGE);
         lri.getClient().getMetaData().getOidcClient().getInstitution().setSector(SPType.PUBLIC);
         authSession.setLoginRequestInfo(lri);
+        authSession.setSmartIdFlowType(smartIdFlowType);
         session.setAttribute(TARA_SESSION, authSession);
         sessionRepository.save(session);
         return session.getId();

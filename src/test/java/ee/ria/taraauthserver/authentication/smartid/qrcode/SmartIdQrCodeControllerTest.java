@@ -50,13 +50,10 @@ class SmartIdQrCodeControllerTest extends BaseTest {
 
     @Test
     void sidQrCodeAuthInit_countryAllowed_authenticationSucceeds() {
-        createDeviceLinkAuthInitStub();
+        createDeviceLinkAuthInitStub(200);
         createSidApiPollStub("mock_responses/sid/sid_poll_response_ok.json", 200);
         mockDeviceLinkAuthenticationResponseValidator("EE");
-        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
-                .sessionRepository(sessionRepository)
-                .authenticationTypes(of(SMART_ID))
-                .authenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS).build();
+        MockSessionFilter sessionFilter = createMockSessionFilter();
 
         given()
                 .filter(sessionFilter)
@@ -80,13 +77,10 @@ class SmartIdQrCodeControllerTest extends BaseTest {
 
     @Test
     void sidQrCodeAuthInit_countryNotAllowed_authenticationFails() {
-        createDeviceLinkAuthInitStub();
+        createDeviceLinkAuthInitStub(200);
         createSidApiPollStub("mock_responses/sid/sid_poll_response_ok.json", 200);
         mockDeviceLinkAuthenticationResponseValidator("LV");
-        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
-                .sessionRepository(sessionRepository)
-                .authenticationTypes(of(SMART_ID))
-                .authenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS).build();
+        MockSessionFilter sessionFilter = createMockSessionFilter();
 
         given()
                 .filter(sessionFilter)
@@ -108,12 +102,41 @@ class SmartIdQrCodeControllerTest extends BaseTest {
                 "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=SID_COUNTRY_NOT_ALLOWED, smartIdFlowType=QR)");
     }
 
-    private void createDeviceLinkAuthInitStub() {
+    @Test
+    void sidQrCodeAuthInit_technicalError_externalTransactionLogged() {
+        createDeviceLinkAuthInitStub(500);
+        MockSessionFilter sessionFilter = createMockSessionFilter();
+
+        given()
+                .filter(sessionFilter)
+                .when()
+                .post("/auth/sid/qr-code/init")
+                .then()
+                .assertThat()
+                .statusCode(200);
+
+        await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION),
+                        hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_INTERNAL_ERROR, smartIdFlowType=QR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
+                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=SID_INTERNAL_ERROR, smartIdFlowType=QR)");
+    }
+
+    private void createDeviceLinkAuthInitStub(int status) {
         wireMockServer.stubFor(any(urlPathEqualTo("/smart-id-rp/v3/authentication/device-link/anonymous"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withStatus(200)
+                        .withStatus(status)
                         .withBodyFile("mock_responses/sid/sid_device_link_init_response.json")));
+    }
+
+    private MockSessionFilter createMockSessionFilter() {
+        return MockSessionFilter.withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(SMART_ID))
+                .authenticationState(TaraAuthenticationState.INIT_AUTH_PROCESS).build();
     }
 
     private void mockDeviceLinkAuthenticationResponseValidator(String country) {

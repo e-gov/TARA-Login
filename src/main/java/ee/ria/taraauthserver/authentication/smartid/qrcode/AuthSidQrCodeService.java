@@ -105,13 +105,18 @@ public class AuthSidQrCodeService {
                                 value("error.message", e.getMessage()),
                                 value("error.code", errorCode.name()));
             }
-            updateSession(session, new AuthenticationFailedSessionUpdate(errorCode));
+            session.accept(new AuthenticationFailedSessionUpdate(errorCode));
             logErrorToStatisticsLog(session, errorCode, e);
+            saveSession(session);
         }
     }
 
     private void updateSession(@NonNull TaraSession taraSession, TaraSessionUpdate update) {
         taraSession.accept(update);
+        saveSession(taraSession);
+    }
+
+    private void saveSession(@NonNull TaraSession taraSession) {
         Session session = sessionRepository.findById(taraSession.getSessionId());
         if (session == null) {
             throw new IllegalStateException("Session \"%s\" not found".formatted(taraSession.getSessionId()));
