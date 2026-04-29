@@ -39,9 +39,9 @@
         </filter>
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
             <decorator class="ee.ria.taraauthserver.logging.LogbackMapperBuilderDecorator"/>
-            <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
+            <decorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
                 <valueMasker class="ee.ria.taraauthserver.logging.LogbackFieldValueMasker"/>
-            </jsonGeneratorDecorator>
+            </decorator>
             <providers>
                 <timestamp>
                     <fieldName>@timestamp</fieldName>
