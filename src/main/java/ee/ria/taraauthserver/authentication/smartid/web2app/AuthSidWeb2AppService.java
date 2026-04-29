@@ -228,6 +228,7 @@ public class AuthSidWeb2AppService {
             String sidSessionId = authenticationSessionResponse.sessionID();
             log.info("Initiated Smart-ID Web2App session with id: {}",
                     value("tara.session.authentication_result.sid_session_id", sidSessionId));
+            taraSession.setAuthFlowStartTime(now());
             updateSession(taraSession, new PollSmartIdWeb2AppAuthenticationSessionUpdate(
                     sidSessionId,
                     authenticationSessionResponse.sessionSecret(),

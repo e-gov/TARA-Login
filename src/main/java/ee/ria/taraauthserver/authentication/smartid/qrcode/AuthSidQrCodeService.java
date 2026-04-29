@@ -33,6 +33,7 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_SID_QR_
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_QR_CODE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static ee.ria.taraauthserver.utils.RequestUtils.withMdcAndLocale;
+import static java.time.Instant.now;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static net.logstash.logback.marker.Markers.append;
 
@@ -83,6 +84,7 @@ public class AuthSidQrCodeService {
             SmartIdDeviceLinkSession smartIdDeviceLinkSession = smartIdClientFacade.initDeviceLinkSession(
                     session.getOriginalClient().getTranslatedShortName(),
                     session.getSmartIdRelyingParty().orElse(null));
+            session.setAuthFlowStartTime(now());
             updateSession(session, new PollSmartIdQrCodeAuthenticationSessionUpdate(smartIdDeviceLinkSession));
 
             AuthenticationIdentity authenticationIdentity = smartIdClientFacade.fetchSmartIdAuthenticationResult(

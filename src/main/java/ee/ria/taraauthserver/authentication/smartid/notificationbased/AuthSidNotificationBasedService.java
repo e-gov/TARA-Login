@@ -134,6 +134,7 @@ public class AuthSidNotificationBasedService {
             String sidSessionId = authenticationSessionResponse.sessionID();
             log.info("Initiated Smart-ID notification based session with id: {}", value("tara.session.authentication_result.sid_session_id", sidSessionId));
             taraSession.setState(POLL_SID_STATUS);
+            taraSession.setAuthFlowStartTime(now());
             createAuthenticationResult(taraSession, sidSessionId);
             return authenticationSessionResponse;
         } catch (Exception e) {

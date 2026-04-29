@@ -93,6 +93,7 @@ public class TaraSession implements Serializable {
     @Setter(AccessLevel.NONE)
     private SmartIdQrCodeSession smartIdQrCodeSession;
     private FlowType smartIdFlowType;
+    private Instant authFlowStartTime;
 
     public void setState(@NonNull TaraAuthenticationState newState) {
         if (state.equals(newState)) {

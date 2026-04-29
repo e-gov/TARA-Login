@@ -22,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.marker.LogstashMarker;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -82,6 +84,7 @@ public class StatisticsLogger {
         processAuthenticationRequest(taraSession, state, statisticsBuilder);
         processAuthenticationResult(taraSession, ex, statisticsBuilder);
         processSmartIdFlowType(taraSession, statisticsBuilder);
+        processFlowDuration(taraSession, statisticsBuilder);
 
         SessionStatistics sessionStatistics = statisticsBuilder.build();
         LogstashMarker toLog = appendFields(sessionStatistics);
@@ -168,6 +171,13 @@ public class StatisticsLogger {
         statisticsBuilder.smartIdFlowType(taraSession.getSmartIdFlowType());
     }
 
+    private void processFlowDuration(TaraSession taraSession, SessionStatisticsBuilder statisticsBuilder) {
+        Instant startTime = taraSession.getAuthFlowStartTime();
+        if (startTime != null) {
+            statisticsBuilder.flowDuration(Duration.between(startTime, Instant.now()).toMillis());
+        }
+    }
+
     private Optional<TaraAuthenticationState> getStateToLog(TaraSession taraSession) {
         TaraAuthenticationState state = taraSession.getState();
         if (AUTHENTICATION_SUCCESS == state || AUTHENTICATION_FAILED == state) {
@@ -221,5 +231,8 @@ public class StatisticsLogger {
 
         @JsonProperty("authentication.smart_id.flow_type")
         private FlowType smartIdFlowType;
+
+        @JsonProperty("authentication.flow_duration")
+        private Long flowDuration;
     }
 }
