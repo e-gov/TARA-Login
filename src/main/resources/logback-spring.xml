@@ -38,7 +38,7 @@
             <mode>NOT_STATISTICS</mode>
         </filter>
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-            <jsonFactoryDecorator class="ee.ria.taraauthserver.logging.LogbackJsonFactoryDecorator"/>
+            <decorator class="ee.ria.taraauthserver.logging.LogbackMapperBuilderDecorator"/>
             <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
                 <valueMasker class="ee.ria.taraauthserver.logging.LogbackFieldValueMasker"/>
             </jsonGeneratorDecorator>
@@ -96,7 +96,7 @@
             <mode>STATISTICS_ONLY</mode>
         </filter>
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-            <jsonFactoryDecorator class="ee.ria.taraauthserver.logging.LogbackJsonFactoryDecorator"/>
+            <decorator class="ee.ria.taraauthserver.logging.LogbackMapperBuilderDecorator"/>
             <providers>
                 <timestamp>
                     <fieldName>@timestamp</fieldName>
