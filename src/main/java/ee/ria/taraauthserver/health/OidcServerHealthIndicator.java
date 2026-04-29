@@ -2,8 +2,8 @@ package ee.ria.taraauthserver.health;
 
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.actuate.health.AbstractHealthIndicator;
-import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.health.contributor.AbstractHealthIndicator;
+import org.springframework.boot.health.contributor.Health;
 import org.springframework.stereotype.Component;
 
 import javax.net.ssl.HttpsURLConnection;
