@@ -180,10 +180,8 @@ public class AuthSidWeb2AppService {
             validateAuthenticationCountry(authIdentity);
             updateSession(taraSession, new SmartIdAuthenticationSuccessfulSessionUpdate(
                     authIdentity, smartIdConfigurationProperties.getLevelOfAssurance()));
-            logSuccessToStatisticsLog(taraSession);
         } catch (Exception e) {
             handleSidAuthenticationException(taraSession, e);
-            logErrorToStatisticsLog(taraSession, e);
             saveSession(taraSession);
         } finally {
             taraSession.setSmartIdWeb2AppSession(null);
@@ -288,6 +286,7 @@ public class AuthSidWeb2AppService {
                     value("tara.session.sid_authentication_result.sid_session_id", taraSession.getSmartIdWeb2AppSession().getSessionId()));
             SessionStatus sessionStatus = sessionStatusPoller.fetchFinalSessionStatus(taraSession.getSmartIdWeb2AppSession().getSessionId());
             validateSessionStatus(sessionStatus);
+            logSuccessToStatisticsLog(taraSession);
             updateSession(taraSession, new SaveSmartIdWeb2AppSessionStatusSessionUpdate(sessionStatus));
         } catch (Exception ex) {
             handleSidAuthenticationException(taraSession, ex);
