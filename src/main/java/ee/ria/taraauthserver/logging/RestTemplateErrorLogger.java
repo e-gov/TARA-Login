@@ -26,7 +26,7 @@ public class RestTemplateErrorLogger extends DefaultResponseErrorHandler {
     @Override
     protected byte @NotNull [] getResponseBody(@NotNull ClientHttpResponse response) {
         byte[] responseBody = super.getResponseBody(response);
-        int httpStatusCode = response.getRawStatusCode();
+        int httpStatusCode = response.getStatusCode().value();
 
         LogstashMarker marker = append(PROP_RESPONSE_STATUS_CODE, httpStatusCode);
         if (!ArrayUtils.isEmpty(responseBody)) {

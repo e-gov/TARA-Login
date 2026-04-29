@@ -37,7 +37,7 @@ public class AlertsConfiguration {
 
         //The setReadTimeout() method of this builder is not usable because we are instantiating our own HttpComponentsClientHttpRequestFactory, which does not support it.
         return builder
-                .setConnectTimeout(Duration.ofMillis(alertsConfigurationProperties.getConnectionTimeoutMilliseconds()))
+                .connectTimeout(Duration.ofMillis(alertsConfigurationProperties.getConnectionTimeoutMilliseconds()))
                 .requestFactory(() -> new HttpComponentsClientHttpRequestFactory(client))
                 .errorHandler(new RestTemplateErrorLogger(Service.ALERTS))
                 .build();

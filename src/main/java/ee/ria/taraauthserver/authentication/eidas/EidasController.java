@@ -100,7 +100,7 @@ public class EidasController {
     private String createRequestUrl(String country, TaraSession taraSession, String relayState) {
         String url = eidasConfigurationProperties.getClientUrl() + "/login";
         OidcClient oidcClient = taraSession.getLoginRequestInfo().getClient().getMetaData().getOidcClient();
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(url)
                 .queryParam("Country", country)
                 .queryParam("RequesterID", oidcClient.getEidasRequesterId())
                 .queryParam("SPType", oidcClient.getInstitution().getSector())
