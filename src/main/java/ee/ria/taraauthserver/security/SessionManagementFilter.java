@@ -12,8 +12,8 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.MDC;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -26,8 +26,8 @@ import static net.logstash.logback.marker.Markers.append;
 
 @Slf4j
 public class SessionManagementFilter extends OncePerRequestFilter {
-    private static final RequestMatcher AUTH_INIT_REQUEST_MATCHER = new AntPathRequestMatcher(AUTH_INIT_REQUEST_MAPPING);
-    private static final RequestMatcher AUTH_REQUEST_MATCHER = new AntPathRequestMatcher("/auth/**");
+    private static final RequestMatcher AUTH_INIT_REQUEST_MATCHER = PathPatternRequestMatcher.pathPattern(AUTH_INIT_REQUEST_MAPPING);
+    private static final RequestMatcher AUTH_REQUEST_MATCHER = PathPatternRequestMatcher.pathPattern("/auth/**");
     public static final String MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID = "labels.tara_trace_id";
     private static final String APM_LABEL_KEY_FLOW_TRACE_ID = "tara_trace_id";
     public static final String MDC_ATTRIBUTE_KEY_GOVSSO_FLOW_TRACE_ID = "labels.govsso_trace_id";
