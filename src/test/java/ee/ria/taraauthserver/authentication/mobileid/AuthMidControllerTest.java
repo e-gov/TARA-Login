@@ -21,11 +21,11 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.function.Function;
@@ -62,7 +62,7 @@ class AuthMidControllerTest extends BaseTest {
             .withHashType(MidHashType.SHA512)
             .withHashInBase64("7iG3DSOoETBiuvL3uKvCRTL0cmF0ciTXKMe88VgsLpw=").build();
 
-    @SpyBean
+    @MockitoSpyBean
     private AuthMidService authMidService;
 
     @Autowired
