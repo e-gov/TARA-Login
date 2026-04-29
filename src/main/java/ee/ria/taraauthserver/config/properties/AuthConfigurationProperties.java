@@ -358,6 +358,8 @@ public class AuthConfigurationProperties {
         private String url;
 
         private X500Name responderSubjectDn;
+
+        private boolean enabledForEidasProxy = true;
     }
 
     @Data

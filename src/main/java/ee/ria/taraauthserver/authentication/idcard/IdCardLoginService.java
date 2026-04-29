@@ -20,7 +20,6 @@ import eu.webeid.security.challenge.ChallengeNonceStore;
 import eu.webeid.security.exceptions.AuthTokenException;
 import eu.webeid.security.exceptions.CertificateExpiredException;
 import eu.webeid.security.exceptions.CertificateNotYetValidException;
-import eu.webeid.security.validator.AuthTokenValidator;
 import eu.webeid.security.validator.ValidationInfo;
 import eu.webeid.security.validator.revocationcheck.RevocationInfo;
 import lombok.RequiredArgsConstructor;
@@ -74,9 +73,9 @@ public class IdCardLoginService {
 
     private final AuthConfigurationProperties.IdCardAuthConfigurationProperties configurationProperties;
     private final AuthConfigurationProperties.FilterForEidasProxy filterForEidasProxy;
-    private final AuthTokenValidator authTokenValidator;
     private final ChallengeNonceStore nonceStore;
     private final StatisticsLogger statisticsLogger;
+    private final AuthTokenValidatorResolver authTokenValidatorResolver;
 
     public void attemptLogin(IdCardLoginController.WebEidData data, TaraSession taraSession) {
         String nonce;
@@ -109,7 +108,7 @@ public class IdCardLoginService {
 
     private ValidationInfo handleTokenValidation(WebEidAuthToken authToken, String nonce, TaraSession taraSession) {
         try {
-            return authTokenValidator.validate(authToken, nonce);
+            return authTokenValidatorResolver.resolve(taraSession.getOriginalClient()).validate(authToken, nonce);
         } catch (CertificateExpiredException e) {
             throw new BadRequestException(IDC_CERT_EXPIRED, e.getMessage(), e);
         } catch (CertificateNotYetValidException e) {

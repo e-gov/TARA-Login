@@ -310,6 +310,7 @@ Table 1.5.8.2 - Configuration that applies to fallback OCSP servers.
 | :---------------- | :---------- | :----------------|
 | `tara.auth-methods.id-card.ocsp.certificate-chains[0].{first-fallback-server\|second-fallback-server}.url` | Yes | Required OCSP server URL. Example `http://ocsp.sk.ee/` |
 | `tara.auth-methods.id-card.ocsp.certificate-chains[0].{first-fallback-server\|second-fallback-server}.responder-subject-dn` | No | Responder certificate's subject DN. Example `C=EE, O=Information System Authority, CN=local-ocsp` |
+| `tara.auth-methods.id-card.ocsp.certificate-chains[0].{first-fallback-server\|second-fallback-server}.enabled-for-eidas-proxy` | No | Enables this fallback OCSP server in the eIDAS proxy flow. Set to `false` for CRL-based fallback servers. Default `true`. |
 
 Example: using SK's AIA OCSP as the primary service, SK's commercial OCSP (with subscription only) as the first fallback
 and CRLs as the second fallback:

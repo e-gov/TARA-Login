@@ -52,6 +52,11 @@ public class IDCardConfiguration {
 
     private static final long CHALLENGE_NONCE_TTL_MINUTES = 5;
 
+    private enum ValidatorType {
+        DEFAULT,
+        EIDAS_PROXY
+    }
+
     @Bean
     KeyStore issuerKeystore(ResourceLoader resourceLoader, IdCardAuthConfigurationProperties configurationProvider) {
         return buildKeystore(resourceLoader, configurationProvider.getIssuerTruststore());
@@ -85,10 +90,38 @@ public class IDCardConfiguration {
     }
 
     @Bean
-    public AuthTokenValidator validator(AuthConfigurationProperties authConfigurationProperties,
+    public AuthTokenValidator defaultAuthTokenValidator(AuthConfigurationProperties authConfigurationProperties,
                                         IdCardAuthConfigurationProperties idCardAuthConfigurationProperties,
                                         Map<String, X509Certificate> issuerTrustedCertificatesMap,
                                         Map<X500Name, X509Certificate> ocspResponderTrustedCertificatesMap) {
+        return buildValidator(
+                authConfigurationProperties,
+                idCardAuthConfigurationProperties,
+                issuerTrustedCertificatesMap,
+                ocspResponderTrustedCertificatesMap,
+                ValidatorType.DEFAULT
+        );
+    }
+
+    @Bean
+    public AuthTokenValidator eidasProxyAuthTokenValidator(AuthConfigurationProperties authConfigurationProperties,
+                                                  IdCardAuthConfigurationProperties idCardAuthConfigurationProperties,
+                                                  Map<String, X509Certificate> issuerTrustedCertificatesMap,
+                                                  Map<X500Name, X509Certificate> ocspResponderTrustedCertificatesMap) {
+        return buildValidator(
+                authConfigurationProperties,
+                idCardAuthConfigurationProperties,
+                issuerTrustedCertificatesMap,
+                ocspResponderTrustedCertificatesMap,
+                ValidatorType.EIDAS_PROXY
+        );
+    }
+
+    private static AuthTokenValidator buildValidator(AuthConfigurationProperties authConfigurationProperties,
+                                                     IdCardAuthConfigurationProperties idCardAuthConfigurationProperties,
+                                                     Map<String, X509Certificate> issuerTrustedCertificatesMap,
+                                                     Map<X500Name, X509Certificate> ocspResponderTrustedCertificatesMap,
+                                                     ValidatorType validatorType) {
         X509Certificate[] issuerCertificates = issuerTrustedCertificatesMap.values().toArray(new X509Certificate[0]);
 
         try {
@@ -113,9 +146,14 @@ public class IDCardConfiguration {
             AiaOcspServiceConfiguration aiaOcspServiceConfiguration
                     = getAiaOcspServiceConfiguration(ocsp, trustedCACertificateAnchors, trustedCACertificateCertStore);
 
-            List<FallbackOcspServiceConfiguration> fallbackOcspServiceConfigurations
-                    = getFallbackOcspServiceConfigurations(idCardAuthConfigurationProperties, trustedCACertificateAnchors,
-                    trustedCACertificateCertStore, ocspResponderTrustedCertificatesMap);
+            List<FallbackOcspServiceConfiguration> fallbackOcspServiceConfigurations =
+                    getFallbackOcspServiceConfigurations(
+                            idCardAuthConfigurationProperties,
+                            trustedCACertificateAnchors,
+                            trustedCACertificateCertStore,
+                            ocspResponderTrustedCertificatesMap,
+                            validatorType
+                    );
 
             OcspServiceProvider ocspServiceProvider = new OcspServiceProvider(
                     null,
@@ -175,6 +213,31 @@ public class IDCardConfiguration {
         );
     }
 
+    private static List<FallbackOcspServiceConfiguration> getFallbackOcspServiceConfigurations(
+            IdCardAuthConfigurationProperties idCardAuthConfigurationProperties,
+            Set<TrustAnchor> trustedCACertificateAnchors,
+            CertStore trustedCACertificateCertStore,
+            Map<X500Name, X509Certificate> ocspResponderTrustedCertificatesMap,
+            ValidatorType validatorType
+    ) throws OCSPCertificateException, JceException {
+
+        if (validatorType == ValidatorType.EIDAS_PROXY) {
+            return getEidasProxyFallbackOcspServiceConfigurations(
+                    idCardAuthConfigurationProperties,
+                    trustedCACertificateAnchors,
+                    trustedCACertificateCertStore,
+                    ocspResponderTrustedCertificatesMap
+            );
+        }
+
+        return getFallbackOcspServiceConfigurations(
+                idCardAuthConfigurationProperties,
+                trustedCACertificateAnchors,
+                trustedCACertificateCertStore,
+                ocspResponderTrustedCertificatesMap
+        );
+    }
+
     private static List<FallbackOcspServiceConfiguration> getFallbackOcspServiceConfigurations(IdCardAuthConfigurationProperties idCardAuthConfigurationProperties,
                                                                                                Set<TrustAnchor> trustedCACertificateAnchors,
                                                                                                CertStore trustedCACertificateCertStore,
@@ -223,6 +286,85 @@ public class IDCardConfiguration {
             fallbackOcspServiceConfigurationList.add(firstFallbackConfiguration);
         }
         return fallbackOcspServiceConfigurationList;
+    }
+
+    private static List<FallbackOcspServiceConfiguration> getEidasProxyFallbackOcspServiceConfigurations(
+            IdCardAuthConfigurationProperties idCardAuthConfigurationProperties,
+            Set<TrustAnchor> trustedCACertificateAnchors,
+            CertStore trustedCACertificateCertStore,
+            Map<X500Name, X509Certificate> ocspResponderTrustedCertificatesMap
+    ) throws OCSPCertificateException, JceException {
+        List<FallbackOcspServiceConfiguration> result = new ArrayList<>();
+
+        for (AuthConfigurationProperties.CertificateChain chain : idCardAuthConfigurationProperties.getOcsp().getCertificateChains()) {
+            FallbackOcspServiceConfiguration fallbackConfiguration = buildEidasProxyFallbackConfiguration(
+                    chain,
+                    trustedCACertificateAnchors,
+                    trustedCACertificateCertStore,
+                    ocspResponderTrustedCertificatesMap
+            );
+
+            if (fallbackConfiguration != null) {
+                result.add(fallbackConfiguration);
+            }
+        }
+
+        return result;
+    }
+
+    private static FallbackOcspServiceConfiguration buildEidasProxyFallbackConfiguration(
+            AuthConfigurationProperties.CertificateChain chain,
+            Set<TrustAnchor> trustedCACertificateAnchors,
+            CertStore trustedCACertificateCertStore,
+            Map<X500Name, X509Certificate> ocspResponderTrustedCertificatesMap
+    ) throws OCSPCertificateException {
+        X500Name issuerDn = chain.getIssuerDn();
+
+        FallbackOcspServiceConfiguration secondFallbackConfiguration = createEidasProxyFallbackConfiguration(
+                chain.getSecondFallbackServer(),
+                null,
+                issuerDn,
+                trustedCACertificateAnchors,
+                trustedCACertificateCertStore,
+                ocspResponderTrustedCertificatesMap
+        );
+
+        return createEidasProxyFallbackConfiguration(
+                chain.getFirstFallbackServer(),
+                secondFallbackConfiguration,
+                issuerDn,
+                trustedCACertificateAnchors,
+                trustedCACertificateCertStore,
+                ocspResponderTrustedCertificatesMap
+        );
+    }
+
+    private static FallbackOcspServiceConfiguration createEidasProxyFallbackConfiguration(
+            AuthConfigurationProperties.FallbackOcspServer fallbackServer,
+            FallbackOcspServiceConfiguration nextFallbackConfiguration,
+            X500Name issuerDn,
+            Set<TrustAnchor> trustedCACertificateAnchors,
+            CertStore trustedCACertificateCertStore,
+            Map<X500Name, X509Certificate> ocspResponderTrustedCertificatesMap
+    ) throws OCSPCertificateException {
+        if (fallbackServer == null || !fallbackServer.isEnabledForEidasProxy()) {
+            return nextFallbackConfiguration;
+        }
+
+        FallbackOcspServiceConfiguration configuration = new FallbackOcspServiceConfiguration(
+                URI.create(fallbackServer.getUrl()),
+                getResponderCertificate(fallbackServer, ocspResponderTrustedCertificatesMap),
+                fallbackServer.isNonceEnabled(),
+                nextFallbackConfiguration,
+                issuerDn,
+                trustedCACertificateAnchors,
+                trustedCACertificateCertStore
+        );
+
+        log.info("Found eIDAS proxy fallback configuration for issuer {}", issuerDn);
+        logFallbackOcspServiceConfiguration(configuration);
+
+        return configuration;
     }
 
     private static X509Certificate getResponderCertificate(AuthConfigurationProperties.FallbackOcspServer fallbackOcspServer,
