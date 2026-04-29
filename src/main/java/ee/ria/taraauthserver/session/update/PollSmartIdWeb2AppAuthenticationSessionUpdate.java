@@ -2,7 +2,10 @@ package ee.ria.taraauthserver.session.update;
 
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.sk.smartid.rest.dao.DeviceLinkAuthenticationSessionRequest;
+import lombok.NonNull;
 import lombok.Value;
+
+import java.time.Instant;
 
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_WEB2APP_STATUS;
 
@@ -14,6 +17,7 @@ public class PollSmartIdWeb2AppAuthenticationSessionUpdate implements TaraSessio
     String sessionToken;
     DeviceLinkAuthenticationSessionRequest authenticationSessionRequest;
     String urlToken;
+    @NonNull Instant authFlowStartTime;
 
     @Override
     public void apply(TaraSession session) {
@@ -25,6 +29,7 @@ public class PollSmartIdWeb2AppAuthenticationSessionUpdate implements TaraSessio
                 urlToken
         );
         session.setSmartIdWeb2AppSession(smartIdWeb2AppSession);
+        session.setAuthFlowStartTime(authFlowStartTime);
         session.setState(POLL_SID_WEB2APP_STATUS);
     }
 }

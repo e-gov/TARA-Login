@@ -48,6 +48,10 @@ import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static ee.ria.taraauthserver.error.ErrorCode.INTERNAL_ERROR;
+import static ee.ria.taraauthserver.error.ErrorCode.MISSING_SCOPE;
+import static ee.ria.taraauthserver.error.ErrorCode.NO_VALID_AUTHMETHODS_AVAILABLE;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 
 @Slf4j
 class AuthInitControllerTest extends BaseTest {
@@ -791,7 +795,14 @@ class AuthInitControllerTest extends BaseTest {
         assertErrorIsLogged("Server encountered an unexpected error: Level of assurance must be configured for authentication method: mobile-id. Please check the application configuration.");
         assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/admin/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
         assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"openIdDemo\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"}}},\"scope\":\"mid idcard eidas\"},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"high\"],\"ui_locales\":[\"zu\",\"fi\",\"Ru\",\"ET\",\"en\"]},\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"openid\",\"mid\",\"idcard\",\"eidas\"]}");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=70006317, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("70006317")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INTERNAL_ERROR)
+                .build());
         authConfigurationProperties.getAuthMethods().get(AuthenticationType.MOBILE_ID).setLevelOfAssurance(LevelOfAssurance.LOW); 
     }
 
@@ -953,7 +964,14 @@ class AuthInitControllerTest extends BaseTest {
 
         assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/admin/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
         assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"openIdDemo\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"}}},\"scope\":\"idcard mid banklink\"},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"high\"],\"ui_locales\":[]},\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"idcard\",\"ldap\",\"banklink\"]}");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=70006317, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=NO_VALID_AUTHMETHODS_AVAILABLE, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("70006317")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(NO_VALID_AUTHMETHODS_AVAILABLE)
+                .build());
     }
 
     @Test
@@ -979,7 +997,14 @@ class AuthInitControllerTest extends BaseTest {
         assertErrorIsLogged("Server encountered an unexpected error: Unsupported acr value requested by client: 'wrongvalue'");
         assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/admin/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
         assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"openIdDemo\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"}}},\"scope\":\"idcard mid\"},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"wrongvalue\"],\"ui_locales\":[]},\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[\"idcard\",\"mid\"]}");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=70006317, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("70006317")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INTERNAL_ERROR)
+                .build());
     }
 
     @Test
@@ -1158,7 +1183,14 @@ class AuthInitControllerTest extends BaseTest {
 
         assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA request", "http.request.method=GET, url.full=https://localhost:9877/admin/oauth2/auth/requests/login?login_challenge=abcdefg098AAdsCC");
         assertMessageWithMarkerIsLoggedOnce(AuthInitController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"challenge\":\"abcdefg098AAdsCC\",\"client\":{\"client_id\":\"openIdDemo\",\"metadata\":{\"display_user_consent\":false,\"oidc_client\":{\"institution\":{\"registry_code\":\"70006317\",\"sector\":\"public\"},\"name_translations\":{\"en\":\"test client en\",\"et\":\"test client et\",\"ru\":\"test client ru\"},\"short_name_translations\":{\"en\":\"short test client en\",\"et\":\"short test client et\",\"ru\":\"short test client ru\"}}},\"scope\":\"mid idcard\"},\"login_challenge_expired\":false,\"oidc_context\":{\"acr_values\":[\"high\"],\"ui_locales\":[\"zu\",\"fi\",\"Et\",\"RU\",\"en\"]},\"request_url\":\"https://oidc-service:8443/oauth2/auth?scope=openid&response_type=code&client_id=dev-local-specificproxyservice&redirect_uri=https://oidc-client-mock:8451/oauth/response&state=c46b216b-e73d-4cd2-907b-6c809b44cec1&nonce=f722ae1d-1a81-4482-8f9b-06d2356ec3d6&ui_locales=et\",\"requested_scope\":[]}");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=70006317, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=MISSING_SCOPE, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("70006317")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(MISSING_SCOPE)
+                .build());
     }
 
     @Test

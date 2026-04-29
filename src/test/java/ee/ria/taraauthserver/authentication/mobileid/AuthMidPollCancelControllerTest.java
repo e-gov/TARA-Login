@@ -24,6 +24,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_CANCELED;
 
 class AuthMidPollCancelControllerTest extends BaseTest {
 
@@ -113,7 +114,14 @@ class AuthMidPollCancelControllerTest extends BaseTest {
         TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.POLL_MID_STATUS_CANCELED, taraSession.getState());
         assertWarningIsLogged("Mobile-ID authentication process has been canceled");
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_CANCELED, errorCode=null, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_CANCELED)
+                .build());
     }
 
     @ParameterizedTest
@@ -148,7 +156,13 @@ class AuthMidPollCancelControllerTest extends BaseTest {
         assertEquals(TaraAuthenticationState.POLL_MID_STATUS_CANCELED, taraSession.getState());
         assertWarningIsLogged("Mobile-ID authentication process has been canceled");
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED",
-            "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_CANCELED, errorCode=null, smartIdFlowType=null)");
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_CANCELED)
+                .build());
     }
 
     @Test

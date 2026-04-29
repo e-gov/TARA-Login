@@ -10,6 +10,7 @@ import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
+import ee.ria.taraauthserver.logging.StatisticsLogger.SessionStatistics;
 import io.restassured.RestAssured;
 import io.restassured.builder.ResponseSpecBuilder;
 import io.restassured.config.SessionConfig;
@@ -23,15 +24,22 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.convention.TestBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static ch.qos.logback.classic.Level.ERROR;
@@ -48,11 +56,15 @@ import static io.restassured.config.RedirectConfig.redirectConfig;
 import static java.util.List.of;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toUnmodifiableList;
+import net.logstash.logback.marker.LogstashMarker;
+import org.slf4j.Marker;
+import static net.logstash.logback.marker.Markers.appendFields;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInRelativeOrder;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.startsWith;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -60,8 +72,16 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 @Slf4j
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-@Import(ConfigurationPropertiesReloader.class)
+@Import({ConfigurationPropertiesReloader.class})
 public abstract class BaseTest {
+
+    @TestBean
+    Clock clock;
+
+    static Clock clock() {
+        return Clock.fixed(Instant.parse("2025-01-01T00:00:00Z"), ZoneOffset.UTC);
+    }
+
     public static final String TARA_SESSION_COOKIE_NAME = "__Host-SESSION";
     public static final String CHARSET_UTF_8 = ";charset=UTF-8";
 
@@ -290,42 +310,152 @@ public abstract class BaseTest {
         assertNull(loggedMessage);
     }
 
-    protected void assertMessageWithMarkerIsLoggedOnce(Class<?> loggerClass, Level loggingLevel, String exactMessage, String markerValuePrefix) {
-        assertMessageWithMarkerIsLoggedOnce(loggerClass, loggingLevel, null, exactMessage, markerValuePrefix);
+    /** 
+     * Allows statistics log fields to match regex patterns instead of exact values.
+     * Useful for fields that can't use injected test values.
+     * Currently not used.
+     */
+    protected record DynamicField(String name, String pattern) {
+        public static DynamicField nonNull(String name) {
+            return new DynamicField(name, "[^,)]+");
+        }
     }
 
-    protected void assertMessageWithMarkerIsLoggedOnce(Class<?> loggerClass, Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String exactMessage, String markerValuePrefix) {
-        assertMessageWithMarkerIsLogged(loggerClass, loggingLevel, additionalFilter, exactMessage, markerValuePrefix, true);
-    }
-
-    protected void assertMessageWithMarkerIsLogged(Class<?> loggerClass, Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String exactMessage, String markerValuePrefix) {
-        assertMessageWithMarkerIsLogged(loggerClass, loggingLevel, additionalFilter, exactMessage, markerValuePrefix, false);
-    }
-
-    protected void assertMessageWithMarkerIsLogged(Class<?> loggerClass, Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String exactMessage, String markerValuePrefix, boolean loggedOnce) {
-        Stream<ILoggingEvent> eventStream = mockAppender.list.stream()
+    private List<ILoggingEvent> findLogEvents(Class<?> loggerClass, Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String exactMessage) {
+        Stream<ILoggingEvent> stream = mockAppender.list.stream()
                 .filter(e -> (loggerClass == null || e.getLoggerName().equals(loggerClass.getCanonicalName())) &&
                         e.getLevel().equals(loggingLevel) &&
                         e.getMarker() != null &&
                         e.getFormattedMessage().equals(exactMessage));
         if (additionalFilter != null) {
-            eventStream = eventStream.filter(additionalFilter);
+            stream = stream.filter(additionalFilter);
         }
-        List<ILoggingEvent> loggingEvents = eventStream.collect(toUnmodifiableList());
-        if (loggedOnce){
-            assertThat(loggingEvents, hasSize(1));
-        }
-        ILoggingEvent loggingEvent = loggingEvents.get(0);
-        assertEquals(loggingLevel, loggingEvent.getLevel());
-        assertThat(loggingEvent.getMarker().toString(), startsWith(markerValuePrefix));
+        return stream.collect(toUnmodifiableList());
     }
 
-    protected void assertStatisticsIsLoggedOnce(Level loggingLevel, String exactMessage, String markerValuePrefix) {
-        assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, loggingLevel, exactMessage, markerValuePrefix);
+    protected void assertMessageWithMarkerIsLoggedOnce(Class<?> loggerClass, Level loggingLevel, String exactMessage, String expectedStatistics) {
+        assertMessageWithMarkerIsLoggedOnce(loggerClass, loggingLevel, null, exactMessage, expectedStatistics);
     }
 
-    protected void assertStatisticsIsLoggedOnce(Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String exactMessage, String markerValuePrefix) {
-        assertMessageWithMarkerIsLoggedOnce(StatisticsLogger.class, loggingLevel, additionalFilter, exactMessage, markerValuePrefix);
+    protected void assertMessageWithMarkerIsLoggedOnce(Class<?> loggerClass, Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String exactMessage, String expectedStatistics) {
+        List<ILoggingEvent> loggingEvents = findLogEvents(loggerClass, loggingLevel, additionalFilter, exactMessage);
+        assertThat(loggingEvents, hasSize(1));
+        assertThat(loggingEvents.get(0).getMarker().toString(), equalTo(expectedStatistics));
+    }
+
+    protected void assertMessageWithMarkerIsLoggedOnce(Class<?> loggerClass, Level loggingLevel, String exactMessage, Pattern markerPattern) {
+        List<ILoggingEvent> loggingEvents = findLogEvents(loggerClass, loggingLevel, null, exactMessage);
+        assertThat(loggingEvents, hasSize(1));
+        assertThat(loggingEvents.get(0).getMarker().toString(), matchesPattern(markerPattern));
+    }
+
+    protected void assertStatisticsIsLoggedOnce(Level loggingLevel, String exactMessage, SessionStatistics expectedStatistics) {
+        assertStatisticsIsLoggedOnce(loggingLevel, null, exactMessage, expectedStatistics, Set.of());
+    }
+
+    protected void assertStatisticsIsLoggedOnce(Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String exactMessage, SessionStatistics expectedStatistics) {
+        assertStatisticsIsLoggedOnce(loggingLevel, additionalFilter, exactMessage, expectedStatistics, Set.of());
+    }
+
+    protected void assertStatisticsIsLoggedOnce(Level loggingLevel, String exactMessage, SessionStatistics expectedStatistics, Set<DynamicField> fieldPatterns) {
+        assertStatisticsIsLoggedOnce(loggingLevel, null, exactMessage, expectedStatistics, fieldPatterns);
+    }
+
+    protected void assertStatisticsIsLoggedOnce(Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String exactMessage, SessionStatistics expectedStatistics, Set<DynamicField> dynamicFields) {
+        List<ILoggingEvent> loggingEvents = findLogEvents(StatisticsLogger.class, loggingLevel, additionalFilter, exactMessage);
+        assertThat(loggingEvents, hasSize(1));
+        
+        String actualString = extractSessionStatisticsString(loggingEvents.get(0));
+        Map<String, String> actualFields = parseStatisticsFields(actualString);
+        String expectedString = appendFields(expectedStatistics).toString();
+        Map<String, String> expectedFields = parseStatisticsFields(expectedString);
+        assertStatisticsFields(actualFields, expectedFields, dynamicFields);
+    }
+
+    private void assertStatisticsFields(Map<String, String> actualFields, Map<String, String> expectedFields, Set<DynamicField> dynamicFields) {
+        for (Map.Entry<String, String> field : expectedFields.entrySet()) {
+            String fieldName = field.getKey();
+            DynamicField dynamicField = findDynamicField(fieldName, dynamicFields);
+            if (dynamicField != null) {
+                String actualValue = actualFields.get(fieldName);
+                assertThat("Dynamic field: " + fieldName, actualValue, matchesPattern(dynamicField.pattern()));
+                continue;
+            }
+            String actualValue = actualFields.get(fieldName);
+            String expectedValue = field.getValue();
+            assertThat("Static field: " + fieldName, actualValue, equalTo(expectedValue));
+        }
+
+        Set<String> unexpectedKeys = new HashSet<>(actualFields.keySet());
+        unexpectedKeys.removeAll(expectedFields.keySet());
+        assertThat("Unexpected fields in actual statistics", unexpectedKeys, empty());
+    }
+
+    private DynamicField findDynamicField(String fieldName, Set<DynamicField> dynamicFields) {
+        for (DynamicField dynamicField : dynamicFields) {
+            if (dynamicField.name().equals(fieldName)) {
+                return dynamicField;
+            }
+        }
+        return null;
+    }
+
+    private static String extractSessionStatisticsString(ILoggingEvent event) {
+        Marker marker = event.getMarker();
+        if (!(marker instanceof LogstashMarker)) {
+            throw new AssertionError("Expected LogstashMarker for statistics event but got: " + marker.getClass().getName());
+        }
+        LogstashMarker statisticsMarker = (LogstashMarker) marker;
+        if (!statisticsMarker.hasReferences()) {
+            return statisticsMarker.toString();
+        }
+        String fullString = statisticsMarker.toString();
+        return removeReferencesSuffix(fullString, findReferencesSuffix(statisticsMarker));
+    }
+
+    private static String findReferencesSuffix(LogstashMarker marker) {
+        StringBuilder sb = new StringBuilder();
+        for (Marker ref : marker) {
+            String refStr = ref.toString();
+            if (!refStr.isEmpty()) {
+                sb.append(", ").append(refStr);
+            }
+        }
+        return sb.toString();
+    }
+
+    private static String removeReferencesSuffix(String fullString, String suffix) {
+        return fullString.substring(0, fullString.length() - suffix.length());
+    }
+
+    private static Map<String, String> parseStatisticsFields(String statisticsString) {
+        return parseFields(stripOuterParentheses(statisticsString));
+    }
+
+    private static String stripOuterParentheses(String statisticsString) {
+        int openParen = statisticsString.indexOf('(');
+        int closeParen = statisticsString.lastIndexOf(')');
+        if (openParen >= 0 && closeParen > openParen) {
+            return statisticsString.substring(openParen + 1, closeParen);
+        }
+        return statisticsString;
+    }
+
+    private static Map<String, String> parseFields(String content) {
+        Map<String, String> fields = new HashMap<>();
+        for (String pairString : content.split(", ")) {
+            int separatorIndex = pairString.indexOf('=');
+            if (separatorIndex > 0) {
+                String key = pairString.substring(0, separatorIndex);
+                String value = pairString.substring(separatorIndex + 1);
+                fields.put(key, value);
+            }
+        }
+        return fields;
+    }
+
+    protected static SessionStatistics.SessionStatisticsBuilder defaultStatisticsMarkerBuilder() {
+        return SessionStatistics.builder();
     }
 
     protected void assertStatisticsIsNotLogged() {

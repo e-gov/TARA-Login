@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.marker.LogstashMarker;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumSet;
@@ -45,6 +46,7 @@ import static net.logstash.logback.marker.Markers.appendFields;
 public class StatisticsLogger {
 
     private final IdCardLoggingContextMapper idCardLoggingContextMapper;
+    private final Clock clock;
 
     public static final String SERVICE_GOVSSO = "GOVSSO";
     private static final EnumSet<TaraAuthenticationState> CANCELED_STATES = EnumSet.of(
@@ -174,7 +176,7 @@ public class StatisticsLogger {
     private void processFlowDuration(TaraSession taraSession, SessionStatisticsBuilder statisticsBuilder) {
         Instant startTime = taraSession.getAuthFlowStartTime();
         if (startTime != null) {
-            statisticsBuilder.flowDuration(Duration.between(startTime, Instant.now()).toMillis());
+            statisticsBuilder.flowDuration(Duration.between(startTime, Instant.now(clock)).toMillis());
         }
     }
 

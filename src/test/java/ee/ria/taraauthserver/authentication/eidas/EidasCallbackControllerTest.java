@@ -19,6 +19,13 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.EIDAS;
+import static ee.ria.taraauthserver.error.ErrorCode.EIDAS_AUTHENTICATION_FAILED;
+import static ee.ria.taraauthserver.error.ErrorCode.EIDAS_INCORRECT_LOA;
+import static ee.ria.taraauthserver.error.ErrorCode.EIDAS_INTERNAL_ERROR;
+import static ee.ria.taraauthserver.error.ErrorCode.EIDAS_USER_CONSENT_NOT_GIVEN;
+import static ee.ria.taraauthserver.error.ErrorCode.INTERNAL_ERROR;
+import static ee.ria.taraauthserver.error.ErrorCode.SESSION_STATE_INVALID;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
@@ -78,7 +85,15 @@ class EidasCallbackControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [WAITING_EIDAS_RESPONSE]");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=SESSION_STATE_INVALID, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                        .clientId("openIdDemo")
+                        .sector("public")
+                        .registryCode("10001234")
+                        .country("EE")
+                        .authenticationState(AUTHENTICATION_FAILED)
+                        .errorCode(SESSION_STATE_INVALID)
+                        .build());
     }
 
     @Test
@@ -100,7 +115,15 @@ class EidasCallbackControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"));
 
         assertErrorIsLogged("User input exception: Required request parameter 'RelayState' for method parameter type String is not present");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                        .clientId("openIdDemo")
+                        .sector("public")
+                        .registryCode("10001234")
+                        .country("EE")
+                        .authenticationState(AUTHENTICATION_FAILED)
+                        .errorCode(INTERNAL_ERROR)
+                        .build());
     }
 
     @Test
@@ -121,7 +144,15 @@ class EidasCallbackControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"));
 
         assertErrorIsLogged("User input exception: Required request parameter 'SAMLResponse' for method parameter type String is not present");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                        .clientId("openIdDemo")
+                        .sector("public")
+                        .registryCode("10001234")
+                        .country("EE")
+                        .authenticationState(AUTHENTICATION_FAILED)
+                        .errorCode(INTERNAL_ERROR)
+                        .build());
     }
 
     @Test
@@ -193,7 +224,15 @@ class EidasCallbackControllerTest extends BaseTest {
         assertErrorIsLogged("Server encountered an unexpected error: attributes.FamilyName: must not be blank");
         assertMessageWithMarkerIsLoggedOnce(EidasCallbackController.class, INFO, "EIDAS request", "http.request.method=POST, url.full=https://localhost:9877/returnUrl, http.request.body.content={\"SAMLResponse\":\"123test\"}");
         assertMessageWithMarkerIsLoggedOnce(EidasCallbackController.class, INFO, "EIDAS response: 200", "http.response.status_code=200, http.response.body.content={\"attributes\":{\"DateOfBirth\":\"1965-01-01\",\"FirstName\":\"Javier\",\"PersonIdentifier\":\"CA/EE/12345\"},\"levelOfAssurance\":\"http://eidas.europa.eu/LoA/high\"}");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                        .clientId("openIdDemo")
+                        .sector("public")
+                        .registryCode("10001234")
+                        .country("EE")
+                        .authenticationState(AUTHENTICATION_FAILED)
+                        .errorCode(INTERNAL_ERROR)
+                        .build());
     }
 
     @Test
@@ -231,7 +270,15 @@ class EidasCallbackControllerTest extends BaseTest {
                 "  \"status\": \"urn:oasis:names:tc:SAML:2.0:status:Responder\",\n" +
                 "  \"subStatus\": \"urn:oasis:names:tc:SAML:2.0:status:AuthnFailed\"\n" +
                 "}");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=EIDAS_AUTHENTICATION_FAILED, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                        .clientId("openIdDemo")
+                        .sector("public")
+                        .registryCode("10001234")
+                        .country("EE")
+                        .authenticationState(AUTHENTICATION_FAILED)
+                        .errorCode(EIDAS_AUTHENTICATION_FAILED)
+                        .build());
     }
 
     @Test
@@ -269,7 +316,15 @@ class EidasCallbackControllerTest extends BaseTest {
                 "  \"status\": \"urn:oasis:names:tc:SAML:2.0:status:Responder\",\n" +
                 "  \"subStatus\": \"urn:oasis:names:tc:SAML:2.0:status:RequestDenied\"\n" +
                 "}");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=EIDAS_USER_CONSENT_NOT_GIVEN, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                        .clientId("openIdDemo")
+                        .sector("public")
+                        .registryCode("10001234")
+                        .country("EE")
+                        .authenticationState(AUTHENTICATION_FAILED)
+                        .errorCode(EIDAS_USER_CONSENT_NOT_GIVEN)
+                        .build());
     }
 
     @Test
@@ -306,7 +361,15 @@ class EidasCallbackControllerTest extends BaseTest {
                 "  \"message\": \"202019 - Incorrect Level of Assurance in IdP response\",\n" +
                 "  \"status\": \"urn:oasis:names:tc:SAML:2.0:status:Responder\"\n" +
                 "}");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=EIDAS_INCORRECT_LOA, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                        .clientId("openIdDemo")
+                        .sector("public")
+                        .registryCode("10001234")
+                        .country("EE")
+                        .authenticationState(AUTHENTICATION_FAILED)
+                        .errorCode(EIDAS_INCORRECT_LOA)
+                        .build());
     }
 
     @Test
@@ -339,7 +402,15 @@ class EidasCallbackControllerTest extends BaseTest {
         assertWarningIsLogged("Session has been invalidated: " + sessionFilter.getSession().getId());
         assertMessageWithMarkerIsLoggedOnce(EidasCallbackController.class, INFO, "EIDAS request", "http.request.method=POST, url.full=https://localhost:9877/returnUrl, http.request.body.content={\"SAMLResponse\":\"123test\"}");
         assertMessageWithMarkerIsLoggedOnce(RestTemplateErrorLogger.class, ERROR, "EIDAS response: 404", "http.response.status_code=404");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=EIDAS_INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                        .clientId("openIdDemo")
+                        .sector("public")
+                        .registryCode("10001234")
+                        .country("EE")
+                        .authenticationState(AUTHENTICATION_FAILED)
+                        .errorCode(EIDAS_INTERNAL_ERROR)
+                        .build());
     }
 
     @Test
@@ -371,7 +442,15 @@ class EidasCallbackControllerTest extends BaseTest {
         assertWarningIsLogged("Session has been invalidated: " + sessionFilter.getSession().getId());
         assertErrorIsLogged("Service not available: EIDAS service error: I/O error on POST request for \"https://localhost:9877/returnUrl\": Read timed out");
         assertMessageWithMarkerIsLoggedOnce(EidasCallbackController.class, INFO, "EIDAS request", "http.request.method=POST, url.full=https://localhost:9877/returnUrl, http.request.body.content={\"SAMLResponse\":\"123test\"}");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=EIDAS_INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                        .clientId("openIdDemo")
+                        .sector("public")
+                        .registryCode("10001234")
+                        .country("EE")
+                        .authenticationState(AUTHENTICATION_FAILED)
+                        .errorCode(EIDAS_INTERNAL_ERROR)
+                        .build());
     }
 
     protected static void createEidasCountryStub(String response, int status) {

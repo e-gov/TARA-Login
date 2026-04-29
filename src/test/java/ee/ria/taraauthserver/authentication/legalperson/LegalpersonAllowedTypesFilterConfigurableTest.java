@@ -12,6 +12,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestPropertySource;
 
+import java.util.regex.Pattern;
+
 import static ch.qos.logback.classic.Level.INFO;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
@@ -57,8 +59,12 @@ public class LegalpersonAllowedTypesFilterConfigurableTest extends BaseTest {
 
         assertThat(response.getString("legalPersons[0].legalName")).isEqualTo("Acme INC OÜ 1");
         assertThat(response.getString("legalPersons[0].legalPersonIdentifier")).isEqualTo("11111111");
-        assertMessageWithMarkerIsLoggedOnce(BusinessRegistryService.class, INFO, "X_ROAD request", "http.request.method=POST, url.full=https://localhost:7877/cgi-bin/consumer_proxy, http.request.body.content=\"<soapenv:Envelope xmlns:soapenv=\\\"http://schemas.xmlsoap.org/soap/envelope/\\\"");
-        assertMessageWithMarkerIsLoggedOnce(BusinessRegistryService.class, INFO, "X_ROAD response: 200", "http.response.status_code=200, http.response.body.content=<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+        // TODO Assert proper regex
+        assertMessageWithMarkerIsLoggedOnce(BusinessRegistryService.class, INFO, "X_ROAD request",
+                Pattern.compile(Pattern.quote("http.request.method=POST, url.full=https://localhost:7877/cgi-bin/consumer_proxy, http.request.body.content=\"<soapenv:Envelope xmlns:soapenv=\\\"http://schemas.xmlsoap.org/soap/envelope/\\\"") + ".*"));
+        // TODO Assert proper regex
+        assertMessageWithMarkerIsLoggedOnce(BusinessRegistryService.class, INFO, "X_ROAD response: 200",
+                Pattern.compile(Pattern.quote("http.response.status_code=200, http.response.body.content=<?xml version=\"1.0\" encoding=\"UTF-8\"?>") + ".*", Pattern.DOTALL));
         assertStatisticsIsNotLogged();
     }
 }

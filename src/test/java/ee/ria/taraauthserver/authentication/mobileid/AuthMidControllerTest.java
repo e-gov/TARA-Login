@@ -50,6 +50,11 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.spy;
+import static ee.ria.taraauthserver.error.ErrorCode.INTERNAL_ERROR;
+import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
+import static ee.ria.taraauthserver.error.ErrorCode.SESSION_STATE_INVALID;
+import static ee.ria.taraauthserver.error.ErrorCode.MID_DELIVERY_ERROR;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.EXTERNAL_TRANSACTION;
 
 @Slf4j
 class AuthMidControllerTest extends BaseTest {
@@ -113,8 +118,16 @@ class AuthMidControllerTest extends BaseTest {
                 "Mobile-ID response: 200",
                 "MID session id de305d54-75b4-431b-adb2-eb6b9e546015 authentication result: OK, status: COMPLETE",
                 "State: POLL_MID_STATUS -> NATURAL_PERSON_AUTHENTICATION_COMPLETED");
-        assertStatisticsIsLoggedOnce(INFO, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
-                "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(INFO, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),                "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .idCode("60001019906")
+                .authenticationType(MOBILE_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .build());
     }
 
     @Test
@@ -152,10 +165,26 @@ class AuthMidControllerTest extends BaseTest {
                 "State: POLL_MID_STATUS -> AUTHENTICATION_FAILED",
                 "Mobile-ID authentication failed: SMS sending error, Error code: MID_DELIVERY_ERROR",
                 "Authentication result: AUTHENTICATION_FAILED");
-        assertStatisticsIsLoggedOnce(ERROR, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
-                "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=MID_DELIVERY_ERROR, smartIdFlowType=null)");
-        assertStatisticsIsLoggedOnce(ERROR, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
-                "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=MID_DELIVERY_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),                "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(MOBILE_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(MID_DELIVERY_ERROR)
+                .build());
+        assertStatisticsIsLoggedOnce(ERROR, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),                "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(MOBILE_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(MID_DELIVERY_ERROR)
+                .build());
     }
 
     @Test
@@ -219,7 +248,15 @@ class AuthMidControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [INIT_AUTH_PROCESS]");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=SESSION_STATE_INVALID, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(SESSION_STATE_INVALID)
+                .build());
     }
 
     @Test
@@ -238,7 +275,15 @@ class AuthMidControllerTest extends BaseTest {
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("User input exception: Validation failed for argument [0]");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INTERNAL_ERROR)
+                .build());
     }
 
     @Test
@@ -258,7 +303,15 @@ class AuthMidControllerTest extends BaseTest {
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("User input exception: Validation failed for argument [0]");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INTERNAL_ERROR)
+                .build());
     }
 
     @Test
@@ -278,7 +331,15 @@ class AuthMidControllerTest extends BaseTest {
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("User input exception: Validation failed for argument [0]");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INTERNAL_ERROR)
+                .build());
     }
 
     @Test
@@ -298,7 +359,15 @@ class AuthMidControllerTest extends BaseTest {
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("User input exception: Validation failed for argument [0]");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INTERNAL_ERROR)
+                .build());
     }
 
     @Test
@@ -316,7 +385,15 @@ class AuthMidControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false));
 
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INTERNAL_ERROR)
+                .build());
     }
 
     @Test
@@ -335,7 +412,15 @@ class AuthMidControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false));
 
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INTERNAL_ERROR)
+                .build());
     }
 
     @Test
@@ -354,7 +439,15 @@ class AuthMidControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false));
 
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INTERNAL_ERROR)
+                .build());
     }
 
     @Test
@@ -373,7 +466,15 @@ class AuthMidControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false));
 
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INTERNAL_ERROR)
+                .build());
     }
 
     @Test
@@ -392,7 +493,15 @@ class AuthMidControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false));
 
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INTERNAL_ERROR)
+                .build());
     }
 
     @Test
@@ -411,7 +520,15 @@ class AuthMidControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"))
                 .body("reportable", equalTo(false));
 
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INTERNAL_ERROR)
+                .build());
     }
 
     @Test
@@ -431,7 +548,15 @@ class AuthMidControllerTest extends BaseTest {
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("User input exception: Validation failed for argument [0]");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INTERNAL_ERROR)
+                .build());
     }
 
     @Test
@@ -455,7 +580,15 @@ class AuthMidControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: Mobile-ID authentication method is not allowed");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INVALID_REQUEST, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INVALID_REQUEST)
+                .build());
     }
 
     @Test
@@ -494,7 +627,16 @@ class AuthMidControllerTest extends BaseTest {
                 "Mobile-ID response: 200",
                 "MID session id de305d54-75b4-431b-adb2-eb6b9e546015 authentication result: OK, status: COMPLETE",
                 "State: POLL_MID_STATUS -> NATURAL_PERSON_AUTHENTICATION_COMPLETED");
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .idCode("60001019906")
+                .authenticationType(MOBILE_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .build());
     }
 
     @Test
@@ -525,7 +667,16 @@ class AuthMidControllerTest extends BaseTest {
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
         TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
         assertAuthenticationResult(result);
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .idCode("60001019906")
+                .authenticationType(MOBILE_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .build());
     }
 
     @Test
@@ -558,7 +709,16 @@ class AuthMidControllerTest extends BaseTest {
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
         TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
         assertAuthenticationResult(result);
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .idCode("60001019906")
+                .authenticationType(MOBILE_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .build());
     }
 
     @Nested
@@ -615,7 +775,16 @@ class AuthMidControllerTest extends BaseTest {
                     .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
             TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
             assertAuthenticationResult(result);
-            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null, smartIdFlowType=null)");
+            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION",
+                    defaultStatisticsMarkerBuilder()
+                    .clientId("openIdDemo")
+                    .sector("public")
+                    .registryCode("10001234")
+                    .country("EE")
+                    .idCode("60001019906")
+                    .authenticationType(MOBILE_ID)
+                    .authenticationState(EXTERNAL_TRANSACTION)
+                    .build());
         }
 
         @Test
@@ -656,7 +825,16 @@ class AuthMidControllerTest extends BaseTest {
                     .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
             TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
             assertAuthenticationResult(result);
-            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null, smartIdFlowType=null)");
+            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION",
+                    defaultStatisticsMarkerBuilder()
+                    .clientId("openIdDemo")
+                    .sector("public")
+                    .registryCode("10001234")
+                    .country("EE")
+                    .idCode("60001019906")
+                    .authenticationType(MOBILE_ID)
+                    .authenticationState(EXTERNAL_TRANSACTION)
+                    .build());
         }
 
         @Test
@@ -699,7 +877,17 @@ class AuthMidControllerTest extends BaseTest {
                     .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
             TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
             assertAuthenticationResult(result);
-            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=GOVSSO, clientId=govsso_test_client_id, eidasRequesterId=null, sector=public, registryCode=govsso_test_registry_code, legalPerson=false, country=EE, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null, smartIdFlowType=null)");
+            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION",
+                    defaultStatisticsMarkerBuilder()
+                    .service("GOVSSO")
+                    .clientId("govsso_test_client_id")
+                    .sector("public")
+                    .registryCode("govsso_test_registry_code")
+                    .country("EE")
+                    .idCode("60001019906")
+                    .authenticationType(MOBILE_ID)
+                    .authenticationState(EXTERNAL_TRANSACTION)
+                    .build());
         }
 
         @Test
@@ -740,7 +928,17 @@ class AuthMidControllerTest extends BaseTest {
                     .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
             TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
             assertAuthenticationResult(result);
-            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=GOVSSO, clientId=govsso_test_client_id, eidasRequesterId=null, sector=public, registryCode=govsso_test_registry_code, legalPerson=false, country=EE, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null, smartIdFlowType=null)");
+            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION",
+                    defaultStatisticsMarkerBuilder()
+                    .service("GOVSSO")
+                    .clientId("govsso_test_client_id")
+                    .sector("public")
+                    .registryCode("govsso_test_registry_code")
+                    .country("EE")
+                    .idCode("60001019906")
+                    .authenticationType(MOBILE_ID)
+                    .authenticationState(EXTERNAL_TRANSACTION)
+                    .build());
         }
 
         @Test
@@ -790,7 +988,17 @@ class AuthMidControllerTest extends BaseTest {
                     .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
             TaraSession.MidAuthenticationResult result = (TaraSession.MidAuthenticationResult) taraSession.getAuthenticationResult();
             assertAuthenticationResult(result);
-            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=GOVSSO, clientId=govsso_test_client_id, eidasRequesterId=null, sector=public, registryCode=govsso_test_registry_code, legalPerson=false, country=EE, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null, smartIdFlowType=null)");
+            assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION",
+                    defaultStatisticsMarkerBuilder()
+                    .service("GOVSSO")
+                    .clientId("govsso_test_client_id")
+                    .sector("public")
+                    .registryCode("govsso_test_registry_code")
+                    .country("EE")
+                    .idCode("60001019906")
+                    .authenticationType(MOBILE_ID)
+                    .authenticationState(EXTERNAL_TRANSACTION)
+                    .build());
         }
 
         private TaraSession.LoginRequestInfo createGovSsoLoginRequest(TaraSession.MidSettings mobileIdSettings) {
@@ -854,9 +1062,25 @@ class AuthMidControllerTest extends BaseTest {
         assertEquals(ERROR_GENERAL, result.getErrorCode());
         assertErrorIsLogged("Mobile-ID authentication exception: HTTP 400 Bad Request");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
-                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=ERROR_GENERAL, smartIdFlowType=null)");
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(MOBILE_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(ERROR_GENERAL)
+                .build());
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
-                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=ERROR_GENERAL, smartIdFlowType=null)");
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(MOBILE_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(ERROR_GENERAL)
+                .build());
     }
 
     @Test
@@ -883,9 +1107,25 @@ class AuthMidControllerTest extends BaseTest {
         assertEquals(ERROR_GENERAL, result.getErrorCode());
         assertErrorIsLogged("Mobile-ID authentication exception: Request is unauthorized for URI https://localhost:9877/mid-api/authentication: HTTP 401 Unauthorized");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
-                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=ERROR_GENERAL, smartIdFlowType=null)");
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(MOBILE_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(ERROR_GENERAL)
+                .build());
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
-                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=ERROR_GENERAL, smartIdFlowType=null)");
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(MOBILE_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(ERROR_GENERAL)
+                .build());
     }
 
     @Test
@@ -912,9 +1152,25 @@ class AuthMidControllerTest extends BaseTest {
         assertEquals(ERROR_GENERAL, result.getErrorCode());
         assertErrorIsLogged("Mobile-ID authentication exception: HTTP 405 Method Not Allowed");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
-                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=ERROR_GENERAL, smartIdFlowType=null)");
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(MOBILE_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(ERROR_GENERAL)
+                .build());
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
-                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=ERROR_GENERAL, smartIdFlowType=null)");
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(MOBILE_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(ERROR_GENERAL)
+                .build());
     }
 
     @Test
@@ -941,9 +1197,25 @@ class AuthMidControllerTest extends BaseTest {
         assertEquals(MID_INTERNAL_ERROR, result.getErrorCode());
         assertErrorIsLogged("Mobile-ID authentication exception: Error getting response from cert-store/MSSP for URI https://localhost:9877/mid-api/authentication: HTTP 500 Server Error");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
-                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=MID_INTERNAL_ERROR, smartIdFlowType=null)");
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(MOBILE_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(MID_INTERNAL_ERROR)
+                .build());
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
-                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=MID_INTERNAL_ERROR, smartIdFlowType=null)");
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(MOBILE_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(MID_INTERNAL_ERROR)
+                .build());
     }
 
     @Test
@@ -969,9 +1241,25 @@ class AuthMidControllerTest extends BaseTest {
         assertEquals(MID_INTERNAL_ERROR, result.getErrorCode());
         assertErrorIsLogged("Mobile-ID authentication exception: Error getting response from cert-store/MSSP for URI https://localhost:9877/mid-api/authentication: HTTP 500 Server Error");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
-                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=MID_INTERNAL_ERROR, smartIdFlowType=null)");
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(MOBILE_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(MID_INTERNAL_ERROR)
+                .build());
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
-                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=MID_INTERNAL_ERROR, smartIdFlowType=null)");
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(MOBILE_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(MID_INTERNAL_ERROR)
+                .build());
     }
 
     @Test
@@ -997,9 +1285,25 @@ class AuthMidControllerTest extends BaseTest {
         assertEquals(MID_INTERNAL_ERROR, result.getErrorCode());
         assertErrorIsLogged("Mobile-ID authentication exception: Unknown error when connecting to Host");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
-                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=MID_INTERNAL_ERROR, smartIdFlowType=null)");
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(MOBILE_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(MID_INTERNAL_ERROR)
+                .build());
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
-                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=MID_INTERNAL_ERROR, smartIdFlowType=null)");
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(MOBILE_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(MID_INTERNAL_ERROR)
+                .build());
     }
 
     @Test
@@ -1022,7 +1326,16 @@ class AuthMidControllerTest extends BaseTest {
 
         await().atMost(TEN_SECONDS)
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=60001019906, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .idCode("60001019906")
+                .authenticationType(MOBILE_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .build());
     }
 
     private void assertAuthenticationResult(TaraSession.MidAuthenticationResult result) {

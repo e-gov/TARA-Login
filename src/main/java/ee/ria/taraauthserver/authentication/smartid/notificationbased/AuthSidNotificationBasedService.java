@@ -36,6 +36,8 @@ import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -48,7 +50,6 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_STA
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static ee.ria.taraauthserver.utils.RequestUtils.withMdc;
 import static ee.ria.taraauthserver.utils.RequestUtils.withMdcAndLocale;
-import static java.time.Instant.now;
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.util.concurrent.CompletableFuture.delayedExecutor;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -90,6 +91,9 @@ public class AuthSidNotificationBasedService {
     @Autowired
     private AuthenticationDisplayTextFactory smartIdDisplayTextFactory;
 
+    @Autowired
+    private Clock clock;
+
     public String startSidAuthSession(TaraSession taraSession, String idCode) {
         RpChallenge rpChallenge = rpChallengeService.getRpChallenge();
         String verificationCode = VerificationCodeCalculator.calculate(rpChallenge.value());
@@ -114,7 +118,7 @@ public class AuthSidNotificationBasedService {
         Span span = ElasticApm.currentSpan().startSpan("app", "SID", "poll")
                 .setName(ElasticApmUtil.currentMethodName())
                 .setStartTimestamp(
-                        now()
+                        Instant.now(clock)
                                 .plus(200, MILLIS)
                                 .minus(smartIdConfigurationProperties.getDelayInitiateSidSession())
                                 .toEpochMilli() * 1_000);
@@ -134,7 +138,7 @@ public class AuthSidNotificationBasedService {
             String sidSessionId = authenticationSessionResponse.sessionID();
             log.info("Initiated Smart-ID notification based session with id: {}", value("tara.session.authentication_result.sid_session_id", sidSessionId));
             taraSession.setState(POLL_SID_STATUS);
-            taraSession.setAuthFlowStartTime(now());
+            taraSession.setAuthFlowStartTime(Instant.now(clock));
             createAuthenticationResult(taraSession, sidSessionId);
             return authenticationSessionResponse;
         } catch (Exception e) {
@@ -185,7 +189,7 @@ public class AuthSidNotificationBasedService {
         Span span = ElasticApm.currentSpan().startSpan("app", "SID", "poll")
                 .setName(ElasticApmUtil.currentMethodName())
                 .setStartTimestamp(
-                        now()
+                        Instant.now(clock)
                                 .plus(200, MILLIS)
                                 .minus(smartIdConfigurationProperties.getDelayStatusPollingStart())
                                 .toEpochMilli() * 1_000);

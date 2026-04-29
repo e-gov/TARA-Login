@@ -8,11 +8,13 @@ import ee.sk.smartid.AuthenticationIdentity;
 import ee.sk.smartid.DeviceLinkAuthenticationResponseValidator;
 import ee.sk.smartid.rest.dao.DeviceLinkAuthenticationSessionRequest;
 import ee.sk.smartid.rest.dao.SessionStatus;
+import ee.sk.smartid.FlowType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
+
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -36,6 +38,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_COUNTRY_NOT_ALLOWED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.EXTERNAL_TRANSACTION;
 
 @TestPropertySource(
         locations = "classpath:application.yml",
@@ -72,7 +76,17 @@ class SmartIdQrCodeControllerTest extends BaseTest {
         assertEquals("Jaak-Kristjan", result.getFirstName());
         assertEquals("Jõeorg", result.getLastName());
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION",
-                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=38001085718, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null, smartIdFlowType=QR)");
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .idCode("38001085718")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .smartIdFlowType(FlowType.QR)
+                .flowDuration(0L)
+                .build());
     }
 
     @Test
@@ -97,9 +111,29 @@ class SmartIdQrCodeControllerTest extends BaseTest {
                 taraSession.getAuthenticationResult().getErrorCode());
         assertWarningIsLogged("Smart-ID authentication failed: Smart-ID authentication is not allowed for country: LV, Error code: SID_COUNTRY_NOT_ALLOWED");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
-                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_COUNTRY_NOT_ALLOWED, smartIdFlowType=QR)");
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(SID_COUNTRY_NOT_ALLOWED)
+                .smartIdFlowType(FlowType.QR)
+                .flowDuration(0L)
+                .build());
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
-                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=SID_COUNTRY_NOT_ALLOWED, smartIdFlowType=QR)");
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(SID_COUNTRY_NOT_ALLOWED)
+                .smartIdFlowType(FlowType.QR)
+                .flowDuration(0L)
+                .build());
     }
 
     @Test
@@ -119,9 +153,27 @@ class SmartIdQrCodeControllerTest extends BaseTest {
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION),
                         hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
-                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_INTERNAL_ERROR, smartIdFlowType=QR)");
+                defaultStatisticsMarkerBuilder()
+                        .clientId("openIdDemo")
+                        .sector("public")
+                        .registryCode("10001234")
+                        .country("EE")
+                        .authenticationType(SMART_ID)
+                        .authenticationState(AUTHENTICATION_FAILED)
+                        .errorCode(ee.ria.taraauthserver.error.ErrorCode.SID_INTERNAL_ERROR)
+                        .smartIdFlowType(FlowType.QR)
+                        .build());
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
-                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=SID_INTERNAL_ERROR, smartIdFlowType=QR)");
+                defaultStatisticsMarkerBuilder()
+                        .clientId("openIdDemo")
+                        .sector("public")
+                        .registryCode("10001234")
+                        .country("EE")
+                        .authenticationType(SMART_ID)
+                        .authenticationState(EXTERNAL_TRANSACTION)
+                        .errorCode(ee.ria.taraauthserver.error.ErrorCode.SID_INTERNAL_ERROR)
+                        .smartIdFlowType(FlowType.QR)
+                        .build());
     }
 
     private void createDeviceLinkAuthInitStub(int status) {

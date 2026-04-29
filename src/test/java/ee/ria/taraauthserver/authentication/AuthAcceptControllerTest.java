@@ -19,7 +19,13 @@ import static ch.qos.logback.classic.Level.INFO;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.put;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
+import static ee.ria.taraauthserver.error.ErrorCode.INTERNAL_ERROR;
+import static ee.ria.taraauthserver.error.ErrorCode.SESSION_STATE_INVALID;
 import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.MOCK_LOGIN_CHALLENGE;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_CANCELED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
@@ -87,7 +93,15 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [AUTHENTICATION_SUCCESS, NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED]");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=SESSION_STATE_INVALID, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                        .clientId("openIdDemo")
+                        .sector("public")
+                        .registryCode("10001234")
+                        .country("EE")
+                        .authenticationState(AUTHENTICATION_FAILED)
+                        .errorCode(SESSION_STATE_INVALID)
+                        .build());
     }
 
     @Test
@@ -116,7 +130,17 @@ public class AuthAcceptControllerTest extends BaseTest {
         assertErrorIsLogged("TARA_HYDRA response: 400");
         assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
         assertMessageWithMarkerIsLoggedOnce(RestTemplateErrorLogger.class, ERROR, "TARA_HYDRA response: 400", "http.response.status_code=400");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                        .clientId("openIdDemo")
+                        .sector("public")
+                        .registryCode("10001234")
+                        .country("EE")
+                        .idCode("47101010033")
+                        .authenticationType(MOBILE_ID)
+                        .authenticationState(AUTHENTICATION_FAILED)
+                        .errorCode(INTERNAL_ERROR)
+                        .build());
     }
 
     @Test
@@ -146,7 +170,17 @@ public class AuthAcceptControllerTest extends BaseTest {
         assertErrorIsLogged("Server encountered an unexpected error: Invalid OIDC server response. Redirect URL missing from response.");
         assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
         assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={}");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                        .clientId("openIdDemo")
+                        .sector("public")
+                        .registryCode("10001234")
+                        .country("EE")
+                        .idCode("47101010033")
+                        .authenticationType(MOBILE_ID)
+                        .authenticationState(AUTHENTICATION_FAILED)
+                        .errorCode(INTERNAL_ERROR)
+                        .build());
     }
 
     @Test
@@ -176,7 +210,16 @@ public class AuthAcceptControllerTest extends BaseTest {
 
         assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
         assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"/some/test/url\"}");
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS",
+                defaultStatisticsMarkerBuilder()
+                        .clientId("openIdDemo")
+                        .sector("public")
+                        .registryCode("10001234")
+                        .country("EE")
+                        .idCode("47101010033")
+                        .authenticationType(MOBILE_ID)
+                        .authenticationState(AUTHENTICATION_SUCCESS)
+                        .build());
     }
 
     @Test
@@ -208,7 +251,16 @@ public class AuthAcceptControllerTest extends BaseTest {
         assertInfoIsLogged("State: NATURAL_PERSON_AUTHENTICATION_COMPLETED -> AUTHENTICATION_SUCCESS");
         assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
         assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"/some/test/url\"}");
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS",
+                defaultStatisticsMarkerBuilder()
+                        .clientId("openIdDemo")
+                        .sector("public")
+                        .registryCode("10001234")
+                        .country("EE")
+                        .idCode("47101010033")
+                        .authenticationType(MOBILE_ID)
+                        .authenticationState(AUTHENTICATION_SUCCESS)
+                        .build());
 
         resetMockLogAppender();
         given()
@@ -272,7 +324,16 @@ public class AuthAcceptControllerTest extends BaseTest {
 
         assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
         assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"/some/test/url\"}");
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS",
+                defaultStatisticsMarkerBuilder()
+                        .clientId("openIdDemo")
+                        .sector("public")
+                        .registryCode("10001234")
+                        .country("EE")
+                        .idCode("47101010033")
+                        .authenticationType(MOBILE_ID)
+                        .authenticationState(AUTHENTICATION_SUCCESS)
+                        .build());
     }
 
     @Test
@@ -302,7 +363,17 @@ public class AuthAcceptControllerTest extends BaseTest {
 
         assertErrorIsLogged("Service not available: I/O error on PUT request for \"https://localhost:9877/admin/oauth2/auth/requests/login/accept\": Read timed out");
         assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                        .clientId("openIdDemo")
+                        .sector("public")
+                        .registryCode("10001234")
+                        .country("EE")
+                        .idCode("47101010033")
+                        .authenticationType(MOBILE_ID)
+                        .authenticationState(AUTHENTICATION_FAILED)
+                        .errorCode(INTERNAL_ERROR)
+                        .build());
     }
 
     @ParameterizedTest
@@ -328,7 +399,16 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .header("Location", Matchers.endsWith("/auth/init?login_challenge=abcdefg098AAdsCC"));
 
         assertMessageIsNotLogged(AuthAcceptController.class, "TARA_HYDRA request");
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_CANCELED, errorCode=null, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED",
+                defaultStatisticsMarkerBuilder()
+                        .clientId("openIdDemo")
+                        .sector("public")
+                        .registryCode("10001234")
+                        .country("EE")
+                        .idCode("47101010033")
+                        .authenticationType(MOBILE_ID)
+                        .authenticationState(AUTHENTICATION_CANCELED)
+                        .build());
     }
 
     @ParameterizedTest
@@ -352,6 +432,15 @@ public class AuthAcceptControllerTest extends BaseTest {
             .header("Location", Matchers.endsWith("/auth/init?login_challenge=abcdefg098AAdsCC&lang=" + language));
 
         assertMessageIsNotLogged(AuthAcceptController.class, "TARA_HYDRA request");
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=47101010033, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_CANCELED, errorCode=null, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED",
+                defaultStatisticsMarkerBuilder()
+                        .clientId("openIdDemo")
+                        .sector("public")
+                        .registryCode("10001234")
+                        .country("EE")
+                        .idCode("47101010033")
+                        .authenticationType(MOBILE_ID)
+                        .authenticationState(AUTHENTICATION_CANCELED)
+                        .build());
     }
 }

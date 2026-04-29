@@ -58,6 +58,20 @@ import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.spy;
+import static ee.ria.taraauthserver.error.ErrorCode.ERROR_GENERAL;
+import static ee.ria.taraauthserver.error.ErrorCode.INTERNAL_ERROR;
+import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
+import static ee.ria.taraauthserver.error.ErrorCode.SESSION_STATE_INVALID;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_DOCUMENT_UNUSABLE;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_INTERACTION_NOT_SUPPORTED;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_INTERNAL_ERROR;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_SESSION_TIMEOUT;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_DISPLAYTEXTANDPIN;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_VALIDATION_ERROR;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_WRONG_VC;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.EXTERNAL_TRANSACTION;
 
 @Disabled // TODO AUT-2477: Update the tests for Smart ID v3
 @Slf4j
@@ -151,7 +165,15 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_SID', expected one of: [INIT_AUTH_PROCESS]");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=SESSION_STATE_INVALID)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(SESSION_STATE_INVALID)
+                .build());
     }
 
     @Test
@@ -174,7 +196,15 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: Smart-ID authentication method is not allowed");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INVALID_REQUEST)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INVALID_REQUEST)
+                .build());
     }
 
     @Test
@@ -196,7 +226,15 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: Validation failed for argument [0] in public java.lang.String");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INTERNAL_ERROR)
+                .build());
     }
 
     @Test
@@ -219,7 +257,15 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: Validation failed for argument [0] in public java.lang.String");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INTERNAL_ERROR)
+                .build());
     }
 
     @Test
@@ -242,7 +288,15 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: Validation failed for argument [0] in public java.lang.String");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INTERNAL_ERROR)
+                .build());
     }
 
     @Test
@@ -265,7 +319,15 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: Validation failed for argument [0] in public java.lang.String");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INTERNAL_ERROR)
+                .build());
     }
 
     @Test
@@ -300,7 +362,16 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
         assertEquals("1801-01-01", result.getDateOfBirth().toString());
         assertEquals(SMART_ID, result.getAmr());
         assertEquals(LevelOfAssurance.HIGH, result.getAcr());
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=10101010005, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .idCode("10101010005")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .build());
     }
 
     @Test
@@ -330,7 +401,16 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
 
         await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=10101010005, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .idCode("10101010005")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .build());
     }
 
     @Test
@@ -363,7 +443,16 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
 
         await().atMost(FIVE_SECONDS)
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=10101010005, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .idCode("10101010005")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .build());
     }
 
     @Nested
@@ -689,8 +778,16 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 "Smart-ID response: 200",
                 "SID session id de305d54-75b4-431b-adb2-eb6b9e546014 authentication result: OK, document number: PNOEE-10101010005-Z1B2-Q, status: COMPLETE",
                 "State: POLL_SID_STATUS -> NATURAL_PERSON_AUTHENTICATION_COMPLETED");
-        assertStatisticsIsLoggedOnce(INFO, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
-                "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=10101010005, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+        assertStatisticsIsLoggedOnce(INFO, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),                "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .idCode("10101010005")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .build());
     }
 
     @Test
@@ -728,10 +825,26 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 "State: POLL_SID_STATUS -> AUTHENTICATION_FAILED",
                 "Smart-ID authentication failed: User pressed cancel in app, Error code: SID_USER_REFUSED",
                 "Authentication result: AUTHENTICATION_FAILED");
-        assertStatisticsIsLoggedOnce(ERROR, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
-                "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=SID_USER_REFUSED)");
-        assertStatisticsIsLoggedOnce(ERROR, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),
-                "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_USER_REFUSED)");
+        assertStatisticsIsLoggedOnce(ERROR, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),                "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(SID_USER_REFUSED)
+                .build());
+        assertStatisticsIsLoggedOnce(ERROR, e -> e.getMDCPropertyMap().getOrDefault(MDC_ATTRIBUTE_KEY_FLOW_TRACE_ID, "missing").equals(taraTraceId),                "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(SID_USER_REFUSED)
+                .build());
     }
 
     @Test
@@ -758,8 +871,26 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         TaraSession.SidAuthenticationResult result = (TaraSession.SidAuthenticationResult) taraSession.getAuthenticationResult();
         assertEquals(SID_REQUEST_TIMEOUT, result.getErrorCode());
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=SID_REQUEST_TIMEOUT)");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_REQUEST_TIMEOUT)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(SID_REQUEST_TIMEOUT)
+                .build());
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(SID_REQUEST_TIMEOUT)
+                .build());
     }
 
     @Test
@@ -784,7 +915,16 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
 
         await().atMost(TEN_SECONDS)
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=10101010005, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .idCode("10101010005")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .build());
     }
 
     @Test
@@ -815,8 +955,28 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_VALIDATION_ERROR, taraSession.getAuthenticationResult().getErrorCode());
         assertErrorIsLogged("Smart-ID authentication exception: Failed to verify validity of signature returned by Smart-ID");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=10101010005, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=SID_VALIDATION_ERROR)");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=10101010005, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_VALIDATION_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .idCode("10101010005")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(SID_VALIDATION_ERROR)
+                .build());
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .idCode("10101010005")
+                .authenticationType(SMART_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(SID_VALIDATION_ERROR)
+                .build());
     }
 
     @Test
@@ -842,8 +1002,26 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertErrorIsLogged("Smart-ID authentication exception: HTTP 400 Bad Request");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=ERROR_GENERAL)");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=ERROR_GENERAL)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(ERROR_GENERAL)
+                .build());
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(ERROR_GENERAL)
+                .build());
     }
 
     @Test
@@ -869,8 +1047,26 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertErrorIsLogged("Smart-ID authentication exception: HTTP 401 Unauthorized");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=ERROR_GENERAL)");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=ERROR_GENERAL)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(ERROR_GENERAL)
+                .build());
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(ERROR_GENERAL)
+                .build());
     }
 
     @Test
@@ -896,8 +1092,26 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertErrorIsLogged("Smart-ID authentication exception: null");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=ERROR_GENERAL)");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=ERROR_GENERAL)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(ERROR_GENERAL)
+                .build());
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(ERROR_GENERAL)
+                .build());
     }
 
     @Test
@@ -923,8 +1137,26 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertErrorIsLogged("Smart-ID authentication exception: HTTP 405 Method Not Allowed");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=ERROR_GENERAL)");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=ERROR_GENERAL)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(ERROR_GENERAL)
+                .build());
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(ERROR_GENERAL)
+                .build());
     }
 
     @Test
@@ -951,8 +1183,26 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_INTERNAL_ERROR, taraSession.getAuthenticationResult().getErrorCode());
         assertErrorIsLogged("Smart-ID authentication exception: HTTP 500 Server Error");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=SID_INTERNAL_ERROR)");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_INTERNAL_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(SID_INTERNAL_ERROR)
+                .build());
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(SID_INTERNAL_ERROR)
+                .build());
     }
 
     @Test
@@ -979,8 +1229,26 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_USER_REFUSED, taraSession.getAuthenticationResult().getErrorCode());
         assertWarningIsLogged("Smart-ID authentication failed: User pressed cancel in app, Error code: SID_USER_REFUSED");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=SID_USER_REFUSED)");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_USER_REFUSED)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(SID_USER_REFUSED)
+                .build());
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(SID_USER_REFUSED)
+                .build());
     }
 
     @Test
@@ -1007,9 +1275,27 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_SESSION_TIMEOUT, taraSession.getAuthenticationResult().getErrorCode());
         assertWarningIsLogged("Smart-ID authentication failed: Session timed out without getting any response from user, Error code: SID_SESSION_TIMEOUT");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=SID_SESSION_TIMEOUT)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(SID_SESSION_TIMEOUT)
+                .build());
         //TODO AUT-1528 Is logged double
-        assertMessageWithMarkerIsLogged(StatisticsLogger.class, ERROR, null, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_SESSION_TIMEOUT)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(SID_SESSION_TIMEOUT)
+                .build());
     }
 
     @Test
@@ -1036,8 +1322,26 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_DOCUMENT_UNUSABLE, taraSession.getAuthenticationResult().getErrorCode());
         assertWarningIsLogged("Smart-ID authentication failed: DOCUMENT_UNUSABLE. User must either check his/her Smart-ID mobile application or turn to customer support for getting the exact reason., Error code: SID_DOCUMENT_UNUSABLE");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=SID_DOCUMENT_UNUSABLE)");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_DOCUMENT_UNUSABLE)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(SID_DOCUMENT_UNUSABLE)
+                .build());
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(SID_DOCUMENT_UNUSABLE)
+                .build());
     }
 
     @Test
@@ -1064,8 +1368,26 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_WRONG_VC, taraSession.getAuthenticationResult().getErrorCode());
         assertWarningIsLogged("Smart-ID authentication failed: User selected wrong verification code, Error code: SID_WRONG_VC");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=SID_WRONG_VC)");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_WRONG_VC)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(SID_WRONG_VC)
+                .build());
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(SID_WRONG_VC)
+                .build());
     }
 
     @Test
@@ -1092,8 +1414,26 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_INTERACTION_NOT_SUPPORTED, taraSession.getAuthenticationResult().getErrorCode());
         assertWarningIsLogged("Smart-ID authentication failed: User app version does not support any of the allowedInteractionsOrder interactions., Error code: SID_INTERACTION_NOT_SUPPORTED");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=SID_INTERACTION_NOT_SUPPORTED)");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_INTERACTION_NOT_SUPPORTED)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(SID_INTERACTION_NOT_SUPPORTED)
+                .build());
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(SID_INTERACTION_NOT_SUPPORTED)
+                .build());
     }
 
     @Test
@@ -1120,8 +1460,26 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_USER_REFUSED_DISPLAYTEXTANDPIN, taraSession.getAuthenticationResult().getErrorCode());
         assertWarningIsLogged("Smart-ID authentication failed: User pressed Cancel on PIN screen., Error code: SID_USER_REFUSED_DISAPLAYTEXTANDPIN");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=SID_USER_REFUSED_DISAPLAYTEXTANDPIN)");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_USER_REFUSED_DISAPLAYTEXTANDPIN)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(SID_USER_REFUSED_DISPLAYTEXTANDPIN)
+                .build());
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(SID_USER_REFUSED_DISPLAYTEXTANDPIN)
+                .build());
     }
 
     @Test
@@ -1147,8 +1505,26 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION), hasProperty("state", equalTo(AUTHENTICATION_FAILED)));
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertWarningIsLogged("Smart-ID authentication failed: User cancelled verificationCodeChoice screen, Error code: SID_USER_REFUSED_VC_CHOICE");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=SID_USER_REFUSED_VC_CHOICE)");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_USER_REFUSED_VC_CHOICE)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE)
+                .build());
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE)
+                .build());
     }
 
     @Test
@@ -1175,8 +1551,26 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_VALIDATION_ERROR, taraSession.getAuthenticationResult().getErrorCode());
         assertErrorIsLogged("Smart-ID authentication exception: Session status end result is 'UNKNOWN_STATUS'");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=SID_VALIDATION_ERROR)");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_VALIDATION_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(SID_VALIDATION_ERROR)
+                .build());
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationType(SMART_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(SID_VALIDATION_ERROR)
+                .build());
     }
 
     @Test
@@ -1203,7 +1597,27 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
         assertEquals(AUTHENTICATION_FAILED, taraSession.getState());
         assertEquals(ErrorCode.SID_VALIDATION_ERROR, taraSession.getAuthenticationResult().getErrorCode());
         assertErrorIsLogged("Smart-ID authentication exception: Signer's certificate is below requested certificate level");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=10101010005, ocspUrl=null, authenticationType=SMART_ID, authenticationState=EXTERNAL_TRANSACTION, errorCode=SID_VALIDATION_ERROR)");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=10101010005, ocspUrl=null, authenticationType=SMART_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_VALIDATION_ERROR)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .idCode("10101010005")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .errorCode(SID_VALIDATION_ERROR)
+                .build());
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .idCode("10101010005")
+                .authenticationType(SMART_ID)
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(SID_VALIDATION_ERROR)
+                .build());
     }
 }

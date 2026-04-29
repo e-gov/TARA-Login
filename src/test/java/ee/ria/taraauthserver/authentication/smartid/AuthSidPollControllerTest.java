@@ -28,6 +28,10 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static ee.ria.taraauthserver.error.ErrorCode.ERROR_GENERAL;
+import static ee.ria.taraauthserver.error.ErrorCode.SESSION_STATE_INVALID;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_INTERNAL_ERROR;
+import static ee.ria.taraauthserver.error.ErrorCode.SID_USER_REFUSED;
 
 @TestPropertySource(
         locations = "classpath:application.yml",
@@ -84,7 +88,15 @@ class AuthSidPollControllerTest extends BaseTest {
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS', expected one of: [AUTHENTICATION_FAILED, INIT_SID, POLL_SID_STATUS, NATURAL_PERSON_AUTHENTICATION_COMPLETED]");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=SESSION_STATE_INVALID, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(SESSION_STATE_INVALID)
+                .build());
     }
 
     @Test
@@ -158,7 +170,15 @@ class AuthSidPollControllerTest extends BaseTest {
         assertNull(sessionRepository.findById(sessionFilter.getSession().getId()));
         assertWarningIsLogged("Session has been invalidated: " + sessionId);
         assertInfoIsLogged("Session is removed from cache: " + sessionId);
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_USER_REFUSED, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(SID_USER_REFUSED)
+                .build());
     }
 
     @Test
@@ -189,7 +209,15 @@ class AuthSidPollControllerTest extends BaseTest {
         assertInfoIsLogged("State: NOT_SET -> AUTHENTICATION_FAILED");
         assertWarningIsLogged("Session has been invalidated: " + sessionId);
         assertInfoIsLogged("Session is removed from cache: " + sessionId);
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=ERROR_GENERAL, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(ERROR_GENERAL)
+                .build());
     }
 
     @Test
@@ -221,6 +249,14 @@ class AuthSidPollControllerTest extends BaseTest {
         assertErrorIsLogged("Service not available: Sid poll failed");
         assertWarningIsLogged("Session has been invalidated: " + sessionId);
         assertInfoIsLogged("Session is removed from cache: " + sessionId);
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=SID_INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(SID_INTERNAL_ERROR)
+                .build());
     }
 }

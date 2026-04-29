@@ -7,6 +7,8 @@ import ee.ria.taraauthserver.session.TaraSession;
 import lombok.NonNull;
 import lombok.Value;
 
+import java.time.Instant;
+
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_SID_QR_CODE;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_QR_CODE;
 
@@ -14,12 +16,14 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_QR_
 public class PollSmartIdQrCodeAuthenticationSessionUpdate implements TaraSessionUpdate {
 
     @NonNull SmartIdDeviceLinkSession smartIdDeviceLinkSession;
+    @NonNull Instant authFlowStartTime;
 
     @Override
     public void apply(TaraSession session) {
         SessionUtils.assertSessionInState(session, INIT_SID_QR_CODE);
 
         session.setSmartIdQrCodeSession(smartIdDeviceLinkSession);
+        session.setAuthFlowStartTime(authFlowStartTime);
 
         TaraSession.SidAuthenticationResult authenticationResult =
                 new TaraSession.SidAuthenticationResult(smartIdDeviceLinkSession.sessionId());

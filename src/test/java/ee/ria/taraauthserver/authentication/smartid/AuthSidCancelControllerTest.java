@@ -25,6 +25,9 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static ee.ria.taraauthserver.error.ErrorCode.SESSION_STATE_INVALID;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_CANCELED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 
 @TestPropertySource(
         locations = "classpath:application.yml",
@@ -92,7 +95,15 @@ class AuthSidCancelControllerTest extends BaseTest {
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'COMPLETE', expected one of: [AUTHENTICATION_FAILED, INIT_SID, POLL_SID_STATUS, NATURAL_PERSON_AUTHENTICATION_COMPLETED, LEGAL_PERSON_AUTHENTICATION_COMPLETED]");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=SESSION_STATE_INVALID, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(SESSION_STATE_INVALID)
+                .build());
     }
 
     @ParameterizedTest
@@ -120,7 +131,14 @@ class AuthSidCancelControllerTest extends BaseTest {
         TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.POLL_SID_STATUS_CANCELED, taraSession.getState());
         assertWarningIsLogged("Smart ID authentication process has been canceled");
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_CANCELED, errorCode=null, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_CANCELED)
+                .build());
     }
 
     @Test
@@ -147,7 +165,13 @@ class AuthSidCancelControllerTest extends BaseTest {
         TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.POLL_SID_STATUS_CANCELED, taraSession.getState());
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED",
-            "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_CANCELED, errorCode=null, smartIdFlowType=null)");
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_CANCELED)
+                .build());
     }
 
     @Test
@@ -174,7 +198,13 @@ class AuthSidCancelControllerTest extends BaseTest {
         TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
         assertEquals(TaraAuthenticationState.POLL_SID_STATUS_CANCELED, taraSession.getState());
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED",
-            "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_CANCELED, errorCode=null, smartIdFlowType=null)");
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_CANCELED)
+                .build());
     }
 
     @Test

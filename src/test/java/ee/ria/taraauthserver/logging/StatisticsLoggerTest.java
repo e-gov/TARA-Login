@@ -12,6 +12,7 @@ import ee.ria.taraauthserver.session.TaraSession.LegalPerson;
 import ee.ria.taraauthserver.session.TaraSession.LoginRequestInfo;
 import ee.ria.taraauthserver.session.TaraSession.MetaData;
 import ee.ria.taraauthserver.session.TaraSession.OidcClient;
+import ee.ria.taraauthserver.logging.StatisticsLogger.SessionStatistics;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -36,6 +37,7 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATI
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_MID_STATUS_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_STATUS_CANCELED;
 import static java.lang.String.format;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
 class StatisticsLoggerTest extends BaseTest {
@@ -84,9 +86,22 @@ class StatisticsLoggerTest extends BaseTest {
 
         TaraAuthenticationState expectedState = (state == POLL_MID_STATUS_CANCELED || state == POLL_SID_STATUS_CANCELED) ? AUTHENTICATION_CANCELED : state;
         if (state == AUTHENTICATION_FAILED) {
-            assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=null, sector=public, registryCode=test_registry_code, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=%s, errorCode=INTERNAL_ERROR", expectedState.name()));
+            assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()),
+                    defaultStatisticsMarkerBuilder()
+                            .clientId("test_client_id")
+                            .sector("public")
+                            .registryCode("test_registry_code")
+                            .authenticationState(expectedState)
+                            .errorCode(INTERNAL_ERROR)
+                            .build());
         } else {
-            assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=null, sector=public, registryCode=test_registry_code, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=%s, errorCode=null", expectedState.name()));
+            assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()),
+                    defaultStatisticsMarkerBuilder()
+                            .clientId("test_client_id")
+                            .sector("public")
+                            .registryCode("test_registry_code")
+                            .authenticationState(expectedState)
+                            .build());
         }
     }
 
@@ -102,7 +117,16 @@ class StatisticsLoggerTest extends BaseTest {
         statisticsLogger.log(taraSession);
 
         TaraAuthenticationState expectedState = (state == POLL_MID_STATUS_CANCELED || state == POLL_SID_STATUS_CANCELED) ? AUTHENTICATION_CANCELED : state;
-        assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=null, sector=public, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=%s, errorCode=null, smartIdFlowType=null)", expectedState.name()));
+        assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()),
+                defaultStatisticsMarkerBuilder()
+                        .clientId("test_client_id")
+                        .sector("public")
+                        .registryCode("test_registry_code")
+                        .country("EE")
+                        .idCode("test_person_id_code")
+                        .authenticationType(MOBILE_ID)
+                        .authenticationState(expectedState)
+                        .build());
     }
 
     @ParameterizedTest
@@ -120,7 +144,17 @@ class StatisticsLoggerTest extends BaseTest {
         statisticsLogger.log(taraSession);
 
         TaraAuthenticationState expectedState = (state == POLL_MID_STATUS_CANCELED || state == POLL_SID_STATUS_CANCELED) ? AUTHENTICATION_CANCELED : state;
-        assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=%s, sector=private, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=null, authenticationType=EIDAS, authenticationState=%s, errorCode=null, smartIdFlowType=null)", TEST_REQUESTER_ID, expectedState.name()));
+        assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()),
+                defaultStatisticsMarkerBuilder()
+                        .clientId("test_client_id")
+                        .eidasRequesterId(TEST_REQUESTER_ID)
+                        .sector("private")
+                        .registryCode("test_registry_code")
+                        .country("EE")
+                        .idCode("test_person_id_code")
+                        .authenticationType(EIDAS)
+                        .authenticationState(expectedState)
+                        .build());
     }
 
     @ParameterizedTest
@@ -137,7 +171,16 @@ class StatisticsLoggerTest extends BaseTest {
         statisticsLogger.log(taraSession);
 
         TaraAuthenticationState expectedState = (state == POLL_MID_STATUS_CANCELED || state == POLL_SID_STATUS_CANCELED) ? AUTHENTICATION_CANCELED : state;
-        assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=null, sector=public, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=null, authenticationType=EIDAS, authenticationState=%s, errorCode=null, smartIdFlowType=null)", expectedState.name()));
+        assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()),
+                defaultStatisticsMarkerBuilder()
+                        .clientId("test_client_id")
+                        .sector("public")
+                        .registryCode("test_registry_code")
+                        .country("EE")
+                        .idCode("test_person_id_code")
+                        .authenticationType(EIDAS)
+                        .authenticationState(expectedState)
+                        .build());
     }
 
     @ParameterizedTest
@@ -155,7 +198,16 @@ class StatisticsLoggerTest extends BaseTest {
         statisticsLogger.log(taraSession);
 
         TaraAuthenticationState expectedState = (state == POLL_MID_STATUS_CANCELED || state == POLL_SID_STATUS_CANCELED) ? AUTHENTICATION_CANCELED : state;
-        assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=null, sector=private, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=null, authenticationType=SMART_ID, authenticationState=%s, errorCode=null, smartIdFlowType=null)", expectedState.name()));
+        assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()),
+                defaultStatisticsMarkerBuilder()
+                        .clientId("test_client_id")
+                        .sector("private")
+                        .registryCode("test_registry_code")
+                        .country("EE")
+                        .idCode("test_person_id_code")
+                        .authenticationType(SMART_ID)
+                        .authenticationState(expectedState)
+                        .build());
     }
 
     @ParameterizedTest
@@ -171,7 +223,17 @@ class StatisticsLoggerTest extends BaseTest {
         statisticsLogger.log(taraSession);
 
         TaraAuthenticationState expectedState = (state == POLL_MID_STATUS_CANCELED || state == POLL_SID_STATUS_CANCELED) ? AUTHENTICATION_CANCELED : state;
-        assertStatisticsIsLoggedOnce(ERROR, format("Authentication result: %s", expectedState.name()), format("StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=null, sector=public, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=%s, errorCode=INTERNAL_ERROR, smartIdFlowType=null)", expectedState.name()));
+        assertStatisticsIsLoggedOnce(ERROR, format("Authentication result: %s", expectedState.name()),
+                defaultStatisticsMarkerBuilder()
+                        .clientId("test_client_id")
+                        .sector("public")
+                        .registryCode("test_registry_code")
+                        .country("EE")
+                        .idCode("test_person_id_code")
+                        .authenticationType(MOBILE_ID)
+                        .authenticationState(expectedState)
+                        .errorCode(INTERNAL_ERROR)
+                        .build());
     }
 
     @Test
@@ -186,7 +248,17 @@ class StatisticsLoggerTest extends BaseTest {
 
         statisticsLogger.log(taraSession);
 
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=null, sector=public, registryCode=test_registry_code, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=https://test-ocsp, authenticationType=ID_CARD, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS",
+                defaultStatisticsMarkerBuilder()
+                .clientId("test_client_id")
+                .sector("public")
+                .registryCode("test_registry_code")
+                .country("EE")
+                .idCode("test_person_id_code")
+                .ocspUrl("https://test-ocsp")
+                .authenticationType(ID_CARD)
+                .authenticationState(AUTHENTICATION_SUCCESS)
+                .build());
     }
 
     @Test
@@ -198,7 +270,17 @@ class StatisticsLoggerTest extends BaseTest {
 
         statisticsLogger.log(taraSession);
 
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS", "StatisticsLogger.SessionStatistics(service=null, clientId=test_client_id, eidasRequesterId=null, sector=public, registryCode=test_registry_code, legalPerson=true, country=EE, idCode=test_legal_person_id_code, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, errorCode=null, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS",
+                defaultStatisticsMarkerBuilder()
+                .clientId("test_client_id")
+                .sector("public")
+                .registryCode("test_registry_code")
+                .legalPerson(true)
+                .country("EE")
+                .idCode("test_legal_person_id_code")
+                .authenticationType(MOBILE_ID)
+                .authenticationState(AUTHENTICATION_SUCCESS)
+                .build());
     }
 
     @ParameterizedTest
@@ -230,12 +312,36 @@ class StatisticsLoggerTest extends BaseTest {
 
         TaraAuthenticationState expectedState = (state == POLL_MID_STATUS_CANCELED || state == POLL_SID_STATUS_CANCELED) ? AUTHENTICATION_CANCELED : state;
         assertStatisticsIsLoggedOnce(INFO, format("Authentication result: %s", expectedState.name()),
-                format("StatisticsLogger.SessionStatistics(service=%s, clientId=%s, eidasRequesterId=null, sector=%s, registryCode=%s, legalPerson=false, country=EE, idCode=test_person_id_code, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=%s, errorCode=null, smartIdFlowType=null)",
-                        SERVICE_GOVSSO,
-                        expectedClientId,
-                        expectedSector,
-                        expectedRegistryCode,
-                        expectedState.name()));
+                defaultStatisticsMarkerBuilder()
+                        .service(SERVICE_GOVSSO)
+                        .clientId(expectedClientId)
+                        .sector(expectedSector.toString())
+                        .registryCode(expectedRegistryCode)
+                        .country("EE")
+                        .idCode("test_person_id_code")
+                        .authenticationType(MOBILE_ID)
+                        .authenticationState(expectedState)
+                        .build());
+    }
+
+    @Test
+    void sessionStatistics_toString_producesExpectedLiteralFormat() {
+        SessionStatistics statistics = SessionStatistics.builder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .idCode("38001085718")
+                .authenticationType(MOBILE_ID)
+                .authenticationState(AUTHENTICATION_SUCCESS)
+                .build();
+
+        assertEquals(
+                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, " +
+                "sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=38001085718, " +
+                "ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, " +
+                "errorCode=null, smartIdFlowType=null, flowDuration=null)",
+                statistics.toString());
     }
 
     private TaraSession buildValidSessionWithoutState() {

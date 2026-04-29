@@ -22,6 +22,7 @@ import org.springframework.http.MediaType;
 import javax.cache.Cache;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.Map;
 
 import static ch.qos.logback.classic.Level.ERROR;
@@ -33,6 +34,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.EIDAS;
+import static ee.ria.taraauthserver.error.ErrorCode.EIDAS_COUNTRY_NOT_SUPPORTED;
+import static ee.ria.taraauthserver.error.ErrorCode.INTERNAL_ERROR;
+import static ee.ria.taraauthserver.error.ErrorCode.SESSION_STATE_INVALID;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.WAITING_EIDAS_RESPONSE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
@@ -119,7 +124,15 @@ public class EidasControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [INIT_AUTH_PROCESS]");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=SESSION_STATE_INVALID, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(SESSION_STATE_INVALID)
+                .build());
     }
 
     @Test
@@ -143,7 +156,15 @@ public class EidasControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: Required request parameter 'country' for method parameter type String is not present");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INTERNAL_ERROR)
+                .build());
     }
 
     @Disabled("Flaky test") // TODO Flaky test
@@ -173,7 +194,15 @@ public class EidasControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: Requested country not supported for public sector.");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=EIDAS_COUNTRY_NOT_SUPPORTED, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(EIDAS_COUNTRY_NOT_SUPPORTED)
+                .build());
     }
 
     @Test
@@ -203,7 +232,15 @@ public class EidasControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User exception: Requested country not supported for private sector.");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=private, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=EIDAS_COUNTRY_NOT_SUPPORTED, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("private")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(EIDAS_COUNTRY_NOT_SUPPORTED)
+                .build());
     }
 
     @Test
@@ -232,8 +269,18 @@ public class EidasControllerTest extends BaseTest {
                 .statusCode(502);
 
         assertErrorIsLogged("Service not available: I/O error on GET request for \"https://localhost:9877/login\": Read timed out");
-        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request", "http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&RequesterID=a:b:c&SPType=public&RelayState="); // Regex?
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        // TODO Assert proper regex
+        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request",
+                Pattern.compile(Pattern.quote("http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&RequesterID=a:b:c&SPType=public&RelayState=") + ".*"));
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INTERNAL_ERROR)
+                .build());
     }
 
     @Test
@@ -268,8 +315,10 @@ public class EidasControllerTest extends BaseTest {
         assertEquals("a:b:c", oidcClient.getEidasRequesterId().toString());
         assertEquals(SPType.PUBLIC, oidcClient.getInstitution().getSector());
         wireMockServer.verify(exactly(1), getRequestedFor(urlMatching("^\\/login\\?Country=CA&RequesterID=a:b:c&SPType=public&RelayState=.*&LoA=HIGH$")));
-        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request", "http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&RequesterID=a:b:c&SPType=public&RelayState="); // Regex?
-        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS response: 200", "http.response.status_code=200, http.response.body.content=\"<html xmlns=\\\"http://www.w3.org/1999/xhtml\\\" xml:lang=\\\"en\\\"><body onload=\\\"document.forms[0].submit()\\\"><noscript><p><strong>Note: </strong> Since your browser does not support JavaScript, you must press the Continue button once to proceed.</p></noscript><form action=\\\"https&#x3a;&#x2f;&#x2f;eidastest.eesti.ee/&#x3a;8080&#x2f;EidasNode&#x2f;ServiceProvider\\\" method=\\\"post\\\"><div><input type=\\\"hidden\\\" name=\\\"SAMLRequest\\\" value=\\\"PD94bWw...........MnA6QXV0aG5SZXF1ZXN0Pg==\\\"/><input type=\\\"hidden\\\" name=\\\"country\\\" value=\\\"CA\\\"/></div><noscript><div><input type=\\\"submit\\\" value=\\\"Continue\\\"/></div></noscript></form></body></html>");
+        // TODO Assert proper regex
+        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request",
+                Pattern.compile(Pattern.quote("http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&RequesterID=a:b:c&SPType=public&RelayState=") + ".*"));
+        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS response: 200", "http.response.status_code=200, http.response.body.content=\"<html xmlns=\\\"http://www.w3.org/1999/xhtml\\\" xml:lang=\\\"en\\\"><body onload=\\\"document.forms[0].submit()\\\"><noscript><p><strong>Note: </strong> Since your browser does not support JavaScript, you must press the Continue button once to proceed.</p></noscript><form action=\\\"https&#x3a;&#x2f;&#x2f;eidastest.eesti.ee/&#x3a;8080&#x2f;EidasNode&#x2f;ServiceProvider\\\" method=\\\"post\\\"><div><input type=\\\"hidden\\\" name=\\\"SAMLRequest\\\" value=\\\"PD94bWw...........MnA6QXV0aG5SZXF1ZXN0Pg==\\\"/><input type=\\\"hidden\\\" name=\\\"country\\\" value=\\\"CA\\\"/></div><noscript><div><input type=\\\"submit\\\" value=\\\"Continue\\\"/></div></noscript></form></body></html>\"");
         assertStatisticsIsNotLogged();
     }
 
@@ -389,8 +438,10 @@ public class EidasControllerTest extends BaseTest {
                 .statusCode(200);
 
         wireMockServer.verify(exactly(1), getRequestedFor(urlMatching("^\\/login\\?Country=CA&RequesterID=a:b:c&SPType=public&RelayState=.*&LoA=HIGH$")));
-        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request", "http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&RequesterID=a:b:c&SPType=public&RelayState="); // Regex?
-        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS response: 200", "http.response.status_code=200, http.response.body.content=\"<html xmlns=\\\"http://www.w3.org/1999/xhtml\\\" xml:lang=\\\"en\\\"><body onload=\\\"document.forms[0].submit()\\\"><noscript><p><strong>Note: </strong> Since your browser does not support JavaScript, you must press the Continue button once to proceed.</p></noscript><form action=\\\"https&#x3a;&#x2f;&#x2f;eidastest.eesti.ee/&#x3a;8080&#x2f;EidasNode&#x2f;ServiceProvider\\\" method=\\\"post\\\"><div><input type=\\\"hidden\\\" name=\\\"SAMLRequest\\\" value=\\\"PD94bWw...........MnA6QXV0aG5SZXF1ZXN0Pg==\\\"/><input type=\\\"hidden\\\" name=\\\"country\\\" value=\\\"CA\\\"/></div><noscript><div><input type=\\\"submit\\\" value=\\\"Continue\\\"/></div></noscript></form></body></html>");
+        // TODO Assert proper regex
+        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request",
+                Pattern.compile(Pattern.quote("http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&RequesterID=a:b:c&SPType=public&RelayState=") + ".*"));
+        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS response: 200", "http.response.status_code=200, http.response.body.content=\"<html xmlns=\\\"http://www.w3.org/1999/xhtml\\\" xml:lang=\\\"en\\\"><body onload=\\\"document.forms[0].submit()\\\"><noscript><p><strong>Note: </strong> Since your browser does not support JavaScript, you must press the Continue button once to proceed.</p></noscript><form action=\\\"https&#x3a;&#x2f;&#x2f;eidastest.eesti.ee/&#x3a;8080&#x2f;EidasNode&#x2f;ServiceProvider\\\" method=\\\"post\\\"><div><input type=\\\"hidden\\\" name=\\\"SAMLRequest\\\" value=\\\"PD94bWw...........MnA6QXV0aG5SZXF1ZXN0Pg==\\\"/><input type=\\\"hidden\\\" name=\\\"country\\\" value=\\\"CA\\\"/></div><noscript><div><input type=\\\"submit\\\" value=\\\"Continue\\\"/></div></noscript></form></body></html>\"");
         assertStatisticsIsNotLogged();
     }
 
@@ -421,8 +472,10 @@ public class EidasControllerTest extends BaseTest {
                 .statusCode(200);
 
         wireMockServer.verify(exactly(1), getRequestedFor(urlMatching("^\\/login\\?Country=CA&RequesterID=a:b:c&SPType=public&RelayState=.*&LoA=HIGH$")));
-        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request", "http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&RequesterID=a:b:c&SPType=public&RelayState="); // Regex?
-        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS response: 200", "http.response.status_code=200, http.response.body.content=\"<html xmlns=\\\"http://www.w3.org/1999/xhtml\\\" xml:lang=\\\"en\\\"><body onload=\\\"document.forms[0].submit()\\\"><noscript><p><strong>Note: </strong> Since your browser does not support JavaScript, you must press the Continue button once to proceed.</p></noscript><form action=\\\"https&#x3a;&#x2f;&#x2f;eidastest.eesti.ee/&#x3a;8080&#x2f;EidasNode&#x2f;ServiceProvider\\\" method=\\\"post\\\"><div><input type=\\\"hidden\\\" name=\\\"SAMLRequest\\\" value=\\\"PD94bWw...........MnA6QXV0aG5SZXF1ZXN0Pg==\\\"/><input type=\\\"hidden\\\" name=\\\"country\\\" value=\\\"CA\\\"/></div><noscript><div><input type=\\\"submit\\\" value=\\\"Continue\\\"/></div></noscript></form></body></html>");
+        // TODO Assert proper regex
+        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request",
+                Pattern.compile(Pattern.quote("http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&RequesterID=a:b:c&SPType=public&RelayState=") + ".*"));
+        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS response: 200", "http.response.status_code=200, http.response.body.content=\"<html xmlns=\\\"http://www.w3.org/1999/xhtml\\\" xml:lang=\\\"en\\\"><body onload=\\\"document.forms[0].submit()\\\"><noscript><p><strong>Note: </strong> Since your browser does not support JavaScript, you must press the Continue button once to proceed.</p></noscript><form action=\\\"https&#x3a;&#x2f;&#x2f;eidastest.eesti.ee/&#x3a;8080&#x2f;EidasNode&#x2f;ServiceProvider\\\" method=\\\"post\\\"><div><input type=\\\"hidden\\\" name=\\\"SAMLRequest\\\" value=\\\"PD94bWw...........MnA6QXV0aG5SZXF1ZXN0Pg==\\\"/><input type=\\\"hidden\\\" name=\\\"country\\\" value=\\\"CA\\\"/></div><noscript><div><input type=\\\"submit\\\" value=\\\"Continue\\\"/></div></noscript></form></body></html>\"");
         assertStatisticsIsNotLogged();
     }
 
@@ -448,9 +501,19 @@ public class EidasControllerTest extends BaseTest {
                 .body("error", equalTo("Internal Server Error"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request", "http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&RequesterID=a:b:c&SPType=public&RelayState="); // Regex?
+        // TODO Assert proper regex
+        assertMessageWithMarkerIsLoggedOnce(EidasController.class, INFO, "EIDAS request",
+                Pattern.compile(Pattern.quote("http.request.method=GET, url.full=https://localhost:9877/login?Country=CA&RequesterID=a:b:c&SPType=public&RelayState=") + ".*"));
         assertMessageWithMarkerIsLoggedOnce(RestTemplateErrorLogger.class, ERROR, "EIDAS response: 400", "http.response.status_code=400");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                .clientId("openIdDemo")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INTERNAL_ERROR)
+                .build());
     }
 
     public static void createEidasCountryStub(String response, int status) {

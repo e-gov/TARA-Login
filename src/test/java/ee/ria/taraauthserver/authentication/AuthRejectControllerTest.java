@@ -21,7 +21,10 @@ import static ch.qos.logback.classic.Level.INFO;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.put;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static ee.ria.taraauthserver.error.ErrorCode.INTERNAL_ERROR;
 import static ee.ria.taraauthserver.session.MockTaraSessionBuilder.MOCK_LOGIN_CHALLENGE;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_CANCELED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
@@ -108,7 +111,11 @@ class AuthRejectControllerTest extends BaseTest {
         assertInfoIsLogged("Session is removed from cache: " + sessionId);
         assertMessageWithMarkerIsLoggedOnce(HydraService.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/reject?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"error\":\"user_cancel\",\"error_debug\":\"User canceled the authentication process.\",\"error_description\":\"User canceled the authentication process.\"}");
         assertMessageWithMarkerIsLoggedOnce(HydraService.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"/some/test/url\"}");
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_CANCELED, errorCode=null, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED",
+                defaultStatisticsMarkerBuilder()
+                        .sector("public")
+                        .authenticationState(AUTHENTICATION_CANCELED)
+                        .build());
     }
 
     @Test
@@ -130,7 +137,12 @@ class AuthRejectControllerTest extends BaseTest {
 
         assertMessageWithMarkerIsLoggedOnce(HydraService.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/reject?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"error\":\"user_cancel\",\"error_debug\":\"User canceled the authentication process.\",\"error_description\":\"User canceled the authentication process.\"}");
         assertMessageWithMarkerIsLoggedOnce(RestTemplateErrorLogger.class, ERROR, "TARA_HYDRA response: 400", "http.response.status_code=400, http.response.body.content={}");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                        .sector("public")
+                        .authenticationState(AUTHENTICATION_FAILED)
+                        .errorCode(INTERNAL_ERROR)
+                        .build());
     }
 
     @Test
@@ -153,7 +165,12 @@ class AuthRejectControllerTest extends BaseTest {
         assertErrorIsLogged("Server encountered an unexpected error: Invalid OIDC server response. Redirect URL missing from response.");
         assertMessageWithMarkerIsLoggedOnce(HydraService.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/reject?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"error\":\"user_cancel\",\"error_debug\":\"User canceled the authentication process.\",\"error_description\":\"User canceled the authentication process.\"}");
         assertMessageWithMarkerIsLoggedOnce(HydraService.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={}");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                        .sector("public")
+                        .authenticationState(AUTHENTICATION_FAILED)
+                        .errorCode(INTERNAL_ERROR)
+                        .build());
     }
 
     @Test
@@ -176,7 +193,11 @@ class AuthRejectControllerTest extends BaseTest {
 
         assertErrorIsLogged("Server encountered an unexpected error: Invalid OIDC server response. Redirect URL missing from response.");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
-            "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+                defaultStatisticsMarkerBuilder()
+                .sector("public")
+                .authenticationState(AUTHENTICATION_FAILED)
+                .errorCode(INTERNAL_ERROR)
+                .build());
     }
 
     @Test
@@ -197,8 +218,12 @@ class AuthRejectControllerTest extends BaseTest {
 
         assertNull(sessionRepository.findById(sessionId));
         assertInfoIsLogged("State: NOT_SET -> AUTHENTICATION_CANCELED");
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED",
-                "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_CANCELED, errorCode=null, smartIdFlowType=QR)");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED", 
+                defaultStatisticsMarkerBuilder()
+                        .sector("public")
+                        .authenticationState(AUTHENTICATION_CANCELED)
+                        .smartIdFlowType(FlowType.QR)
+                        .build());
     }
 
     private void stubLoginReject(int status, String bodyFile) {

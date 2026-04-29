@@ -22,6 +22,8 @@ import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -33,7 +35,6 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_SID_QR_
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_QR_CODE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static ee.ria.taraauthserver.utils.RequestUtils.withMdcAndLocale;
-import static java.time.Instant.now;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static net.logstash.logback.marker.Markers.append;
 
@@ -54,6 +55,7 @@ public class AuthSidQrCodeService {
     private final Executor applicationTaskExecutor;
     private final SmartIdConfigurationProperties smartIdConfigurationProperties;
     private final StatisticsLogger statisticsLogger;
+    private final Clock clock;
 
     public void startAuthentication(@NonNull TaraSession session) {
         assertSessionInState(session, INIT_AUTH_PROCESS);
@@ -84,8 +86,7 @@ public class AuthSidQrCodeService {
             SmartIdDeviceLinkSession smartIdDeviceLinkSession = smartIdClientFacade.initDeviceLinkSession(
                     session.getOriginalClient().getTranslatedShortName(),
                     session.getSmartIdRelyingParty().orElse(null));
-            session.setAuthFlowStartTime(now());
-            updateSession(session, new PollSmartIdQrCodeAuthenticationSessionUpdate(smartIdDeviceLinkSession));
+            updateSession(session, new PollSmartIdQrCodeAuthenticationSessionUpdate(smartIdDeviceLinkSession, Instant.now(clock)));
 
             AuthenticationIdentity authenticationIdentity = smartIdClientFacade.fetchSmartIdAuthenticationResult(
                     smartIdDeviceLinkSession);

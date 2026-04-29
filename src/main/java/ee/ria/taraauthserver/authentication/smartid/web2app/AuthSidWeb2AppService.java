@@ -50,6 +50,8 @@ import org.springframework.stereotype.Service;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -58,7 +60,6 @@ import java.util.concurrent.Executor;
 import static co.elastic.apm.api.Outcome.FAILURE;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static ee.ria.taraauthserver.utils.RequestUtils.withMdc;
-import static java.time.Instant.now;
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static net.logstash.logback.marker.Markers.append;
@@ -102,6 +103,9 @@ public class AuthSidWeb2AppService {
 
     @Autowired
     private AuthenticationDisplayTextFactory smartIdDisplayTextFactory;
+
+    @Autowired
+    private Clock clock;
 
     public URI startSidAuthSession(@NonNull TaraSession taraSession) throws URISyntaxException {
         RpChallenge rpChallenge = rpChallengeService.getRpChallenge();
@@ -222,19 +226,19 @@ public class AuthSidWeb2AppService {
             CallbackUrl callbackUrlWithToken) {
         Span span = ElasticApm.currentSpan().startSpan("app", "SID", "poll")
                 .setName(ElasticApmUtil.currentMethodName())
-                .setStartTimestamp(now().plus(200, MILLIS).toEpochMilli() * 1_000);
+                .setStartTimestamp(Instant.now(clock).plus(200, MILLIS).toEpochMilli() * 1_000);
         try (final Scope ignored = span.activate()) {
             DeviceLinkSessionResponse authenticationSessionResponse = requestBuilder.initAuthenticationSession();
             String sidSessionId = authenticationSessionResponse.sessionID();
             log.info("Initiated Smart-ID Web2App session with id: {}",
                     value("tara.session.authentication_result.sid_session_id", sidSessionId));
-            taraSession.setAuthFlowStartTime(now());
             updateSession(taraSession, new PollSmartIdWeb2AppAuthenticationSessionUpdate(
                     sidSessionId,
                     authenticationSessionResponse.sessionSecret(),
                     authenticationSessionResponse.sessionToken(),
                     requestBuilder.getAuthenticationSessionRequest(),
-                    callbackUrlWithToken.urlToken()
+                    callbackUrlWithToken.urlToken(),
+                    Instant.now(clock)
             ));
             updateSession(taraSession, new CreateNewSmartIdAuthenticationResultSessionUpdate(sidSessionId));
             return authenticationSessionResponse;
@@ -273,7 +277,7 @@ public class AuthSidWeb2AppService {
         Span span = ElasticApm.currentSpan().startSpan("app", "SID", "poll");
         span.setName(ElasticApmUtil.currentMethodName());
         span.setStartTimestamp(
-                now()
+                Instant.now(clock)
                         .plus(200, MILLIS)
                         .minus(smartIdConfigurationProperties.getDelayStatusPollingStart())
                         .toEpochMilli() * 1_000);

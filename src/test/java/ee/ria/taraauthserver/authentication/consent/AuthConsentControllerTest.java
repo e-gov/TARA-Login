@@ -23,6 +23,9 @@ import java.util.List;
 
 import static ch.qos.logback.classic.Level.ERROR;
 import static ch.qos.logback.classic.Level.INFO;
+import static ee.ria.taraauthserver.config.properties.AuthenticationType.MOBILE_ID;
+import static ee.ria.taraauthserver.error.ErrorCode.SESSION_STATE_INVALID;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.put;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
@@ -165,7 +168,16 @@ class AuthConsentControllerTest extends BaseTest {
                 .body("error", equalTo("Bad Request"));
 
         assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_MID', expected one of: [AUTHENTICATION_SUCCESS]");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=true, country=EE, idCode=identifier123, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=SESSION_STATE_INVALID, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                defaultStatisticsMarkerBuilder()
+                        .sector("public")
+                        .legalPerson(true)
+                        .country("EE")
+                        .idCode("identifier123")
+                        .authenticationType(MOBILE_ID)
+                        .authenticationState(AUTHENTICATION_FAILED)
+                        .errorCode(SESSION_STATE_INVALID)
+                        .build());
     }
 
     @Test
