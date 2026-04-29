@@ -1,6 +1,5 @@
 package ee.ria.taraauthserver.logging;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -9,6 +8,7 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.MutablePropertySources;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.AbstractMap;
 import java.util.Map;

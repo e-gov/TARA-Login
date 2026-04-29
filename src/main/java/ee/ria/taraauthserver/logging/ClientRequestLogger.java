@@ -1,16 +1,15 @@
 package ee.ria.taraauthserver.logging;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import net.logstash.logback.marker.LogstashMarker;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.PropertyNamingStrategies;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 import static net.logstash.logback.marker.Markers.append;
 
@@ -40,11 +39,10 @@ public class ClientRequestLogger {
         logResponseMessage = String.format("%s response: {}", service.name());
         objectMapper = JsonMapper
                 .builder()
-                .serializationInclusion(JsonInclude.Include.NON_NULL)
+                .changeDefaultPropertyInclusion(inclusion -> JsonInclude.Value.construct(JsonInclude.Include.NON_NULL, JsonInclude.Include.NON_NULL))
                 .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
                 .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
                 .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
-                .addModule(new JavaTimeModule())
                 .build();
     }
 
@@ -60,7 +58,7 @@ public class ClientRequestLogger {
             try {
                 String requestBodyJson = objectMapper.writeValueAsString(requestBodyObject);
                 logMarker.and(append(PROP_REQUEST_BODY_CONTENT, requestBodyJson));
-            } catch (JsonProcessingException ex) {
+            } catch (JacksonException ex) {
                 throw new IllegalStateException("Unable to convert request body object to JSON string", ex);
             }
         }
@@ -75,7 +73,7 @@ public class ClientRequestLogger {
         try {
             String responseBodyJson = objectMapper.writeValueAsString(responseBodyObject);
             logResponse(httpStatusCode, responseBodyJson);
-        } catch (JsonProcessingException ex) {
+        } catch (JacksonException ex) {
             throw new IllegalStateException("Unable to convert response body object to JSON string", ex);
         }
     }
