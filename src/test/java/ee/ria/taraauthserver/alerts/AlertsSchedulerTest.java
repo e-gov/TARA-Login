@@ -39,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Slf4j
 @TestPropertySource(
         locations = "classpath:application.yml",
-        properties = {"tara.alerts.enabled=true"})
+        properties = {"tara.alerts.enabled=true", "spring.task.scheduling.enabled=false"})
 public class AlertsSchedulerTest extends BaseTest {
 
     @Autowired
@@ -130,6 +130,7 @@ public class AlertsSchedulerTest extends BaseTest {
     }
 
     public static void createAlertsStub(String response, int status) {
+        wireMockServer.resetAll();
         wireMockServer.stubFor(any(urlPathMatching("/alerts"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
@@ -137,4 +138,3 @@ public class AlertsSchedulerTest extends BaseTest {
                         .withBodyFile(response)));
     }
 }
-
