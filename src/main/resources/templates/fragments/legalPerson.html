@@ -41,8 +41,8 @@
                 <div class="link-back text"><a th:href="${'/auth/init?login_challenge=' + login_challenge + '&lang=' + locale}" th:utext="#{label.common.back}"></a></div>
             </div>
         </div>
-        <div class="c-tab-login__footer">
-            <div class="text"><a rel="noopener" th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a></div>
+        <div class="c-tab-login__footer" th:with="homeUrl=${@thymeleafSupport.getHomeUrl()}">
+            <div class="text"><a rel="noopener" th:href="${homeUrl}" th:text="#{label.common.home}">Home</a></div>
         </div>
     </div>
 </div>

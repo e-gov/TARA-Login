@@ -1,4 +1,5 @@
-<div class="container" xmlns:th="http://www.w3.org/1999/xhtml">
+<div class="container" xmlns:th="http://www.w3.org/1999/xhtml"
+     th:with="errorReportEmail=${@thymeleafSupport.getErrorReportEmail()}, backUrl=${@thymeleafSupport.getBackUrl()}">
     <script th:src="@{/scripts/timeconverter.js}"></script>
     <div class="alert alert-error" role="alert">
         <div><strong><span th:class="error-title" th:text="#{message.error.auth.title}" th:remove="tag"></span></strong>
@@ -13,15 +14,15 @@
             <span id="error-incident-number"></span>
         </div>
         <div><a id="error-report-url"
-              th:href="#{label.error.error-report-content(${@thymeleafSupport.getErrorReportEmail()},'(1)','(2)','(3)','(4)','(5)')}"
+              th:href="#{label.error.error-report-content(${errorReportEmail},'(1)','(2)','(3)','(4)','(5)')}"
               th:text="#{label.error.error-report-link}">Send error report</a>
         </div>
         <div>
             <span id="error-report-notification" class="hidden"
-                  th:utext="#{label.error.error-report-notification(${@thymeleafSupport.getErrorReportEmail()})}"/>
+                  th:utext="#{label.error.error-report-notification(${errorReportEmail})}"/>
         </div>
     </div>
-    <div th:if="${@thymeleafSupport.getBackUrl() != '#'}" class="link-back arrow-back">
-        <a th:href="${@thymeleafSupport.getBackUrl()}" th:text="#{label.common.back}">Back</a>
+    <div th:if="${backUrl != '#'}" class="link-back arrow-back">
+        <a th:href="${backUrl}" th:text="#{label.common.back}">Back</a>
     </div>
 </div>

@@ -3,7 +3,8 @@
       layout:decorate="~{layout}" th:with="hideHeaderLanguageSelection=true, ariaHideLogoHeader=true">
 <head th:replace="~{fragments/head}"></head>
 <body class="is-mobile-subview"
-      th:attr="data-check-form-refresh-rate=${@environment.getProperty('tara.auth-methods.mobile-id.interval-between-session-status-queries-in-milliseconds')}">
+      th:with="midPollInterval=${@environment.getProperty('tara.auth-methods.mobile-id.interval-between-session-status-queries-in-milliseconds')}"
+      th:attr="data-check-form-refresh-rate=${midPollInterval}">
 <div layout:fragment="content" th:with="hideHeaderLanguageSelection=true" th:remove="tag">
     <div class="container">
         <div class="c-tab-login">
@@ -30,8 +31,8 @@
         </div>
     </div>
     <div id="mid-error" th:insert="~{fragments/error}" th:class="hidden" />
-    <p class="link-back-mobile" xmlns:th="http://www.w3.org/1999/xhtml">
-        <a rel="noopener" th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a>
+    <p class="link-back-mobile" xmlns:th="http://www.w3.org/1999/xhtml" th:with="homeUrl=${@thymeleafSupport.getHomeUrl()}">
+        <a rel="noopener" th:href="${homeUrl}" th:text="#{label.common.home}">Home</a>
     </p>
     <script th:src="@{/scripts/form-check.js}" defer></script>
     <script th:src="@{/scripts/main.js}" defer></script>

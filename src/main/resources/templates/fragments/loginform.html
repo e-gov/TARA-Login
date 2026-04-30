@@ -12,7 +12,7 @@
 </th:block>
 
 <div class="container" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-        th:with="enabledAuthMethods=${@thymeleafSupport.getEnabledAuthMethods()}">
+        th:with="enabledAuthMethods=${@thymeleafSupport.getEnabledAuthMethods()}, serviceName=${@thymeleafSupport.getServiceName()}">
     <noscript>
         <div class="alert alert-error" role="alert">
             <div class="text"><strong th:utext="#{message.warning.noscript}"></strong></div>
@@ -90,7 +90,7 @@
                  layout:insert="~{fragments/logintabs :: content('id-card')}" th:remove="tag"
                  aria-hidden="true" aria-labelledby="id-card">
                 <th:block layout:fragment="login-form-content">
-                    <p th:utext="${#messages.msg('label.id-card.' + (#strings.isEmpty(@thymeleafSupport.getServiceName()) ? 'instruction' : 'instruction-with-short-name'), @thymeleafSupport.getServiceName())}"></p>
+                    <p th:utext="${#messages.msg('label.id-card.' + (#strings.isEmpty(serviceName) ? 'instruction' : 'instruction-with-short-name'), serviceName)}"></p>
                     <form th:action="@{/auth/accept}" method="post" id="idCardForm" class="c-form">
                         <button type="button" class="c-btn c-btn--primary" th:text="#{label.common.login}">
                             Login
@@ -103,7 +103,7 @@
                  layout:insert="~{fragments/logintabs :: content('mobile-id')}" th:remove="tag"
                  aria-hidden="true" aria-labelledby="mobile-id">
                 <th:block layout:fragment="login-form-content">
-                    <p th:utext="${#messages.msg('label.mobile-id.' + (#strings.isEmpty(@thymeleafSupport.getServiceName()) ? 'instruction' : 'instruction-with-short-name'), @thymeleafSupport.getServiceName())}"></p>
+                    <p th:utext="${#messages.msg('label.mobile-id.' + (#strings.isEmpty(serviceName) ? 'instruction' : 'instruction-with-short-name'), serviceName)}"></p>
                     <form th:action="@{/auth/mid/init}" method="post" id="mobileIdForm" class="c-form">
                         <table role="presentation">
                             <tbody>
@@ -186,7 +186,7 @@
                  th:remove="tag"
                  aria-hidden="true" aria-labelledby="eu-citizen">
                 <th:block layout:fragment="login-form-content">
-                    <p th:utext="${#messages.msg('label.eu-citizen.' + (#strings.isEmpty(@thymeleafSupport.getServiceName()) ? 'instruction' : 'instruction-with-short-name'), @thymeleafSupport.getServiceName())}"></p>
+                    <p th:utext="${#messages.msg('label.eu-citizen.' + (#strings.isEmpty(serviceName) ? 'instruction' : 'instruction-with-short-name'), serviceName)}"></p>
                     <form method="post" id="eidasForm" th:action="@{/auth/eidas/init}" class="c-form">
                         <table role="presentation">
                             <tbody>
@@ -222,8 +222,8 @@
         </main>
     </div>
 </div>
-<p class="link-back-mobile" xmlns:th="http://www.w3.org/1999/xhtml">
-    <a rel="noopener" th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a>
+<p class="link-back-mobile" xmlns:th="http://www.w3.org/1999/xhtml" th:with="homeUrl=${@thymeleafSupport.getHomeUrl()}">
+    <a rel="noopener" th:href="${homeUrl}" th:text="#{label.common.home}">Home</a>
 </p>
 
 <!-- Session Timeout Notification Modal -->

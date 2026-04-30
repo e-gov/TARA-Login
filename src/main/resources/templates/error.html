@@ -3,7 +3,9 @@
       layout:decorate="~{layout}" th:with="hideHeaderLanguageSelection=true">
 <head th:replace="~{fragments/head}"></head>
 <body>
-<div layout:fragment="content" th:with="hideHeaderLanguageSelection=true" th:remove="tag">
+<div layout:fragment="content"
+     th:with="hideHeaderLanguageSelection=true, errorReportEmail=${@thymeleafSupport.getErrorReportEmail()}, homeUrl=${@thymeleafSupport.getHomeUrl()}"
+     th:remove="tag">
     <div class="container">
         <div class="alert alert-error" role="alert">
             <div ><strong><span th:text="#{message.error.auth.title}" th:remove="tag"></span></strong></div>
@@ -15,19 +17,19 @@
                       th:attr="data-server-time=${offset_timestamp},data-time-format=#{format.datetime}"></span>
                 <div th:utext="#{label.error.incident-number(${incident_nr})}"></div>
                 <a id="error-report-url" class="mailto-link"
-                   th:href="#{label.error.error-report-content(${@thymeleafSupport.getErrorReportEmail()},${#uris.escapePathSegment(message, 'UTF-8')},${incident_nr},'(3)','(4)','(5)')}"
+                   th:href="#{label.error.error-report-content(${errorReportEmail},${#uris.escapePathSegment(message, 'UTF-8')},${incident_nr},'(3)','(4)','(5)')}"
                    th:text="#{label.error.error-report-link}">Send error report</a>
                 <script th:src="@{/scripts/timeconverter.js}"></script>
             </th:block>
             <div th:if="${incident_nr != null}" id="error-report-notification" class="hidden"
-               th:utext="#{label.error.error-report-notification(${@thymeleafSupport.getErrorReportEmail()}, ${incident_nr})}"></div>
+               th:utext="#{label.error.error-report-notification(${errorReportEmail}, ${incident_nr})}"></div>
         </div>
         <div th:if="${login_challenge != null && redirect_to_service_provider_url == null}" class="link-back arrow-back">
             <a th:href="'/auth/init?login_challenge=' + ${login_challenge} + '&lang='+ ${locale}" th:text="#{label.common.back}">Back</a>
         </div>
         <div th:if="${redirect_to_service_provider}" class="link-back">
             <a th:if="${redirect_to_service_provider_url != null}" th:href="${redirect_to_service_provider_url}" th:text="#{label.common.home}">Home</a>
-            <a rel="noopener" th:if="${redirect_to_service_provider_url == null}" th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a>
+            <a rel="noopener" th:if="${redirect_to_service_provider_url == null}" th:href="${homeUrl}" th:text="#{label.common.home}">Home</a>
         </div>
     </div>
     <script th:src="@{/scripts/main.js}" defer></script>

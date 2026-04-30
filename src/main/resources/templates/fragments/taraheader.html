@@ -4,22 +4,23 @@
             <header th:attr="aria-hidden=${ariaHideLogoHeader} ? 'true' : 'false'">
                 <div class="text" th:text="#{label.header.title}"/>
             </header>
-            <nav class="d-flex" th:if="not ${hideHeaderLanguageSelection}">
+            <nav class="d-flex" th:if="not ${hideHeaderLanguageSelection}"
+                 th:with="localeUrlEt=${@thymeleafSupport.getLocaleUrl('et')}, localeUrlEn=${@thymeleafSupport.getLocaleUrl('en')}, localeUrlRu=${@thymeleafSupport.getLocaleUrl('ru')}">
                 <div class="accessibility">
                     <a rel="noopener" class="accessibility__link" th:href="#{link.header.accessibility}"
                        th:text="#{label.header.accessibility}">ACCESSIBILITY</a>
                 </div>
                 <ul class="c-lang-list" th:aria-label="#{label.aria.language-selection.navigation}">
                     <li class="c-lang-list__item" th:if="${@thymeleafSupport.isNotLocale('et', #locale)}">
-                        <a class="c-lang-list__link" th:href="${@thymeleafSupport.getLocaleUrl('et')}"
+                        <a class="c-lang-list__link" th:href="${localeUrlEt}"
                            th:text="#{label.header.et}" th:hreflang="et" th:lang="et">EESTI</a>
                     </li>
                     <li class="c-lang-list__item" th:if="${@thymeleafSupport.isNotLocale('en', #locale)}">
-                        <a class="c-lang-list__link" th:href="${@thymeleafSupport.getLocaleUrl('en')}"
+                        <a class="c-lang-list__link" th:href="${localeUrlEn}"
                            th:text="#{label.header.en}" th:hreflang="en" th:lang="en">ENGLISH</a>
                     </li>
                     <li class="c-lang-list__item" th:if="${@thymeleafSupport.isNotLocale('ru', #locale)}">
-                        <a class="c-lang-list__link" th:href="${@thymeleafSupport.getLocaleUrl('ru')}"
+                        <a class="c-lang-list__link" th:href="${localeUrlRu}"
                            th:text="#{label.header.ru}" th:hreflang="ru" th:lang="ru" aria-label="russki">РУССКИЙ</a>
                     </li>
                 </ul>

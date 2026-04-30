@@ -3,7 +3,7 @@
       layout:decorate="~{layout}" th:with="hideHeaderLanguageSelection=true, ariaHideLogoHeader=true">
 <head th:replace="~{fragments/head}"></head>
 <body class="is-mobile-subview">
-<th:block layout:fragment="content" th:with="hideHeaderLanguageSelection=true">
+<th:block layout:fragment="content" th:with="hideHeaderLanguageSelection=true, serviceName=${@thymeleafSupport.getServiceName()}">
     <div class="container">
         <div class="c-tab-login">
             <div class="c-tab-login__header hide-in-desktop">
@@ -16,10 +16,10 @@
                     <th:block layout:fragment="login-form-content">
                         <div class="c-tab-login__qr-code-card">
                             <p>
-                                <th:block th:if="${#strings.isEmpty(@thymeleafSupport.getServiceName())}"
-                                        th:utext="#{message.smart-id.qr-code.instructions}"></th:block>
-                                <th:block th:if="${!#strings.isEmpty(@thymeleafSupport.getServiceName())}"
-                                          th:utext="${#messages.msg('message.smart-id.qr-code.instructions-with-service-name', @thymeleafSupport.getServiceName())}"></th:block>
+                                <th:block th:if="${#strings.isEmpty(serviceName)}"
+                                         th:utext="#{message.smart-id.qr-code.instructions}"></th:block>
+                                <th:block th:if="${!#strings.isEmpty(serviceName)}"
+                                          th:utext="${#messages.msg('message.smart-id.qr-code.instructions-with-service-name', serviceName)}"></th:block>
                                 <a target="_blank"
                                    th:text="#{label.smart-id.qr-code.instructions.learn-more}"
                                    th:href="#{link.smart-id.qr-code.instructions.learn-more}"
@@ -42,8 +42,8 @@
 
     <form id="cancelForm" method="post" th:action="@{/auth/sid/qr-code/cancel}"></form>
     <div id="sid-error" th:insert="~{fragments/error}" th:class="hidden"/>
-    <p class="link-back-mobile" xmlns:th="http://www.w3.org/1999/xhtml">
-        <a rel="noopener" th:href="${@thymeleafSupport.getHomeUrl()}" th:text="#{label.common.home}">Home</a>
+    <p class="link-back-mobile" xmlns:th="http://www.w3.org/1999/xhtml" th:with="homeUrl=${@thymeleafSupport.getHomeUrl()}">
+        <a rel="noopener" th:href="${homeUrl}" th:text="#{label.common.home}">Home</a>
     </p>
     <script th:src="@{/scripts/main.js}" defer></script>
     <script th:src="@{/scripts/sid-qr-code.js}" defer></script>
