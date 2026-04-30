@@ -7,6 +7,7 @@ import ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import ee.ria.taraauthserver.logging.RestTemplateErrorLogger;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
 import org.apache.hc.client5.http.io.HttpClientConnectionManager;
@@ -14,6 +15,7 @@ import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactoryBuilder;
 import org.apache.hc.core5.http.io.SocketConfig;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
@@ -23,7 +25,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
+import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.client.RestTemplate;
@@ -82,21 +84,39 @@ public class EidasConfiguration {
     }
 
     @Bean
-    public RestTemplate eidasRestTemplate(RestTemplateBuilder builder, SSLContext trustContext, EidasConfigurationProperties eidasConfigurationProperties) {
+    public RestTemplate eidasLoginRestTemplate(RestTemplateBuilder builder, SSLContext trustContext, EidasConfigurationProperties eidasConfigurationProperties) {
         @SuppressWarnings("resource")
         HttpClient client = HttpClients.custom()
+                .setDefaultRequestConfig(RequestConfig.custom()
+                        .setConnectTimeout(Timeout.ofSeconds(eidasConfigurationProperties.getRequestTimeoutInSeconds()))
+                        .build())
                 .setConnectionManager(createConnectionManager(trustContext, eidasConfigurationProperties))
                 .build();
 
         List<HttpMessageConverter<?>> converters = new ArrayList<>();
-        JacksonJsonHttpMessageConverter converter = new JacksonJsonHttpMessageConverter();
-        converter.setSupportedMediaTypes(Collections.singletonList(MediaType.TEXT_HTML));
+        StringHttpMessageConverter converter = new StringHttpMessageConverter();
+        converter.setSupportedMediaTypes(List.of(MediaType.TEXT_HTML, MediaType.APPLICATION_JSON));
         converters.add(converter);
 
-        //The setReadTimeout() method of this builder is not usable because we are instantiating our own HttpComponentsClientHttpRequestFactory, which does not support it.
+        // HttpComponentsClientHttpRequestFactory no longer exposes connect-timeout configuration directly in Spring 7.
         return builder
-                .additionalMessageConverters(converters)
-                .connectTimeout(Duration.ofSeconds(eidasConfigurationProperties.getRequestTimeoutInSeconds()))
+                .messageConverters(converters)
+                .requestFactory(() -> new HttpComponentsClientHttpRequestFactory(client))
+                .errorHandler(new RestTemplateErrorLogger(Service.EIDAS))
+                .build();
+    }
+
+    @Bean
+    public RestTemplate eidasRestTemplate(RestTemplateBuilder builder, SSLContext trustContext, EidasConfigurationProperties eidasConfigurationProperties) {
+        @SuppressWarnings("resource")
+        HttpClient client = HttpClients.custom()
+                .setDefaultRequestConfig(RequestConfig.custom()
+                        .setConnectTimeout(Timeout.ofSeconds(eidasConfigurationProperties.getRequestTimeoutInSeconds()))
+                        .build())
+                .setConnectionManager(createConnectionManager(trustContext, eidasConfigurationProperties))
+                .build();
+
+        return builder
                 .requestFactory(() -> new HttpComponentsClientHttpRequestFactory(client))
                 .errorHandler(new RestTemplateErrorLogger(Service.EIDAS))
                 .build();
