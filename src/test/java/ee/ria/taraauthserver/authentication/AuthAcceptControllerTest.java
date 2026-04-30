@@ -128,7 +128,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .body("reportable", equalTo(true));
 
         assertErrorIsLogged("TARA_HYDRA response: 400");
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"remember\":false,\"acr\":\"high\",\"amr\":[\"mID\"],\"subject\":\"EE47101010033\"}");
         assertMessageWithMarkerIsLoggedOnce(RestTemplateErrorLogger.class, ERROR, "TARA_HYDRA response: 400", "http.response.status_code=400");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
@@ -168,7 +168,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .body("reportable", equalTo(true));
 
         assertErrorIsLogged("Server encountered an unexpected error: Invalid OIDC server response. Redirect URL missing from response.");
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"remember\":false,\"acr\":\"high\",\"amr\":[\"mID\"],\"subject\":\"EE47101010033\"}");
         assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={}");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
@@ -208,7 +208,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .statusCode(302)
                 .header("Location", Matchers.endsWith("some/test/url"));
 
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"remember\":false,\"acr\":\"high\",\"amr\":[\"mID\"],\"subject\":\"EE47101010033\"}");
         assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"/some/test/url\"}");
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS",
                 defaultStatisticsMarkerBuilder()
@@ -249,7 +249,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .header("Location", Matchers.endsWith("some/test/url"));
 
         assertInfoIsLogged("State: NATURAL_PERSON_AUTHENTICATION_COMPLETED -> AUTHENTICATION_SUCCESS");
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"remember\":false,\"acr\":\"high\",\"amr\":[\"mID\"],\"subject\":\"EE47101010033\"}");
         assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"/some/test/url\"}");
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS",
                 defaultStatisticsMarkerBuilder()
@@ -322,7 +322,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .statusCode(302)
                 .header("Location", Matchers.endsWith("some/test/url"));
 
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"remember\":false,\"acr\":\"high\",\"amr\":[\"mID\"],\"subject\":\"EE47101010033\"}");
         assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA response: 200", "http.response.status_code=200, http.response.body.content={\"redirect_to\":\"/some/test/url\"}");
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS",
                 defaultStatisticsMarkerBuilder()
