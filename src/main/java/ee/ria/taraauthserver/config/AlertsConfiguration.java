@@ -5,6 +5,7 @@ import ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import ee.ria.taraauthserver.logging.RestTemplateErrorLogger;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
 import org.apache.hc.client5.http.io.HttpClientConnectionManager;
@@ -32,12 +33,14 @@ public class AlertsConfiguration {
     public RestTemplate alertsRestTemplate(RestTemplateBuilder builder, SSLContext trustContext, AlertsConfigurationProperties alertsConfigurationProperties) {
         @SuppressWarnings("resource")
         HttpClient client = HttpClients.custom()
+                .setDefaultRequestConfig(RequestConfig.custom()
+                        .setConnectTimeout(Timeout.ofMilliseconds(alertsConfigurationProperties.getConnectionTimeoutMilliseconds()))
+                        .build())
                 .setConnectionManager(createConnectionManager(trustContext, alertsConfigurationProperties))
                 .build();
 
-        //The setReadTimeout() method of this builder is not usable because we are instantiating our own HttpComponentsClientHttpRequestFactory, which does not support it.
+        // HttpComponentsClientHttpRequestFactory no longer exposes connect-timeout configuration directly in Spring 7.
         return builder
-                .connectTimeout(Duration.ofMillis(alertsConfigurationProperties.getConnectionTimeoutMilliseconds()))
                 .requestFactory(() -> new HttpComponentsClientHttpRequestFactory(client))
                 .errorHandler(new RestTemplateErrorLogger(Service.ALERTS))
                 .build();

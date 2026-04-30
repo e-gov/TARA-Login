@@ -10,6 +10,7 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.ssl.SSLContextBuilder;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
@@ -139,6 +140,9 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
         @SuppressWarnings("resource")
         HttpClient client = HttpClients.custom()
                 .setConnectionManager(createConnectionManager(trustContext, authConfigurationProperties))
+                .setDefaultRequestConfig(RequestConfig.custom()
+                        .setConnectTimeout(Timeout.ofSeconds(authConfigurationProperties.getHydraService().getRequestTimeoutInSeconds()))
+                        .build())
                 .build();
 
         List<HttpMessageConverter<?>> converters = new ArrayList<>();
@@ -146,10 +150,9 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
         converter.setSupportedMediaTypes(Collections.singletonList(MediaType.TEXT_HTML));
         converters.add(converter);
 
-        //The setReadTimeout() method of this builder is not usable because we are instantiating our own HttpComponentsClientHttpRequestFactory, which does not support it.
+        // HttpComponentsClientHttpRequestFactory no longer exposes connect-timeout configuration directly in Spring 7.
         return builder
                 .additionalMessageConverters(converters)
-                .connectTimeout(Duration.ofSeconds(authConfigurationProperties.getHydraService().getRequestTimeoutInSeconds()))
                 .requestFactory(() -> new HttpComponentsClientHttpRequestFactory(client))
                 .errorHandler(new RestTemplateErrorLogger(Service.TARA_HYDRA))
                 .build();
