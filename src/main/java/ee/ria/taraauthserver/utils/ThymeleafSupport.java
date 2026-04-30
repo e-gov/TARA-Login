@@ -144,15 +144,14 @@ public class ThymeleafSupport {
         if (staticAlert == null) {
             return Optional.empty();
         }
-        AlertsConfigurationProperties.LoginAlert loginAlert = AlertsConfigurationProperties.LoginAlert.builder()
-                .enabled(true)
-                .authMethods(AuthenticationType.getFormalNames())
-                .messageTemplates(staticAlert.getMessageTemplates())
-                .build();
-        Alert alert = Alert.builder()
-                .startTime(OffsetDateTime.now())
-                .endTime(OffsetDateTime.now().plusYears(1))
-                .build();
+        AlertsConfigurationProperties.LoginAlert loginAlert = new AlertsConfigurationProperties.LoginAlert();
+        loginAlert.setEnabled(true);
+        loginAlert.setAuthMethods(AuthenticationType.getFormalNames());
+        loginAlert.setMessageTemplates(staticAlert.getMessageTemplates());
+
+        Alert alert = new Alert();
+        alert.setStartTime(OffsetDateTime.now());
+        alert.setEndTime(OffsetDateTime.now().plusYears(1));
         alert.setLoginAlert(loginAlert);
         alert.setLoadedFromConf(true);
         return Optional.of(alert);

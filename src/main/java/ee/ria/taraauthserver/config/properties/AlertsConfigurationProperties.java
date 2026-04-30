@@ -3,7 +3,6 @@ package ee.ria.taraauthserver.config.properties;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,8 +39,8 @@ public class AlertsConfigurationProperties {
         private List<MessageTemplate> messageTemplates = new ArrayList<>();
     }
 
-    @Builder
     @Data
+    @NoArgsConstructor
     public static class Alert implements Serializable {
         @JsonProperty("start_time")
         private OffsetDateTime startTime;
@@ -82,8 +81,8 @@ public class AlertsConfigurationProperties {
         }
     }
 
-    @Builder
     @Data
+    @NoArgsConstructor
     public static class LoginAlert {
         @Getter
         @JsonProperty("enabled")
