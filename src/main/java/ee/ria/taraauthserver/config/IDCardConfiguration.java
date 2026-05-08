@@ -227,8 +227,8 @@ public class IDCardConfiguration {
 
     private static X509Certificate getResponderCertificate(AuthConfigurationProperties.FallbackOcspServer fallbackOcspServer,
                                                            Map<X500Name, X509Certificate> ocspResponderTrustedCertificatesMap) {
-        return fallbackOcspServer.getResponderCertificateDn() != null
-                ? ocspResponderTrustedCertificatesMap.get(fallbackOcspServer.getResponderCertificateDn())
+        return fallbackOcspServer.getResponderSubjectDn() != null
+                ? ocspResponderTrustedCertificatesMap.get(fallbackOcspServer.getResponderSubjectDn())
                 : null;
     }
 

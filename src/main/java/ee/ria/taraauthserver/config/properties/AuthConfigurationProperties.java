@@ -357,7 +357,7 @@ public class AuthConfigurationProperties {
         @NotEmpty
         private String url;
 
-        private X500Name responderCertificateDn;
+        private X500Name responderSubjectDn;
     }
 
     @Data
