@@ -2,17 +2,22 @@ package ee.ria.taraauthserver.utils;
 
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x500.style.IETFUtils;
+import org.bouncycastle.asn1.x509.CertificatePolicies;
 import org.bouncycastle.asn1.x509.GeneralName;
+import org.bouncycastle.asn1.x509.PolicyInformation;
+import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.jetbrains.annotations.NotNull;
 
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -78,5 +83,25 @@ public class X509Utils {
             params.put(t[0], t[1]);
         }
         return params;
+    }
+
+    public List<ASN1ObjectIdentifier> getCertificatePolicyOids(X509Certificate certificate) {
+        try {
+            X509CertificateHolder holder = new X509CertificateHolder(certificate.getEncoded());
+
+            CertificatePolicies certificatePolicies =
+                    CertificatePolicies.fromExtensions(holder.getExtensions());
+
+            if (certificatePolicies == null) {
+                return List.of();
+            }
+
+            return Arrays.stream(certificatePolicies.getPolicyInformation())
+                    .map(PolicyInformation::getPolicyIdentifier)
+                    .toList();
+
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to extract certificate policy OIDs", e);
+        }
     }
 }

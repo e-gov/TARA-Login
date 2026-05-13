@@ -359,8 +359,8 @@ Table 1.5.9 - Configuration for eIDAS proxy filter.
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
-| `tara.auth-methods.id-card.filter-for-eidas-proxy.client-id` | No | OIDC `client_id` treated as the eIDAS proxy. Activates the `forbidden-issuer-cns` check and skips fallback OCSP servers marked `enabled-for-eidas-proxy: false`. Example `eidas-proxy` |
-| `tara.auth-methods.id-card.filter-for-eidas-proxy.forbidden-issuer-cns` | No | Certificate issuer CNs rejected for logins from the eIDAS proxy client. Default empty list. Example `["TEST of ESTEID-SK 2015"]` |
+| `tara.auth-methods.id-card.filter-for-eidas-proxy.client-id` | No | OIDC `client_id` treated as the eIDAS proxy. Activates the certificate policy OID filter and skips fallback OCSP servers marked `enabled-for-eidas-proxy: false`. Example `eidas-proxy` |
+| `tara.auth-methods.id-card.filter-for-eidas-proxy.allowed-policy-oids` | No | Certificate policy OIDs allowed for logins from the eIDAS proxy client. Default empty list. Example `["1.3.6.1.4.1.51361.1.1.1"]` |
 
 <a name="eidas_conf"></a>
 ### 1.6 Eidas auth method

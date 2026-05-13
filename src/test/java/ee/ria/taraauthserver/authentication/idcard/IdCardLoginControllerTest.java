@@ -84,6 +84,7 @@ import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -1332,9 +1333,10 @@ class IdCardLoginControllerTest extends BaseTest {
     @Test
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     @Disabled("AUT-2678. Fails only intermittently in Jenkins CI environment, passes consistently locally and in local Docker environment.")
-    void handleRequest_forbiddenClientId_Succeeds() {
+    void handleRequest_eidasProxyClientAndAllowedCertificatePolicyOid_Succeeds() {
         configurationProperties.getOcsp().setEnabled(false);
         filterForEidasProxy.setClientId("openIdDemo");
+        filterForEidasProxy.setAllowedPolicyOids(Set.of("1.3.6.1.4.1.51361.1.2.1"));
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
         given()
                 .body(createRequestBody())
@@ -1352,9 +1354,9 @@ class IdCardLoginControllerTest extends BaseTest {
     @Test
     @Disabled("AUT-2678. Fails only intermittently in Jenkins CI environment, passes consistently locally and in local Docker environment.")
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
-    void handleRequest_forbiddenCertificateIssuerCN_Succeeds() {
+    void handleRequest_forbiddenCertificatePolicyOidWithoutEidasProxyClient_Succeeds() {
         configurationProperties.getOcsp().setEnabled(false);
-        filterForEidasProxy.setForbiddenIssuerCns(List.of("TEST of ESTEID-SK 2015", "TEST of ESTEID2018"));
+        filterForEidasProxy.setAllowedPolicyOids(Set.of("1.3.6.1.4.1.51361.1.1.1"));
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
         given()
                 .body(createRequestBody())
@@ -1372,9 +1374,9 @@ class IdCardLoginControllerTest extends BaseTest {
     @Test
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     @Disabled("AUT-2678. Fails only intermittently in Jenkins CI environment, passes consistently locally and in local Docker environment.")
-    void handleRequest_forbiddenClientIdAndforbiddenCertificateIssuerCN_Fails() {
+    void handleRequest_eidasProxyClientAndDisallowedCertificatePolicyOid_Fails() {
         filterForEidasProxy.setClientId("openIdDemo");
-        filterForEidasProxy.setForbiddenIssuerCns(List.of("TEST of ESTEID-SK 2015", "TEST of ESTEID2018"));
+        filterForEidasProxy.setAllowedPolicyOids(Set.of("1.2.3.4"));
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
         given()
                 .body(createRequestBody())
@@ -1386,9 +1388,9 @@ class IdCardLoginControllerTest extends BaseTest {
                 .assertThat()
                 .statusCode(400)
                 .headers(EXPECTED_RESPONSE_HEADERS)
-                .body("message", containsString("ei ole ajutiselt võimalik autentimine välisriikide e-teenustesse."));
+                .body("message", containsString("Seda tüüpi ID-kaardiga ei ole võimalik autentimine välisriikide e-teenustesse."));
 
-        assertErrorIsLogged(ErrorHandler.class, "User exception: eIDAS authentication with given certificate issuer CN has been forbidden in the application configuration");
+        assertErrorIsLogged(ErrorHandler.class, "User exception: eIDAS authentication with given certificate policy OID is forbidden");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                         .clientId("openIdDemo")
@@ -1400,6 +1402,10 @@ class IdCardLoginControllerTest extends BaseTest {
                         .authenticationType(AuthenticationType.ID_CARD)
                         .authenticationState(TaraAuthenticationState.AUTHENTICATION_FAILED)
                         .errorCode(ErrorCode.IDC_CERT_FORBIDDEN)
+                        .certificatePolicyOids(List.of(
+                                "1.3.6.1.4.1.51361.1.2.1",
+                                "0.4.0.2042.1.2"
+                        ))
                         .build());
     }
 
@@ -1426,9 +1432,9 @@ class IdCardLoginControllerTest extends BaseTest {
     @Test
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     @Disabled("AUT-2678. Fails only intermittently in Jenkins CI environment, passes consistently locally and in local Docker environment.")
-    void handleRequest_nonForbiddenCertificateIssuerCN_Succeeds() {
+    void handleRequest_allowedCertificatePolicyOid_Succeeds() {
         configurationProperties.getOcsp().setEnabled(false);
-        filterForEidasProxy.setForbiddenIssuerCns(List.of("TEST of ESTEID-SK 2015"));
+        filterForEidasProxy.setAllowedPolicyOids(Set.of("1.3.6.1.4.1.51361.1.2.1"));
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
         given()
                 .body(createRequestBody())

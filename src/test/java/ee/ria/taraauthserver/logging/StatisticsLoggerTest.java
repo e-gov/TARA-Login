@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import static ch.qos.logback.classic.Level.ERROR;
@@ -337,6 +338,7 @@ class StatisticsLoggerTest extends BaseTest {
                 .idCode("38001085718")
                 .authenticationType(MOBILE_ID)
                 .authenticationState(AUTHENTICATION_SUCCESS)
+                .certificatePolicyOids(List.of("1.3.6.1.4.1.51361.1.1.1"))
                 .build();
 
         assertEquals(
@@ -345,7 +347,7 @@ class StatisticsLoggerTest extends BaseTest {
                         "sector=public, registryCode=10001234, legalPerson=false, country=EE, " +
                         "idCode=38001085718, ocspUrl=null, authenticationType=MOBILE_ID, " +
                         "authenticationState=AUTHENTICATION_SUCCESS, errorCode=null, " +
-                        "smartIdFlowType=null, flowDuration=null)",
+                        "smartIdFlowType=null, flowDuration=null, certificatePolicyOids=[1.3.6.1.4.1.51361.1.1.1])",
                 statistics.toString());
     }
 
@@ -409,6 +411,32 @@ class StatisticsLoggerTest extends BaseTest {
                         .authenticationType(MOBILE_ID)
                         .authenticationState(AUTHENTICATION_SUCCESS)
                         .flowDuration(500L)
+                        .build());
+    }
+
+    @Test
+    void eventWithCertificatePolicyOidsLoggedWhen_IdCardAuthenticationResult() {
+        TaraSession taraSession = buildValidSessionWithoutState();
+        taraSession.setState(AUTHENTICATION_SUCCESS);
+
+        IdCardAuthenticationResult authenticationResult = new IdCardAuthenticationResult();
+        authenticationResult.setIdCode("test_person_id_code");
+        authenticationResult.setAmr(ID_CARD);
+        authenticationResult.setCertificatePolicyOids(List.of("1.3.6.1.4.1.51361.1.1.1"));
+        taraSession.setAuthenticationResult(authenticationResult);
+
+        statisticsLogger.log(taraSession);
+
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS",
+                defaultStatisticsMarkerBuilder()
+                        .clientId("test_client_id")
+                        .sector("public")
+                        .registryCode("test_registry_code")
+                        .country("EE")
+                        .idCode("test_person_id_code")
+                        .authenticationType(ID_CARD)
+                        .authenticationState(AUTHENTICATION_SUCCESS)
+                        .certificatePolicyOids(List.of("1.3.6.1.4.1.51361.1.1.1"))
                         .build());
     }
 

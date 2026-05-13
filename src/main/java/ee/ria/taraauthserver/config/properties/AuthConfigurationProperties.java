@@ -14,6 +14,7 @@ import jakarta.validation.constraints.Positive;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -375,6 +376,20 @@ public class AuthConfigurationProperties {
 
         private String clientId;
 
-        private List<String> forbiddenIssuerCns = List.of();
+        private Set<ASN1ObjectIdentifier> allowedPolicyOids = Set.of();
+
+        public void setAllowedPolicyOids(Set<String> allowedPolicyOids) {
+            this.allowedPolicyOids = allowedPolicyOids.stream()
+                    .map(FilterForEidasProxy::parsePolicyOid)
+                    .collect(Collectors.toSet());
+        }
+
+        private static ASN1ObjectIdentifier parsePolicyOid(String policyOid) {
+            try {
+                return new ASN1ObjectIdentifier(policyOid);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid eIDAS proxy allowed certificate policy OID: " + policyOid, e);
+            }
+        }
     }
 }

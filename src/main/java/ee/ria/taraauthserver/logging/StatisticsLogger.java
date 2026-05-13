@@ -27,6 +27,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -163,7 +164,11 @@ public class StatisticsLogger {
                     .authenticationType(authenticationResult.getAmr())
                     .errorCode(authenticationResult.getErrorCode());
             if (authenticationResult.getAmr() == AuthenticationType.ID_CARD) {
-                sessionStatisticsBuilder.ocspUrl(((TaraSession.IdCardAuthenticationResult) authenticationResult).getOcspUrl());
+                TaraSession.IdCardAuthenticationResult idCardAuthenticationResult = (TaraSession.IdCardAuthenticationResult) authenticationResult;
+
+                sessionStatisticsBuilder
+                        .ocspUrl(idCardAuthenticationResult.getOcspUrl())
+                        .certificatePolicyOids(idCardAuthenticationResult.getCertificatePolicyOids());
             }
         } else if (taraSession.getState() == AUTHENTICATION_FAILED) {
             if (ex instanceof TaraException) {
@@ -267,5 +272,8 @@ public class StatisticsLogger {
 
         @JsonProperty("authentication.flow_duration")
         private Long flowDuration;
+
+        @JsonProperty("authentication.certificate_policies")
+        private List<String> certificatePolicyOids;
     }
 }
