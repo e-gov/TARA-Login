@@ -125,7 +125,25 @@ tara:
               nonce-enabled: true
               responder-certificate-cn: local-ocsp
       filter-for-eidas-proxy:
-        forbidden-issuer-cns: []
+        client-id: dev-local-specificproxyservice
+        allowed-policy-oids:
+          # ESTEID2018
+          - 1.3.6.1.4.1.51361.1.1.1
+          - 1.3.6.1.4.1.51361.1.1.2
+          - 1.3.6.1.4.1.51455.1.1.1
+          - 1.3.6.1.4.1.51361.1.1.5
+          - 1.3.6.1.4.1.51361.1.1.6
+          - 1.3.6.1.4.1.51361.1.1.7
+          - 1.3.6.1.4.1.51361.1.1.3
+          - 1.3.6.1.4.1.51361.1.1.4
+
+          # ESTEID2025 except e-resident digi-id
+          - 1.3.6.1.4.1.51361.2.1.1
+          - 1.3.6.1.4.1.51361.2.1.2
+          - 1.3.6.1.4.1.51361.2.1.3
+          - 1.3.6.1.4.1.51361.2.1.4
+          - 1.3.6.1.4.1.51361.2.1.5
+          - 1.3.6.1.4.1.51455.2.1.1
     mobile-id:
       enabled: true
       level-of-assurance: HIGH

@@ -8,6 +8,7 @@ import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1TaggedObject;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
@@ -15,8 +16,11 @@ import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.asn1.x509.AccessDescription;
 import org.bouncycastle.asn1.x509.AuthorityInformationAccess;
 import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.CertificatePolicies;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.X509ObjectIdentifiers;
+import org.bouncycastle.asn1.x509.PolicyInformation;
+import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,6 +31,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -139,5 +144,25 @@ public class X509Utils {
         ASN1OctetString octs = (ASN1OctetString) aIn.readObject();
         aIn = new ASN1InputStream(new ByteArrayInputStream(octs.getOctets()));
         return aIn.readObject();
+    }
+
+    public List<ASN1ObjectIdentifier> getCertificatePolicyOids(X509Certificate certificate) {
+        try {
+            X509CertificateHolder holder = new X509CertificateHolder(certificate.getEncoded());
+
+            CertificatePolicies certificatePolicies =
+                    CertificatePolicies.fromExtensions(holder.getExtensions());
+
+            if (certificatePolicies == null) {
+                return List.of();
+            }
+
+            return Arrays.stream(certificatePolicies.getPolicyInformation())
+                    .map(PolicyInformation::getPolicyIdentifier)
+                    .toList();
+
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to extract certificate policy OIDs", e);
+        }
     }
 }

@@ -143,6 +143,7 @@ public class TaraSession implements Serializable {
     @RequiredArgsConstructor
     public static class IdCardAuthenticationResult extends AuthenticationResult {
         private String ocspUrl;
+        private List<String> certificatePolicyOids;
     }
 
     @Data

@@ -25,6 +25,7 @@ import eu.webeid.security.validator.ValidationInfo;
 import eu.webeid.security.validator.revocationcheck.RevocationInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.cert.ocsp.BasicOCSPResp;
 import org.bouncycastle.cert.ocsp.CertificateStatus;
 import org.bouncycastle.cert.ocsp.OCSPException;
@@ -164,11 +165,13 @@ public class IdCardLoginService {
     }
 
     private void validateIdCardValidForEidasAuthentication(X509Certificate certificate) {
-        String issuerCn = X509Utils.getIssuerCNFromCertificate(certificate);
-        List<String> forbiddenIssuerCns = filterForEidasProxy.getForbiddenIssuerCns();
+        List<ASN1ObjectIdentifier> certificatePolicyOids = X509Utils.getCertificatePolicyOids(certificate);
 
-        if (forbiddenIssuerCns.contains(issuerCn)) {
-            throw new BadRequestException(IDC_CERT_FORBIDDEN, "eIDAS authentication with given certificate issuer CN has been forbidden in the application configuration");
+        boolean allowed = certificatePolicyOids.stream()
+                .anyMatch(filterForEidasProxy.getAllowedPolicyOids()::contains);
+
+        if (!allowed) {
+            throw new BadRequestException(IDC_CERT_FORBIDDEN, "eIDAS authentication with given certificate policy OID is forbidden");
         }
     }
 
@@ -188,6 +191,9 @@ public class IdCardLoginService {
         Map<String, String> params = X509Utils.getCertificateParams(certificate);
         String idCode = EstonianIdCodeUtil.getEstonianIdCode(params.get(CN_SERIALNUMBER));
         TaraSession.IdCardAuthenticationResult authenticationResult = (TaraSession.IdCardAuthenticationResult) taraSession.getAuthenticationResult();
+        List<String> certificatePolicyOids = X509Utils.getCertificatePolicyOids(certificate).stream()
+                .map(ASN1ObjectIdentifier::getId)
+                .toList();
 
         if (taraSession.isEmailScopeRequested()) {
             String email = X509Utils.getRfc822NameSubjectAltName(certificate);
@@ -195,6 +201,7 @@ public class IdCardLoginService {
         }
         authenticationResult.setErrorCode(null);
         authenticationResult.setOcspUrl(validatingOcspConfUrl);
+        authenticationResult.setCertificatePolicyOids(certificatePolicyOids);
         authenticationResult.setFirstName(params.get(CN_GIVEN_NAME));
         authenticationResult.setLastName(params.get(CN_SURNAME));
         authenticationResult.setIdCode(idCode);
