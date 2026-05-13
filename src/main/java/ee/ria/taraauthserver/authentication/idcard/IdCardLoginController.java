@@ -13,12 +13,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.SessionAttribute;
 
 import java.util.Map;
 
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
-import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.util.Map.of;
 import static net.logstash.logback.marker.Markers.append;
 
@@ -31,7 +29,7 @@ public class IdCardLoginController {
     private final IdCardLoginService idCardLoginService;
 
     @PostMapping(path = "/auth/id/login", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String, Object>> handleRequest(@RequestBody WebEidData data, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+    public ResponseEntity<Map<String, Object>> handleRequest(@RequestBody WebEidData data, TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
         logWebEidData(data);
 

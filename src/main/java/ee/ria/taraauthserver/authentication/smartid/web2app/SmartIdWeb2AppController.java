@@ -23,12 +23,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.servlet.view.RedirectView;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
@@ -65,7 +65,7 @@ public class SmartIdWeb2AppController {
 
     @ResponseBody
     @PostMapping(value = "/auth/sid/web2app/init", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Map<String, String> authSidInit(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) throws URISyntaxException {
+    public Map<String, String> authSidInit(TaraSession taraSession) throws URISyntaxException {
         log.info("Initiating Smart-ID Web2App authentication session");
         validateSession(taraSession, INIT_AUTH_PROCESS);
         URI deviceLink = authSidWeb2AppService.startSidAuthSession(taraSession);
@@ -74,8 +74,7 @@ public class SmartIdWeb2AppController {
 
     @ResponseBody
     @GetMapping(value = "/auth/sid/web2app/poll", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Map<String, String> authSidPoll(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession,
-                                           @RequestParam String sessionToken) {
+    public Map<String, String> authSidPoll(TaraSession taraSession, @RequestParam String sessionToken) {
         log.info("Validating Smart-ID Web2App poll endpoint");
         validateSessionNotReset(taraSession, sessionToken);
         validateSession(taraSession,
@@ -96,8 +95,7 @@ public class SmartIdWeb2AppController {
     }
 
     @PostMapping(value = "/auth/sid/web2app/poll/cancel", produces = MediaType.APPLICATION_JSON_VALUE)
-    public RedirectView authSidPollCancel(
-            @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+    public RedirectView authSidPollCancel(TaraSession taraSession) {
         log.info("Validating Smart-ID Web2App poll cancel endpoint");
         validateSession(taraSession,
                 INIT_SID_WEB2APP,
@@ -112,10 +110,13 @@ public class SmartIdWeb2AppController {
     }
 
     @GetMapping(value = "/auth/sid/web2app/callback", produces = MediaType.TEXT_HTML_VALUE)
-    public String authSidCallback(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession,
+    public String authSidCallback(Optional<TaraSession> optionalTaraSession,
                                   @RequestParam String value) {
         log.info("Validating Smart-ID Web2App callback endpoint");
-        // An additional "pre-validation" check to show user nicer error messages
+        // Missing session is expected, throw an Exception different from the default "session missing" one in order to
+        // show user nicer error messages.
+        TaraSession taraSession = optionalTaraSession.orElseThrow(() ->
+                new BadRequestException(ErrorCode.SID_WEB2APP_CALLBACK_SESSION_NOT_FOUND, "Session not found on Web2App callback"));
         validateAuthenticationNotCancelled(taraSession, value);
         validateSession(taraSession,
                 POLL_SID_WEB2APP_STATUS,
@@ -126,7 +127,7 @@ public class SmartIdWeb2AppController {
 
     @ResponseBody
     @GetMapping(value = "/auth/sid/web2app/callback/poll", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Map<String, String> authSidCallbackPoll(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession,
+    public Map<String, String> authSidCallbackPoll(TaraSession taraSession,
                                            @RequestParam String value,
                                            @RequestParam String sessionSecretDigest,
                                            @RequestParam String userChallengeVerifier) {
@@ -153,8 +154,7 @@ public class SmartIdWeb2AppController {
    }
 
     @PostMapping(value = "/auth/sid/web2app/callback/poll/cancel", produces = MediaType.APPLICATION_JSON_VALUE)
-    public RedirectView authSidCallbackPollCancel(
-            @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+    public RedirectView authSidCallbackPollCancel(TaraSession taraSession) {
         log.info("Validating Smart-ID Web2App callback poll cancel endpoint");
         validateSession(taraSession,
                 AUTHENTICATION_SUCCESS,
@@ -176,9 +176,6 @@ public class SmartIdWeb2AppController {
     }
 
     private static void validateSessionNotReset(TaraSession taraSession, String sessionToken) {
-        if (taraSession == null) {
-            return;
-        }
         if (taraSession.getSmartIdWeb2AppSession() == null
                 || !sessionToken.equals(taraSession.getSmartIdWeb2AppSession().getSessionToken())) {
             throw new SessionResetException("Session was reset while polling");
@@ -186,9 +183,6 @@ public class SmartIdWeb2AppController {
     }
 
     private static void validateAuthenticationNotCancelled(TaraSession taraSession, String value) {
-        if (taraSession == null) {
-            throw new BadRequestException(ErrorCode.SID_WEB2APP_CALLBACK_SESSION_NOT_FOUND, "Session not found on Web2App callback");
-        }
         try {
             AuthSidWeb2AppService.assertCallbackUrlTokenMatchesInitialToken(taraSession, value);
         } catch (Exception e) {

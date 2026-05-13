@@ -24,7 +24,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -56,7 +55,7 @@ public class EidasController {
     private Cache<String, String> eidasRelayStateCache;
 
     @PostMapping(value = "/auth/eidas/init", produces = MediaType.TEXT_HTML_VALUE)
-    public String EidasInit(@RequestParam("country") String country, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession, HttpServletResponse servletResponse) {
+    public String EidasInit(@RequestParam("country") String country, TaraSession taraSession, HttpServletResponse servletResponse) {
         String relayState = UUID.randomUUID().toString();
         log.info("Initiating EIDAS authentication session with relay state: {}", value("tara.session.eidas.relay_state", relayState));
         validateSession(taraSession);
@@ -126,7 +125,7 @@ public class EidasController {
                 messageParameters);
     }
 
-    public void validateSession(TaraSession taraSession) {
+    private void validateSession(TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
         List<String> allowedScopes = getAllowedRequestedScopes(taraSession.getLoginRequestInfo());
         if (!allowedScopes.contains(TaraScope.EIDAS.getFormalName()) &&

@@ -19,20 +19,17 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.servlet.view.RedirectView;
 
 import java.util.Locale;
 import java.util.Set;
 
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
-import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
 import static ee.ria.taraauthserver.error.ErrorCode.SESSION_STATE_INVALID;
 import static ee.ria.taraauthserver.session.SessionUtils.assertSessionInState;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_SID_QR_CODE;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_QR_CODE;
-import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static ee.ria.taraauthserver.utils.RequestUtils.LANG_PARAM_NAME;
 
 @Slf4j
@@ -53,8 +50,7 @@ public class SmartIdQrCodeController {
     private final MessageSource messageSource;
 
     @PostMapping(value = "/auth/sid/qr-code/init", produces = MediaType.TEXT_HTML_VALUE)
-    public String initAuthentication(
-            @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+    public String initAuthentication(TaraSession taraSession) {
         log.info("Initiating Smart-ID QR code authentication session");
         assertSessionInState(taraSession, INIT_AUTH_PROCESS);
         validateSmartIdAuthenticationAllowed(taraSession);
@@ -65,12 +61,8 @@ public class SmartIdQrCodeController {
 
     @ResponseBody
     @GetMapping(value = "/auth/sid/qr-code/poll", produces = MediaType.APPLICATION_JSON_VALUE)
-    public PollResponse pollStatus(
-            @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+    public PollResponse pollStatus(TaraSession taraSession) {
         log.info("Polling Smart-ID QR code authentication status");
-        if (taraSession == null) {
-            throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
-        }
         TaraAuthenticationState state = taraSession.getState();
         switch (state) {
             case NATURAL_PERSON_AUTHENTICATION_COMPLETED:
@@ -89,8 +81,7 @@ public class SmartIdQrCodeController {
     }
 
     @PostMapping(value = "/auth/sid/qr-code/cancel", produces = MediaType.TEXT_HTML_VALUE)
-    public RedirectView cancelAuthentication(
-            @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+    public RedirectView cancelAuthentication(TaraSession taraSession) {
         log.info("Canceling Smart-ID QR code authentication");
         assertSessionInState(taraSession, Set.of(INIT_SID_QR_CODE, POLL_SID_QR_CODE));
 

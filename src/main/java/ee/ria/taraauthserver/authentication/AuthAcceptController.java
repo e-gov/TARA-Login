@@ -20,14 +20,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.view.RedirectView;
 
 import java.util.EnumSet;
 import java.util.List;
 
-import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
 import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_COMPLETED;
@@ -53,10 +51,8 @@ class AuthAcceptController {
     private RestTemplate hydraRestTemplate;
 
     @PostMapping("/auth/accept")
-    public RedirectView authAccept(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
-        if (taraSession == null) {
-            throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
-        } else if (POLL_CANCELED_STATES.contains(taraSession.getState())) {
+    public RedirectView authAccept(TaraSession taraSession) {
+        if (POLL_CANCELED_STATES.contains(taraSession.getState())) {
             return new RedirectView("/auth/init?login_challenge=" + taraSession.getLoginRequestInfo().getChallenge() + RequestUtils.getLangParam(taraSession));
         } else if (!ALLOWED_STATES.contains(taraSession.getState())) {
             throw new BadRequestException(ErrorCode.SESSION_STATE_INVALID, format("Invalid authentication state: '%s', expected one of: %s", taraSession.getState(), ALLOWED_STATES));

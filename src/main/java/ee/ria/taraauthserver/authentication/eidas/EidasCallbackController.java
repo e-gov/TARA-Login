@@ -175,7 +175,7 @@ public class EidasCallbackController {
         return new HttpEntity<>(map, headers);
     }
 
-    public void validateSession(Session session) {
+    private void validateSession(Session session) {
         if (session == null) {
             throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
         }

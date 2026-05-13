@@ -21,7 +21,6 @@ import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
@@ -52,7 +51,7 @@ public class AuthConsentController {
     @GetMapping(value = "/auth/consent", produces = MediaType.TEXT_HTML_VALUE)
     public String authConsent(@RequestParam(name = "consent_challenge") @Size(max = 50)
                               @Pattern(regexp = "[A-Za-z0-9]{1,}", message = "only characters and numbers allowed") String consentChallenge, Model model,
-                              @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+                              TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, AUTHENTICATION_SUCCESS);
 
         if (taraSession.getLoginRequestInfo().getClient().getMetaData().isDisplayUserConsent()) {

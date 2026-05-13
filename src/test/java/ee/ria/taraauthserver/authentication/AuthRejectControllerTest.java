@@ -55,8 +55,10 @@ class AuthRejectControllerTest extends BaseTest {
 
     @Test
     void authReject_invalidParameter() {
+        String sessionId = createSession();
         given()
                 .when()
+                .sessionId(TARA_SESSION_COOKIE_NAME, sessionId)
                 .param("error_code", "wrongValue")
                 .get("/auth/reject")
                 .then()
@@ -67,7 +69,7 @@ class AuthRejectControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: authReject.errorCode: the only supported value is: 'user_cancel'");
-        assertStatisticsIsNotLogged();
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
     }
 
     @Test

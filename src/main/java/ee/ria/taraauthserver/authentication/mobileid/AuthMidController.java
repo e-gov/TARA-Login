@@ -18,11 +18,9 @@ import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.SessionAttribute;
 
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
-import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 
 @Slf4j
 @Validated
@@ -34,7 +32,7 @@ public class AuthMidController {
     private AuthMidService authMidService;
 
     @PostMapping(value = "/auth/mid/init", produces = MediaType.TEXT_HTML_VALUE, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public String authMidInit(@Validated @ModelAttribute(value = "credential") MidRequest midRequest, Model model, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+    public String authMidInit(@Validated @ModelAttribute(value = "credential") MidRequest midRequest, Model model, TaraSession taraSession) {
         log.info("Initiating Mobile-ID authentication session");
         validateSession(taraSession);
         MidAuthenticationHashToSign authenticationHash = authMidService.startMidAuthSession(
@@ -44,7 +42,7 @@ public class AuthMidController {
         return "midLoginCode";
     }
 
-    public void validateSession(TaraSession taraSession) {
+    private void validateSession(TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
         if (!taraSession.getAllowedAuthMethods().contains(AuthenticationType.MOBILE_ID)) {
             throw new BadRequestException(INVALID_REQUEST, "Mobile-ID authentication method is not allowed");

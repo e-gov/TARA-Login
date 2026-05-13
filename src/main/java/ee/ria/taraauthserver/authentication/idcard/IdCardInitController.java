@@ -11,7 +11,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.SessionAttribute;
 
 import java.util.Map;
 
@@ -27,7 +26,7 @@ public class IdCardInitController {
     private final ChallengeNonceGenerator nonceGenerator;
 
     @PostMapping(value = "/auth/id/init")
-    public ResponseEntity<Map<String, String>> handleRequest(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+    public ResponseEntity<Map<String, String>> handleRequest(TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, INIT_AUTH_PROCESS);
         initIdCardAuthentication(taraSession);
         String nonce = nonceGenerator.generateAndStoreNonce().getBase64EncodedNonce();

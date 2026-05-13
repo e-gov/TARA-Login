@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.util.List;
@@ -52,7 +51,7 @@ public class LegalpersonController {
     private final BusinessRegistryService eBusinessRegistryService;
 
     @GetMapping(value = "/auth/legalperson/init")
-    public ModelAndView initLegalPerson(Model model, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+    public ModelAndView initLegalPerson(Model model, TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 
         if (!isLegalpersonScopeAllowed(taraSession))
@@ -80,7 +79,7 @@ public class LegalpersonController {
 
     @GetMapping(value = "/auth/legalperson", produces = {MediaType.APPLICATION_JSON_VALUE})
     @ResponseBody
-    public Map<String, List<TaraSession.LegalPerson>> fetchLegalPersonsList(@SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+    public Map<String, List<TaraSession.LegalPerson>> fetchLegalPersonsList(TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, LEGAL_PERSON_AUTHENTICATION_INIT);
         notNull(taraSession.getAuthenticationResult(), "Authentication credentials missing from session!");
         List<TaraSession.LegalPerson> legalPersons = eBusinessRegistryService.executeEsindusV2Service(taraSession.getAuthenticationResult().getIdCode());
@@ -100,7 +99,8 @@ public class LegalpersonController {
             @RequestParam(name = "legal_person_identifier")
             @Size(max = 50)
             @Pattern(regexp = "[a-zA-Z0-9-_]{1,}", message = "invalid legal person identifier")
-            String legalPersonIdentifier, @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+            String legalPersonIdentifier,
+            TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, GET_LEGAL_PERSON_LIST);
         List<TaraSession.LegalPerson> legalPersons = taraSession.getLegalPersonList();
         notNull(legalPersons, "Invalid state. Legal person list was not found!");

@@ -18,7 +18,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.view.RedirectView;
 
@@ -29,7 +28,6 @@ import static ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.CONSENT_GIVEN;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.CONSENT_NOT_GIVEN;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_CONSENT_PROCESS;
-import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 
 @Validated
 @Controller
@@ -50,7 +48,7 @@ public class AuthConsentConfirmController {
     public RedirectView authConsentConfirm(
             @RequestParam(name = "consent_given")
             @Pattern(regexp = "(true|false)", message = "supported values are: 'true', 'false'") String consentGiven,
-            @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
+            TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, INIT_CONSENT_PROCESS);
         if (consentGiven.equals("true")) {
             return acceptConsent(taraSession);

@@ -34,7 +34,6 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -49,19 +48,20 @@ class AuthConsentControllerTest extends BaseTest {
     @Test
     @Tag(value = "USER_CONSENT_ENDPOINT")
     void authConsent_consentChallenge_EmptyValue() {
+        Session session = createSessionAndResetStatisticsLog(TaraAuthenticationState.AUTHENTICATION_SUCCESS, true, List.of("openid"));
         given()
+                .sessionId(TARA_SESSION_COOKIE_NAME, session.getId())
                 .param("consent_challenge", "")
                 .when()
                 .get("/auth/consent")
                 .then()
                 .assertThat()
                 .statusCode(400)
-                .header("Set-Cookie", nullValue())
                 .body("message", equalTo("authConsent.consentChallenge: only characters and numbers allowed"))
                 .body("error", equalTo("Bad Request"))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
-        assertStatisticsIsNotLogged();
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=true, country=EE, idCode=identifier123, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
     }
 
     @Test
@@ -84,7 +84,9 @@ class AuthConsentControllerTest extends BaseTest {
     @Test
     @Tag(value = "USER_CONSENT_ENDPOINT")
     void authConsent_consentChallenge_InvalidValue() {
+        Session session = createSessionAndResetStatisticsLog(TaraAuthenticationState.AUTHENTICATION_SUCCESS, true, List.of("openid"));
         given()
+                .sessionId(TARA_SESSION_COOKIE_NAME, session.getId())
                 .param("consent_challenge", "......")
                 .when()
                 .get("/auth/consent")
@@ -96,13 +98,15 @@ class AuthConsentControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: authConsent.consentChallenge: only characters and numbers allowed");
-        assertStatisticsIsNotLogged();
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=true, country=EE, idCode=identifier123, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
     }
 
     @Test
     @Tag(value = "USER_CONSENT_ENDPOINT")
     void authConsent_consentChallenge_InvalidLength() {
+        Session session = createSessionAndResetStatisticsLog(TaraAuthenticationState.AUTHENTICATION_SUCCESS, true, List.of("openid"));
         given()
+                .sessionId(TARA_SESSION_COOKIE_NAME, session.getId())
                 .param("consent_challenge", "123456789012345678901234567890123456789012345678900")
                 .when()
                 .get("/auth/consent")
@@ -114,7 +118,7 @@ class AuthConsentControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: authConsent.consentChallenge: size must be between 0 and 50");
-        assertStatisticsIsNotLogged();
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=true, country=EE, idCode=identifier123, ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
     }
 
     @Test

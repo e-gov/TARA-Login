@@ -33,8 +33,7 @@ public class AuthSidPollController {
     private static final EnumSet<TaraAuthenticationState> ALLOWED_STATES = EnumSet.of(INIT_SID, POLL_SID_STATUS, AUTHENTICATION_FAILED, NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 
     @GetMapping(value = "/auth/sid/poll")
-    public Map<String, String> authSidPoll() {
-        TaraSession taraSession = SessionUtils.getAuthSession();
+    public Map<String, String> authSidPoll(TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, ALLOWED_STATES);
 
         if (taraSession.getState() == NATURAL_PERSON_AUTHENTICATION_COMPLETED) {

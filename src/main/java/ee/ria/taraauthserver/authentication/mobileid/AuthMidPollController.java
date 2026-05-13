@@ -26,8 +26,7 @@ public class AuthMidPollController {
     private static final EnumSet<TaraAuthenticationState> ALLOWED_STATES = EnumSet.of(INIT_MID, POLL_MID_STATUS, AUTHENTICATION_FAILED, NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 
     @GetMapping(value = "/auth/mid/poll")
-    public Map<String, String> authMidPoll() {
-        TaraSession taraSession = SessionUtils.getAuthSession();
+    public Map<String, String> authMidPoll(TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, ALLOWED_STATES);
 
         log.info(append("tara.session.state", taraSession.getState()),

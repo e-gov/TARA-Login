@@ -13,12 +13,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.servlet.view.RedirectView;
 
 import java.util.EnumSet;
 
-import static ee.ria.taraauthserver.error.ErrorCode.SESSION_NOT_FOUND;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
@@ -47,11 +45,8 @@ public class AuthSidCancelController {
     StatisticsLogger statisticsLogger;
 
     @PostMapping(value = "/auth/sid/poll/cancel", produces = MediaType.APPLICATION_JSON_VALUE)
-    public RedirectView authSidPollCancel(
-        @SessionAttribute(value = TARA_SESSION, required = false) TaraSession taraSession) {
-        if (taraSession == null) {
-            throw new BadRequestException(SESSION_NOT_FOUND, "Invalid session");
-        } else if (taraSession.getState().equals(AUTHENTICATION_SUCCESS)) {
+    public RedirectView authSidPollCancel(TaraSession taraSession) {
+        if (taraSession.getState().equals(AUTHENTICATION_SUCCESS)) {
             String userCancelUri = taraSession.getLoginRequestInfo().getUserCancelUri();
             logAndInvalidateSession(taraSession);
             return new RedirectView(userCancelUri);
