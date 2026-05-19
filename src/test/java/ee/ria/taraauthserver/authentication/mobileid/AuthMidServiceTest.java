@@ -140,6 +140,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -231,6 +232,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -264,6 +266,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .idCode("60001019906")
@@ -274,6 +277,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .idCode("60001019906")
@@ -300,6 +304,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -310,6 +315,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -336,6 +342,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -346,6 +353,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -372,6 +380,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -382,6 +391,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -405,6 +415,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -415,6 +426,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -438,6 +450,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -448,6 +461,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -471,6 +485,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -481,6 +496,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -504,6 +520,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -514,6 +531,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -537,6 +555,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -547,6 +566,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -570,6 +590,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -580,6 +601,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -603,6 +625,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -613,6 +636,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -636,6 +660,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -646,6 +671,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -668,6 +694,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -678,6 +705,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -700,6 +728,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -710,6 +739,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -732,6 +762,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -742,6 +773,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -764,6 +796,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -774,6 +807,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -796,6 +830,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -806,6 +841,7 @@ class AuthMidServiceTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")

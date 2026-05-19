@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.logging;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.authentication.idcard.IdCardLoggingContextMapper;
 import ee.ria.taraauthserver.authentication.idcard.IdCardLoginService;
+import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.config.properties.TaraScope;
@@ -122,14 +123,18 @@ public class StatisticsLogger {
         if (govSsoLoginRequestInfo != null) {
             statisticsBuilder
                     .service(SERVICE_GOVSSO)
-                    .clientId(govSsoLoginRequestInfo.getClientId());
+                    .clientId(govSsoLoginRequestInfo.getClientId())
+                    .clientName(getClientName(govSsoLoginRequestInfo))
+                    .clientShortName(getClientShortName(govSsoLoginRequestInfo));
             govSsoLoginRequestInfo.getInstitution().ifPresent(i -> {
                 statisticsBuilder.registryCode(i.getRegistryCode());
                 statisticsBuilder.sector(i.getSector().toString());
             });
         } else {
             statisticsBuilder
-                    .clientId(taraLoginRequestInfo.getClientId());
+                    .clientId(taraLoginRequestInfo.getClientId())
+                    .clientName(getClientName(taraLoginRequestInfo))
+                    .clientShortName(getClientShortName(taraLoginRequestInfo));
             taraLoginRequestInfo.getInstitution().ifPresent(i -> {
                 statisticsBuilder.registryCode(i.getRegistryCode());
                 statisticsBuilder.sector(i.getSector().toString());
@@ -191,6 +196,20 @@ public class StatisticsLogger {
         }
     }
 
+    private String getClientName(LoginRequestInfo loginRequestInfo) {
+        return loginRequestInfo.getOidcClient()
+                .map(TaraSession.OidcClient::getNameTranslations)
+                .map(translations -> translations.get(AuthConfigurationProperties.DEFAULT_LOCALE))
+                .orElse(null);
+    }
+
+    private String getClientShortName(LoginRequestInfo loginRequestInfo) {
+        return loginRequestInfo.getOidcClient()
+                .map(TaraSession.OidcClient::getShortNameTranslations)
+                .map(translations -> translations.get(AuthConfigurationProperties.DEFAULT_LOCALE))
+                .orElse(null);
+    }
+
     @Builder
     @Data
     public static class SessionStatistics {
@@ -200,6 +219,12 @@ public class StatisticsLogger {
 
         @JsonProperty("client.id")
         private String clientId;
+
+        @JsonProperty("client.name")
+        private String clientName;
+
+        @JsonProperty("client.short_name")
+        private String clientShortName;
 
         @JsonProperty("client.eidas_requester_id")
         private String eidasRequesterId;

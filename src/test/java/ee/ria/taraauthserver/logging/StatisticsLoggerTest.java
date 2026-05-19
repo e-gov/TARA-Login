@@ -328,6 +328,8 @@ class StatisticsLoggerTest extends BaseTest {
     void sessionStatistics_toString_producesExpectedLiteralFormat() {
         SessionStatistics statistics = SessionStatistics.builder()
                 .clientId("openIdDemo")
+                .clientName("client name")
+                .clientShortName("client shortname")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
@@ -337,10 +339,12 @@ class StatisticsLoggerTest extends BaseTest {
                 .build();
 
         assertEquals(
-                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, eidasRequesterId=null, " +
-                "sector=public, registryCode=10001234, legalPerson=false, country=EE, idCode=38001085718, " +
-                "ocspUrl=null, authenticationType=MOBILE_ID, authenticationState=AUTHENTICATION_SUCCESS, " +
-                "errorCode=null, smartIdFlowType=null, flowDuration=null)",
+                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, " +
+                        "clientName=client name, clientShortName=client shortname, eidasRequesterId=null, " +
+                        "sector=public, registryCode=10001234, legalPerson=false, country=EE, " +
+                        "idCode=38001085718, ocspUrl=null, authenticationType=MOBILE_ID, " +
+                        "authenticationState=AUTHENTICATION_SUCCESS, errorCode=null, " +
+                        "smartIdFlowType=null, flowDuration=null)",
                 statistics.toString());
     }
 

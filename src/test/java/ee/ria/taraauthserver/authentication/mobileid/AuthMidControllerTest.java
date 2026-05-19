@@ -712,6 +712,7 @@ class AuthMidControllerTest extends BaseTest {
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientShortName("short name et")
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")

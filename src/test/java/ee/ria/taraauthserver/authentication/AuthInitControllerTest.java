@@ -798,6 +798,8 @@ class AuthInitControllerTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientName("test client et")
+                .clientShortName("short test client et")
                 .sector("public")
                 .registryCode("70006317")
                 .authenticationState(AUTHENTICATION_FAILED)
@@ -967,6 +969,8 @@ class AuthInitControllerTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientName("test client et")
+                .clientShortName("short test client et")
                 .sector("public")
                 .registryCode("70006317")
                 .authenticationState(AUTHENTICATION_FAILED)
@@ -1000,6 +1004,8 @@ class AuthInitControllerTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientName("test client et")
+                .clientShortName("short test client et")
                 .sector("public")
                 .registryCode("70006317")
                 .authenticationState(AUTHENTICATION_FAILED)
@@ -1186,6 +1192,8 @@ class AuthInitControllerTest extends BaseTest {
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
+                .clientName("test client et")
+                .clientShortName("short test client et")
                 .sector("public")
                 .registryCode("70006317")
                 .authenticationState(AUTHENTICATION_FAILED)
