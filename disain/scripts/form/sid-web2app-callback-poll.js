@@ -28,6 +28,7 @@
         document.querySelector("#sid-web2app-longer-expected-text").classList.remove('hidden');
     }, LONGER_THAN_EXPECTED_DELAY_MS);
 
+    // TODO: This should be refactored to use smaller self-documenting functions and let variables like in sid-web2app-poll.js
     function checkAuthenticationStatus() {
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {

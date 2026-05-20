@@ -27,6 +27,7 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -35,7 +36,9 @@ import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.CONSENT_NOT_REQUIRED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_CONSENT_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_SID_WEB2APP;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.LEGAL_PERSON_AUTHENTICATION_COMPLETED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
@@ -81,17 +84,19 @@ public class SmartIdWeb2AppController {
                 INIT_SID_WEB2APP,
                 POLL_SID_WEB2APP_STATUS,
                 POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED,
+                NATURAL_PERSON_AUTHENTICATION_COMPLETED,
+                AUTHENTICATION_SUCCESS,
+                INIT_CONSENT_PROCESS,
+                CONSENT_NOT_REQUIRED,
                 AUTHENTICATION_FAILED);
-        switch (taraSession.getState()) {
-            case AUTHENTICATION_FAILED:
-                throw getExceptionForAuthenticationFailureOnPoll(taraSession);
-            case POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED:
-                return Map.of("status", "COMPLETED");
-            // INIT_SID_WEB2APP or POLL_SID_WEB2APP_STATUS, depending on whether "/auth/sid/web2app/init" controller
-            // has already updated the status or not
-            default:
-                return Map.of("status", "PENDING");
-        }
+        return switch (taraSession.getState()) {
+            case AUTHENTICATION_FAILED -> throw getExceptionForAuthenticationFailureOnPoll(taraSession);
+            case POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED -> Map.of("status", "AWAITING_CALLBACK");
+            case NATURAL_PERSON_AUTHENTICATION_COMPLETED, AUTHENTICATION_SUCCESS,
+                    INIT_CONSENT_PROCESS, CONSENT_NOT_REQUIRED -> Map.of("status", "COMPLETED");
+            // INIT_SID_WEB2APP or POLL_SID_WEB2APP_STATUS, depending on whether init controller has already updated status
+            default -> Map.of("status", "PENDING");
+        };
     }
 
     @PostMapping(value = "/auth/sid/web2app/poll/cancel", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -176,6 +181,13 @@ public class SmartIdWeb2AppController {
     }
 
     private static void validateSessionNotReset(TaraSession taraSession, String sessionToken) {
+        Set<TaraAuthenticationState> activeStates = EnumSet.of(
+                INIT_SID_WEB2APP,
+                POLL_SID_WEB2APP_STATUS,
+                POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED);
+        if (!activeStates.contains(taraSession.getState())) {
+            return;
+        }
         if (taraSession.getSmartIdWeb2AppSession() == null
                 || !sessionToken.equals(taraSession.getSmartIdWeb2AppSession().getSessionToken())) {
             throw new SessionResetException("Session was reset while polling");

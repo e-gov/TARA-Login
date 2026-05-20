@@ -96,13 +96,13 @@
     }
 
     function checkAuthenticationStatus() {
-        var xhttp = new XMLHttpRequest();
+        let xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
             if (this.readyState !== 4 || cancelled) {
                 return;
             }
 
-            var pollResponse;
+            let pollResponse;
             try {
                 pollResponse = JSON.parse(this.responseText);
             } catch (e) {
@@ -122,54 +122,73 @@
                 return;
             }
 
-            // If status is not PENDING, the polling has been finished, so we hide the loader divs
-            $("#sid-web2app-loader").hide();
-            $("#sid-web2app-inner-loader").hide();
-
-            if (this.status === 200 && pollResponse["status"] === 'COMPLETED') {
-                $("#sid-web2app-wait-login").hide();
-                $("#sid-web2app-login-success").show();
+            if (this.status === 200 && pollResponse["status"] === 'AWAITING_CALLBACK') {
+                showPinEnteredView();
                 return;
             }
 
-            // If we reach here, there is a failure, so we need to show an error
-            hide("#sid-web2app-wait");
-            show("#login-form-error");
-            show("#sid-mobile-tab-context");
-            setupErrorBackLinkHandler();
-
-            if (pollResponse["message"]) {
-                document.querySelector("#error-message").innerHTML = pollResponse["message"];
-            } else {
-                document.querySelector("#error-message").classList.add('hidden');
-                document.querySelector("#default-error-message").classList.remove('hidden');
+            if (this.status === 200 && pollResponse["status"] === 'COMPLETED') {
+                showSuccessView();
+                return;
             }
 
-            if (pollResponse["reportable"]) {
-                var timeFormat = document.querySelector("#error-incident-time").getAttribute("data-time-format");
-                var formattedDateTimeWithOffset = formatDateTimeWithBrowserOffset(
-                    pollResponse["timestamp"], timeFormat);
-
-                document.querySelector("#error-incident-number").innerHTML = pollResponse["incident_nr"];
-                document.querySelector("#error-incident-time").innerHTML = formattedDateTimeWithOffset;
-
-                var errorReportUrl = document.querySelector("#error-report-url").href;
-                errorReportUrl = errorReportUrl.replace("{1}", pollResponse["message"]);
-                errorReportUrl = errorReportUrl.replace("{2}", pollResponse["incident_nr"]);
-                document.querySelector("#error-report-url").href = errorReportUrl;
-
-                var errorReportNotification = document.querySelector("#error-report-notification").innerHTML;
-                errorReportNotification = errorReportNotification.replace("{1}", pollResponse["incident_nr"]);
-                document.querySelector("#error-report-notification").innerHTML = errorReportNotification;
-            } else {
-                document.querySelector("#error-incident-number-wrapper").classList.add('hidden');
-                document.querySelector("#error-report-url").classList.add('hidden');
-            }
-            // Error message appears on top of the page and might not be visible to the user without scrolling to top
-            window.scrollTo(0, 0);
+            showErrorView(pollResponse);
         };
         xhttp.open('GET', `/auth/sid/web2app/poll?sessionToken=${encodeURIComponent(sessionToken)}`, true);
         xhttp.setRequestHeader('Accept', 'application/json;charset=UTF-8');
         xhttp.send();
+    }
+
+    function showPinEnteredView() {
+        hide("#sid-web2app-wait-login-text");
+        hide("#sid-web2app-wait-login-details");
+        show("#sid-web2app-pin-entered-text");
+        show("#sid-web2app-pin-entered-details");
+        setTimeout(checkAuthenticationStatus, pollIntervalMs); 
+    }
+
+    function showSuccessView() {
+        hide("#sid-web2app-loader");
+        hide("#sid-web2app-wait-login");
+        show("#sid-web2app-login-success");
+    }
+
+    function showErrorView(pollResponse) {
+        hide("#sid-web2app-loader");
+        hide("#sid-web2app-inner-loader");
+        hide("#sid-web2app-wait");
+        show("#login-form-error");
+        show("#sid-mobile-tab-context");
+        setupErrorBackLinkHandler();
+
+        if (pollResponse["message"]) {
+            document.querySelector("#error-message").innerHTML = pollResponse["message"];
+        } else {
+            hide("#error-message");
+            show("#default-error-message");
+        }
+
+        if (pollResponse["reportable"]) {
+            let timeFormat = document.querySelector("#error-incident-time").getAttribute("data-time-format");
+            let formattedDateTimeWithOffset = formatDateTimeWithBrowserOffset(
+                pollResponse["timestamp"], timeFormat);
+
+            document.querySelector("#error-incident-number").innerHTML = pollResponse["incident_nr"];
+            document.querySelector("#error-incident-time").innerHTML = formattedDateTimeWithOffset;
+
+            let errorReportUrl = document.querySelector("#error-report-url").href;
+            errorReportUrl = errorReportUrl.replace("{1}", pollResponse["message"]);
+            errorReportUrl = errorReportUrl.replace("{2}", pollResponse["incident_nr"]);
+            document.querySelector("#error-report-url").href = errorReportUrl;
+
+            let errorReportNotification = document.querySelector("#error-report-notification").innerHTML;
+            errorReportNotification = errorReportNotification.replace("{1}", pollResponse["incident_nr"]);
+            document.querySelector("#error-report-notification").innerHTML = errorReportNotification;
+        } else {
+            hide("#error-incident-number-wrapper");
+            hide("#error-report-url");
+        }
+        // Error message appears on top of the page and might not be visible to the user without scrolling to top
+        window.scrollTo(0, 0);
     }
 })();

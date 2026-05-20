@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.authentication.smartid.web2app;
 
 import ee.ria.taraauthserver.BaseTest;
+import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.session.MockSessionFilter;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
@@ -9,8 +10,9 @@ import ee.sk.smartid.DeviceLinkAuthenticationResponseValidator;
 import ee.sk.smartid.rest.dao.DeviceLinkAuthenticationSessionRequest;
 import ee.sk.smartid.rest.dao.SessionStatus;
 import ee.sk.smartid.FlowType;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
@@ -26,7 +28,11 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static ee.ria.taraauthserver.config.properties.AuthenticationType.SMART_ID;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_SID_WEB2APP;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_WEB2APP_STATUS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static io.restassured.RestAssured.given;
@@ -50,6 +56,7 @@ class SmartIdWeb2AppControllerTest extends BaseTest {
     // Base64URL-without-padding of SHA-256(Base64Decode("dGVzdC1zZWNyZXQ"))
     // where "dGVzdC1zZWNyZXQ" is the sessionSecret from sid_device_link_init_response.json
     private static final String SESSION_SECRET_DIGEST = "nK8Gu0Q2zb-iCvkSGmJrwQk8T1SzHA-pN5V4VhNTRbY";
+    private static final String TEST_SESSION_TOKEN = "test-session-token";
 
     @Autowired
     private SessionRepository<Session> sessionRepository;
@@ -170,6 +177,200 @@ class SmartIdWeb2AppControllerTest extends BaseTest {
                 .smartIdFlowType(FlowType.WEB2APP)
                 .flowDuration(0L)
                 .build());
+    }
+
+    @Test
+    void sidWeb2AppPoll_sessionMissing_returns400() {
+        given()
+                .queryParam("sessionToken", TEST_SESSION_TOKEN)
+                .when()
+                .get("/auth/sid/web2app/poll")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Teie seanssi ei leitud! Seanss aegus või on küpsiste kasutamine Teie brauseris piiratud."))
+                .body("reportable", equalTo(false));
+
+        assertErrorIsLogged("User exception: Invalid session");
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    void sidWeb2AppPoll_sessionInIncorrectState_returns400() {
+        given()
+                .filter(MockSessionFilter.withTaraSession()
+                        .sessionRepository(sessionRepository)
+                        .authenticationTypes(of(SMART_ID))
+                        .authenticationState(INIT_AUTH_PROCESS).build())
+                .queryParam("sessionToken", TEST_SESSION_TOKEN)
+                .when()
+                .get("/auth/sid/web2app/poll")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Ebakorrektne päring. Vale seansi staatus."))
+                .body("reportable", equalTo(false));
+
+        assertErrorIsLogged("User exception: Invalid authentication state: 'INIT_AUTH_PROCESS'");
+    }
+
+    @ParameterizedTest
+    @EnumSource(
+            value = TaraAuthenticationState.class,
+            names = {"INIT_SID_WEB2APP", "POLL_SID_WEB2APP_STATUS"},
+            mode = EnumSource.Mode.INCLUDE)
+    void sidWeb2AppPoll_returnsPending(TaraAuthenticationState state) {
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(SMART_ID))
+                .authenticationState(state).build();
+        addWeb2AppSession(sessionFilter, TEST_SESSION_TOKEN);
+
+        given()
+                .filter(sessionFilter)
+                .queryParam("sessionToken", TEST_SESSION_TOKEN)
+                .when()
+                .get("/auth/sid/web2app/poll")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body("status", equalTo("PENDING"));
+
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    void sidWeb2AppPoll_returnsPinEntered_whenStateIsAfterFinalStatusReceived() {
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(SMART_ID))
+                .authenticationState(POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED).build();
+        addWeb2AppSession(sessionFilter, TEST_SESSION_TOKEN);
+
+        given()
+                .filter(sessionFilter)
+                .queryParam("sessionToken", TEST_SESSION_TOKEN)
+                .when()
+                .get("/auth/sid/web2app/poll")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body("status", equalTo("AWAITING_CALLBACK"));
+
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    void sidWeb2AppPoll_returnsCompleted_whenStateIsNaturalPersonAuthenticationCompleted() {
+        given()
+                .filter(MockSessionFilter.withTaraSession()
+                        .sessionRepository(sessionRepository)
+                        .authenticationTypes(of(SMART_ID))
+                        .authenticationState(NATURAL_PERSON_AUTHENTICATION_COMPLETED).build())
+                .queryParam("sessionToken", TEST_SESSION_TOKEN)
+                .when()
+                .get("/auth/sid/web2app/poll")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body("status", equalTo("COMPLETED"));
+
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    void sidWeb2AppPoll_returnsCompleted_whenStateIsAuthenticationSuccess() {
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(SMART_ID))
+                .authenticationState(AUTHENTICATION_SUCCESS).build();
+        resetMockLogAppender();
+
+        given()
+                .filter(sessionFilter)
+                .queryParam("sessionToken", TEST_SESSION_TOKEN)
+                .when()
+                .get("/auth/sid/web2app/poll")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body("status", equalTo("COMPLETED"));
+
+        assertStatisticsIsNotLogged();
+    }
+
+    @ParameterizedTest
+    @EnumSource(
+            value = TaraAuthenticationState.class,
+            names = {"INIT_CONSENT_PROCESS", "CONSENT_NOT_REQUIRED"},
+            mode = EnumSource.Mode.INCLUDE)
+    void sidWeb2AppPoll_returnsCompleted_whenStateIsPostAuthConsentState(TaraAuthenticationState state) {
+        given()
+                .filter(MockSessionFilter.withTaraSession()
+                        .sessionRepository(sessionRepository)
+                        .authenticationTypes(of(SMART_ID))
+                        .authenticationState(state).build())
+                .queryParam("sessionToken", TEST_SESSION_TOKEN)
+                .when()
+                .get("/auth/sid/web2app/poll")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body("status", equalTo("COMPLETED"));
+
+        assertStatisticsIsNotLogged();
+    }
+
+    @Test
+    void sidWeb2AppPoll_authenticationFailed_returns400() {
+        TaraSession.AuthenticationResult authenticationResult = new TaraSession.AuthenticationResult();
+        authenticationResult.setErrorCode(ErrorCode.SID_USER_REFUSED);
+
+        given()
+                .filter(MockSessionFilter.withTaraSession()
+                        .sessionRepository(sessionRepository)
+                        .authenticationTypes(of(SMART_ID))
+                        .authenticationState(AUTHENTICATION_FAILED)
+                        .authenticationResult(authenticationResult).build())
+                .queryParam("sessionToken", TEST_SESSION_TOKEN)
+                .when()
+                .get("/auth/sid/web2app/poll")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Kasutaja katkestas autentimise<span translate=\"no\" lang=\"en\"> Smart-ID </span>rakenduses."))
+                .body("reportable", equalTo(false));
+    }
+
+    @Test
+    void sidWeb2AppPoll_sessionTokenMismatch_returns400() {
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(SMART_ID))
+                .authenticationState(POLL_SID_WEB2APP_STATUS).build();
+        addWeb2AppSession(sessionFilter, TEST_SESSION_TOKEN);
+
+        given()
+                .filter(sessionFilter)
+                .queryParam("sessionToken", "different-token")
+                .when()
+                .get("/auth/sid/web2app/poll")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("message", equalTo("Ebakorrektne päring. Vale seansi staatus."))
+                .body("reportable", equalTo(false));
+
+        assertErrorIsLogged("Session was reset before accessing resource: Session was reset while polling");
+    }
+
+    private void addWeb2AppSession(MockSessionFilter sessionFilter, String sessionToken) {
+        Session session = sessionRepository.findById(sessionFilter.getSession().getId());
+        TaraSession taraSession = session.getAttribute(TARA_SESSION);
+        taraSession.setSmartIdWeb2AppSession(
+                new TaraSession.SmartIdWeb2AppSession("sid-session-id", "session-secret", sessionToken, null, "url-token"));
+        session.setAttribute(TARA_SESSION, taraSession);
+        sessionRepository.save(session);
     }
 
     private void createDeviceLinkAuthInitStub() {
