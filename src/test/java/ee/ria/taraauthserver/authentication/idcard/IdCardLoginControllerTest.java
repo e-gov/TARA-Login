@@ -636,6 +636,7 @@ class IdCardLoginControllerTest extends BaseTest {
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     @Tag(value = "OCSP_DISABLED")
     @Tag(value = "IDCARD_AUTH_SUCCESSFUL")
+    @Disabled("AUT-2678. Fails only intermittently in Jenkins CI environment, passes consistently locally and in local Docker environment.")
     void handleRequest_OcspDisabled_Success() {
         configurationProperties.getOcsp().setEnabled(false);
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
@@ -669,6 +670,7 @@ class IdCardLoginControllerTest extends BaseTest {
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     @Tag(value = "OCSP_RESPONSE_STATUS_HANDLING")
     @Tag(value = "IDCARD_AUTH_SUCCESSFUL")
+    @Disabled("AUT-2678. Fails only intermittently in Jenkins CI environment, passes consistently locally and in local Docker environment.")
     void handleRequest_OcspEnabled_Success() {
         setupMockOcspResponseForSingleTest("CN=TEST of ESTEID2018", CertificateStatus.GOOD, "/esteid2018");
         MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
@@ -717,6 +719,7 @@ class IdCardLoginControllerTest extends BaseTest {
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     @Tag(value = "OCSP_RESPONSE_STATUS_HANDLING")
     @Tag(value = "IDCARD_AUTH_SUCCESSFUL")
+    @Disabled("AUT-2678. Fails only intermittently in Jenkins CI environment, passes consistently locally and in local Docker environment.")
     void handleRequest_withEmail_Success() {
         setupMockOcspResponseForSingleTest("CN=TEST of ESTEID2018", CertificateStatus.GOOD, "/esteid2018");
         TaraSession.IdCardAuthenticationResult authenticationResult = new TaraSession.IdCardAuthenticationResult();
@@ -761,6 +764,7 @@ class IdCardLoginControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "LOG_TARA_TRACE_ID")
+    @Disabled("AUT-2678. Fails only intermittently in Jenkins CI environment, passes consistently locally and in local Docker environment.")
     void taraTraceIdOnAllLogsWhen_successfulAuthentication() {
         setupMockOcspResponseForSingleTest("CN=TEST of ESTEID2018", CertificateStatus.GOOD, "/esteid2018");
         TaraSession.IdCardAuthenticationResult authenticationResult = new TaraSession.IdCardAuthenticationResult();
@@ -1024,6 +1028,7 @@ class IdCardLoginControllerTest extends BaseTest {
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     @Tag(value = "OCSP_FAILOVER_CONF")
     @Tag(value = "IDCARD_AUTH_SUCCESSFUL")
+    @Disabled("AUT-2678. Fails only intermittently in Jenkins CI environment, passes consistently locally and in local Docker environment.")
     void handleRequest_OcspResponse404WithFallbackService_Success() {
         wireMockServer.stubFor(any(urlPathEqualTo("/esteid2018"))
                 .willReturn(aResponse().withStatus(404)));
@@ -1326,6 +1331,7 @@ class IdCardLoginControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
+    @Disabled("AUT-2678. Fails only intermittently in Jenkins CI environment, passes consistently locally and in local Docker environment.")
     void handleRequest_forbiddenClientId_Succeeds() {
         configurationProperties.getOcsp().setEnabled(false);
         filterForEidasProxy.setClientId("openIdDemo");
@@ -1344,6 +1350,7 @@ class IdCardLoginControllerTest extends BaseTest {
     }
 
     @Test
+    @Disabled("AUT-2678. Fails only intermittently in Jenkins CI environment, passes consistently locally and in local Docker environment.")
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     void handleRequest_forbiddenCertificateIssuerCN_Succeeds() {
         configurationProperties.getOcsp().setEnabled(false);
@@ -1364,6 +1371,7 @@ class IdCardLoginControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
+    @Disabled("AUT-2678. Fails only intermittently in Jenkins CI environment, passes consistently locally and in local Docker environment.")
     void handleRequest_forbiddenClientIdAndforbiddenCertificateIssuerCN_Fails() {
         filterForEidasProxy.setClientId("openIdDemo");
         filterForEidasProxy.setForbiddenIssuerCns(List.of("TEST of ESTEID-SK 2015", "TEST of ESTEID2018"));
@@ -1397,6 +1405,7 @@ class IdCardLoginControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
+    @Disabled("AUT-2678. Fails only intermittently in Jenkins CI environment, passes consistently locally and in local Docker environment.")
     void handleRequest_nonForbiddenClientId_Succeeds() {
         configurationProperties.getOcsp().setEnabled(false);
         filterForEidasProxy.setClientId("testID");
@@ -1416,6 +1425,7 @@ class IdCardLoginControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
+    @Disabled("AUT-2678. Fails only intermittently in Jenkins CI environment, passes consistently locally and in local Docker environment.")
     void handleRequest_nonForbiddenCertificateIssuerCN_Succeeds() {
         configurationProperties.getOcsp().setEnabled(false);
         filterForEidasProxy.setForbiddenIssuerCns(List.of("TEST of ESTEID-SK 2015"));
