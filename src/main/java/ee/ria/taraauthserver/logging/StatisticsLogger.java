@@ -180,9 +180,15 @@ public class StatisticsLogger {
 
     private void processFlowDuration(TaraSession taraSession, SessionStatisticsBuilder statisticsBuilder) {
         Instant startTime = taraSession.getAuthFlowStartTime();
-        if (startTime != null) {
-            statisticsBuilder.flowDuration(Duration.between(startTime, Instant.now(clock)).toMillis());
+        if (startTime == null) {
+            return;
         }
+        Instant endTime = taraSession.getAuthFlowEndTime();
+        if (endTime == null) {
+            log.error("authFlowEndTime not set before statistics logging for session {}", taraSession.getSessionId());
+            return;
+        }
+        statisticsBuilder.flowDuration(Duration.between(startTime, endTime).toMillis());
     }
 
     private Optional<TaraAuthenticationState> getStateToLog(TaraSession taraSession) {

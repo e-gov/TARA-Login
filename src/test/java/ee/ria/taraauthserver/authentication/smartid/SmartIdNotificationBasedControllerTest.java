@@ -10,6 +10,7 @@ import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.MockSessionFilter;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
+import ee.sk.smartid.FlowType;
 import ee.sk.smartid.RpChallenge;
 import ee.sk.smartid.SmartIdClient;
 import ee.sk.smartid.rest.SmartIdConnector;
@@ -370,6 +371,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .country("EE")
                 .idCode("10101010005")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .build());
     }
@@ -409,6 +412,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .country("EE")
                 .idCode("10101010005")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .build());
     }
@@ -451,6 +456,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .country("EE")
                 .idCode("10101010005")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .build());
     }
@@ -786,6 +793,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .country("EE")
                 .idCode("10101010005")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .build());
     }
@@ -832,6 +841,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .errorCode(SID_USER_REFUSED)
                 .build());
@@ -842,6 +853,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(AUTHENTICATION_FAILED)
                 .errorCode(SID_USER_REFUSED)
                 .build());
@@ -878,6 +891,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .errorCode(SID_REQUEST_TIMEOUT)
                 .build());
@@ -888,6 +903,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(AUTHENTICATION_FAILED)
                 .errorCode(SID_REQUEST_TIMEOUT)
                 .build());
@@ -923,6 +940,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .country("EE")
                 .idCode("10101010005")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .build());
     }
@@ -963,6 +982,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .country("EE")
                 .idCode("10101010005")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .errorCode(SID_VALIDATION_ERROR)
                 .build());
@@ -974,6 +995,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .country("EE")
                 .idCode("10101010005")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(AUTHENTICATION_FAILED)
                 .errorCode(SID_VALIDATION_ERROR)
                 .build());
@@ -1009,6 +1032,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .errorCode(ERROR_GENERAL)
                 .build());
@@ -1019,6 +1044,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(AUTHENTICATION_FAILED)
                 .errorCode(ERROR_GENERAL)
                 .build());
@@ -1054,6 +1081,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .errorCode(ERROR_GENERAL)
                 .build());
@@ -1064,6 +1093,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(AUTHENTICATION_FAILED)
                 .errorCode(ERROR_GENERAL)
                 .build());
@@ -1099,6 +1130,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .errorCode(ERROR_GENERAL)
                 .build());
@@ -1109,6 +1142,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(AUTHENTICATION_FAILED)
                 .errorCode(ERROR_GENERAL)
                 .build());
@@ -1144,6 +1179,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .errorCode(ERROR_GENERAL)
                 .build());
@@ -1154,6 +1191,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(AUTHENTICATION_FAILED)
                 .errorCode(ERROR_GENERAL)
                 .build());
@@ -1190,6 +1229,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .errorCode(SID_INTERNAL_ERROR)
                 .build());
@@ -1200,6 +1241,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(AUTHENTICATION_FAILED)
                 .errorCode(SID_INTERNAL_ERROR)
                 .build());
@@ -1236,6 +1279,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .errorCode(SID_USER_REFUSED)
                 .build());
@@ -1246,6 +1291,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(AUTHENTICATION_FAILED)
                 .errorCode(SID_USER_REFUSED)
                 .build());
@@ -1282,6 +1329,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .errorCode(SID_SESSION_TIMEOUT)
                 .build());
@@ -1293,6 +1342,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(AUTHENTICATION_FAILED)
                 .errorCode(SID_SESSION_TIMEOUT)
                 .build());
@@ -1329,6 +1380,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .errorCode(SID_DOCUMENT_UNUSABLE)
                 .build());
@@ -1339,6 +1392,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(AUTHENTICATION_FAILED)
                 .errorCode(SID_DOCUMENT_UNUSABLE)
                 .build());
@@ -1375,6 +1430,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .errorCode(SID_WRONG_VC)
                 .build());
@@ -1385,6 +1442,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(AUTHENTICATION_FAILED)
                 .errorCode(SID_WRONG_VC)
                 .build());
@@ -1421,6 +1480,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .errorCode(SID_INTERACTION_NOT_SUPPORTED)
                 .build());
@@ -1431,6 +1492,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(AUTHENTICATION_FAILED)
                 .errorCode(SID_INTERACTION_NOT_SUPPORTED)
                 .build());
@@ -1467,6 +1530,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .errorCode(SID_USER_REFUSED_DISPLAYTEXTANDPIN)
                 .build());
@@ -1477,6 +1542,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(AUTHENTICATION_FAILED)
                 .errorCode(SID_USER_REFUSED_DISPLAYTEXTANDPIN)
                 .build());
@@ -1512,6 +1579,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .errorCode(SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE)
                 .build());
@@ -1522,6 +1591,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(AUTHENTICATION_FAILED)
                 .errorCode(SID_USER_REFUSED_CONFIRMATIONMESSAGE_WITH_VC_CHOICE)
                 .build());
@@ -1558,6 +1629,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .errorCode(SID_VALIDATION_ERROR)
                 .build());
@@ -1568,6 +1641,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .registryCode("10001234")
                 .country("EE")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(AUTHENTICATION_FAILED)
                 .errorCode(SID_VALIDATION_ERROR)
                 .build());
@@ -1605,6 +1680,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .country("EE")
                 .idCode("10101010005")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .errorCode(SID_VALIDATION_ERROR)
                 .build());
@@ -1616,6 +1693,8 @@ class SmartIdNotificationBasedControllerTest extends BaseTest {
                 .country("EE")
                 .idCode("10101010005")
                 .authenticationType(SMART_ID)
+                .smartIdFlowType(FlowType.NOTIFICATION)
+                .flowDuration(0L)
                 .authenticationState(AUTHENTICATION_FAILED)
                 .errorCode(SID_VALIDATION_ERROR)
                 .build());

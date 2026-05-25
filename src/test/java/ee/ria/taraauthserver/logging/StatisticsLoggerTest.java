@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Instant;
 import java.util.UUID;
 
 import static ch.qos.logback.classic.Level.ERROR;
@@ -346,6 +347,69 @@ class StatisticsLoggerTest extends BaseTest {
                         "authenticationState=AUTHENTICATION_SUCCESS, errorCode=null, " +
                         "smartIdFlowType=null, flowDuration=null)",
                 statistics.toString());
+    }
+
+    @Test
+    void processFlowDuration_logsErrorAndOmitsDuration_whenStartTimeSetButEndTimeNull() {
+        TaraSession taraSession = buildValidSessionWithoutState();
+        taraSession.setAuthFlowStartTime(Instant.parse("2025-01-01T00:00:00Z"));
+        taraSession.setState(AUTHENTICATION_SUCCESS);
+
+        statisticsLogger.log(taraSession);
+
+        assertErrorIsLogged(StatisticsLogger.class, "authFlowEndTime not set before statistics logging for session");
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS",
+                defaultStatisticsMarkerBuilder()
+                        .clientId("test_client_id")
+                        .sector("public")
+                        .registryCode("test_registry_code")
+                        .country("EE")
+                        .idCode("test_person_id_code")
+                        .authenticationType(MOBILE_ID)
+                        .authenticationState(AUTHENTICATION_SUCCESS)
+                        .build());
+    }
+
+    @Test
+    void processFlowDuration_omitsDurationSilently_whenOnlyEndTimeSet() {
+        TaraSession taraSession = buildValidSessionWithoutState();
+        taraSession.setAuthFlowEndTime(Instant.parse("2025-01-01T00:00:00Z"));
+        taraSession.setState(AUTHENTICATION_SUCCESS);
+
+        statisticsLogger.log(taraSession);
+
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS",
+                defaultStatisticsMarkerBuilder()
+                        .clientId("test_client_id")
+                        .sector("public")
+                        .registryCode("test_registry_code")
+                        .country("EE")
+                        .idCode("test_person_id_code")
+                        .authenticationType(MOBILE_ID)
+                        .authenticationState(AUTHENTICATION_SUCCESS)
+                        .build());
+    }
+
+    @Test
+    void processFlowDuration_calculatesCorrectDuration_whenBothTimesSet() {
+        TaraSession taraSession = buildValidSessionWithoutState();
+        taraSession.setAuthFlowStartTime(Instant.parse("2025-01-01T00:00:00Z"));
+        taraSession.setAuthFlowEndTime(Instant.parse("2025-01-01T00:00:00.500Z"));
+        taraSession.setState(AUTHENTICATION_SUCCESS);
+
+        statisticsLogger.log(taraSession);
+
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS",
+                defaultStatisticsMarkerBuilder()
+                        .clientId("test_client_id")
+                        .sector("public")
+                        .registryCode("test_registry_code")
+                        .country("EE")
+                        .idCode("test_person_id_code")
+                        .authenticationType(MOBILE_ID)
+                        .authenticationState(AUTHENTICATION_SUCCESS)
+                        .flowDuration(500L)
+                        .build());
     }
 
     private TaraSession buildValidSessionWithoutState() {

@@ -90,11 +90,15 @@ public class AuthSidQrCodeService {
 
             AuthenticationIdentity authenticationIdentity = smartIdClientFacade.fetchSmartIdAuthenticationResult(
                     smartIdDeviceLinkSession);
+            session.setAuthFlowEndTime(Instant.now(clock));
             updateSession(session, new SmartIdAuthenticationSuccessfulSessionUpdate(
                     authenticationIdentity, smartIdConfigurationProperties.getLevelOfAssurance()
             ));
             logSuccessToStatisticsLog(session);
         } catch (Exception e) {
+            if (session.getAuthFlowEndTime() == null) {
+                session.setAuthFlowEndTime(Instant.now(clock));
+            }
             ErrorCode errorCode = SmartIdExceptionTranslator.getErrorCode(e);
             if (SmartIdExceptionTranslator.isTechnicalError(errorCode)) {
                 log.atError()

@@ -286,9 +286,13 @@ public class AuthSidWeb2AppService {
             log.info("Starting Smart-ID session status polling with id: {}",
                     value("tara.session.sid_authentication_result.sid_session_id", taraSession.getSmartIdWeb2AppSession().getSessionId()));
             SessionStatus sessionStatus = sessionStatusPoller.fetchFinalSessionStatus(taraSession.getSmartIdWeb2AppSession().getSessionId());
+            taraSession.setAuthFlowEndTime(Instant.now(clock));
             validateSessionStatus(sessionStatus);
             updateSession(taraSession, new SaveSmartIdWeb2AppSessionStatusSessionUpdate(sessionStatus));
         } catch (Exception ex) {
+            if (taraSession.getAuthFlowEndTime() == null) {
+                taraSession.setAuthFlowEndTime(Instant.now(clock));
+            }
             handleSidAuthenticationException(taraSession, ex);
             logErrorToStatisticsLog(taraSession, ex);
         } finally {

@@ -200,10 +200,14 @@ public class AuthSidNotificationBasedService {
                             authenticationSessionResponse.sessionID()));
             SessionStatus sessionStatus = sessionStatusPoller.fetchFinalSessionStatus(
                     authenticationSessionResponse.sessionID());
+            taraSession.setAuthFlowEndTime(Instant.now(clock));
             handleSidAuthenticationResult(taraSession, sessionStatus, requestBuilder);
             taraSession.setState(NATURAL_PERSON_AUTHENTICATION_COMPLETED);
             statisticsLogger.logExternalTransaction(taraSession);
         } catch (Exception ex) {
+            if (taraSession.getAuthFlowEndTime() == null) {
+                taraSession.setAuthFlowEndTime(Instant.now(clock));
+            }
             handleSidAuthenticationException(taraSession, ex);
             handleStatisticsLogging(taraSession, ex);
         } finally {
