@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.authentication;
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.logging.RestTemplateErrorLogger;
+import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.sk.smartid.FlowType;
 import lombok.extern.slf4j.Slf4j;
@@ -69,7 +70,12 @@ class AuthRejectControllerTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + CHARSET_UTF_8);
 
         assertErrorIsLogged("User input exception: authReject.errorCode: the only supported value is: 'user_cancel'");
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED", "StatisticsLogger.SessionStatistics(service=null, clientId=null, eidasRequesterId=null, sector=public, registryCode=null, legalPerson=false, country=null, idCode=null, ocspUrl=null, authenticationType=null, authenticationState=AUTHENTICATION_FAILED, errorCode=INTERNAL_ERROR, smartIdFlowType=null)");
+        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
+                StatisticsLogger.SessionStatistics.builder()
+                        .sector("public")
+                        .authenticationState(AUTHENTICATION_FAILED)
+                        .errorCode(INTERNAL_ERROR)
+                        .build());
     }
 
     @Test
