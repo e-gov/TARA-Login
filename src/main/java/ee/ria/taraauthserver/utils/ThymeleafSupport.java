@@ -198,7 +198,6 @@ public class ThymeleafSupport {
                 isAuthMethodAllowed(AuthenticationType.SMART_ID),
                 isAuthMethodAllowed(AuthenticationType.EIDAS),
                 new EnabledAuthMethods.SmartIdFlows(
-                        isSidNotificationBasedEnabled(),
                         isSidWeb2AppEnabled(),
                         isSidQrCodeEnabled()
                 )
@@ -213,7 +212,6 @@ public class ThymeleafSupport {
         SmartIdFlows smartIdFlows
     ) {
         public record SmartIdFlows (
-           boolean notificationBased,
            boolean web2app,
            boolean qrCode
         ) {}
@@ -232,11 +230,6 @@ public class ThymeleafSupport {
         }
 
         return clientSpecificAuthMethodList.contains(method);
-    }
-
-    private boolean isSidNotificationBasedEnabled() {
-        return isAuthMethodAllowed(AuthenticationType.SMART_ID)
-                && smartIdConfigurationProperties.getNotificationBased().isEnabled();
     }
 
     private boolean isSidWeb2AppEnabled() {

@@ -7,12 +7,12 @@ public enum TaraAuthenticationState {
     AUTHENTICATION_CANCELED,
     AUTHENTICATION_FAILED,
     INIT_MID,
-    INIT_SID,
+    @Deprecated INIT_SID, // Unused, left for backwards compatibility in Ignite
     INIT_SID_WEB2APP,
     INIT_SID_QR_CODE,
     POLL_MID_STATUS,
     POLL_MID_STATUS_CANCELED,
-    POLL_SID_STATUS,
+    @Deprecated POLL_SID_STATUS, // Unused, left for backwards compatibility in Ignite
     POLL_SID_WEB2APP_STATUS,
     POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED,
     POLL_SID_QR_CODE,

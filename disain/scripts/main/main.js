@@ -50,8 +50,7 @@ jQuery(function ($) {
         if (tabId === 'smart-id'
                 && !supportsSmartIdApp()
                 && enabledAuthMethods.smartIdFlows.web2app === true
-                && enabledAuthMethods.smartIdFlows.qrCode !== true
-                && enabledAuthMethods.smartIdFlows.notificationBased !== true) {
+                && enabledAuthMethods.smartIdFlows.qrCode !== true) {
             $(this).addClass('hidden');
         }
     })

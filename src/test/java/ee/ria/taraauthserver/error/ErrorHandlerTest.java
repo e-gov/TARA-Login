@@ -19,12 +19,7 @@ import static ee.ria.taraauthserver.error.ErrorCode.INTERNAL_ERROR;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 
 @TestPropertySource(
-        locations = "classpath:application.yml",
-        properties = {
-                "tara.auth-methods.smart-id.notification-based.enabled=true",
-                "tara.auth-methods.smart-id.web2app.enabled=false",
-                "tara.auth-methods.smart-id.qr-code.enabled=false"
-        })
+        locations = "classpath:application.yml")
 class ErrorHandlerTest extends BaseTest {
 
     @Test
@@ -110,10 +105,11 @@ class ErrorHandlerTest extends BaseTest {
             .filter(MockSessionFilter.withTaraSession()
                 .sessionRepository(sessionRepository)
                 .authenticationTypes(of(SMART_ID))
-                .authenticationState(TaraAuthenticationState.INIT_SID).build())
+                .authenticationState(TaraAuthenticationState.INIT_MID).build())
             .formParam("idCode", "12312312311")
+            .formParam("telephoneNumber", "00000266")
             .when()
-            .post("/auth/sid/init")
+            .post("/auth/mid/init")
             .then()
             .assertThat()
             .statusCode(400)

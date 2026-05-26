@@ -93,15 +93,13 @@ tara:
       read-timeout-milliseconds: 120000
       allowed-countries:
         - EE
-      notification-based:
-        enabled: true
       web2app:
-        enabled: false
+        enabled: true
         frontend-polling-interval-in-milliseconds: 1000
         custom-callback:
           enabled: false
       qr-code:
-        enabled: false
+        enabled: true
     eidas:
       enabled: true
       refresh-countries-interval-in-milliseconds: 86400000

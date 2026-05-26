@@ -42,10 +42,6 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
 
     @NotNull
     @Valid
-    private NotificationBased notificationBased;
-
-    @NotNull
-    @Valid
     private Web2App web2app;
 
     @NotNull
@@ -94,8 +90,8 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
     @PostConstruct
     public void validateConfiguration() {
         Assert.isTrue(readTimeoutMilliseconds >= longPollingTimeoutMilliseconds + 5000, "Smart-ID read timeout must be at least 5 seconds longer than its long polling timeout.");
-        Assert.isTrue(notificationBased.isEnabled() || web2app.isEnabled() || qrCode.isEnabled(),
-                "If Smart-ID is enabled, then at least one of the Smart-ID authentication flows must be enabled: 'notification-based', 'web2app' or 'qr-code'");
+        Assert.isTrue(web2app.isEnabled() || qrCode.isEnabled(),
+                "If Smart-ID is enabled, then at least one of the Smart-ID authentication flows must be enabled: 'web2app' or 'qr-code'");
         Assert.isTrue(web2app.isEnabled() == qrCode.isEnabled(),
                 "Only enabling one of 'web2app' and 'qr-code' flows is currently not supported");
     }
@@ -115,13 +111,6 @@ public class SmartIdConfigurationProperties extends AuthConfigurationProperties.
 
         @NotNull
         private String password;
-    }
-
-    @Data
-    public static class NotificationBased {
-
-        @NotNull
-        private boolean enabled;
     }
 
     @Data

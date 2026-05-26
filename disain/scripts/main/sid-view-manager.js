@@ -23,9 +23,6 @@ jQuery(function ($) {
 
         setView(mainEl, 'init');
         setComponents(mainEl, 'init', initViewComponents);
-        setClickHandler(mainEl, 'init-notificationBased', function () {
-            setView(mainEl, 'init-notificationBased');
-        });
         setClickHandler(mainEl, 'back', function () {
             setView(mainEl, 'init');
         });
@@ -94,7 +91,7 @@ jQuery(function ($) {
         if (enabledFlows.includes('qrCode')) {
             return 'qrCode';
         }
-        return 'notificationBased';
+        throw new Error('Unable to set primary SID flow, no candidates enabled');
     }
 
     function hideEl(el) {

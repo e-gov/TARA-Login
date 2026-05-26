@@ -168,9 +168,6 @@ class ThymeleafSupportTest {
     }
 
     private void setupConfigurationProperties() {
-        SmartIdConfigurationProperties.NotificationBased notificationBased = new SmartIdConfigurationProperties.NotificationBased();
-        notificationBased.setEnabled(true);
-        when(configurationProperties.getNotificationBased()).thenReturn(notificationBased);
         SmartIdConfigurationProperties.Web2App web2App = new SmartIdConfigurationProperties.Web2App();
         web2App.setEnabled(true);
         when(configurationProperties.getWeb2app()).thenReturn(web2App);

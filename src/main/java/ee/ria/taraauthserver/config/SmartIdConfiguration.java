@@ -6,7 +6,6 @@ import ee.ria.taraauthserver.logging.JaxRsClientRequestLogger;
 import ee.sk.smartid.CertificateValidatorImpl;
 import ee.sk.smartid.DefaultTrustedCAStoreBuilder;
 import ee.sk.smartid.DeviceLinkAuthenticationResponseValidator;
-import ee.sk.smartid.NotificationAuthenticationResponseValidator;
 import ee.sk.smartid.SmartIdClient;
 import ee.sk.smartid.TrustedCACertStore;
 import lombok.extern.slf4j.Slf4j;
@@ -72,12 +71,6 @@ public class SmartIdConfiguration {
     @Bean
     public DeviceLinkAuthenticationResponseValidator deviceLinkAuthenticationResponseValidator() throws Exception {
         return DeviceLinkAuthenticationResponseValidator.defaultSetupWithCertificateValidator(
-                new CertificateValidatorImpl(getTrustedCACertStore()));
-    }
-
-    @Bean
-    public NotificationAuthenticationResponseValidator notificationAuthenticationResponseValidator() throws Exception {
-        return NotificationAuthenticationResponseValidator.defaultSetupWithCertificateValidator(
                 new CertificateValidatorImpl(getTrustedCACertStore()));
     }
 
