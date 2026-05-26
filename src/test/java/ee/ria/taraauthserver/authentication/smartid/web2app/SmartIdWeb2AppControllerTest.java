@@ -111,7 +111,6 @@ class SmartIdWeb2AppControllerTest extends BaseTest {
                 .sector("public")
                 .registryCode("10001234")
                 .country("EE")
-                .idCode("38001085718")
                 .authenticationType(SMART_ID)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .smartIdFlowType(FlowType.WEB2APP)
@@ -165,7 +164,7 @@ class SmartIdWeb2AppControllerTest extends BaseTest {
                 .smartIdFlowType(FlowType.WEB2APP)
                 .flowDuration(0L)
                 .build());
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                 .clientId("openIdDemo")
                 .sector("public")
@@ -173,7 +172,6 @@ class SmartIdWeb2AppControllerTest extends BaseTest {
                 .country("EE")
                 .authenticationType(SMART_ID)
                 .authenticationState(EXTERNAL_TRANSACTION)
-                .errorCode(SID_COUNTRY_NOT_ALLOWED)
                 .smartIdFlowType(FlowType.WEB2APP)
                 .flowDuration(0L)
                 .build());

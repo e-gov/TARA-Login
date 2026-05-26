@@ -184,10 +184,9 @@ public class AuthSidWeb2AppService {
             validateAuthenticationCountry(authIdentity);
             updateSession(taraSession, new SmartIdAuthenticationSuccessfulSessionUpdate(
                     authIdentity, smartIdConfigurationProperties.getLevelOfAssurance()));
-            logSuccessToStatisticsLog(taraSession);
         } catch (Exception e) {
             handleSidAuthenticationException(taraSession, e);
-            logErrorToStatisticsLog(taraSession, e);
+            saveSession(taraSession);
         } finally {
             taraSession.setSmartIdWeb2AppSession(null);
         }
@@ -246,6 +245,7 @@ public class AuthSidWeb2AppService {
             updateSession(taraSession, new CreateNewSmartIdAuthenticationResultSessionUpdate(null));
             handleSidAuthenticationException(taraSession, e);
             logErrorToStatisticsLog(taraSession, e);
+            saveSession(taraSession);
             throw e;
         } finally {
             span.end();
@@ -254,6 +254,10 @@ public class AuthSidWeb2AppService {
 
     private void updateSession(@NonNull TaraSession taraSession, TaraSessionUpdate update) {
         taraSession.accept(update);
+        saveSession(taraSession);
+    }
+
+    private void saveSession(@NonNull TaraSession taraSession) {
         Session session = sessionRepository.findById(taraSession.getSessionId());
         if (session != null) {
             session.setAttribute(TARA_SESSION, taraSession);
@@ -288,6 +292,7 @@ public class AuthSidWeb2AppService {
             SessionStatus sessionStatus = sessionStatusPoller.fetchFinalSessionStatus(taraSession.getSmartIdWeb2AppSession().getSessionId());
             taraSession.setAuthFlowEndTime(Instant.now(clock));
             validateSessionStatus(sessionStatus);
+            logSuccessToStatisticsLog(taraSession);
             updateSession(taraSession, new SaveSmartIdWeb2AppSessionStatusSessionUpdate(sessionStatus));
         } catch (Exception ex) {
             if (taraSession.getAuthFlowEndTime() == null) {
@@ -295,6 +300,7 @@ public class AuthSidWeb2AppService {
             }
             handleSidAuthenticationException(taraSession, ex);
             logErrorToStatisticsLog(taraSession, ex);
+            saveSession(taraSession);
         } finally {
             span.end();
         }
@@ -362,7 +368,7 @@ public class AuthSidWeb2AppService {
         } else {
             log.warn("Smart-ID authentication failed: {}, Error code: {}", value("error.message", ex.getMessage()), value("error.code", errorCode.name()));
         }
-        updateSession(taraSession, new FailSmartIdWeb2AppAuthenticationSessionUpdate(errorCode));
+        taraSession.accept(new FailSmartIdWeb2AppAuthenticationSessionUpdate(errorCode));
 
         Span span = ElasticApm.currentSpan();
         span.setOutcome(FAILURE);
