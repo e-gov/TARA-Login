@@ -362,7 +362,7 @@ public class AuthAcceptControllerTest extends BaseTest {
                 .body("reportable", equalTo(true));
 
         assertErrorIsLogged("Service not available: I/O error on PUT request for \"https://localhost:9877/admin/oauth2/auth/requests/login/accept\": Read timed out");
-        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"acr\":\"high\",\"amr\":[\"mID\"],\"remember\":false,\"subject\":\"EE47101010033\"}");
+        assertMessageWithMarkerIsLoggedOnce(AuthAcceptController.class, INFO, "TARA_HYDRA request", "http.request.method=PUT, url.full=https://localhost:9877/admin/oauth2/auth/requests/login/accept?login_challenge=abcdefg098AAdsCC, http.request.body.content={\"remember\":false,\"acr\":\"high\",\"amr\":[\"mID\"],\"subject\":\"EE47101010033\"}");
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
                 defaultStatisticsMarkerBuilder()
                         .clientId("openIdDemo")
