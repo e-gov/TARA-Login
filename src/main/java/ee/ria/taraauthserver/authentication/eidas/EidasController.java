@@ -52,7 +52,7 @@ public class EidasController {
 
     @Autowired
     @Qualifier("eidasLoginRestTemplate")
-    private RestTemplate eidasRestTemplate;
+    private RestTemplate eidasLoginRestTemplate;
 
     @Autowired
     private Cache<String, String> eidasRelayStateCache;
@@ -73,7 +73,7 @@ public class EidasController {
         String requestUrl = createRequestUrl(country, taraSession, relayState);
 
         requestLogger.logRequest(requestUrl, HttpMethod.GET);
-        var response = eidasRestTemplate.exchange(
+        var response = eidasLoginRestTemplate.exchange(
                 requestUrl,
                 HttpMethod.GET,
                 null,

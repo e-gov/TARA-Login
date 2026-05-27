@@ -7,6 +7,8 @@ import ee.ria.taraauthserver.utils.ThymeleafSupport;
 import jakarta.validation.Validator;
 import java.security.UnrecoverableKeyException;
 import java.util.Optional;
+
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.RequestConfig;
@@ -35,8 +37,6 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import tools.jackson.databind.json.JsonMapper;
 
 import javax.net.ssl.SSLContext;
@@ -56,10 +56,10 @@ import java.util.Locale;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static org.springframework.util.ResourceUtils.getFile;
 
+@Slf4j
 @Configuration
 @ConfigurationPropertiesScan
 public class TaraAuthServerConfiguration implements WebMvcConfigurer {
-    private static final Logger log = LoggerFactory.getLogger(TaraAuthServerConfiguration.class);
 
     @Bean
     public SSLContext xRoadTrustContext(AuthConfigurationProperties authConfigurationProperties)
@@ -140,10 +140,10 @@ public class TaraAuthServerConfiguration implements WebMvcConfigurer {
     public RestTemplate hydraRestTemplate(RestTemplateBuilder builder, SSLContext trustContext, AuthConfigurationProperties authConfigurationProperties) {
         @SuppressWarnings("resource")
         HttpClient client = HttpClients.custom()
+                .setConnectionManager(createConnectionManager(trustContext, authConfigurationProperties))
                 .setDefaultRequestConfig(RequestConfig.custom()
                         .setConnectTimeout(Timeout.ofSeconds(authConfigurationProperties.getHydraService().getRequestTimeoutInSeconds()))
                         .build())
-                .setConnectionManager(createConnectionManager(trustContext, authConfigurationProperties))
                 .build();
 
         List<HttpMessageConverter<?>> converters = new ArrayList<>();
