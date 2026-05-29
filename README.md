@@ -95,9 +95,10 @@ Example: to deploy the webapp using embedded Tomcat
 | :---------------- | :---------- | :----------------|
 | `tara.default-locale` | No | Locale that is used by default. Default `et` |
 | `tara.default-authentication-methods` | No | default authentication methods. Example `ID_CARD, MOBILE_ID, SMART_ID, EIDAS` |
-| `tara.error-report-address` | Yes | E-mail address where users can send error reports. Example `help@example.com` |
+| `tara.error-report-email` | Yes | E-mail address where users can send error reports. Example `help@example.com` |
 | `tara.auth-flow-timeout` | Yes | Duration till authentication flow timeout. Example `1800s` (30min) |
 | `tara.site-origin` | Yes | Web page's [origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) (scheme (protocol), hostname (domain), and port) where user's browser accesses TARA service from. Used by Web eID and Smart ID Web2App authenticaton flows. Example: https://example.com |
+| `tara.govsso.self-service-url` | No | URL of the GovSSO end-user self-service page; shown as a link in the login UI. Example `https://enduserselfservice.example.com/` |
 
 
 <a name="hydra_integration_conf"></a>
@@ -355,6 +356,13 @@ tara:
               responder-subject-dn: C=EE, O=Information System Authority, CN=local-ocsp
 ````
 
+Table 1.5.9 - Configuration for eIDAS proxy filter.
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.auth-methods.id-card.filter-for-eidas-proxy.client-id` | No | OIDC `client_id` treated as the eIDAS proxy. Activates the `forbidden-issuer-cns` check and skips fallback OCSP servers marked `enabled-for-eidas-proxy: false`. Example `eidas-proxy` |
+| `tara.auth-methods.id-card.filter-for-eidas-proxy.forbidden-issuer-cns` | No | Certificate issuer CNs rejected for logins from the eIDAS proxy client. Default empty list. Example `["TEST of ESTEID-SK 2015"]` |
+
 <a name="eidas_conf"></a>
 ### 1.6 Eidas auth method
 
@@ -373,7 +381,7 @@ Table 1.6.2 - Assigning the Level of assurance to authentication method
 | `tara.auth-methods.eidas.request-timeout-in-seconds` | No | Eidas client request timeout. Default. `3` |
 | `tara.auth-methods.eidas.read-timeout-in-seconds` | No | Eidas client read timeout. Default. `3` |
 | `tara.auth-methods.eidas.max-connections-total` | No | Max connection pool size for eidas client requests. Defaults to `50` |
-| `tara.auth-methods.eidas.relay-state-cache-duration-in-seconds` | No | Eidas client read timeout. Default. `30` |
+| `tara.auth-methods.eidas.relay-state-cache-duration-in-seconds` | No | How long eIDAS SAML relay state entries are kept in the cache. Default `300` |
 | `tara.auth-methods.eidas.script-hash` | No | hash to allow inline javascript for eidas redirect. Default. `sha256-8lDeP0UDwCO6/RhblgeH/ctdBzjVpJxrXizsnIk3cEQ=` |
 
 <a name="legalperson_conf"></a>
@@ -395,9 +403,9 @@ Table 1.7.2 - Integration with the Estonian business registry
 | `tara.legal-person-authentication.x-road-service-instance` | Yes | X-Road service instance. Example `ee-dev`  |
 | `tara.legal-person-authentication.x-road-service-member-code` | Yes | X-Road service member code. Example `70000310`  |
 | `tara.legal-person-authentication.x-road-service-subsystem-code` | Yes | X-Road service subsystem code. Example `arireg`  |
-| `tara.legal-person-authentication.x-road-client-member-class` | Yes | X-Road client member class. Example `GOV`  |
-| `tara.legal-person-authentication.x-road-client-instance` | Yes | X-Road client instance. Example `ee-dev`  |
-| `tara.legal-person-authentication.x-road-client-member-code` | Yes | X-Road client member code. Example `70006317`  |
+| `tara.legal-person-authentication.x-road-client-subsystem-member-class` | Yes | X-Road client subsystem member class. Example `GOV`  |
+| `tara.legal-person-authentication.x-road-client-subsystem-instance` | Yes | X-Road client subsystem instance. Example `ee-dev`  |
+| `tara.legal-person-authentication.x-road-client-subsystem-member-code` | Yes | X-Road client subsystem member code. Example `70006317`  |
 | `tara.legal-person-authentication.x-road-client-subsystem-code` | Yes | X-Road client subsystem code. Example `idp`  |
 | `tara.legal-person-authentication.x-road-server-read-timeout-in-milliseconds` | No | X-Road security server response read timeout in milliseconds. Defaults to 3000 if not specified.  |
 | `tara.legal-person-authentication.x-road-server-connect-timeout-in-milliseconds` | No | X-Road security server connect timeout in milliseconds. Defaults to 3000 if not specified.  |
@@ -408,6 +416,12 @@ Table 1.7.2 - Integration with the Estonian business registry
 
 The webapp uses `Spring Boot Actuator` to enable endpoints for monitoring support. To customize Monitoring, Metrics, Auditing and more, see [Spring Boot Actuator documentation](https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#production-ready).
 For configuring readiness and liveness probes, see [Kubernetes Probes](https://docs.spring.io/spring-boot/reference/actuator/endpoints.html#actuator.endpoints.kubernetes-probes).
+
+Table 1.8.1 - Health endpoint configuration
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.health-endpoint.expiration-warning-period-in-days` | No | Number of days before a truststore certificate's expiry at which the truststore health indicator starts reporting a warning. Default `30` |
 
 <a name="session_and_sec_conf"></a>
 ## 1.9 Security and session management
@@ -487,6 +501,7 @@ Table 1.12.1 - Alerts service configuration parameters
 | `tara.alerts.read-timeout-milliseconds` | No | Read timeout in milliseconds. Default value `3000`|
 | `tara.alerts.refresh-alerts-interval-in-milliseconds` | No | How often alerts are requested from the configured alerts url. Default. `600000` |
 | `tara.alerts.alerts-cache-duration-in-seconds` | No | How long alerts request results are kept in cache, in case next refresh fails. Default. `86400` |
+| `tara.alerts.smart-id-info-alert-enabled` | No | Show a built-in informational alert in the UI specifically for Smart-ID. Default `false` |
 
 Table 1.12.2 - Static alert configuration parameters
 
