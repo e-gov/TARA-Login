@@ -1,0 +1,7 @@
+# This file lists commits that should be ignored by git blame.
+# Each developer needs to run once: git config blame.ignoreRevsFile .git-blame-ignore-revs
+# GitHub picks this up automatically.
+
+# Prettier formatting — disain JS/SCSS
+999952a22cd7fa90f4de5edb78c298e9e060a4ea
+
