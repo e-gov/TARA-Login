@@ -328,7 +328,7 @@ class StatisticsLoggerTest extends BaseTest {
     }
 
     @Test
-    void sessionStatistics_toString_producesExpectedLiteralFormat() {
+    void sessionStatistics_json_producesExpectedFieldNames() throws Exception {
         SessionStatistics statistics = SessionStatistics.builder()
                 .clientId("openIdDemo")
                 .clientName("client name")
@@ -343,13 +343,60 @@ class StatisticsLoggerTest extends BaseTest {
                 .build();
 
         assertEquals(
-                "StatisticsLogger.SessionStatistics(service=null, clientId=openIdDemo, " +
-                        "clientName=client name, clientShortName=client shortname, eidasRequesterId=null, " +
-                        "sector=public, registryCode=10001234, legalPerson=false, country=EE, " +
-                        "idCode=38001085718, ocspUrl=null, authenticationType=MOBILE_ID, " +
-                        "authenticationState=AUTHENTICATION_SUCCESS, errorCode=null, " +
-                        "smartIdFlowType=null, eventDuration=null, certificatePolicyOids=[1.3.6.1.4.1.51361.1.1.1])",
-                statistics.toString());
+                "{\"client.service\":null," +
+                "\"client.id\":\"openIdDemo\"," +
+                "\"client.name\":\"client name\"," +
+                "\"client.short_name\":\"client shortname\"," +
+                "\"client.eidas_requester_id\":null," +
+                "\"institution.sector\":\"public\"," +
+                "\"institution.registry_code\":\"10001234\"," +
+                "\"authentication.legal_person\":false," +
+                "\"authentication.country\":\"EE\"," +
+                "\"authentication.id_code\":\"38001085718\"," +
+                "\"authentication.ocsp_url\":null," +
+                "\"authentication.type\":\"MOBILE_ID\"," +
+                "\"authentication.state\":\"AUTHENTICATION_SUCCESS\"," +
+                "\"authentication.error_code\":null," +
+                "\"authentication.smart_id.flow_type\":null," +
+                "\"event.duration\":null," +
+                "\"authentication.certificate_policies\":[\"1.3.6.1.4.1.51361.1.1.1\"]}",
+                STATS_OBJECT_MAPPER.writeValueAsString(statistics));
+    }
+
+    @Test
+    void sessionStatistics_json_externalTransaction_producesExpectedFieldNames() throws Exception {
+        SessionStatistics statistics = SessionStatistics.builder()
+                .clientId("openIdDemo")
+                .clientName("client name")
+                .clientShortName("client shortname")
+                .sector("public")
+                .registryCode("10001234")
+                .country("EE")
+                .idCode("38001085718")
+                .authenticationType(SMART_ID)
+                .authenticationState(EXTERNAL_TRANSACTION)
+                .eventDuration(500_000_000L)
+                .build();
+
+        assertEquals(
+                "{\"client.service\":null," +
+                "\"client.id\":\"openIdDemo\"," +
+                "\"client.name\":\"client name\"," +
+                "\"client.short_name\":\"client shortname\"," +
+                "\"client.eidas_requester_id\":null," +
+                "\"institution.sector\":\"public\"," +
+                "\"institution.registry_code\":\"10001234\"," +
+                "\"authentication.legal_person\":false," +
+                "\"authentication.country\":\"EE\"," +
+                "\"authentication.id_code\":\"38001085718\"," +
+                "\"authentication.ocsp_url\":null," +
+                "\"authentication.type\":\"SMART_ID\"," +
+                "\"authentication.state\":\"EXTERNAL_TRANSACTION\"," +
+                "\"authentication.error_code\":null," +
+                "\"authentication.smart_id.flow_type\":null," +
+                "\"event.duration\":500000000," +
+                "\"authentication.certificate_policies\":null}",
+                STATS_OBJECT_MAPPER.writeValueAsString(statistics));
     }
 
     @Test
@@ -378,9 +425,9 @@ class StatisticsLoggerTest extends BaseTest {
         taraSession.setAuthFlowEndTime(Instant.parse("2025-01-01T00:00:00Z"));
         taraSession.setState(AUTHENTICATION_SUCCESS);
 
-        statisticsLogger.log(taraSession);
+        statisticsLogger.logExternalTransaction(taraSession);
 
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS",
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                         .clientId("test_client_id")
                         .sector("public")
@@ -388,7 +435,7 @@ class StatisticsLoggerTest extends BaseTest {
                         .country("EE")
                         .idCode("test_person_id_code")
                         .authenticationType(MOBILE_ID)
-                        .authenticationState(AUTHENTICATION_SUCCESS)
+                        .authenticationState(EXTERNAL_TRANSACTION)
                         .build());
     }
 

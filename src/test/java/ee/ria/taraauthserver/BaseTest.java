@@ -40,6 +40,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.stream.Stream;
 
 import static ch.qos.logback.classic.Level.ERROR;
@@ -56,9 +58,11 @@ import static io.restassured.config.RedirectConfig.redirectConfig;
 import static java.util.List.of;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toUnmodifiableList;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.logstash.logback.marker.LogstashMarker;
 import org.slf4j.Marker;
-import static net.logstash.logback.marker.Markers.appendFields;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInRelativeOrder;
 import static org.hamcrest.Matchers.empty;
@@ -74,6 +78,8 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @Import({ConfigurationPropertiesReloader.class})
 public abstract class BaseTest {
+
+    protected static final ObjectMapper STATS_OBJECT_MAPPER = new ObjectMapper();
 
     @TestBean
     Clock clock;
@@ -365,10 +371,8 @@ public abstract class BaseTest {
         List<ILoggingEvent> loggingEvents = findLogEvents(StatisticsLogger.class, loggingLevel, additionalFilter, exactMessage);
         assertThat(loggingEvents, hasSize(1));
         
-        String actualString = extractSessionStatisticsString(loggingEvents.get(0));
-        Map<String, String> actualFields = parseStatisticsFields(actualString);
-        String expectedString = appendFields(expectedStatistics).toString();
-        Map<String, String> expectedFields = parseStatisticsFields(expectedString);
+        Map<String, String> actualFields = extractStatisticsFields(loggingEvents.get(0));
+        Map<String, String> expectedFields = statisticsToStringMap(expectedStatistics);
         assertStatisticsFields(actualFields, expectedFields, dynamicFields);
     }
 
@@ -400,58 +404,40 @@ public abstract class BaseTest {
         return null;
     }
 
-    private static String extractSessionStatisticsString(ILoggingEvent event) {
+    private static Map<String, String> extractStatisticsFields(ILoggingEvent event) {
         Marker marker = event.getMarker();
         if (!(marker instanceof LogstashMarker)) {
             throw new AssertionError("Expected LogstashMarker for statistics event but got: " + marker.getClass().getName());
         }
-        LogstashMarker statisticsMarker = (LogstashMarker) marker;
-        if (!statisticsMarker.hasReferences()) {
-            return statisticsMarker.toString();
-        }
-        String fullString = statisticsMarker.toString();
-        return removeReferencesSuffix(fullString, findReferencesSuffix(statisticsMarker));
+        return markerToStringMap((LogstashMarker) marker);
     }
 
-    private static String findReferencesSuffix(LogstashMarker marker) {
-        StringBuilder sb = new StringBuilder();
-        for (Marker ref : marker) {
-            String refStr = ref.toString();
-            if (!refStr.isEmpty()) {
-                sb.append(", ").append(refStr);
+    private static Map<String, String> statisticsToStringMap(SessionStatistics statistics) {
+        Map<String, Object> jsonMap = STATS_OBJECT_MAPPER.convertValue(statistics, new TypeReference<>() {});
+        return toStringMap(jsonMap);
+    }
+
+    private static Map<String, String> markerToStringMap(LogstashMarker marker) {
+        try {
+            StringWriter sw = new StringWriter();
+            try (JsonGenerator gen = STATS_OBJECT_MAPPER.getFactory().createGenerator(sw)) {
+                gen.writeStartObject();
+                marker.writeTo(gen);
+                gen.writeEndObject();
             }
+            Map<String, Object> jsonMap = STATS_OBJECT_MAPPER.readValue(sw.toString(), new TypeReference<>() {});
+            return toStringMap(jsonMap);
+        } catch (IOException e) {
+            throw new AssertionError("Failed to serialize statistics marker to JSON", e);
         }
-        return sb.toString();
     }
 
-    private static String removeReferencesSuffix(String fullString, String suffix) {
-        return fullString.substring(0, fullString.length() - suffix.length());
-    }
-
-    private static Map<String, String> parseStatisticsFields(String statisticsString) {
-        return parseFields(stripOuterParentheses(statisticsString));
-    }
-
-    private static String stripOuterParentheses(String statisticsString) {
-        int openParen = statisticsString.indexOf('(');
-        int closeParen = statisticsString.lastIndexOf(')');
-        if (openParen >= 0 && closeParen > openParen) {
-            return statisticsString.substring(openParen + 1, closeParen);
+    private static Map<String, String> toStringMap(Map<String, Object> jsonMap) {
+        Map<String, String> result = new HashMap<>();
+        for (Map.Entry<String, Object> entry : jsonMap.entrySet()) {
+            result.put(entry.getKey(), String.valueOf(entry.getValue()));
         }
-        return statisticsString;
-    }
-
-    private static Map<String, String> parseFields(String content) {
-        Map<String, String> fields = new HashMap<>();
-        for (String pairString : content.split(", ")) {
-            int separatorIndex = pairString.indexOf('=');
-            if (separatorIndex > 0) {
-                String key = pairString.substring(0, separatorIndex);
-                String value = pairString.substring(separatorIndex + 1);
-                fields.put(key, value);
-            }
-        }
-        return fields;
+        return result;
     }
 
     protected static SessionStatistics.SessionStatisticsBuilder defaultStatisticsMarkerBuilder() {
