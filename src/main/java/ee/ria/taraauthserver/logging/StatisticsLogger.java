@@ -88,7 +88,9 @@ public class StatisticsLogger {
         processAuthenticationRequest(taraSession, state, statisticsBuilder);
         processAuthenticationResult(taraSession, ex, statisticsBuilder);
         processSmartIdFlowType(taraSession, statisticsBuilder);
-        processFlowDuration(taraSession, statisticsBuilder);
+        if (state == EXTERNAL_TRANSACTION) {
+            processEventDuration(taraSession, statisticsBuilder);
+        }
 
         SessionStatistics sessionStatistics = statisticsBuilder.build();
         LogstashMarker toLog = appendFields(sessionStatistics);
@@ -183,7 +185,7 @@ public class StatisticsLogger {
         statisticsBuilder.smartIdFlowType(taraSession.getSmartIdFlowType());
     }
 
-    private void processFlowDuration(TaraSession taraSession, SessionStatisticsBuilder statisticsBuilder) {
+    private void processEventDuration(TaraSession taraSession, SessionStatisticsBuilder statisticsBuilder) {
         Instant startTime = taraSession.getAuthFlowStartTime();
         if (startTime == null) {
             return;
@@ -193,7 +195,7 @@ public class StatisticsLogger {
             log.error("authFlowEndTime not set before statistics logging for session {}", taraSession.getSessionId());
             return;
         }
-        statisticsBuilder.flowDuration(Duration.between(startTime, endTime).toMillis());
+        statisticsBuilder.eventDuration(Duration.between(startTime, endTime).toNanos());
     }
 
     private Optional<TaraAuthenticationState> getStateToLog(TaraSession taraSession) {
@@ -270,8 +272,8 @@ public class StatisticsLogger {
         @JsonProperty("authentication.smart_id.flow_type")
         private FlowType smartIdFlowType;
 
-        @JsonProperty("authentication.flow_duration")
-        private Long flowDuration;
+        @JsonProperty("event.duration")
+        private Long eventDuration;
 
         @JsonProperty("authentication.certificate_policies")
         private List<String> certificatePolicyOids;

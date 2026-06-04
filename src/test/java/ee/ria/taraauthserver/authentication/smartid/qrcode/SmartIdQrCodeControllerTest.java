@@ -85,7 +85,7 @@ class SmartIdQrCodeControllerTest extends BaseTest {
                 .authenticationType(SMART_ID)
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .smartIdFlowType(FlowType.QR)
-                .flowDuration(0L)
+                .eventDuration(0L)
                 .build());
     }
 
@@ -120,7 +120,6 @@ class SmartIdQrCodeControllerTest extends BaseTest {
                 .authenticationState(AUTHENTICATION_FAILED)
                 .errorCode(SID_COUNTRY_NOT_ALLOWED)
                 .smartIdFlowType(FlowType.QR)
-                .flowDuration(0L)
                 .build());
         assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
@@ -132,7 +131,7 @@ class SmartIdQrCodeControllerTest extends BaseTest {
                 .authenticationState(EXTERNAL_TRANSACTION)
                 .errorCode(SID_COUNTRY_NOT_ALLOWED)
                 .smartIdFlowType(FlowType.QR)
-                .flowDuration(0L)
+                .eventDuration(0L)
                 .build());
     }
 

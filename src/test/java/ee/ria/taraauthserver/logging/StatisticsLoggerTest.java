@@ -36,6 +36,7 @@ import static ee.ria.taraauthserver.logging.StatisticsLogger.SERVICE_GOVSSO;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_SUCCESS;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.EXTERNAL_TRANSACTION;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_MID_STATUS_CANCELED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_SID_STATUS_CANCELED;
 import static java.lang.String.format;
@@ -347,20 +348,20 @@ class StatisticsLoggerTest extends BaseTest {
                         "sector=public, registryCode=10001234, legalPerson=false, country=EE, " +
                         "idCode=38001085718, ocspUrl=null, authenticationType=MOBILE_ID, " +
                         "authenticationState=AUTHENTICATION_SUCCESS, errorCode=null, " +
-                        "smartIdFlowType=null, flowDuration=null, certificatePolicyOids=[1.3.6.1.4.1.51361.1.1.1])",
+                        "smartIdFlowType=null, eventDuration=null, certificatePolicyOids=[1.3.6.1.4.1.51361.1.1.1])",
                 statistics.toString());
     }
 
     @Test
-    void processFlowDuration_logsErrorAndOmitsDuration_whenStartTimeSetButEndTimeNull() {
+    void processEventDuration_logsErrorAndOmitsDuration_whenStartTimeSetButEndTimeNull() {
         TaraSession taraSession = buildValidSessionWithoutState();
         taraSession.setAuthFlowStartTime(Instant.parse("2025-01-01T00:00:00Z"));
         taraSession.setState(AUTHENTICATION_SUCCESS);
 
-        statisticsLogger.log(taraSession);
+        statisticsLogger.logExternalTransaction(taraSession);
 
         assertErrorIsLogged(StatisticsLogger.class, "authFlowEndTime not set before statistics logging for session");
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS",
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                         .clientId("test_client_id")
                         .sector("public")
@@ -368,12 +369,12 @@ class StatisticsLoggerTest extends BaseTest {
                         .country("EE")
                         .idCode("test_person_id_code")
                         .authenticationType(MOBILE_ID)
-                        .authenticationState(AUTHENTICATION_SUCCESS)
+                        .authenticationState(EXTERNAL_TRANSACTION)
                         .build());
     }
 
     @Test
-    void processFlowDuration_omitsDurationSilently_whenOnlyEndTimeSet() {
+    void processEventDuration_omitsDurationSilently_whenOnlyEndTimeSet() {
         TaraSession taraSession = buildValidSessionWithoutState();
         taraSession.setAuthFlowEndTime(Instant.parse("2025-01-01T00:00:00Z"));
         taraSession.setState(AUTHENTICATION_SUCCESS);
@@ -393,15 +394,15 @@ class StatisticsLoggerTest extends BaseTest {
     }
 
     @Test
-    void processFlowDuration_calculatesCorrectDuration_whenBothTimesSet() {
+    void processEventDuration_calculatesCorrectDuration_whenBothTimesSet() {
         TaraSession taraSession = buildValidSessionWithoutState();
         taraSession.setAuthFlowStartTime(Instant.parse("2025-01-01T00:00:00Z"));
         taraSession.setAuthFlowEndTime(Instant.parse("2025-01-01T00:00:00.500Z"));
         taraSession.setState(AUTHENTICATION_SUCCESS);
 
-        statisticsLogger.log(taraSession);
+        statisticsLogger.logExternalTransaction(taraSession);
 
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_SUCCESS",
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                         .clientId("test_client_id")
                         .sector("public")
@@ -409,8 +410,8 @@ class StatisticsLoggerTest extends BaseTest {
                         .country("EE")
                         .idCode("test_person_id_code")
                         .authenticationType(MOBILE_ID)
-                        .authenticationState(AUTHENTICATION_SUCCESS)
-                        .flowDuration(500L)
+                        .authenticationState(EXTERNAL_TRANSACTION)
+                        .eventDuration(500_000_000L)
                         .build());
     }
 
