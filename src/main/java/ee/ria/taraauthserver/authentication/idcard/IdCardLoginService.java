@@ -278,7 +278,7 @@ public class IdCardLoginService {
     }
 
     private static ErrorCode handleOSCPClientException(OCSPClientException e) {
-        if (e.getResponseBody() == null) {
+        if (e.getResponseBody() == null || e.getResponseBody().length == 0) {
             return IDC_OCSP_NOT_AVAILABLE;
         }
         OCSPResp ocspResp;
@@ -316,6 +316,9 @@ public class IdCardLoginService {
                         : httpStatusCode;
             } else {
                 encodedOcspResp = ocspResp.getEncoded();
+                // A non-OCSPClientException failure (e.g. a definitive REVOKED/UNKNOWN status) means the OCSP HTTP
+                // request itself succeeded, so the response was served with HTTP 200.
+                httpStatusCode = HttpStatus.OK.value();
             }
             if (encodedOcspResp != null) {
                 requestLogger.logResponse(httpStatusCode, Base64.getEncoder().encodeToString(encodedOcspResp));

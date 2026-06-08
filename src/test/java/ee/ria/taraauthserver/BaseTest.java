@@ -98,13 +98,17 @@ public abstract class BaseTest {
     }};
 
     protected static final OCSPValidatorTest.OcspResponseTransformer ocspResponseTransformer = new OCSPValidatorTest.OcspResponseTransformer(false);
+    protected static final WireMockServer ocspWireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig()
+            .port(9876)
+            .extensions(ocspResponseTransformer)
+            .notifier(new ConsoleNotifier(true))
+    );
     protected static final WireMockServer wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig()
             .httpDisabled(true)
             .httpsPort(9877)
             .keystorePath("src/test/resources/localhost.keystore.p12")
             .keystorePassword("changeit")
             .keyManagerPassword("changeit")
-            .extensions(ocspResponseTransformer)
             .globalTemplating(true)
             .notifier(new ConsoleNotifier(true))
     );
@@ -149,6 +153,7 @@ public abstract class BaseTest {
         System.setProperty("IGNITE_HOME", System.getProperty("java.io.tmpdir"));
         System.setProperty("java.net.preferIPv4Stack", "true");
         wireMockServer.start();
+        ocspWireMockServer.start();
         govSsoWireMockServer.start();
         xroadWireMockServer.start();
     }
@@ -234,6 +239,7 @@ public abstract class BaseTest {
         RestAssured.port = port;
         resetMockLogAppender();
         wireMockServer.resetAll();
+        ocspWireMockServer.resetAll();
         govSsoWireMockServer.resetAll();
         xroadWireMockServer.resetAll();
     }
@@ -344,9 +350,13 @@ public abstract class BaseTest {
     }
 
     protected void assertMessageWithMarkerIsLoggedOnce(Class<?> loggerClass, Level loggingLevel, String exactMessage, Pattern markerPattern) {
-        List<ILoggingEvent> loggingEvents = findLogEvents(loggerClass, loggingLevel, null, exactMessage);
-        assertThat(loggingEvents, hasSize(1));
-        assertThat(loggingEvents.get(0).getMarker().toString(), matchesPattern(markerPattern));
+        assertMessageWithMarkerIsLogged(loggerClass, loggingLevel, exactMessage, markerPattern, 1);
+    }
+
+    protected void assertMessageWithMarkerIsLogged(Class<?> loggerClass, Level loggingLevel, String exactMessage, Pattern markerPattern, int expectedCount) {
+        List<ILoggingEvent> loggingEvents = findLogEvents(loggerClass, loggingLevel,
+                e -> markerPattern.matcher(e.getMarker().toString()).matches(), exactMessage);
+        assertThat(loggingEvents, hasSize(expectedCount));
     }
 
     protected void assertStatisticsIsLoggedOnce(Level loggingLevel, String exactMessage, SessionStatistics expectedStatistics) {
@@ -362,14 +372,22 @@ public abstract class BaseTest {
     }
 
     protected void assertStatisticsIsLoggedOnce(Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String exactMessage, SessionStatistics expectedStatistics, Set<DynamicField> dynamicFields) {
-        List<ILoggingEvent> loggingEvents = findLogEvents(StatisticsLogger.class, loggingLevel, additionalFilter, exactMessage);
-        assertThat(loggingEvents, hasSize(1));
+        assertStatisticsIsLogged(loggingLevel, additionalFilter, exactMessage, expectedStatistics, dynamicFields, 1);
+    }
 
-        String actualString = extractSessionStatisticsString(loggingEvents.get(0));
-        Map<String, String> actualFields = parseStatisticsFields(actualString);
+    protected void assertStatisticsIsLogged(Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String exactMessage, SessionStatistics expectedStatistics, int expectedCount) {
+        assertStatisticsIsLogged(loggingLevel, additionalFilter, exactMessage, expectedStatistics, Set.of(), expectedCount);
+    }
+
+    protected void assertStatisticsIsLogged(Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String exactMessage, SessionStatistics expectedStatistics, Set<DynamicField> dynamicFields, int expectedCount) {
+        List<ILoggingEvent> loggingEvents = findLogEvents(StatisticsLogger.class, loggingLevel, additionalFilter, exactMessage);
+        assertThat(loggingEvents, hasSize(expectedCount));
         String expectedString = appendFields(expectedStatistics).toString();
         Map<String, String> expectedFields = parseStatisticsFields(expectedString);
-        assertStatisticsFields(actualFields, expectedFields, dynamicFields);
+        for (ILoggingEvent loggingEvent : loggingEvents) {
+            Map<String, String> actualFields = parseStatisticsFields(extractSessionStatisticsString(loggingEvent));
+            assertStatisticsFields(actualFields, expectedFields, dynamicFields);
+        }
     }
 
     private void assertStatisticsFields(Map<String, String> actualFields, Map<String, String> expectedFields, Set<DynamicField> dynamicFields) {

@@ -1038,7 +1038,11 @@ public class OCSPValidatorTest {
             );
 
             if (nonce != null) {
-                Extension extension = new Extension(OCSPObjectIdentifiers.id_pkix_ocsp_nonce, true, nonce);
+                // web-eid's OcspCertificateRevocationChecker.checkNonce compares the whole Extension (incl. the
+                // critical flag) via Extension.equals; OcspRequestBuilder builds the request nonce as non-critical,
+                // so the echoed response nonce must also be non-critical, otherwise validation fails with
+                // "OCSP request and response nonces differ".
+                Extension extension = new Extension(OCSPObjectIdentifiers.id_pkix_ocsp_nonce, false, nonce);
                 builder.setResponseExtensions(new Extensions(new Extension[]{extension}));
             }
 
