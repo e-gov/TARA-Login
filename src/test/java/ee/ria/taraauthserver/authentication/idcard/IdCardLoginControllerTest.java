@@ -47,12 +47,8 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
@@ -70,8 +66,6 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
@@ -90,7 +84,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import static ch.qos.logback.classic.Level.ERROR;
 import static ch.qos.logback.classic.Level.INFO;
@@ -1160,198 +1153,6 @@ class IdCardLoginControllerTest extends BaseTest {
                         .build());
     }
 
-    @Disabled("AUT-2678 follow-up: AIA OCSP is now mocked, but this negative case still needs assertion rework (web-eid error message / issuer DNs differ from the legacy validator); cannot force responder certificate issuer CN in this test")
-    @ParameterizedTest
-    @MethodSource("ocspResponseStatuses")
-    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
-    @Tag(value = "OCSP_CA_WHITELIST")
-    @Tag(value = "IDCARD_ERROR_HANDLING")
-    void handleRequest_OcspResponderCertificateIssuerNotTrusted_Error(CertificateStatus certificateStatus, ErrorCode expectedErrorCode) {
-        setupMockOcspResponseForSingleTest("CN=WRONG CN", certificateStatus, "/esteid2018");
-        MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
-
-        given()
-                .body(createRequestBody())
-                .filter(mockSessionFilter)
-                .header("Content-Type", APPLICATION_JSON_VALUE)
-                .when()
-                .post("/auth/id/login")
-                .then()
-                .assertThat()
-                .statusCode(500)
-                .headers(EXPECTED_RESPONSE_HEADERS)
-                .body("status", equalTo(500))
-                .body("error", equalTo("Internal Server Error"))
-                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
-                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
-                .body("reportable", equalTo(true));
-
-        String sessionId = mockSessionFilter.getSession().getId();
-        assertNull(sessionRepository.findById(sessionId));
-        assertInfoIsLogged("OCSP certificate validation. Serialnumber=<96454726563488174362096220658227824995>, SubjectDN=<SERIALNUMBER=PNOEE-38001085718, CN=\"JÕEORG,JAAK-KRISTJAN,38001085718\", SURNAME=JÕEORG, GIVENNAME=JAAK-KRISTJAN, C=EE>, issuerDN=<CN=TEST of ESTEID2018, OID.2.5.4.97=NTREE-10747013, O=SK ID Solutions AS, C=EE>");
-        assertErrorIsLogged(ErrorHandler.class, "Server encountered an unexpected error: Issuer certificate with CN 'WRONG CN' is not a trusted certificate!");
-        // TODO Assert proper regex
-        assertMessageWithMarkerIsLoggedOnce(IdCardLoginController.class, INFO, "Client-side Web eID operation successful", successfulWebEidOperationMarkerPattern(base64EncodedUserCertificate));
-        // TODO Assert proper regex
-        assertMessageWithMarkerIsLoggedOnce(ErrorHandler.class, WARN, "Session has been invalidated: " + sessionId, invalidatedSessionMarkerPattern(sessionId));
-        // TODO Assert proper regex
-        assertMessageWithMarkerIsLoggedOnce(IdCardLoginService.class, INFO, "OCSP request", ocspRequestMarkerPattern("POST", "http://localhost:9876/esteid2018", ""));
-        // TODO Assert proper regex
-        assertMessageWithMarkerIsLoggedOnce(IdCardLoginService.class, INFO, "OCSP response: 200", ocspResponseMarkerPattern(200));
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
-                defaultStatisticsMarkerBuilder()
-                        .clientId("openIdDemo")
-                        .sector("public")
-                        .registryCode("10001234")
-                        .country("EE")
-                        .idCode("38001085718")
-                        .ocspUrl("http://localhost:9876/esteid2018")
-                        .authenticationType(AuthenticationType.ID_CARD)
-                        .authenticationState(TaraAuthenticationState.EXTERNAL_TRANSACTION)
-                        .errorCode(expectedErrorCode)
-                        .build());
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
-                defaultStatisticsMarkerBuilder()
-                        .clientId("openIdDemo")
-                        .sector("public")
-                        .registryCode("10001234")
-                        .country("EE")
-                        .idCode("38001085718")
-                        .ocspUrl("http://localhost:9876/esteid2018")
-                        .authenticationType(AuthenticationType.ID_CARD)
-                        .authenticationState(TaraAuthenticationState.AUTHENTICATION_FAILED)
-                        .errorCode(expectedErrorCode)
-                        .build());
-    }
-
-    @Disabled("AUT-2678 follow-up: AIA OCSP is now mocked, but this negative case still needs assertion rework (web-eid error message / issuer DNs differ from the legacy validator); cannot force responder certificate issuer to differ from user certificate issuer")
-    @ParameterizedTest
-    @MethodSource("ocspResponseStatuses")
-    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
-    @Tag(value = "OCSP_RESPONSE_VALID_SIG")
-    @Tag(value = "IDCARD_ERROR_HANDLING")
-    void handleRequest_OcspResponderCertificateIssuerDifferentFromUserCertificateIssuer_Error(CertificateStatus certificateStatus, ErrorCode expectedErrorCode) {
-        setupMockOcspResponseForSingleTest("CN=TEST of ESTEID-SK 2015", certificateStatus, "/esteid2018");
-        MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
-
-        given()
-                .body(createRequestBody())
-                .filter(mockSessionFilter)
-                .header("Content-Type", APPLICATION_JSON_VALUE)
-                .when()
-                .post("/auth/id/login")
-                .then()
-                .assertThat()
-                .statusCode(500)
-                .headers(EXPECTED_RESPONSE_HEADERS)
-                .body("status", equalTo(500))
-                .body("error", equalTo("Internal Server Error"))
-                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
-                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
-                .body("reportable", equalTo(true));
-
-        String sessionId = mockSessionFilter.getSession().getId();
-        assertNull(sessionRepository.findById(sessionId));
-        assertInfoIsLogged("OCSP certificate validation. Serialnumber=<96454726563488174362096220658227824995>, SubjectDN=<SERIALNUMBER=PNOEE-38001085718, CN=\"JÕEORG,JAAK-KRISTJAN,38001085718\", SURNAME=JÕEORG, GIVENNAME=JAAK-KRISTJAN, C=EE>, issuerDN=<CN=TEST of ESTEID2018, OID.2.5.4.97=NTREE-10747013, O=SK ID Solutions AS, C=EE>");
-        assertErrorIsLogged(ErrorHandler.class, "Server encountered an unexpected error: In case of AIA OCSP, the OCSP responder certificate must be issued by the authority that issued the user certificate. Expected issuer: 'CN=TEST of ESTEID2018, OID.2.5.4.97=NTREE-10747013, O=SK ID Solutions AS, C=EE', but the OCSP responder signing certificate was issued by 'CN=TEST of ESTEID-SK 2015, OID.2.5.4.97=NTREE-10747013, O=AS Sertifitseerimiskeskus, C=EE'");
-        // TODO Assert proper regex
-        assertMessageWithMarkerIsLoggedOnce(IdCardLoginController.class, INFO, "Client-side Web eID operation successful", successfulWebEidOperationMarkerPattern(base64EncodedUserCertificate));
-        // TODO Assert proper regex
-        assertMessageWithMarkerIsLoggedOnce(ErrorHandler.class, WARN, "Session has been invalidated: " + sessionId, invalidatedSessionMarkerPattern(sessionId));
-        // TODO Assert proper regex
-        assertMessageWithMarkerIsLoggedOnce(IdCardLoginService.class, INFO, "OCSP request", ocspRequestMarkerPattern("GET", "https://localhost:9877/esteid2018", "{\"http.request.body.content\":"));
-        // TODO Assert proper regex
-        assertMessageWithMarkerIsLoggedOnce(IdCardLoginService.class, INFO, "OCSP response: 200", ocspResponseMarkerPattern(200));
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
-                defaultStatisticsMarkerBuilder()
-                        .clientId("openIdDemo")
-                        .sector("public")
-                        .registryCode("10001234")
-                        .country("EE")
-                        .idCode("38001085718")
-                        .ocspUrl("https://localhost:9877/esteid2018")
-                        .authenticationType(AuthenticationType.ID_CARD)
-                        .authenticationState(TaraAuthenticationState.EXTERNAL_TRANSACTION)
-                        .errorCode(expectedErrorCode)
-                        .build());
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
-                defaultStatisticsMarkerBuilder()
-                        .clientId("openIdDemo")
-                        .sector("public")
-                        .registryCode("10001234")
-                        .country("EE")
-                        .idCode("38001085718")
-                        .ocspUrl("https://localhost:9877/esteid2018")
-                        .authenticationType(AuthenticationType.ID_CARD)
-                        .authenticationState(TaraAuthenticationState.AUTHENTICATION_FAILED)
-                        .errorCode(expectedErrorCode)
-                        .build());
-    }
-
-    @Disabled("AUT-2678 follow-up: AIA OCSP is now mocked, but this negative case still needs assertion rework (web-eid error message / issuer DNs differ from the legacy validator); cannot force malformed OCSP response body")
-    @Test
-    @Tag(value = "ESTEID_LOGIN_ENDPOINT")
-    @Tag(value = "OCSP_VALID_RESPONSE")
-    @Tag(value = "IDCARD_ERROR_HANDLING")
-    void handleRequest_OcspResponseBodyMissing_Error() {
-        ocspWireMockServer.stubFor(WireMock.post("/esteid2018")
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withTransformer("ocsp", "ignore", true)
-                        .withHeader("Content-Type", "application/ocsp-response")));
-        MockSessionFilter mockSessionFilter = buildDefaultSessionFilter();
-
-        given()
-                .body(createRequestBody())
-                .filter(mockSessionFilter)
-                .header("Content-Type", APPLICATION_JSON_VALUE)
-                .when()
-                .post("/auth/id/login")
-                .then()
-                .assertThat()
-                .statusCode(500)
-                .headers(EXPECTED_RESPONSE_HEADERS)
-                .body("status", equalTo(500))
-                .body("error", equalTo("Internal Server Error"))
-                .body("message", equalTo("Autentimine ebaõnnestus teenuse tehnilise vea tõttu. Palun proovige mõne aja pärast uuesti."))
-                .body("incident_nr", matchesPattern("[a-f0-9]{32}"))
-                .body("reportable", equalTo(true));
-
-        String sessionId = mockSessionFilter.getSession().getId();
-        assertNull(sessionRepository.findById(sessionId));
-        assertErrorIsLogged(ErrorHandler.class, "Server encountered an unexpected error: OCSP validation failed: malformed response: no response data found");
-        // TODO Assert proper regex
-        assertMessageWithMarkerIsLoggedOnce(IdCardLoginController.class, INFO, "Client-side Web eID operation successful", successfulWebEidOperationMarkerPattern(base64EncodedUserCertificate));
-        // TODO Assert proper regex
-        assertMessageWithMarkerIsLoggedOnce(ErrorHandler.class, WARN, "Session has been invalidated: " + sessionId, invalidatedSessionMarkerPattern(sessionId));
-        // TODO Assert proper regex
-        assertMessageWithMarkerIsLoggedOnce(IdCardLoginService.class, INFO, "OCSP request", ocspRequestMarkerPattern("GET", "https://localhost:9877/esteid2018", "{\"http.request.body.content\":"));
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: EXTERNAL_TRANSACTION",
-                defaultStatisticsMarkerBuilder()
-                        .clientId("openIdDemo")
-                        .sector("public")
-                        .registryCode("10001234")
-                        .country("EE")
-                        .idCode("38001085718")
-                        .ocspUrl("https://localhost:9877/esteid2018")
-                        .authenticationType(AuthenticationType.ID_CARD)
-                        .authenticationState(TaraAuthenticationState.EXTERNAL_TRANSACTION)
-                        .errorCode(ErrorCode.INTERNAL_ERROR)
-                        .build());
-        assertStatisticsIsLoggedOnce(ERROR, "Authentication result: AUTHENTICATION_FAILED",
-                defaultStatisticsMarkerBuilder()
-                        .clientId("openIdDemo")
-                        .sector("public")
-                        .registryCode("10001234")
-                        .country("EE")
-                        .idCode("38001085718")
-                        .ocspUrl("https://localhost:9877/esteid2018")
-                        .authenticationType(AuthenticationType.ID_CARD)
-                        .authenticationState(TaraAuthenticationState.AUTHENTICATION_FAILED)
-                        .errorCode(ErrorCode.INTERNAL_ERROR)
-                        .build());
-    }
-
     @Test
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     @Tag(value = "OCSP_VALID_RESPONSE")
@@ -1756,11 +1557,4 @@ class IdCardLoginControllerTest extends BaseTest {
         );
     }
 
-    private static Stream<Arguments> ocspResponseStatuses() {
-        return Stream.of(
-                Arguments.of(CertificateStatus.GOOD, ErrorCode.IDC_VALIDATION_ERROR_RESULT_GOOD),
-                Arguments.of(new RevokedStatus(new Date(), CRLReason.unspecified), ErrorCode.IDC_VALIDATION_ERROR_RESULT_REVOKED),
-                Arguments.of(new UnknownStatus(), ErrorCode.IDC_VALIDATION_ERROR_RESULT_OTHER)
-        );
-    }
 }
