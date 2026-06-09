@@ -8,7 +8,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest;
+import ee.ria.taraauthserver.authentication.idcard.OcspResponseTransformer;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.logging.StatisticsLogger.SessionStatistics;
 import io.restassured.RestAssured;
@@ -97,7 +97,7 @@ public abstract class BaseTest {
         // put("Strict-Transport-Security", "max-age=16070400 ; includeSubDomains");
     }};
 
-    protected static final OCSPValidatorTest.OcspResponseTransformer ocspResponseTransformer = new OCSPValidatorTest.OcspResponseTransformer(false);
+    protected static final OcspResponseTransformer ocspResponseTransformer = new OcspResponseTransformer(false);
     protected static final WireMockServer ocspWireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig()
             .port(9876)
             .extensions(ocspResponseTransformer)
