@@ -531,7 +531,7 @@ public class EidasControllerTest extends BaseTest {
     public static void createEidasLoginStub(String response, int status) {
         wireMockServer.stubFor(any(urlPathMatching("/login"))
                 .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withHeader("Content-Type", "text/html; charset=UTF-8")
                         .withStatus(status)
                         .withBodyFile(response)));
     }
