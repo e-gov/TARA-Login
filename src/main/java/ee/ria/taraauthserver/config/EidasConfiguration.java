@@ -7,7 +7,7 @@ import ee.ria.taraauthserver.logging.ClientRequestLogger.Service;
 import ee.ria.taraauthserver.logging.RestTemplateErrorLogger;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.classic.HttpClient;
-import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
 import org.apache.hc.client5.http.io.HttpClientConnectionManager;
@@ -15,7 +15,6 @@ import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactoryBuilder;
 import org.apache.hc.core5.http.io.SocketConfig;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
@@ -31,7 +30,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.client.RestTemplate;
 
 import javax.net.ssl.SSLContext;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -84,12 +82,9 @@ public class EidasConfiguration {
     }
 
     @Bean
-    public RestTemplate eidasLoginRestTemplate(RestTemplateBuilder builder, SSLContext trustContext, EidasConfigurationProperties eidasConfigurationProperties) {
+    public RestTemplate eidasRestTemplate(RestTemplateBuilder builder, SSLContext trustContext, EidasConfigurationProperties eidasConfigurationProperties) {
         @SuppressWarnings("resource")
         HttpClient client = HttpClients.custom()
-                .setDefaultRequestConfig(RequestConfig.custom()
-                        .setConnectTimeout(Timeout.ofSeconds(eidasConfigurationProperties.getRequestTimeoutInSeconds()))
-                        .build())
                 .setConnectionManager(createConnectionManager(trustContext, eidasConfigurationProperties))
                 .build();
 
@@ -100,34 +95,20 @@ public class EidasConfiguration {
 
         // HttpComponentsClientHttpRequestFactory no longer exposes connect-timeout configuration directly in Spring 7.
         return builder
-                .messageConverters(converters)
-                .requestFactory(() -> new HttpComponentsClientHttpRequestFactory(client))
-                .errorHandler(new RestTemplateErrorLogger(Service.EIDAS))
-                .build();
-    }
-
-    @Bean
-    public RestTemplate eidasRestTemplate(RestTemplateBuilder builder, SSLContext trustContext, EidasConfigurationProperties eidasConfigurationProperties) {
-        @SuppressWarnings("resource")
-        HttpClient client = HttpClients.custom()
-                .setDefaultRequestConfig(RequestConfig.custom()
-                        .setConnectTimeout(Timeout.ofSeconds(eidasConfigurationProperties.getRequestTimeoutInSeconds()))
-                        .build())
-                .setConnectionManager(createConnectionManager(trustContext, eidasConfigurationProperties))
-                .build();
-
-        return builder
+                .additionalMessageConverters(converters)
                 .requestFactory(() -> new HttpComponentsClientHttpRequestFactory(client))
                 .errorHandler(new RestTemplateErrorLogger(Service.EIDAS))
                 .build();
     }
 
     private static HttpClientConnectionManager createConnectionManager(SSLContext sslContext, EidasConfigurationProperties eidasConfigurationProperties) {
+        ConnectionConfig connectionConfig = ConnectionConfig.custom().setConnectTimeout(Timeout.ofSeconds(eidasConfigurationProperties.getRequestTimeoutInSeconds())).build();
         SocketConfig socketConfig = SocketConfig.custom().setSoTimeout(Timeout.ofSeconds(eidasConfigurationProperties.getReadTimeoutInSeconds())).build();
 
         return PoolingHttpClientConnectionManagerBuilder.create()
                 .setMaxConnPerRoute(eidasConfigurationProperties.getMaxConnectionsTotal())
                 .setMaxConnTotal(eidasConfigurationProperties.getMaxConnectionsTotal())
+                .setDefaultConnectionConfig(connectionConfig)
                 .setDefaultSocketConfig(socketConfig)
                 .setSSLSocketFactory(SSLConnectionSocketFactoryBuilder.create()
                         .setSslContext(sslContext)
