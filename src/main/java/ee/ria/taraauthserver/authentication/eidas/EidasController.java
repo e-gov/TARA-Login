@@ -13,10 +13,10 @@ import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraSession.OidcClient;
 import ee.ria.taraauthserver.session.update.InitEidasSessionUpdate;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -26,8 +26,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.cache.Cache;
 import java.util.Arrays;
@@ -41,18 +39,17 @@ import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PR
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static net.logstash.logback.argument.StructuredArguments.value;
 
+@Slf4j
 @RestController
 @ConditionalOnProperty(value = "tara.auth-methods.eidas.enabled")
 public class EidasController {
-    private static final Logger log = LoggerFactory.getLogger(EidasController.class);
     private final ClientRequestLogger requestLogger = new ClientRequestLogger(Service.EIDAS, this.getClass());
 
     @Autowired
     private EidasConfigurationProperties eidasConfigurationProperties;
 
     @Autowired
-    @Qualifier("eidasLoginRestTemplate")
-    private RestTemplate eidasLoginRestTemplate;
+    private RestTemplate eidasRestTemplate;
 
     @Autowired
     private Cache<String, String> eidasRelayStateCache;
@@ -73,7 +70,7 @@ public class EidasController {
         String requestUrl = createRequestUrl(country, taraSession, relayState);
 
         requestLogger.logRequest(requestUrl, HttpMethod.GET);
-        var response = eidasLoginRestTemplate.exchange(
+        var response = eidasRestTemplate.exchange(
                 requestUrl,
                 HttpMethod.GET,
                 null,
