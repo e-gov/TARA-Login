@@ -18,6 +18,7 @@ import ee.sk.smartid.FlowType;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.marker.LogstashMarker;
 import org.springframework.stereotype.Component;
@@ -227,9 +228,11 @@ public class StatisticsLogger {
         @JsonProperty("authentication.smart_id.flow_type")
         private FlowType smartIdFlowType;
 
+        @ToString.Exclude
         @JsonProperty("authentication.flow_duration")
         private Long flowDuration;
 
+        @ToString.Exclude
         @JsonProperty("authentication.certificate_policies")
         private List<String> certificatePolicyOids;
     }
