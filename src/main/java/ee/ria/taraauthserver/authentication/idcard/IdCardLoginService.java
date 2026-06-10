@@ -73,7 +73,7 @@ public class IdCardLoginService {
         taraSession.setState(NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT);
         SessionUtils.getHttpSession().setAttribute(TARA_SESSION, taraSession);
         ValidationInfo validationInfo = handleTokenValidation(data.getAuthToken(), nonce, taraSession);
-        logValidationInfo(validationInfo, taraSession);
+        processOcspValidationResults(validationInfo, taraSession);
 
         boolean isOcspEnabled = configurationProperties.getOcsp().isEnabled();
         if (!isOcspEnabled) {
@@ -99,10 +99,10 @@ public class IdCardLoginService {
         } catch (CertificateNotYetValidException e) {
             throw new BadRequestException(IDC_CERT_NOT_YET_VALID, e.getMessage(), e);
         } catch (ResilientUserCertificateRevokedException e) {
-            logValidationInfo(e.getValidationInfo(), taraSession);
+            processOcspValidationResults(e.getValidationInfo(), taraSession);
             throw new BadRequestException(IDC_REVOKED, e.getMessage(), e);
         } catch (ResilientUserCertificateOCSPCheckFailedException e) {
-            logValidationInfo(e.getValidationInfo(), taraSession);
+            processOcspValidationResults(e.getValidationInfo(), taraSession);
             throw new BadRequestException(OcspExceptionTranslator.translateOcspCheckFailure(e), e.getMessage(), e);
         } catch (AuthTokenException e) {
             throw new BadRequestException(IDC_VALIDATION_ERROR_RESULT_OTHER, e.getMessage(), e);
@@ -120,19 +120,7 @@ public class IdCardLoginService {
         }
     }
 
-    private void handleStatisticsLogging(TaraSession taraSession, X509Certificate certificate, ErrorCode errorCode,
-                                         String ocspUrl, Exception e, OcspInfo ocspInfo) {
-        TaraSession.IdCardAuthenticationResult authenticationResult = (TaraSession.IdCardAuthenticationResult) taraSession.getAuthenticationResult();
-        updateAuthenticationResult(taraSession, certificate, ocspUrl);
-        authenticationResult.setErrorCode(errorCode);
-        if (e == null) {
-            statisticsLogger.logExternalTransaction(taraSession, ocspInfo);
-        } else {
-            statisticsLogger.logExternalTransaction(taraSession, e, ocspInfo);
-        }
-    }
-
-    private void updateAuthenticationResult(TaraSession taraSession, X509Certificate certificate, String validatingOcspConfUrl) {
+    void updateAuthenticationResult(TaraSession taraSession, X509Certificate certificate, String validatingOcspConfUrl) {
         Map<String, String> params = X509Utils.getCertificateParams(certificate);
         String idCode = EstonianIdCodeUtil.getEstonianIdCode(params.get(CN_SERIALNUMBER));
         TaraSession.IdCardAuthenticationResult authenticationResult = (TaraSession.IdCardAuthenticationResult) taraSession.getAuthenticationResult();
@@ -157,7 +145,7 @@ public class IdCardLoginService {
         SessionUtils.getHttpSession().setAttribute(TARA_SESSION, taraSession);
     }
 
-    private void logValidationInfo(ValidationInfo validationInfo, TaraSession taraSession) {
+    void processOcspValidationResults(ValidationInfo validationInfo, TaraSession taraSession) {
         X509Certificate certificate = validationInfo.subjectCertificate();
         log.info("OCSP certificate info: Serialnumber=<{}>, SubjectDN=<{}>, issuerDN=<{}>",
                 value("x509.serial_number", certificate.getSerialNumber().toString(16)),
@@ -199,7 +187,10 @@ public class IdCardLoginService {
                 ocspRequestResponseLogger.logSuccess(ocspUrl, ocspReq, ocspResp);
             } else {
                 ErrorCode errorCode = OcspExceptionTranslator.translateOcspRequestError(exception);
-                handleStatisticsLogging(taraSession, certificate, errorCode, ocspUrl, exception, ocspInfo);
+                TaraSession.IdCardAuthenticationResult authenticationResult = (TaraSession.IdCardAuthenticationResult) taraSession.getAuthenticationResult();
+                updateAuthenticationResult(taraSession, certificate, ocspUrl);
+                authenticationResult.setErrorCode(errorCode);
+                statisticsLogger.logExternalTransaction(taraSession, exception, ocspInfo);
                 ocspRequestResponseLogger.logFailure(ocspUrl, ocspReq, ocspResp, exception);
             }
         }
