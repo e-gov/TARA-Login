@@ -1,6 +1,5 @@
 package ee.ria.taraauthserver.authentication.idcard;
 
-import ee.ria.taraauthserver.authentication.idcard.IdCardLoginService.OcspInfo;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.config.properties.TaraScope;
@@ -66,6 +65,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -433,6 +433,24 @@ class IdCardLoginServiceTest {
             assertThat(authenticationResult.getIdCode()).isNull();
             assertThat(authenticationResult.getOcspUrl()).isNull();
             assertThat(authenticationResult.getErrorCode()).isNull();
+            verifyNoInteractions(statisticsLogger, ocspRequestResponseLogger);
+        }
+
+        @Test
+        void processOcspValidationResults_whenOcspResponseAttributesParsingFails_throwsAndUpdatesNothingAndLogsNothing() {
+            TaraSession.IdCardAuthenticationResult authenticationResult = new TaraSession.IdCardAuthenticationResult();
+            TaraSession taraSession = buildTaraSession(authenticationResult);
+            ValidationInfo validationInfo = new ValidationInfo(TestUtils.loadCertificateFromResource(VALID_CERT_PATH),
+                    Collections.singletonList(null));
+
+            assertThatThrownBy(() -> service.processOcspValidationResults(validationInfo, taraSession))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("Revocation info cannot be null");
+
+            assertThat(authenticationResult.getIdCode()).isNull();
+            assertThat(authenticationResult.getOcspUrl()).isNull();
+            assertThat(authenticationResult.getErrorCode()).isNull();
+            assertThat(request.getSession().getAttribute(TARA_SESSION)).isNull();
             verifyNoInteractions(statisticsLogger, ocspRequestResponseLogger);
         }
 

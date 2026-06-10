@@ -2,7 +2,7 @@ package ee.ria.taraauthserver.logging;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ee.ria.taraauthserver.authentication.idcard.IdCardLoggingContextMapper;
-import ee.ria.taraauthserver.authentication.idcard.IdCardLoginService;
+import ee.ria.taraauthserver.authentication.idcard.OcspInfo;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.AuthenticationType;
 import ee.ria.taraauthserver.config.properties.SPType;
@@ -75,15 +75,15 @@ public class StatisticsLogger {
         log(taraSession, EXTERNAL_TRANSACTION, ex, null);
     }
 
-    public void logExternalTransaction(TaraSession taraSession, IdCardLoginService.OcspInfo ocspInfo) {
+    public void logExternalTransaction(TaraSession taraSession, OcspInfo ocspInfo) {
         log(taraSession, EXTERNAL_TRANSACTION, null, ocspInfo);
     }
 
-    public void logExternalTransaction(TaraSession taraSession, Exception ex, IdCardLoginService.OcspInfo ocspInfo) {
+    public void logExternalTransaction(TaraSession taraSession, Exception ex, OcspInfo ocspInfo) {
         log(taraSession, EXTERNAL_TRANSACTION, ex, ocspInfo);
     }
 
-    private void log(TaraSession taraSession, TaraAuthenticationState state, Exception ex, IdCardLoginService.OcspInfo ocspInfo) {
+    private void log(TaraSession taraSession, TaraAuthenticationState state, Exception ex, OcspInfo ocspInfo) {
         SessionStatisticsBuilder statisticsBuilder = SessionStatistics.builder();
         processAuthenticationRequest(taraSession, state, statisticsBuilder);
         processAuthenticationResult(taraSession, ex, statisticsBuilder);
