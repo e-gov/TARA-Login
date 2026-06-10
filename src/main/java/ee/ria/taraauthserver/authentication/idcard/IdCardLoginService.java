@@ -3,14 +3,12 @@ package ee.ria.taraauthserver.authentication.idcard;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
-import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.EstonianIdCodeUtil;
 import ee.ria.taraauthserver.utils.X509Utils;
 import ee.sk.mid.MidNationalIdentificationCodeValidator;
-import eu.webeid.ocsp.exceptions.OCSPClientException;
 import eu.webeid.resilientocsp.ResilientOcspCertificateRevocationChecker;
 import eu.webeid.resilientocsp.exceptions.ResilientUserCertificateOCSPCheckFailedException;
 import eu.webeid.resilientocsp.exceptions.ResilientUserCertificateRevokedException;
@@ -27,15 +25,11 @@ import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.cert.ocsp.OCSPReq;
 import org.bouncycastle.cert.ocsp.OCSPResp;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -61,13 +55,12 @@ public class IdCardLoginService {
     public static final String CN_GIVEN_NAME = "GIVENNAME";
     public static final String CN_SURNAME = "SURNAME";
 
-    private final ClientRequestLogger requestLogger = new ClientRequestLogger(ClientRequestLogger.Service.OCSP, this.getClass());
-
     private final AuthConfigurationProperties.IdCardAuthConfigurationProperties configurationProperties;
     private final AuthConfigurationProperties.FilterForEidasProxy filterForEidasProxy;
     private final ChallengeNonceStore nonceStore;
     private final StatisticsLogger statisticsLogger;
     private final AuthTokenValidatorResolver authTokenValidatorResolver;
+    private final OcspRequestResponseLogger ocspRequestResponseLogger;
 
     public void attemptLogin(IdCardLoginController.WebEidData data, TaraSession taraSession) {
         String nonce;
@@ -203,68 +196,12 @@ public class IdCardLoginService {
                 }
                 updateAuthenticationResult(taraSession, certificate, ocspUrl);
                 statisticsLogger.logExternalTransaction(taraSession, ocspInfo);
-                logOcspSuccess(ocspUrl, ocspReq, ocspResp);
+                ocspRequestResponseLogger.logSuccess(ocspUrl, ocspReq, ocspResp);
             } else {
                 ErrorCode errorCode = OcspExceptionTranslator.translateOcspRequestError(exception);
                 handleStatisticsLogging(taraSession, certificate, errorCode, ocspUrl, exception, ocspInfo);
-                logOcspFailure(ocspReq, ocspUrl, exception, ocspResp);
+                ocspRequestResponseLogger.logFailure(ocspUrl, ocspReq, ocspResp, exception);
             }
-        }
-    }
-
-    private void logOcspFailure(OCSPReq ocspReq, String ocspUrl, Exception exception, OCSPResp ocspResp) {
-        try {
-            if (ocspReq != null) {
-                requestLogger.logRequest(ocspUrl, HttpMethod.POST, Base64.getEncoder().encodeToString(ocspReq.getEncoded()));
-            } else {
-                requestLogger.logRequest(ocspUrl, HttpMethod.POST);
-            }
-        } catch (IOException e) {
-            log.atError()
-                    .setCause(e)
-                    .log("Failed to encode OCSP request");
-        }
-
-        int httpStatusCode = -1;
-        byte[] encodedOcspResp;
-        try {
-            if (exception instanceof OCSPClientException ocspClientException) {
-                encodedOcspResp = ocspClientException.getResponseBody();
-                httpStatusCode = ocspClientException.getStatusCode() != null
-                        ? ocspClientException.getStatusCode()
-                        : httpStatusCode;
-            } else {
-                encodedOcspResp = ocspResp.getEncoded();
-                // A non-OCSPClientException failure (e.g. a definitive REVOKED/UNKNOWN status) means the OCSP HTTP
-                // request itself succeeded, so the response was served with HTTP 200.
-                httpStatusCode = HttpStatus.OK.value();
-            }
-            if (encodedOcspResp != null) {
-                requestLogger.logResponse(httpStatusCode, Base64.getEncoder().encodeToString(encodedOcspResp));
-            } else {
-                requestLogger.logResponse(httpStatusCode);
-            }
-        } catch (IOException e) {
-            log.atError()
-                    .setCause(e)
-                    .log("Failed to encode OCSP response");
-        }
-    }
-
-    private void logOcspSuccess(String ocspUrl, OCSPReq ocspReq, OCSPResp ocspResp) {
-        try {
-            requestLogger.logRequest(ocspUrl, HttpMethod.POST, Base64.getEncoder().encodeToString(ocspReq.getEncoded()));
-        } catch (IOException e) {
-            log.atError()
-                    .setCause(e)
-                    .log("Failed to encode OCSP request");
-        }
-        try {
-            requestLogger.logResponse(HttpStatus.OK.value(), Base64.getEncoder().encodeToString(ocspResp.getEncoded()));
-        } catch (IOException e) {
-            log.atError()
-                    .setCause(e)
-                    .log("Failed to encode OCSP response");
         }
     }
 

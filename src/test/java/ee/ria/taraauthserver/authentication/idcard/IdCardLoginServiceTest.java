@@ -33,6 +33,7 @@ class IdCardLoginServiceTest {
     private AuthConfigurationProperties.IdCardAuthConfigurationProperties configurationProperties;
     private AuthConfigurationProperties.FilterForEidasProxy filterForEidasProxy;
     private AuthTokenValidatorResolver authTokenValidatorResolver;
+    private OcspRequestResponseLogger ocspRequestResponseLogger;
 
     private IdCardLoginService service;
 
@@ -48,13 +49,15 @@ class IdCardLoginServiceTest {
         configurationProperties = mock(AuthConfigurationProperties.IdCardAuthConfigurationProperties.class);
         filterForEidasProxy = mock(AuthConfigurationProperties.FilterForEidasProxy.class);
         authTokenValidatorResolver = mock(AuthTokenValidatorResolver.class);
+        ocspRequestResponseLogger = mock(OcspRequestResponseLogger.class);
 
         service = new IdCardLoginService(
                 configurationProperties,
                 filterForEidasProxy,
                 nonceStore,
                 statisticsLogger,
-                authTokenValidatorResolver
+                authTokenValidatorResolver,
+                ocspRequestResponseLogger
         );
     }
 
