@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.authentication.idcard;
 import ee.ria.taraauthserver.authentication.idcard.IdCardLoginService.OcspInfo;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
+import ee.ria.taraauthserver.config.properties.TaraScope;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
 import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
@@ -10,6 +11,8 @@ import ee.ria.taraauthserver.session.MockTaraSessionBuilder;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.TestUtils;
+import eu.webeid.ocsp.exceptions.OCSPClientException;
+import eu.webeid.ocsp.exceptions.UserCertificateRevokedException;
 import eu.webeid.resilientocsp.exceptions.ResilientUserCertificateOCSPCheckFailedException;
 import eu.webeid.resilientocsp.exceptions.ResilientUserCertificateRevokedException;
 import eu.webeid.security.authtoken.WebEidAuthToken;
@@ -30,6 +33,7 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.cert.ocsp.BasicOCSPResp;
 import org.bouncycastle.cert.ocsp.CertificateStatus;
+import org.bouncycastle.cert.ocsp.OCSPReq;
 import org.bouncycastle.cert.ocsp.OCSPResp;
 import org.bouncycastle.cert.ocsp.RevokedStatus;
 import org.bouncycastle.cert.ocsp.SingleResp;
@@ -37,6 +41,7 @@ import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,13 +54,17 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.security.auth.x500.X500Principal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.Principal;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
@@ -66,6 +75,7 @@ import java.util.stream.Stream;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_EXPIRED;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_FORBIDDEN;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_NOT_YET_VALID;
+import static ee.ria.taraauthserver.error.ErrorCode.IDC_OCSP_NOT_AVAILABLE;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_REVOKED;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_VALIDATION_ERROR_RESULT_OTHER;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_VALIDATION_ERROR_RESULT_REVOKED;
@@ -77,6 +87,7 @@ import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static ee.ria.taraauthserver.utils.MockitoUtil.ANSWER_THROW_EXCEPTION;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
@@ -406,6 +417,312 @@ class IdCardLoginServiceTest {
             assertSessionStoredWithState(login, NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT);
         }
 
+    }
+
+    @Nested
+    class ProcessOcspValidationResults {
+
+        @Test
+        void processOcspValidationResults_whenRevocationInfoListEmpty_updatesNothingAndLogsNothing() {
+            TaraSession.IdCardAuthenticationResult authenticationResult = new TaraSession.IdCardAuthenticationResult();
+            TaraSession taraSession = buildTaraSession(authenticationResult);
+            ValidationInfo validationInfo = new ValidationInfo(TestUtils.loadCertificateFromResource(VALID_CERT_PATH), List.of());
+
+            service.processOcspValidationResults(validationInfo, taraSession);
+
+            assertThat(authenticationResult.getIdCode()).isNull();
+            assertThat(authenticationResult.getOcspUrl()).isNull();
+            assertThat(authenticationResult.getErrorCode()).isNull();
+            verifyNoInteractions(statisticsLogger, ocspRequestResponseLogger);
+        }
+
+        @Test
+        void processOcspValidationResults_whenSuccessfulResponseNotLast_throwsIllegalStateException() {
+            TaraSession taraSession = buildTaraSession(new TaraSession.IdCardAuthenticationResult());
+            ValidationInfo validationInfo = new ValidationInfo(TestUtils.loadCertificateFromResource(VALID_CERT_PATH), List.of(
+                    new RevocationInfo(URI.create("http://ocsp1.test"), Map.of(RevocationInfo.KEY_OCSP_RESPONSE, mock(OCSPResp.class))),
+                    new RevocationInfo(URI.create("http://ocsp2.test"), Map.of())));
+
+            assertThatThrownBy(() -> service.processOcspValidationResults(validationInfo, taraSession))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Only the last response can be successful");
+
+            verifyNoInteractions(statisticsLogger, ocspRequestResponseLogger);
+        }
+
+        @Test
+        void processOcspValidationResults_whenLastResponseSuccessful_updatesAuthenticationResultAndLogsSuccessfulOcspResponse() {
+            TaraSession.IdCardAuthenticationResult authenticationResult = new TaraSession.IdCardAuthenticationResult();
+            TaraSession taraSession = buildTaraSession(authenticationResult);
+            OCSPReq ocspReq = mock(OCSPReq.class);
+            OCSPResp ocspResp = mock(OCSPResp.class);
+            ValidationInfo validationInfo = new ValidationInfo(TestUtils.loadCertificateFromResource(VALID_CERT_PATH), List.of(
+                    new RevocationInfo(URI.create("http://ocsp.test"), Map.of(
+                            RevocationInfo.KEY_OCSP_REQUEST, ocspReq,
+                            RevocationInfo.KEY_OCSP_RESPONSE, ocspResp))));
+
+            service.processOcspValidationResults(validationInfo, taraSession);
+
+            assertThat(authenticationResult.getIdCode()).isEqualTo("38001085718");
+            assertThat(authenticationResult.getFirstName()).isEqualTo("JAAK-KRISTJAN");
+            assertThat(authenticationResult.getLastName()).isEqualTo("JÕEORG");
+            assertThat(authenticationResult.getCountry()).isEqualTo("EE");
+            assertThat(authenticationResult.getSubject()).isEqualTo("EE38001085718");
+            assertThat(authenticationResult.getDateOfBirth()).isEqualTo(LocalDate.of(1980, 1, 8));
+            assertThat(authenticationResult.getAcr()).isEqualTo(LevelOfAssurance.HIGH);
+            assertThat(authenticationResult.getOcspUrl()).isEqualTo("http://ocsp.test");
+            assertThat(authenticationResult.getErrorCode()).isNull();
+            ArgumentCaptor<OcspInfo> ocspInfo = ArgumentCaptor.forClass(OcspInfo.class);
+            verify(statisticsLogger).logExternalTransaction(same(taraSession), ocspInfo.capture());
+            assertThat(ocspInfo.getValue().ocspResp()).isSameAs(ocspResp);
+            assertThat(ocspInfo.getValue().requestCount()).isEqualTo(1);
+            assertThat(ocspInfo.getValue().isLastRequest()).isTrue();
+            verify(ocspRequestResponseLogger).logSuccess("http://ocsp.test", ocspReq, ocspResp);
+        }
+
+        @Test
+        void processOcspValidationResults_whenOcspRequestFailed_updatesAuthenticationResultWithTranslatedErrorAndLogsFailedOcspResponse() {
+            TaraSession.IdCardAuthenticationResult authenticationResult = new TaraSession.IdCardAuthenticationResult();
+            TaraSession taraSession = buildTaraSession(authenticationResult);
+            UserCertificateRevokedException ocspError = new UserCertificateRevokedException();
+            OCSPReq ocspReq = mock(OCSPReq.class);
+            OCSPResp ocspResp = mock(OCSPResp.class);
+            ValidationInfo validationInfo = new ValidationInfo(TestUtils.loadCertificateFromResource(VALID_CERT_PATH), List.of(
+                    new RevocationInfo(URI.create("http://ocsp.test"), Map.of(
+                            RevocationInfo.KEY_OCSP_REQUEST, ocspReq,
+                            RevocationInfo.KEY_OCSP_RESPONSE, ocspResp,
+                            RevocationInfo.KEY_OCSP_ERROR, ocspError))));
+
+            service.processOcspValidationResults(validationInfo, taraSession);
+
+            assertThat(authenticationResult.getErrorCode()).isEqualTo(IDC_REVOKED);
+            assertThat(authenticationResult.getOcspUrl()).isEqualTo("http://ocsp.test");
+            ArgumentCaptor<OcspInfo> ocspInfo = ArgumentCaptor.forClass(OcspInfo.class);
+            verify(statisticsLogger).logExternalTransaction(same(taraSession), same(ocspError), ocspInfo.capture());
+            assertThat(ocspInfo.getValue().requestCount()).isEqualTo(1);
+            assertThat(ocspInfo.getValue().isLastRequest()).isTrue();
+            assertThat(ocspInfo.getValue().ocspResp()).isSameAs(ocspResp);
+            verify(ocspRequestResponseLogger).logFailure("http://ocsp.test", ocspReq, ocspResp, ocspError);
+        }
+
+        @Test
+        void processOcspValidationResults_whenMultipleFailedResponses_keepsErrorCodeOfLastFailure() {
+            TaraSession.IdCardAuthenticationResult authenticationResult = new TaraSession.IdCardAuthenticationResult();
+            TaraSession taraSession = buildTaraSession(authenticationResult);
+            UserCertificateRevokedException firstError = new UserCertificateRevokedException();
+            OCSPClientException lastError = new OCSPClientException("OCSP request failed", null, 503);
+            ValidationInfo validationInfo = new ValidationInfo(TestUtils.loadCertificateFromResource(VALID_CERT_PATH), List.of(
+                    new RevocationInfo(URI.create("http://ocsp1.test"), Map.of(RevocationInfo.KEY_OCSP_ERROR, firstError)),
+                    new RevocationInfo(URI.create("http://ocsp2.test"), Map.of(RevocationInfo.KEY_OCSP_ERROR, lastError))));
+
+            service.processOcspValidationResults(validationInfo, taraSession);
+
+            assertThat(authenticationResult.getErrorCode()).isEqualTo(IDC_OCSP_NOT_AVAILABLE);
+            assertThat(authenticationResult.getOcspUrl()).isEqualTo("http://ocsp2.test");
+            verify(ocspRequestResponseLogger).logFailure("http://ocsp1.test", null, null, firstError);
+            verify(ocspRequestResponseLogger).logFailure("http://ocsp2.test", null, null, lastError);
+            verify(statisticsLogger).logExternalTransaction(same(taraSession), same(firstError), any(OcspInfo.class));
+            verify(statisticsLogger).logExternalTransaction(same(taraSession), same(lastError), any(OcspInfo.class));
+        }
+
+        @Test
+        void processOcspValidationResults_whenFailedResponseFollowedBySuccess_clearsErrorCodeAndLogsBothResponses() {
+            TaraSession.IdCardAuthenticationResult authenticationResult = new TaraSession.IdCardAuthenticationResult();
+            TaraSession taraSession = buildTaraSession(authenticationResult);
+            UserCertificateRevokedException ocspError = new UserCertificateRevokedException();
+            OCSPResp ocspResp = mock(OCSPResp.class);
+            ValidationInfo validationInfo = new ValidationInfo(TestUtils.loadCertificateFromResource(VALID_CERT_PATH), List.of(
+                    new RevocationInfo(URI.create("http://ocsp1.test"), Map.of(RevocationInfo.KEY_OCSP_ERROR, ocspError)),
+                    new RevocationInfo(URI.create("http://ocsp2.test"), Map.of(RevocationInfo.KEY_OCSP_RESPONSE, ocspResp))));
+
+            service.processOcspValidationResults(validationInfo, taraSession);
+
+            assertThat(authenticationResult.getErrorCode()).isNull();
+            assertThat(authenticationResult.getOcspUrl()).isEqualTo("http://ocsp2.test");
+            verify(ocspRequestResponseLogger).logFailure("http://ocsp1.test", null, null, ocspError);
+            verify(ocspRequestResponseLogger).logSuccess("http://ocsp2.test", null, ocspResp);
+            ArgumentCaptor<OcspInfo> failedOcspInfo = ArgumentCaptor.forClass(OcspInfo.class);
+            verify(statisticsLogger).logExternalTransaction(same(taraSession), same(ocspError), failedOcspInfo.capture());
+            assertThat(failedOcspInfo.getValue().requestCount()).isEqualTo(1);
+            assertThat(failedOcspInfo.getValue().isLastRequest()).isFalse();
+            ArgumentCaptor<OcspInfo> successfulOcspInfo = ArgumentCaptor.forClass(OcspInfo.class);
+            verify(statisticsLogger).logExternalTransaction(same(taraSession), successfulOcspInfo.capture());
+            assertThat(successfulOcspInfo.getValue().requestCount()).isEqualTo(2);
+            assertThat(successfulOcspInfo.getValue().isLastRequest()).isTrue();
+        }
+
+        @ParameterizedTest
+        @MethodSource("successfulAndFailedRevocationInfoAttributes")
+        void processOcspValidationResults_whenUpdatingAuthenticationResultFails_throwsAndLogsNothing(Map<String, Object> revocationInfoAttributes) {
+            TaraSession taraSession = buildTaraSession(new TaraSession.IdCardAuthenticationResult());
+            ValidationInfo validationInfo = new ValidationInfo(givenCertificateWithInvalidEstonianIdCode(), List.of(
+                    new RevocationInfo(URI.create("http://ocsp.test"), revocationInfoAttributes)));
+
+            assertThatThrownBy(() -> service.processOcspValidationResults(validationInfo, taraSession))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("Invalid Estonian identity code");
+
+            verifyNoInteractions(statisticsLogger, ocspRequestResponseLogger);
+        }
+
+        static Stream<Named<Map<String, Object>>> successfulAndFailedRevocationInfoAttributes() {
+            return Stream.of(
+                    Named.of("successful OCSP response", Map.of(RevocationInfo.KEY_OCSP_RESPONSE, mock(OCSPResp.class))),
+                    Named.of("failed OCSP response", Map.of(RevocationInfo.KEY_OCSP_ERROR, new UserCertificateRevokedException())));
+        }
+
+        private X509Certificate givenCertificateWithInvalidEstonianIdCode() {
+            X509Certificate certificate = mock(X509Certificate.class);
+            doReturn(BigInteger.ONE).when(certificate).getSerialNumber();
+            doReturn(new X500Principal("CN=Test")).when(certificate).getSubjectX500Principal();
+            doReturn(new X500Principal("CN=Test CA")).when(certificate).getIssuerX500Principal();
+            Principal subjectDN = mock(Principal.class);
+            doReturn(subjectDN).when(certificate).getSubjectDN();
+            doReturn("SERIALNUMBER=99999999999, GIVENNAME=JAAK-KRISTJAN, SURNAME=JÕEORG, CN=Test, C=EE")
+                    .when(subjectDN).getName();
+            return certificate;
+        }
+    }
+
+    @Nested
+    class UpdateAuthenticationResult {
+
+        @Test
+        void updateAuthenticationResult_whenEmailScopeRequested_setsEmailFromCertificate() {
+            TaraSession.IdCardAuthenticationResult authenticationResult = new TaraSession.IdCardAuthenticationResult();
+            TaraSession taraSession = MockTaraSessionBuilder.builder()
+                    .sessionId(request.getSession().getId())
+                    .requestedScopes(List.of(TaraScope.EMAIL.getFormalName()))
+                    .authenticationResult(authenticationResult)
+                    .build();
+
+            service.updateAuthenticationResult(taraSession, TestUtils.loadCertificateFromResource(VALID_CERT_PATH), "http://ocsp.test");
+
+            assertThat(authenticationResult.getEmail()).isEqualTo("38001085718@eesti.ee");
+        }
+
+        @Test
+        void updateAuthenticationResult_whenEmailScopeNotRequested_leavesEmailNull() {
+            TaraSession.IdCardAuthenticationResult authenticationResult = new TaraSession.IdCardAuthenticationResult();
+            TaraSession taraSession = buildTaraSession(authenticationResult);
+
+            service.updateAuthenticationResult(taraSession, TestUtils.loadCertificateFromResource(VALID_CERT_PATH), "http://ocsp.test");
+
+            assertThat(authenticationResult.getEmail()).isNull();
+        }
+
+        @Test
+        void updateAuthenticationResult_whenErrorCodePreviouslySet_setsValuesClearsErrorCodeAndStoresSessionInHttpSession() {
+            TaraSession.IdCardAuthenticationResult authenticationResult = new TaraSession.IdCardAuthenticationResult();
+            authenticationResult.setErrorCode(IDC_REVOKED);
+            TaraSession taraSession = buildTaraSession(authenticationResult);
+
+            service.updateAuthenticationResult(taraSession, TestUtils.loadCertificateFromResource(VALID_CERT_PATH), "http://ocsp.test");
+
+            assertThat(authenticationResult.getErrorCode()).isNull();
+            assertThat(authenticationResult.getOcspUrl()).isEqualTo("http://ocsp.test");
+            assertThat(authenticationResult.getCertificatePolicyOids())
+                    .containsExactlyInAnyOrder(CERTIFICATE_POLICY_OID, "0.4.0.2042.1.2");
+            assertThat(authenticationResult.getFirstName()).isEqualTo("JAAK-KRISTJAN");
+            assertThat(authenticationResult.getLastName()).isEqualTo("JÕEORG");
+            assertThat(authenticationResult.getIdCode()).isEqualTo("38001085718");
+            assertThat(authenticationResult.getCountry()).isEqualTo("EE");
+            assertThat(authenticationResult.getDateOfBirth()).isEqualTo(LocalDate.of(1980, 1, 8));
+            assertThat(authenticationResult.getAcr()).isEqualTo(LevelOfAssurance.HIGH);
+            assertThat(authenticationResult.getSubject()).isEqualTo("EE38001085718");
+            assertThat(request.getSession().getAttribute(TARA_SESSION)).isSameAs(taraSession);
+        }
+
+        @Test
+        void updateAuthenticationResult_whenCertificateSerialNumberIsNotValidEstonianIdCode_throwsAndLeavesAuthenticationResultAndSessionUntouched() {
+            TaraSession.IdCardAuthenticationResult authenticationResult = new TaraSession.IdCardAuthenticationResult();
+            authenticationResult.setErrorCode(IDC_REVOKED);
+            TaraSession taraSession = buildTaraSession(authenticationResult);
+            X509Certificate certificate = mock(X509Certificate.class);
+            Principal subjectDN = mock(Principal.class);
+            doReturn(subjectDN).when(certificate).getSubjectDN();
+            doReturn("SERIALNUMBER=99999999999, GIVENNAME=JAAK-KRISTJAN, SURNAME=JÕEORG, CN=Test, C=EE")
+                    .when(subjectDN).getName();
+
+            assertThatThrownBy(() -> service.updateAuthenticationResult(taraSession, certificate, "http://ocsp.test"))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("Invalid Estonian identity code");
+
+            assertThat(authenticationResult.getErrorCode()).isEqualTo(IDC_REVOKED);
+            assertThat(authenticationResult.getIdCode()).isNull();
+            assertThat(authenticationResult.getFirstName()).isNull();
+            assertThat(authenticationResult.getLastName()).isNull();
+            assertThat(authenticationResult.getSubject()).isNull();
+            assertThat(authenticationResult.getDateOfBirth()).isNull();
+            assertThat(authenticationResult.getAcr()).isNull();
+            assertThat(authenticationResult.getOcspUrl()).isNull();
+            assertThat(authenticationResult.getCertificatePolicyOids()).isNull();
+            assertThat(request.getSession().getAttribute(TARA_SESSION)).isNull();
+        }
+
+        @Test
+        void updateAuthenticationResult_whenCertificatePolicyOidsExtractionFails_throwsAndLeavesAuthenticationResultAndSessionUntouched() throws Exception {
+            TaraSession.IdCardAuthenticationResult authenticationResult = new TaraSession.IdCardAuthenticationResult();
+            authenticationResult.setErrorCode(IDC_REVOKED);
+            TaraSession taraSession = buildTaraSession(authenticationResult);
+            X509Certificate certificate = mock(X509Certificate.class);
+            Principal subjectDN = mock(Principal.class);
+            doReturn(subjectDN).when(certificate).getSubjectDN();
+            doReturn("SERIALNUMBER=38001085718, GIVENNAME=JAAK-KRISTJAN, SURNAME=JÕEORG, CN=Test, C=EE")
+                    .when(subjectDN).getName();
+            CertificateEncodingException encodingException = new CertificateEncodingException("Unable to encode certificate");
+            doThrow(encodingException).when(certificate).getEncoded();
+
+            assertThatThrownBy(() -> service.updateAuthenticationResult(taraSession, certificate, "http://ocsp.test"))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Failed to extract certificate policy OIDs")
+                    .hasCause(encodingException);
+
+            assertThat(authenticationResult.getErrorCode()).isEqualTo(IDC_REVOKED);
+            assertThat(authenticationResult.getIdCode()).isNull();
+            assertThat(authenticationResult.getFirstName()).isNull();
+            assertThat(authenticationResult.getLastName()).isNull();
+            assertThat(authenticationResult.getSubject()).isNull();
+            assertThat(authenticationResult.getDateOfBirth()).isNull();
+            assertThat(authenticationResult.getAcr()).isNull();
+            assertThat(authenticationResult.getOcspUrl()).isNull();
+            assertThat(authenticationResult.getCertificatePolicyOids()).isNull();
+            assertThat(request.getSession().getAttribute(TARA_SESSION)).isNull();
+        }
+
+        @Test
+        void updateAuthenticationResult_whenEmailExtractionFails_throwsAndLeavesAuthenticationResultAndSessionUntouched() throws Exception {
+            TaraSession.IdCardAuthenticationResult authenticationResult = new TaraSession.IdCardAuthenticationResult();
+            authenticationResult.setErrorCode(IDC_REVOKED);
+            TaraSession taraSession = MockTaraSessionBuilder.builder()
+                    .sessionId(request.getSession().getId())
+                    .requestedScopes(List.of(TaraScope.EMAIL.getFormalName()))
+                    .authenticationResult(authenticationResult)
+                    .build();
+            X509Certificate certificate = mock(X509Certificate.class);
+            Principal subjectDN = mock(Principal.class);
+            doReturn(subjectDN).when(certificate).getSubjectDN();
+            doReturn("SERIALNUMBER=38001085718, GIVENNAME=JAAK-KRISTJAN, SURNAME=JÕEORG, CN=Test, C=EE")
+                    .when(subjectDN).getName();
+            doReturn(TestUtils.loadCertificateFromResource(VALID_CERT_PATH).getEncoded()).when(certificate).getEncoded();
+            doReturn(null).when(certificate).getSubjectAlternativeNames();
+
+            assertThatThrownBy(() -> service.updateAuthenticationResult(taraSession, certificate, "http://ocsp.test"))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("This certificate does not contain any Subject Alternative Name fields!");
+
+            assertThat(authenticationResult.getErrorCode()).isEqualTo(IDC_REVOKED);
+            assertThat(authenticationResult.getEmail()).isNull();
+            assertThat(authenticationResult.getIdCode()).isNull();
+            assertThat(authenticationResult.getFirstName()).isNull();
+            assertThat(authenticationResult.getLastName()).isNull();
+            assertThat(authenticationResult.getSubject()).isNull();
+            assertThat(authenticationResult.getDateOfBirth()).isNull();
+            assertThat(authenticationResult.getAcr()).isNull();
+            assertThat(authenticationResult.getOcspUrl()).isNull();
+            assertThat(authenticationResult.getCertificatePolicyOids()).isNull();
+            assertThat(request.getSession().getAttribute(TARA_SESSION)).isNull();
+        }
     }
 
     private LoginTestData givenLoginRequest() throws Exception {
