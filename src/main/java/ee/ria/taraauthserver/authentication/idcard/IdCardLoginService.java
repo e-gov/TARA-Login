@@ -9,7 +9,6 @@ import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.EstonianIdCodeUtil;
 import ee.ria.taraauthserver.utils.X509Utils;
 import ee.sk.mid.MidNationalIdentificationCodeValidator;
-import eu.webeid.resilientocsp.ResilientOcspCertificateRevocationChecker;
 import eu.webeid.resilientocsp.exceptions.ResilientUserCertificateOCSPCheckFailedException;
 import eu.webeid.resilientocsp.exceptions.ResilientUserCertificateRevokedException;
 import eu.webeid.security.authtoken.WebEidAuthToken;
@@ -22,14 +21,10 @@ import eu.webeid.security.validator.revocationcheck.RevocationInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
-import org.bouncycastle.cert.ocsp.OCSPReq;
-import org.bouncycastle.cert.ocsp.OCSPResp;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.security.cert.X509Certificate;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -157,52 +152,22 @@ public class IdCardLoginService {
         while(iterator.hasNext()) {
             requestCount++;
             RevocationInfo revocationInfo = iterator.next();
-            if (revocationInfo == null) {
-                throw new IllegalArgumentException("Revocation info cannot be null");
-            }
-            Map<String, Object> ocspResponseAttributes = revocationInfo.ocspResponseAttributes();
-            String ocspUrl = revocationInfo.ocspResponderUri().toString();
-            OCSPReq ocspReq = (OCSPReq) ocspResponseAttributes.get(RevocationInfo.KEY_OCSP_REQUEST);
-            OCSPResp ocspResp = null;
-            try {
-                ocspResp = (OCSPResp) ocspResponseAttributes.get(RevocationInfo.KEY_OCSP_RESPONSE);
-            } catch (ClassCastException e) {
-                log.atWarn()
-                        .setCause(e)
-                        .log("Failed to parse OCSP response");
-            }
-            Exception exception = (Exception) ocspResponseAttributes.get(RevocationInfo.KEY_OCSP_ERROR);
-            Duration requestDuration = (Duration) ocspResponseAttributes.get(RevocationInfo.KEY_REQUEST_DURATION);
-            boolean isLastRequest = !iterator.hasNext();
-            ResilientOcspCertificateRevocationChecker.CircuitBreakerStatistics circuitBreakerStatistics
-                    = (ResilientOcspCertificateRevocationChecker.CircuitBreakerStatistics) ocspResponseAttributes.get(RevocationInfo.KEY_CIRCUIT_BREAKER_STATISTICS);
-            Instant responseTime = (Instant) ocspResponseAttributes.get(RevocationInfo.KEY_OCSP_RESPONSE_TIME);
-            OcspInfo ocspInfo = new OcspInfo(ocspResp, requestCount, requestDuration, isLastRequest, circuitBreakerStatistics, responseTime);
-            if (exception == null) {
-                if (!isLastRequest) {
+            OcspResponseAttributes ocspResponseAttributes = OcspResponseAttributes.parse(revocationInfo, requestCount, !iterator.hasNext());
+            if (ocspResponseAttributes.error() == null) {
+                if (!ocspResponseAttributes.lastRequest()) {
                     throw new IllegalStateException("Only the last response can be successful");
                 }
-                updateAuthenticationResult(taraSession, certificate, ocspUrl);
-                statisticsLogger.logExternalTransaction(taraSession, ocspInfo);
-                ocspRequestResponseLogger.logSuccess(ocspUrl, ocspReq, ocspResp);
+                updateAuthenticationResult(taraSession, certificate, ocspResponseAttributes.ocspUrl());
+                statisticsLogger.logExternalTransaction(taraSession, ocspResponseAttributes.toOcspInfo());
+                ocspRequestResponseLogger.logSuccess(ocspResponseAttributes.ocspUrl(), ocspResponseAttributes.ocspRequest(), ocspResponseAttributes.ocspResponse());
             } else {
-                ErrorCode errorCode = OcspExceptionTranslator.translateOcspRequestError(exception);
+                ErrorCode errorCode = OcspExceptionTranslator.translateOcspRequestError(ocspResponseAttributes.error());
                 TaraSession.IdCardAuthenticationResult authenticationResult = (TaraSession.IdCardAuthenticationResult) taraSession.getAuthenticationResult();
-                updateAuthenticationResult(taraSession, certificate, ocspUrl);
+                updateAuthenticationResult(taraSession, certificate, ocspResponseAttributes.ocspUrl());
                 authenticationResult.setErrorCode(errorCode);
-                statisticsLogger.logExternalTransaction(taraSession, exception, ocspInfo);
-                ocspRequestResponseLogger.logFailure(ocspUrl, ocspReq, ocspResp, exception);
+                statisticsLogger.logExternalTransaction(taraSession, ocspResponseAttributes.error(), ocspResponseAttributes.toOcspInfo());
+                ocspRequestResponseLogger.logFailure(ocspResponseAttributes.ocspUrl(), ocspResponseAttributes.ocspRequest(), ocspResponseAttributes.ocspResponse(), ocspResponseAttributes.error());
             }
         }
-    }
-
-    public record OcspInfo(
-            OCSPResp ocspResp,
-            Integer requestCount,
-            Duration requestDuration,
-            boolean isLastRequest,
-            ResilientOcspCertificateRevocationChecker.CircuitBreakerStatistics circuitBreakerStatistics,
-            Instant responseTime
-    ) {
     }
 }

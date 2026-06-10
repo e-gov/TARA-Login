@@ -21,7 +21,7 @@ import java.util.Date;
 @Slf4j
 public class IdCardLoggingContextMapper {
 
-    public IdCardLoggingContext toIdCardLoggingContext(IdCardLoginService.OcspInfo ocspInfo) {
+    public IdCardLoggingContext toIdCardLoggingContext(OcspInfo ocspInfo) {
         IdCardLoggingContext.IdCardLoggingContextBuilder idCardLoggingContextBuilder = IdCardLoggingContext.builder();
 
         if (ocspInfo == null) {

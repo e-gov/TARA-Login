@@ -122,7 +122,7 @@ class IdCardLoginServiceTest {
         assertThat(authenticationResult.getAcr()).isEqualTo(LevelOfAssurance.HIGH);
         assertThat(authenticationResult.getOcspUrl()).isEqualTo("http://ocsp.test");
         assertThat(authenticationResult.getErrorCode()).isNull();
-        verify(statisticsLogger).logExternalTransaction(same(taraSession), any(IdCardLoginService.OcspInfo.class));
+        verify(statisticsLogger).logExternalTransaction(same(taraSession), any(OcspInfo.class));
         verify(ocspRequestResponseLogger).logSuccess("http://ocsp.test", null, ocspResp);
     }
 
@@ -139,7 +139,7 @@ class IdCardLoginServiceTest {
 
         assertThat(authenticationResult.getErrorCode()).isEqualTo(IDC_REVOKED);
         assertThat(authenticationResult.getOcspUrl()).isEqualTo("http://ocsp.test");
-        verify(statisticsLogger).logExternalTransaction(same(taraSession), same(ocspError), any(IdCardLoginService.OcspInfo.class));
+        verify(statisticsLogger).logExternalTransaction(same(taraSession), same(ocspError), any(OcspInfo.class));
         verify(ocspRequestResponseLogger).logFailure("http://ocsp.test", null, null, ocspError);
     }
 
