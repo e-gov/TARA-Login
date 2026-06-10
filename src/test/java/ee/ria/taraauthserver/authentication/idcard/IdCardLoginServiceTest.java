@@ -1,13 +1,17 @@
 package ee.ria.taraauthserver.authentication.idcard;
 
+import ee.ria.taraauthserver.authentication.idcard.IdCardLoginService.OcspInfo;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.MockTaraSessionBuilder;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.utils.TestUtils;
+import eu.webeid.resilientocsp.exceptions.ResilientUserCertificateOCSPCheckFailedException;
+import eu.webeid.resilientocsp.exceptions.ResilientUserCertificateRevokedException;
 import eu.webeid.security.authtoken.WebEidAuthToken;
 import eu.webeid.security.challenge.ChallengeNonce;
 import eu.webeid.security.challenge.ChallengeNonceStore;
@@ -24,6 +28,11 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.bouncycastle.cert.ocsp.BasicOCSPResp;
+import org.bouncycastle.cert.ocsp.CertificateStatus;
+import org.bouncycastle.cert.ocsp.OCSPResp;
+import org.bouncycastle.cert.ocsp.RevokedStatus;
+import org.bouncycastle.cert.ocsp.SingleResp;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.junit.jupiter.api.AfterEach;
@@ -33,12 +42,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
+import org.mockito.MockedConstruction;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.math.BigInteger;
+import java.net.URI;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.cert.X509Certificate;
@@ -47,13 +59,16 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_EXPIRED;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_FORBIDDEN;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_NOT_YET_VALID;
+import static ee.ria.taraauthserver.error.ErrorCode.IDC_REVOKED;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_VALIDATION_ERROR_RESULT_OTHER;
+import static ee.ria.taraauthserver.error.ErrorCode.IDC_VALIDATION_ERROR_RESULT_REVOKED;
 import static ee.ria.taraauthserver.error.ErrorCode.INVALID_REQUEST;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT;
@@ -68,6 +83,7 @@ import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -87,6 +103,7 @@ class IdCardLoginServiceTest {
     private AuthConfigurationProperties.Ocsp ocsp;
     private AuthConfigurationProperties.FilterForEidasProxy filterForEidasProxy;
     private AuthTokenValidatorResolver authTokenValidatorResolver;
+    private OcspRequestResponseLogger ocspRequestResponseLogger;
     private StatisticsLogger statisticsLogger;
     private MockHttpServletRequest request;
 
@@ -111,13 +128,18 @@ class IdCardLoginServiceTest {
         filterForEidasProxy = spy(new AuthConfigurationProperties.FilterForEidasProxy());
         filterForEidasProxy.setClientId(EIDAS_CLIENT_ID);
 
-        service = new IdCardLoginService(
-                configurationProperties,
-                filterForEidasProxy,
-                nonceStore,
-                statisticsLogger,
-                authTokenValidatorResolver
-        );
+        try (MockedConstruction<OcspRequestResponseLogger> ocspRequestResponseLoggerConstruction =
+                     mockConstruction(OcspRequestResponseLogger.class, (mock, context) ->
+                             assertThat(context.arguments()).isEqualTo(List.of(ClientRequestLogger.Service.OCSP, IdCardLoginService.class)))) {
+            service = new IdCardLoginService(
+                    configurationProperties,
+                    filterForEidasProxy,
+                    nonceStore,
+                    statisticsLogger,
+                    authTokenValidatorResolver
+            );
+            ocspRequestResponseLogger = ocspRequestResponseLoggerConstruction.constructed().get(0);
+        }
     }
 
     @AfterEach
@@ -160,6 +182,22 @@ class IdCardLoginServiceTest {
             assertThat(login.authenticationResult().getIdCode()).isEqualTo("38001085718");
             assertThat(login.authenticationResult().getOcspUrl()).isNull();
             assertThat(login.authenticationResult().getErrorCode()).isNull();
+        }
+
+        @Test
+        void attemptLogin_whenOcspEnabled_keepsAuthenticationResultFromOcspValidation() throws Exception {
+            ocsp.setEnabled(true);
+            LoginTestData login = givenLoginRequest();
+            OCSPResp ocspResp = mock(OCSPResp.class);
+            givenValidationSucceeds(login, List.of(
+                    new RevocationInfo(URI.create("http://ocsp.test"), Map.of(RevocationInfo.KEY_OCSP_RESPONSE, ocspResp))));
+
+            service.attemptLogin(login.data(), login.taraSession());
+
+            assertThat(login.authenticationResult().getIdCode()).isEqualTo("38001085718");
+            assertThat(login.authenticationResult().getOcspUrl()).isEqualTo("http://ocsp.test");
+            verify(ocspRequestResponseLogger).logSuccess("http://ocsp.test", null, ocspResp);
+            assertSessionStoredWithState(login, NATURAL_PERSON_AUTHENTICATION_COMPLETED);
         }
 
         @ParameterizedTest
@@ -208,6 +246,51 @@ class IdCardLoginServiceTest {
                     .withCause(exception)
                     .satisfies(ex -> assertThat(ex.getErrorCode()).isEqualTo(IDC_CERT_NOT_YET_VALID));
 
+            assertSessionStoredWithState(login, NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT);
+        }
+
+        @Test
+        void attemptLogin_whenCertificateRevoked_processesOcspResultsBeforeThrowingBadRequest() throws Exception {
+            LoginTestData login = givenLoginRequest();
+            OCSPResp ocspResp = mock(OCSPResp.class);
+            ValidationInfo validationInfo = new ValidationInfo(TestUtils.loadCertificateFromResource(VALID_CERT_PATH), List.of(
+                    new RevocationInfo(URI.create("http://ocsp.test"), Map.of(RevocationInfo.KEY_OCSP_RESPONSE, ocspResp))));
+            ResilientUserCertificateRevokedException exception = new ResilientUserCertificateRevokedException(validationInfo);
+            doThrow(exception).when(authTokenValidator).validate(any(), any());
+
+            assertThatExceptionOfType(BadRequestException.class)
+                    .isThrownBy(() -> service.attemptLogin(login.data(), login.taraSession()))
+                    .withCause(exception)
+                    .satisfies(ex -> assertThat(ex.getErrorCode()).isEqualTo(IDC_REVOKED));
+
+            assertThat(login.authenticationResult().getOcspUrl()).isEqualTo("http://ocsp.test");
+            ArgumentCaptor<OcspInfo> ocspInfo = ArgumentCaptor.forClass(OcspInfo.class);
+            verify(statisticsLogger).logExternalTransaction(same(login.taraSession()), ocspInfo.capture());
+            assertThat(ocspInfo.getValue().ocspResp()).isSameAs(ocspResp);
+            verify(ocspRequestResponseLogger).logSuccess("http://ocsp.test", null, ocspResp);
+            assertSessionStoredWithState(login, NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT);
+        }
+
+        @Test
+        void attemptLogin_whenOcspCheckFailedWithRevokedStatus_processesOcspResultsAndThrowsBadRequestWithValidationErrorResultRevoked() throws Exception {
+            LoginTestData login = givenLoginRequest();
+            OCSPResp ocspResp = ocspRespWithCertificateStatus(new RevokedStatus(new Date(), 0));
+            ValidationInfo validationInfo = new ValidationInfo(TestUtils.loadCertificateFromResource(VALID_CERT_PATH), List.of(
+                    new RevocationInfo(URI.create("http://ocsp.test"), Map.of(RevocationInfo.KEY_OCSP_RESPONSE, ocspResp))));
+            ResilientUserCertificateOCSPCheckFailedException exception
+                    = new ResilientUserCertificateOCSPCheckFailedException("User certificate OCSP check failed", validationInfo);
+            doThrow(exception).when(authTokenValidator).validate(any(), any());
+
+            assertThatExceptionOfType(BadRequestException.class)
+                    .isThrownBy(() -> service.attemptLogin(login.data(), login.taraSession()))
+                    .withCause(exception)
+                    .satisfies(ex -> assertThat(ex.getErrorCode()).isEqualTo(IDC_VALIDATION_ERROR_RESULT_REVOKED));
+
+            assertThat(login.authenticationResult().getOcspUrl()).isEqualTo("http://ocsp.test");
+            ArgumentCaptor<OcspInfo> ocspInfo = ArgumentCaptor.forClass(OcspInfo.class);
+            verify(statisticsLogger).logExternalTransaction(same(login.taraSession()), ocspInfo.capture());
+            assertThat(ocspInfo.getValue().ocspResp()).isSameAs(ocspResp);
+            verify(ocspRequestResponseLogger).logSuccess("http://ocsp.test", null, ocspResp);
             assertSessionStoredWithState(login, NATURAL_PERSON_AUTHENTICATION_CHECK_ESTEID_CERT);
         }
 
@@ -291,6 +374,24 @@ class IdCardLoginServiceTest {
         }
 
         @Test
+        void attemptLogin_whenEidasClientWithoutAllowedPolicyOidAndOcspEnabled_storesCertificatePolicyOidsAndLogsStatisticsBeforeThrowing() throws Exception {
+            ocsp.setEnabled(true);
+            LoginTestData login = givenLoginRequest();
+            login.taraSession().getOriginalClient().setClientId(EIDAS_CLIENT_ID);
+            filterForEidasProxy.setAllowedPolicyOids(Set.of("1.2.3.4"));
+            givenValidationSucceeds(login, List.of(
+                    new RevocationInfo(URI.create("http://ocsp.test"), Map.of(RevocationInfo.KEY_OCSP_RESPONSE, mock(OCSPResp.class)))));
+
+            assertThatExceptionOfType(BadRequestException.class)
+                    .isThrownBy(() -> service.attemptLogin(login.data(), login.taraSession()))
+                    .satisfies(ex -> assertThat(ex.getErrorCode()).isEqualTo(IDC_CERT_FORBIDDEN));
+
+            assertThat(login.authenticationResult().getCertificatePolicyOids())
+                    .containsExactly(CERTIFICATE_POLICY_OID, "0.4.0.2042.1.2");
+            verify(statisticsLogger).logExternalTransaction(same(login.taraSession()), any(OcspInfo.class));
+        }
+
+        @Test
         void attemptLogin_whenEidasClientAndCertificateWithoutPolicies_throwsBadRequestWithCertForbidden() throws Exception {
             LoginTestData login = givenLoginRequest();
             login.taraSession().getOriginalClient().setClientId(EIDAS_CLIENT_ID);
@@ -342,6 +443,16 @@ class IdCardLoginServiceTest {
             WebEidAuthToken authToken,
             TaraSession.IdCardAuthenticationResult authenticationResult
     ) {
+    }
+
+    private static OCSPResp ocspRespWithCertificateStatus(CertificateStatus certificateStatus) throws Exception {
+        OCSPResp ocspResp = mock(OCSPResp.class);
+        BasicOCSPResp basicOcspResp = mock(BasicOCSPResp.class);
+        SingleResp singleResp = mock(SingleResp.class);
+        doReturn(basicOcspResp).when(ocspResp).getResponseObject();
+        doReturn(new SingleResp[]{singleResp}).when(basicOcspResp).getResponses();
+        doReturn(certificateStatus).when(singleResp).getCertStatus();
+        return ocspResp;
     }
 
     private static X509Certificate generateCertificateWithoutPolicies() throws Exception {
