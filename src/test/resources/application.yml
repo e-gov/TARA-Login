@@ -124,6 +124,12 @@ tara:
               url: https://ocspcrl:14443/ocsp/test_esteid2025
               nonce-enabled: true
               responder-subject-dn: C=EE, O=Information System Authority, CN=local-ocsp
+          - issuer-dn: CN=TEST of ESTEID2018 MOCK CA, O=SK ID Solutions AS, C=EE
+            primary-server:
+              nonce-enabled: true
+            first-fallback-server:
+              url: http://localhost:9876/ocsp/fallback
+              nonce-enabled: true
       filter-for-eidas-proxy:
         client-id: dev-local-specificproxyservice
         allowed-policy-oids:

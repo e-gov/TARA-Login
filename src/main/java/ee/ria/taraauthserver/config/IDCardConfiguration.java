@@ -198,9 +198,9 @@ public class IDCardConfiguration {
         }
     }
 
-    private static AiaOcspServiceConfiguration getAiaOcspServiceConfiguration(AuthConfigurationProperties.Ocsp ocsp,
-                                                                              Set<TrustAnchor> trustedCACertificateAnchors,
-                                                                              CertStore trustedCACertificateCertStore) throws JceException {
+    static AiaOcspServiceConfiguration getAiaOcspServiceConfiguration(AuthConfigurationProperties.Ocsp ocsp,
+                                                                      Set<TrustAnchor> trustedCACertificateAnchors,
+                                                                      CertStore trustedCACertificateCertStore) throws JceException {
         List<X500Name> nonceDisabledIssuerDNs = ocsp.getCertificateChains().stream()
                 .filter(certificateChain -> !certificateChain.getPrimaryServer().isNonceEnabled())
                 .map(AuthConfigurationProperties.CertificateChain::getIssuerDn)
@@ -374,7 +374,7 @@ public class IDCardConfiguration {
                 : null;
     }
 
-    private static void logFallbackOcspServiceConfiguration(FallbackOcspServiceConfiguration configuration) {
+    static void logFallbackOcspServiceConfiguration(FallbackOcspServiceConfiguration configuration) {
         String nextFallbackAccessLocation = null;
         if (configuration.getNextFallbackConfiguration() != null
                 && configuration.getNextFallbackConfiguration().getAccessLocation() != null) {

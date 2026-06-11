@@ -1,6 +1,5 @@
 package ee.ria.taraauthserver.utils;
 
-import lombok.SneakyThrows;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
@@ -11,12 +10,10 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.cert.CertificateEncodingException;
-import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.time.Instant;
@@ -34,7 +31,7 @@ class X509UtilsTest {
 
     @Test
     void getCertificatePolicyOids_WhenCertificateHasCertificatePolicies_ReturnsPolicyOids() {
-        X509Certificate certificate = loadCertificateFromResource("id-card/38001085718(TEST_of_ESTEID2018).cer.pem");
+        X509Certificate certificate = TestUtils.loadCertificateFromResource("id-card/38001085718(TEST_of_ESTEID2018).cer.pem");
 
         List<ASN1ObjectIdentifier> result = X509Utils.getCertificatePolicyOids(certificate);
 
@@ -65,14 +62,6 @@ class X509UtilsTest {
 
         Assertions.assertEquals("Failed to extract certificate policy OIDs", exception.getMessage());
         assertInstanceOf(CertificateEncodingException.class, exception.getCause());
-    }
-
-    @SneakyThrows
-    private static X509Certificate loadCertificateFromResource(String resourcePath) {
-        try (InputStream inputStream = X509UtilsTest.class.getClassLoader().getResourceAsStream(resourcePath)) {
-            CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-            return (X509Certificate) certificateFactory.generateCertificate(inputStream);
-        }
     }
 
     private static X509Certificate generateCertificateWithoutPolicies() throws Exception {
