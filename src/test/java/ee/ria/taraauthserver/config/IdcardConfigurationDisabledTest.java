@@ -2,6 +2,9 @@ package ee.ria.taraauthserver.config;
 
 import ee.ria.taraauthserver.authentication.idcard.IdCardInitController;
 import ee.ria.taraauthserver.authentication.idcard.IdCardLoginController;
+import ee.ria.taraauthserver.authentication.idcard.IdCardLoginService;
+import ee.ria.taraauthserver.authentication.idcard.SessionBackedChallengeNonceStore;
+import eu.webeid.security.challenge.ChallengeNonceGenerator;
 import eu.webeid.security.validator.AuthTokenValidator;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -20,6 +23,15 @@ class IdcardConfigurationDisabledTest extends DisabledConfigurationTest {
     void whenLegalPersonDisabledThenBeansNotLoaded() {
         assertBeanNotInitiated(IdCardInitController.class);
         assertBeanNotInitiated(IdCardLoginController.class);
+        assertBeanNotInitiated(IdCardLoginService.class);
+        assertBeanNotInitiated(SessionBackedChallengeNonceStore.class);
+        assertBeanNotInitiated(ChallengeNonceGenerator.class);
         assertBeanNotInitiated(AuthTokenValidator.class);
+        assertBeanNotInitiated("authTokenValidatorResolver");
+        assertBeanNotInitiated("ocspRequestResponseLogger");
+        assertBeanNotInitiated("issuerKeystore");
+        assertBeanNotInitiated("ocspResponderKeystore");
+        assertBeanNotInitiated("issuerTrustedCertificatesMap");
+        assertBeanNotInitiated("ocspResponderTrustedCertificatesMap");
     }
 }
