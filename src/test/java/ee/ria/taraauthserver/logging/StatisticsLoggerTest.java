@@ -1,6 +1,7 @@
 package ee.ria.taraauthserver.logging;
 
 import ee.ria.taraauthserver.BaseTest;
+import ee.ria.taraauthserver.StatisticsLogAssertions;
 import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
@@ -360,7 +361,7 @@ class StatisticsLoggerTest extends BaseTest {
                 "\"authentication.smart_id.flow_type\":null," +
                 "\"event.duration\":null," +
                 "\"authentication.certificate_policies\":[\"1.3.6.1.4.1.51361.1.1.1\"]}",
-                STATS_OBJECT_MAPPER.writeValueAsString(statistics));
+                StatisticsLogAssertions.OBJECT_MAPPER.writeValueAsString(statistics));
     }
 
     @Test
@@ -396,7 +397,7 @@ class StatisticsLoggerTest extends BaseTest {
                 "\"authentication.smart_id.flow_type\":null," +
                 "\"event.duration\":500000000," +
                 "\"authentication.certificate_policies\":null}",
-                STATS_OBJECT_MAPPER.writeValueAsString(statistics));
+                StatisticsLogAssertions.OBJECT_MAPPER.writeValueAsString(statistics));
     }
 
     @Test

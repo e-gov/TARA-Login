@@ -34,14 +34,10 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
-import java.io.IOException;
-import java.io.StringWriter;
 import java.util.stream.Stream;
 
 import static ch.qos.logback.classic.Level.ERROR;
@@ -58,14 +54,8 @@ import static io.restassured.config.RedirectConfig.redirectConfig;
 import static java.util.List.of;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toUnmodifiableList;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import net.logstash.logback.marker.LogstashMarker;
-import org.slf4j.Marker;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInRelativeOrder;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.matchesPattern;
@@ -78,8 +68,6 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @Import({ConfigurationPropertiesReloader.class})
 public abstract class BaseTest {
-
-    protected static final ObjectMapper STATS_OBJECT_MAPPER = new ObjectMapper();
 
     @TestBean
     Clock clock;
@@ -316,17 +304,6 @@ public abstract class BaseTest {
         assertNull(loggedMessage);
     }
 
-    /** 
-     * Allows statistics log fields to match regex patterns instead of exact values.
-     * Useful for fields that can't use injected test values.
-     * Currently not used.
-     */
-    protected record DynamicField(String name, String pattern) {
-        public static DynamicField nonNull(String name) {
-            return new DynamicField(name, "[^,)]+");
-        }
-    }
-
     private List<ILoggingEvent> findLogEvents(Class<?> loggerClass, Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String exactMessage) {
         Stream<ILoggingEvent> stream = mockAppender.list.stream()
                 .filter(e -> (loggerClass == null || e.getLoggerName().equals(loggerClass.getCanonicalName())) &&
@@ -356,88 +333,13 @@ public abstract class BaseTest {
     }
 
     protected void assertStatisticsIsLoggedOnce(Level loggingLevel, String exactMessage, SessionStatistics expectedStatistics) {
-        assertStatisticsIsLoggedOnce(loggingLevel, null, exactMessage, expectedStatistics, Set.of());
+        assertStatisticsIsLoggedOnce(loggingLevel, null, exactMessage, expectedStatistics);
     }
 
     protected void assertStatisticsIsLoggedOnce(Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String exactMessage, SessionStatistics expectedStatistics) {
-        assertStatisticsIsLoggedOnce(loggingLevel, additionalFilter, exactMessage, expectedStatistics, Set.of());
-    }
-
-    protected void assertStatisticsIsLoggedOnce(Level loggingLevel, String exactMessage, SessionStatistics expectedStatistics, Set<DynamicField> fieldPatterns) {
-        assertStatisticsIsLoggedOnce(loggingLevel, null, exactMessage, expectedStatistics, fieldPatterns);
-    }
-
-    protected void assertStatisticsIsLoggedOnce(Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String exactMessage, SessionStatistics expectedStatistics, Set<DynamicField> dynamicFields) {
         List<ILoggingEvent> loggingEvents = findLogEvents(StatisticsLogger.class, loggingLevel, additionalFilter, exactMessage);
         assertThat(loggingEvents, hasSize(1));
-        
-        Map<String, String> actualFields = extractStatisticsFields(loggingEvents.get(0));
-        Map<String, String> expectedFields = statisticsToStringMap(expectedStatistics);
-        assertStatisticsFields(actualFields, expectedFields, dynamicFields);
-    }
-
-    private void assertStatisticsFields(Map<String, String> actualFields, Map<String, String> expectedFields, Set<DynamicField> dynamicFields) {
-        for (Map.Entry<String, String> field : expectedFields.entrySet()) {
-            String fieldName = field.getKey();
-            DynamicField dynamicField = findDynamicField(fieldName, dynamicFields);
-            if (dynamicField != null) {
-                String actualValue = actualFields.get(fieldName);
-                assertThat("Dynamic field: " + fieldName, actualValue, matchesPattern(dynamicField.pattern()));
-                continue;
-            }
-            String actualValue = actualFields.get(fieldName);
-            String expectedValue = field.getValue();
-            assertThat("Static field: " + fieldName, actualValue, equalTo(expectedValue));
-        }
-
-        Set<String> unexpectedKeys = new HashSet<>(actualFields.keySet());
-        unexpectedKeys.removeAll(expectedFields.keySet());
-        assertThat("Unexpected fields in actual statistics", unexpectedKeys, empty());
-    }
-
-    private DynamicField findDynamicField(String fieldName, Set<DynamicField> dynamicFields) {
-        for (DynamicField dynamicField : dynamicFields) {
-            if (dynamicField.name().equals(fieldName)) {
-                return dynamicField;
-            }
-        }
-        return null;
-    }
-
-    private static Map<String, String> extractStatisticsFields(ILoggingEvent event) {
-        Marker marker = event.getMarker();
-        if (!(marker instanceof LogstashMarker)) {
-            throw new AssertionError("Expected LogstashMarker for statistics event but got: " + marker.getClass().getName());
-        }
-        return markerToStringMap((LogstashMarker) marker);
-    }
-
-    private static Map<String, String> statisticsToStringMap(SessionStatistics statistics) {
-        Map<String, Object> jsonMap = STATS_OBJECT_MAPPER.convertValue(statistics, new TypeReference<>() {});
-        return toStringMap(jsonMap);
-    }
-
-    private static Map<String, String> markerToStringMap(LogstashMarker marker) {
-        try {
-            StringWriter sw = new StringWriter();
-            try (JsonGenerator gen = STATS_OBJECT_MAPPER.getFactory().createGenerator(sw)) {
-                gen.writeStartObject();
-                marker.writeTo(gen);
-                gen.writeEndObject();
-            }
-            Map<String, Object> jsonMap = STATS_OBJECT_MAPPER.readValue(sw.toString(), new TypeReference<>() {});
-            return toStringMap(jsonMap);
-        } catch (IOException e) {
-            throw new AssertionError("Failed to serialize statistics marker to JSON", e);
-        }
-    }
-
-    private static Map<String, String> toStringMap(Map<String, Object> jsonMap) {
-        Map<String, String> result = new HashMap<>();
-        for (Map.Entry<String, Object> entry : jsonMap.entrySet()) {
-            result.put(entry.getKey(), String.valueOf(entry.getValue()));
-        }
-        return result;
+        StatisticsLogAssertions.assertFields(loggingEvents.get(0), expectedStatistics);
     }
 
     protected static SessionStatistics.SessionStatisticsBuilder defaultStatisticsMarkerBuilder() {
