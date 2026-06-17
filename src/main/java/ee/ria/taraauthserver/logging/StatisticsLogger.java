@@ -192,7 +192,6 @@ public class StatisticsLogger {
         }
         Instant endTime = taraSession.getAuthFlowEndTime();
         if (endTime == null) {
-            log.error("authFlowEndTime not set before statistics logging for session {}", taraSession.getSessionId());
             return;
         }
         statisticsBuilder.eventDuration(Duration.between(startTime, endTime).toNanos());

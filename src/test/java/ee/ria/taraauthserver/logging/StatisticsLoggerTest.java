@@ -353,14 +353,13 @@ class StatisticsLoggerTest extends BaseTest {
     }
 
     @Test
-    void processEventDuration_logsErrorAndOmitsDuration_whenStartTimeSetButEndTimeNull() {
+    void processEventDuration_omitsDurationSilently_whenStartTimeSetButEndTimeNull() {
         TaraSession taraSession = buildValidSessionWithoutState();
         taraSession.setAuthFlowStartTime(Instant.parse("2025-01-01T00:00:00Z"));
         taraSession.setState(AUTHENTICATION_SUCCESS);
 
         statisticsLogger.logExternalTransaction(taraSession);
 
-        assertErrorIsLogged(StatisticsLogger.class, "authFlowEndTime not set before statistics logging for session");
         assertStatisticsIsLoggedOnce(INFO, "Authentication result: EXTERNAL_TRANSACTION",
                 defaultStatisticsMarkerBuilder()
                         .clientId("test_client_id")
