@@ -11,6 +11,8 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import ee.ria.taraauthserver.authentication.idcard.OCSPValidatorTest;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.logging.StatisticsLogger.SessionStatistics;
+import net.logstash.logback.marker.ObjectFieldsAppendingMarker;
+import org.slf4j.Marker;
 import io.restassured.RestAssured;
 import io.restassured.builder.ResponseSpecBuilder;
 import io.restassured.config.SessionConfig;
@@ -56,6 +58,7 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInRelativeOrder;
+import static net.logstash.logback.marker.Markers.appendFields;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.matchesPattern;
@@ -339,7 +342,11 @@ public abstract class BaseTest {
     protected void assertStatisticsIsLoggedOnce(Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String exactMessage, SessionStatistics expectedStatistics) {
         List<ILoggingEvent> loggingEvents = findLogEvents(StatisticsLogger.class, loggingLevel, additionalFilter, exactMessage);
         assertThat(loggingEvents, hasSize(1));
-        StatisticsLogAssertions.assertFields(loggingEvents.get(0), expectedStatistics);
+        Marker marker = loggingEvents.get(0).getMarker();
+        if (!(marker instanceof ObjectFieldsAppendingMarker)) {
+            throw new AssertionError("Expected ObjectFieldsAppendingMarker for statistics event but got: " + marker.getClass().getName());
+        }
+        assertThat(marker, equalTo(appendFields(expectedStatistics)));
     }
 
     protected static SessionStatistics.SessionStatisticsBuilder defaultStatisticsMarkerBuilder() {

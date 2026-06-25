@@ -1,7 +1,7 @@
 package ee.ria.taraauthserver.logging;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import ee.ria.taraauthserver.BaseTest;
-import ee.ria.taraauthserver.StatisticsLogAssertions;
 import ee.ria.taraauthserver.config.properties.SPType;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
@@ -44,8 +44,9 @@ import static java.lang.String.format;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
-class StatisticsLoggerTest extends BaseTest {
+class StatisticsLoggerIntegrationTest extends BaseTest {
     public static final String TEST_REQUESTER_ID = "urn:uuid:80e48e38-e5a5-11ec-acbb-ff7824b5b847";
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Autowired
     private StatisticsLogger statisticsLogger;
@@ -329,7 +330,7 @@ class StatisticsLoggerTest extends BaseTest {
     }
 
     @Test
-    void sessionStatistics_json_producesExpectedFieldNames() throws Exception {
+    void sessionStatistics_json_fieldSchemaIsComplete() throws Exception {
         SessionStatistics statistics = SessionStatistics.builder()
                 .clientId("openIdDemo")
                 .clientName("client name")
@@ -343,7 +344,7 @@ class StatisticsLoggerTest extends BaseTest {
                 .certificatePolicyOids(List.of("1.3.6.1.4.1.51361.1.1.1"))
                 .build();
 
-        assertEquals(
+        String allFieldsIncludingNulls =
                 "{\"client.service\":null," +
                 "\"client.id\":\"openIdDemo\"," +
                 "\"client.name\":\"client name\"," +
@@ -360,12 +361,13 @@ class StatisticsLoggerTest extends BaseTest {
                 "\"authentication.error_code\":null," +
                 "\"authentication.smart_id.flow_type\":null," +
                 "\"event.duration\":null," +
-                "\"authentication.certificate_policies\":[\"1.3.6.1.4.1.51361.1.1.1\"]}",
-                StatisticsLogAssertions.OBJECT_MAPPER.writeValueAsString(statistics));
+                "\"authentication.certificate_policies\":[\"1.3.6.1.4.1.51361.1.1.1\"]}";
+
+        assertEquals(allFieldsIncludingNulls, OBJECT_MAPPER.writeValueAsString(statistics));
     }
 
     @Test
-    void sessionStatistics_json_externalTransaction_producesExpectedFieldNames() throws Exception {
+    void sessionStatistics_json_externalTransaction_fieldSchemaIsComplete() throws Exception {
         SessionStatistics statistics = SessionStatistics.builder()
                 .clientId("openIdDemo")
                 .clientName("client name")
@@ -379,7 +381,7 @@ class StatisticsLoggerTest extends BaseTest {
                 .eventDuration(500_000_000L)
                 .build();
 
-        assertEquals(
+        String allFieldsIncludingNulls =
                 "{\"client.service\":null," +
                 "\"client.id\":\"openIdDemo\"," +
                 "\"client.name\":\"client name\"," +
@@ -396,8 +398,9 @@ class StatisticsLoggerTest extends BaseTest {
                 "\"authentication.error_code\":null," +
                 "\"authentication.smart_id.flow_type\":null," +
                 "\"event.duration\":500000000," +
-                "\"authentication.certificate_policies\":null}",
-                StatisticsLogAssertions.OBJECT_MAPPER.writeValueAsString(statistics));
+                "\"authentication.certificate_policies\":null}";
+
+        assertEquals(allFieldsIncludingNulls, OBJECT_MAPPER.writeValueAsString(statistics));
     }
 
     @Test
