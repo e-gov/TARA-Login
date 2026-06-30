@@ -5,12 +5,12 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.13</version>
+        <version>3.5.13</version><!-- Version 3.5.14 makes some tests fail, AUT-2753 moves to Spring Boot 4 anyway -->
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>ee.ria.tara</groupId>
     <artifactId>tara-login-server</artifactId>
-    <version>1.10.3</version>
+    <version>1.11.1</version>
     <name>tara-login-server</name>
     <description>TARA login server</description>
     <licenses>
@@ -26,15 +26,15 @@
         <imageName>${project.artifactId}:latest</imageName>
         <githubMirror>https://github.com</githubMirror>
 
-        <bouncycastle.version>1.83</bouncycastle.version>
-        <elastic-apm.version>1.55.4</elastic-apm.version>
+        <bouncycastle.version>1.84</bouncycastle.version>
+        <elastic-apm.version>1.56.0</elastic-apm.version>
         <ignite.version>2.13.0</ignite.version><!-- TODO AUT-1086 Upgrade to >=2.14.0 when the following issue is
                                                      resolved:
                                                      https://www.mail-archive.com/user@ignite.apache.org/msg33644.html -->
-        <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
         <logstash-logback-encoder.version>8.1</logstash-logback-encoder.version><!-- TODO Upgrade to logstash-logback-encoder 9.x with Spring Boot 4.x, both upgrade to Jackson 3 -->
         <mid-rest.version>1.6</mid-rest.version>
-        <resilience4j.version>2.3.0</resilience4j.version>
+        <resilience4j.version>2.4.0</resilience4j.version>
         <smart-id.version>3.1</smart-id.version>
         <webeid.version>4.0.0-202604021720</webeid.version>
         <wiremock.version>3.13.2</wiremock.version>
