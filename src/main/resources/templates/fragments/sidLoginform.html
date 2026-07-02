@@ -1,13 +1,14 @@
 <th:block xmlns:th="http://www.w3.org/1999/xhtml" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
           layout:insert="~{fragments/logintabs :: content('smart-id')}"
           aria-hidden="true" aria-labelledby="smart-id">
-    <th:block layout:fragment="login-form-content">
+    <th:block layout:fragment="login-form-content"
+              th:with="serviceName=${@thymeleafSupport.getServiceName()}, sidWeb2AppPollInterval=${@thymeleafSupport.getSidWeb2AppFrontendPollingIntervalInMilliseconds()}">
         <!--/* The content of this element is managed by `sid-view-manager.js` */-->
         <div data-sid-login-form class="hidden">
             <div data-sid-login-form-view="init">
                 <div data-sid-login-form-component="primary-qrCode"
                      class="c-form">
-                    <p th:utext="${#messages.msg('label.smart-id.' + (#strings.isEmpty(@thymeleafSupport.getServiceName()) ? 'instruction-desktop' : 'instruction-desktop-with-short-name'), @thymeleafSupport.getServiceName())}"></p>
+                    <p th:utext="${#messages.msg('label.smart-id.' + (#strings.isEmpty(serviceName) ? 'instruction-desktop' : 'instruction-desktop-with-short-name'), serviceName)}"></p>
                     <div>
                         <button type=submit form="sidQrCodeForm" class="c-btn c-btn--primary"
                                 th:text="#{label.common.login}"></button>
@@ -15,9 +16,9 @@
                 </div>
                 <div data-sid-login-form-component="primary-web2app"
                      class="c-form">
-                    <p th:utext="${#messages.msg('label.smart-id.' + (#strings.isEmpty(@thymeleafSupport.getServiceName()) ? 'instruction-mobile' : 'instruction-mobile-with-short-name'), @thymeleafSupport.getServiceName())}"></p>
+                    <p th:utext="${#messages.msg('label.smart-id.' + (#strings.isEmpty(serviceName) ? 'instruction-mobile' : 'instruction-mobile-with-short-name'), serviceName)}"></p>
                     <div id="sidWeb2AppLinkContainer" th:if="${enabledAuthMethods.smartIdFlows.web2app}"
-                         th:attr="data-sid-web2app-poll-interval=${@environment.getProperty('tara.auth-methods.smart-id.web2app.frontend-polling-interval-in-milliseconds')}">
+                         th:attr="data-sid-web2app-poll-interval=${sidWeb2AppPollInterval}">
                         <button id="sidWeb2AppLink" class="c-btn c-btn--primary" th:text="#{label.common.login}"></button>
                     </div>
                 </div>

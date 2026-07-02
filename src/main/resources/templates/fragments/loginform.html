@@ -23,7 +23,11 @@
         [[${enabledAuthMethods}]]
     </script>
 
-    <div th:with="activeAlerts=${@thymeleafSupport.getActiveAlerts()}">
+    <div th:with="activeAlerts=${@thymeleafSupport.getActiveAlerts()},
+                  idCardAlerts=${@thymeleafSupport.getAlertsFor('ID_CARD')},
+                  mobileIdAlerts=${@thymeleafSupport.getAlertsFor('MOBILE_ID')},
+                  smartIdAlerts=${@thymeleafSupport.getAlertsFor('SMART_ID')},
+                  eidasAlerts=${@thymeleafSupport.getAlertsFor('EIDAS')}">
         <div class="c-tab-login__static-warning">
             <th:block th:remove="tag" aria-hidden="true">
                 <div th:if="${@thymeleafSupport.hasStaticAlert()}" class="alert alert-warning">
@@ -40,25 +44,25 @@
         <th:block
                 th:if="${enabledAuthMethods.idCard}"
                 th:remove="tag"
-                layout:insert="~{fragments/logintabs :: warning('id-card', ${activeAlerts.?[isValidFor(T(ee.ria.taraauthserver.config.properties.AuthenticationType).ID_CARD)]})}"
+                layout:insert="~{fragments/logintabs :: warning('id-card', ${idCardAlerts})}"
                 aria-hidden="true" aria-labelledby="id-card">
         </th:block>
         <th:block
                 th:if="${enabledAuthMethods.mobileId}"
                 th:remove="tag"
-                layout:insert="~{fragments/logintabs :: warning('mobile-id', ${activeAlerts.?[isValidFor(T(ee.ria.taraauthserver.config.properties.AuthenticationType).MOBILE_ID)]})}"
+                layout:insert="~{fragments/logintabs :: warning('mobile-id', ${mobileIdAlerts})}"
                 aria-hidden="true" aria-labelledby="mobile-id">
         </th:block>
         <th:block
                 th:if="${enabledAuthMethods.smartId}"
                 th:remove="tag"
-                layout:insert="~{fragments/logintabs :: warning('smart-id', ${activeAlerts.?[isValidFor(T(ee.ria.taraauthserver.config.properties.AuthenticationType).SMART_ID)]})}"
+                layout:insert="~{fragments/logintabs :: warning('smart-id', ${smartIdAlerts})}"
                 aria-hidden="true" aria-labelledby="smart-id">
         </th:block>
         <th:block
                 th:if="${enabledAuthMethods.eidas}"
                 th:remove="tag"
-                layout:insert="~{fragments/logintabs :: warning('eu-citizen', ${activeAlerts.?[isValidFor(T(ee.ria.taraauthserver.config.properties.AuthenticationType).EIDAS)]})}"
+                layout:insert="~{fragments/logintabs :: warning('eu-citizen', ${eidasAlerts})}"
                 aria-hidden="true" aria-labelledby="eu-citizen">
         </th:block>
     </div>

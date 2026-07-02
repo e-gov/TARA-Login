@@ -3,7 +3,7 @@
       layout:decorate="~{layout}" th:with="hideHeaderLanguageSelection=true, ariaHideLogoHeader=true">
 <head th:replace="~{fragments/head}"></head>
 <body class="is-mobile-subview"
-      th:with="sidWeb2AppPollInterval=${@environment.getProperty('tara.auth-methods.smart-id.web2app.frontend-polling-interval-in-milliseconds')}"
+      th:with="sidWeb2AppPollInterval=${@thymeleafSupport.getSidWeb2AppFrontendPollingIntervalInMilliseconds()}"
       th:attr="data-sid-web2app-poll-interval=${sidWeb2AppPollInterval}">
 <div layout:fragment="content" th:with="hideHeaderLanguageSelection=true" th:remove="tag">
     <div th:replace="~{fragments/loader :: loader(id='sid-web2app-loader', textId='sid-web2app-longer-expected-text', textKey='label.common.loading-longer-than-expected', isFullPage=true)}"></div>

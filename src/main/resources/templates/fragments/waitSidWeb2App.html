@@ -1,4 +1,5 @@
-<div class="container" xmlns:th="http://www.w3.org/1999/xhtml">
+<div class="container" xmlns:th="http://www.w3.org/1999/xhtml"
+     th:with="serviceName=${@thymeleafSupport.getServiceName()}">
     <div th:replace="~{fragments/loader :: loader(id='sid-web2app-loader', textId=null, textKey=null, isFullPage=true)}"></div>
     <div class="c-tab-login__content-wrap">
         <div class="c-tab-login__content-icon" aria-hidden="true">
@@ -12,7 +13,7 @@
                 <p id="sid-web2app-wait-login-text" th:utext="${#messages.msg('label.smart-id.wait-login')}"></p>
                 <p id="sid-web2app-pin-entered-text" class="hidden" aria-hidden="true" th:utext="${#messages.msg('label.smart-id.wait-pin1-entered')}"></p>
                 <div th:replace="~{fragments/loader :: loader(id='sid-web2app-inner-loader', textId=null, textKey=null, isFullPage=false)}"></div>
-                <p id="sid-web2app-wait-login-details" th:utext="${#messages.msg('label.smart-id.wait-login-details', @thymeleafSupport.getServiceName())}"></p>
+                <p id="sid-web2app-wait-login-details" th:utext="${#messages.msg('label.smart-id.wait-login-details', serviceName)}"></p>
                 <p id="sid-web2app-pin-entered-details" class="hidden" aria-hidden="true" th:utext="${#messages.msg('label.smart-id.wait-pin1-entered-details')}"></p>
                 <form method="post" th:action="@{/auth/sid/web2app/poll/cancel}" class="c-form">
                     <button type="submit" class="c-btn c-btn--cancel" th:text="#{label.common.cancel}"></button>

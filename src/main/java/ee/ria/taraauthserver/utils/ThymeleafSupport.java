@@ -35,6 +35,9 @@ public class ThymeleafSupport {
     private AuthConfigurationProperties authConfigurationProperties;
 
     @Autowired(required = false)
+    private AuthConfigurationProperties.MidAuthConfigurationProperties midAuthConfigurationProperties;
+
+    @Autowired(required = false)
     private SmartIdConfigurationProperties smartIdConfigurationProperties;
 
     @Autowired
@@ -85,6 +88,14 @@ public class ThymeleafSupport {
         return originalClient.getLogo();
     }
 
+    public int getSidWeb2AppFrontendPollingIntervalInMilliseconds() {
+        return smartIdConfigurationProperties.getWeb2app().getFrontendPollingIntervalInMilliseconds();
+    }
+
+    public int getMidIntervalBetweenSessionStatusQueriesInMilliseconds() {
+        return midAuthConfigurationProperties.getIntervalBetweenSessionStatusQueriesInMilliseconds();
+    }
+
     public TaraSession.LoginRequestInfo getGovSsoLoginRequestInfo() {
         TaraSession taraSession = SessionUtils.getAuthSession();
         if (taraSession == null) {
@@ -125,6 +136,13 @@ public class ThymeleafSupport {
         if (alertsScheduler != null)
             alerts.addAll(alertsScheduler.getActiveAlerts());
         return alerts;
+    }
+
+    public List<Alert> getAlertsFor(String authenticationTypeName) {
+        AuthenticationType authenticationType = AuthenticationType.valueOf(authenticationTypeName);
+        return getActiveAlerts().stream()
+                .filter(alert -> alert.isValidFor(authenticationType))
+                .toList();
     }
 
     public boolean hasStaticAlert() {

@@ -3,7 +3,7 @@
       layout:decorate="~{layout}" th:with="hideHeaderLanguageSelection=true, ariaHideLogoHeader=true">
 <head th:replace="~{fragments/head}"></head>
 <body class="is-mobile-subview"
-      th:with="midPollInterval=${@environment.getProperty('tara.auth-methods.mobile-id.interval-between-session-status-queries-in-milliseconds')}"
+      th:with="midPollInterval=${@thymeleafSupport.getMidIntervalBetweenSessionStatusQueriesInMilliseconds()}"
       th:attr="data-check-form-refresh-rate=${midPollInterval}">
 <div layout:fragment="content" th:with="hideHeaderLanguageSelection=true" th:remove="tag">
     <div class="container">
