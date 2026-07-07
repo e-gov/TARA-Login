@@ -22,8 +22,9 @@
       height: 80px;
     }
     img {
+      width: auto;
+      height: 80px;
       @media (max-width: $breakpoint-mobile) {
-        width: auto;
         height: 60px;
       }
     }
