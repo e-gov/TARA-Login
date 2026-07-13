@@ -5,24 +5,19 @@ import eu.webeid.ocsp.exceptions.OCSPClientException;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.cert.ocsp.OCSPReq;
 import org.bouncycastle.cert.ocsp.OCSPResp;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.Base64;
 
 @Slf4j
-@Component
-@ConditionalOnProperty(value = "tara.auth-methods.id-card.enabled")
 class OcspRequestResponseLogger {
 
     private final ClientRequestLogger requestLogger;
 
-    public OcspRequestResponseLogger() {
-        // IdCardLoginService.class preserves the OCSP wire-log logger name relied upon by log monitoring.
-        this(new ClientRequestLogger(ClientRequestLogger.Service.OCSP, IdCardLoginService.class));
+    public OcspRequestResponseLogger(ClientRequestLogger.Service service, Class<?> classToBeLogged) {
+        this(new ClientRequestLogger(service, classToBeLogged));
     }
 
     OcspRequestResponseLogger(ClientRequestLogger requestLogger) {

@@ -3,6 +3,7 @@ package ee.ria.taraauthserver.authentication.idcard;
 import ee.ria.taraauthserver.config.properties.AuthConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.error.exceptions.BadRequestException;
+import ee.ria.taraauthserver.logging.ClientRequestLogger;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
 import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraSession;
@@ -18,9 +19,11 @@ import eu.webeid.security.exceptions.CertificateExpiredException;
 import eu.webeid.security.exceptions.CertificateNotYetValidException;
 import eu.webeid.security.validator.ValidationInfo;
 import eu.webeid.security.validator.revocationcheck.RevocationInfo;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
@@ -42,7 +45,7 @@ import static net.logstash.logback.argument.StructuredArguments.value;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 @ConditionalOnProperty(value = "tara.auth-methods.id-card.enabled")
 public class IdCardLoginService {
 
@@ -56,6 +59,16 @@ public class IdCardLoginService {
     private final StatisticsLogger statisticsLogger;
     private final AuthTokenValidatorResolver authTokenValidatorResolver;
     private final OcspRequestResponseLogger ocspRequestResponseLogger;
+
+    @Autowired
+    public IdCardLoginService(AuthConfigurationProperties.IdCardAuthConfigurationProperties configurationProperties,
+                              AuthConfigurationProperties.FilterForEidasProxy filterForEidasProxy,
+                              ChallengeNonceStore nonceStore,
+                              StatisticsLogger statisticsLogger,
+                              AuthTokenValidatorResolver authTokenValidatorResolver) {
+        this(configurationProperties, filterForEidasProxy, nonceStore, statisticsLogger, authTokenValidatorResolver,
+                new OcspRequestResponseLogger(ClientRequestLogger.Service.OCSP, IdCardLoginService.class));
+    }
 
     public void attemptLogin(IdCardLoginController.WebEidData data, TaraSession taraSession) {
         String nonce;

@@ -124,18 +124,19 @@ class OcspRequestResponseLoggerTest {
     }
 
     @Test
-    void defaultConstructor_whenLoggingSuccess_emitsLogsUnderIdCardLoginServiceLoggerName() throws IOException {
+    void constructor_whenServiceAndClassToBeLoggedGiven_emitsLogsUnderGivenClassLoggerName() throws IOException {
         givenOcspRequestEncodes();
         givenOcspResponseEncodes();
-        Logger idCardLoginServiceLogger = (Logger) LoggerFactory.getLogger(IdCardLoginService.class);
+        Logger classToBeLoggedLogger = (Logger) LoggerFactory.getLogger(OcspRequestResponseLoggerTest.class);
         ListAppender<ILoggingEvent> appender = new ListAppender<>();
         appender.start();
-        idCardLoginServiceLogger.addAppender(appender);
+        classToBeLoggedLogger.addAppender(appender);
 
         try {
-            new OcspRequestResponseLogger().logSuccess(OCSP_URL, ocspReq, ocspResp);
+            new OcspRequestResponseLogger(ClientRequestLogger.Service.OCSP, OcspRequestResponseLoggerTest.class)
+                    .logSuccess(OCSP_URL, ocspReq, ocspResp);
         } finally {
-            idCardLoginServiceLogger.detachAppender(appender);
+            classToBeLoggedLogger.detachAppender(appender);
         }
 
         assertThat(appender.list)
