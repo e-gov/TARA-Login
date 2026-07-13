@@ -37,6 +37,8 @@ class OcspRequestResponseLogger {
                     .log("Failed to encode OCSP request");
         }
         try {
+            // For now the Web eID library does not propagate the HTTP status code on success, but its OCSP client throws
+            // OCSPClientException for any non-200 response, so we assume a successfully obtained response is always HTTP 200.
             requestLogger.logResponse(HttpStatus.OK.value(), Base64.getEncoder().encodeToString(ocspResp.getEncoded()));
         } catch (IOException e) {
             log.atError()
