@@ -203,26 +203,25 @@
     }
   }
   &__qr-code-card {
-    @media (max-width: $breakpoint-mobile) {
-      padding: 0;
-      text-align: left;
-    }
     @media (min-width: $breakpoint-mobile + 1) {
+      margin-right: 150px;
       padding: 24px;
-      text-align: center;
       border: 1px solid #ccc;
       border-radius: 8px;
-      margin-right: 150px;
+      text-align: center;
     }
   }
+  &__qr-code-container {
+    text-align: center;
+  }
   &__qr-code {
-    background-color: #fff;
-    margin-bottom: 25px;
     display: inline-flex;
     justify-content: center;
     flex-wrap: wrap; // Required for `align-content` to work on iOS Safari
     align-content: center;
     aspect-ratio: 1;
+    margin-bottom: 25px;
+    background-color: #fff;
   }
   &__qr-code svg {
     display: block;
