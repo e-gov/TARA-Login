@@ -18,6 +18,7 @@
   "scripts": {
     "build:images": "gulp build:images",
     "build:favicon": "gulp build:favicon",
+    "build:favicon_svg": "gulp build:favicon_svg",
     "build:fonts": "gulp build:fonts",
     "build:css": "gulp build:css",
     "build:js_main": "gulp build:js_main",

@@ -12,6 +12,7 @@ var config;
 config = {
   SRC: {
     ICO: './favicon.ico',
+    FAVICON_SVG: './favicon.svg',
     IMG: './assets/**/*',
     FONTS: './fonts/**/*',
     SASS: './styles/**/*.scss',
@@ -46,6 +47,15 @@ gulp.task('build:favicon', function () {
   return gulp
     .src(config.SRC.ICO)
     .pipe(imagemin())
+    .pipe(gulp.dest(config.DEST.ICO))
+    .pipe(browserSync.stream())
+});
+
+// Copy the SVG favicon as-is. It is already optimized with SVGO, and running it
+// through imagemin's bundled SVGO 1.x risks mangling the class-based fills.
+gulp.task('build:favicon_svg', function () {
+  return gulp
+    .src(config.SRC.FAVICON_SVG)
     .pipe(gulp.dest(config.DEST.ICO))
     .pipe(browserSync.stream())
 });
@@ -116,5 +126,5 @@ gulp.task('build:js_timeconverter', function(cb) {
 
 
 // Gulp build
-gulp.task('build', gulp.series('build:images', 'build:favicon', 'build:fonts', 'build:css', 'build:js_main', 'build:js_form', 'build:js_legalperson', 'build:js_timeconverter'), function(done) {
+gulp.task('build', gulp.series('build:images', 'build:favicon', 'build:favicon_svg', 'build:fonts', 'build:css', 'build:js_main', 'build:js_form', 'build:js_legalperson', 'build:js_timeconverter'), function(done) {
 });
