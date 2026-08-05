@@ -1,6 +1,8 @@
 {
   "main": "gulpfile.js",
   "devDependencies": {
+    "eslint": "^8.57.1",
+    "prettier": "^2.8.8",
     "browser-sync": "^2.27.11",
     "gulp": "^4.0.2",
     "gulp-autoprefixer": "^4.0.0",
@@ -12,9 +14,6 @@
     "gulp-uglify": "^3.0.0",
     "pump": "^1.0.2"
   },
-  "dependencies": {
-    "npm": "^7.0.2"
-  },
   "scripts": {
     "build:images": "gulp build:images",
     "build:favicon": "gulp build:favicon",
@@ -24,6 +23,10 @@
     "build:js_main": "gulp build:js_main",
     "build:js_form": "gulp build:js_form",
     "build:js_legalperson": "gulp build:js_legalperson",
-    "build": "gulp build"
+    "build": "gulp build",
+    "format": "prettier --check ${TARGET:-.}",
+    "format:fix": "prettier --write ${TARGET:-.}",
+    "lint": "eslint ${TARGET:-scripts/}",
+    "lint:fix": "eslint --fix ${TARGET:-scripts/}"
   }
 }

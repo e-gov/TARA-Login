@@ -1,0 +1,6 @@
+package-lock.json
+scripts/general/tom-select.base.js
+scripts/general/web-eid.min.js
+scripts/general/jquery-3.7.1.min.js
+scripts/general/qrcode-1.5.4.js
+svg-icons/selection.json
