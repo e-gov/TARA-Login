@@ -1,5 +1,5 @@
-<div th:fragment="loader(id, textId, textKey, isFullPage)" 
-     th:id="${id}" 
+<div th:fragment="loader(id, textId, textKey, isFullPage)"
+     th:id="${id}"
      class="c-loader-container"
      th:classappend="${isFullPage == true ? 'c-loader-container--full-page' : ''}">
     <div class="loader"></div>

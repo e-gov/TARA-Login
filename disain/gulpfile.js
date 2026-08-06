@@ -10,121 +10,139 @@ var imagemin = require('gulp-imagemin');
 
 var config;
 config = {
-  SRC: {
-    ICO: './favicon.ico',
-    FAVICON_SVG: './favicon.svg',
-    IMG: './assets/**/*',
-    FONTS: './fonts/**/*',
-    SASS: './styles/**/*.scss',
-    JS_MAIN: './scripts/main/**/*.js',
-    JS_FORM: './scripts/form/**/*.js',
-    JS_GENERAL: './scripts/general/**/*.js',
-    JS_LEGALPERSON: './scripts/legalperson/**/*.js',
-    JS_MODAL: './scripts/timeout/timeout-modal.js',
-    JS_TIMECONVERTER: './scripts/timeconverter/**/*.js'
-  },
-  DEST: {
-    ICO: '../src/main/resources/static/',
-    IMG: '../src/main/resources/static/assets/',
-    FONTS: '../src/main/resources/static/fonts/',
-    CSS: '../src/main/resources/static/styles/',
-    JS: '../src/main/resources/static/scripts/'
-  }
-}
+    SRC: {
+        ICO: './favicon.ico',
+        FAVICON_SVG: './favicon.svg',
+        IMG: './assets/**/*',
+        FONTS: './fonts/**/*',
+        SASS: './styles/**/*.scss',
+        JS_MAIN: './scripts/main/**/*.js',
+        JS_FORM: './scripts/form/**/*.js',
+        JS_GENERAL: './scripts/general/**/*.js',
+        JS_LEGALPERSON: './scripts/legalperson/**/*.js',
+        JS_MODAL: './scripts/timeout/timeout-modal.js',
+        JS_TIMECONVERTER: './scripts/timeconverter/**/*.js',
+    },
+    DEST: {
+        ICO: '../src/main/resources/static/',
+        IMG: '../src/main/resources/static/assets/',
+        FONTS: '../src/main/resources/static/fonts/',
+        CSS: '../src/main/resources/static/styles/',
+        JS: '../src/main/resources/static/scripts/',
+    },
+};
 
 //
 // BUILDERS
 
 // Minify images
 gulp.task('build:images', function () {
-  return gulp
-    .src(config.SRC.IMG)
-    .pipe(imagemin())
-    .pipe(gulp.dest(config.DEST.IMG))
-    .pipe(browserSync.stream())
+    return gulp
+        .src(config.SRC.IMG)
+        .pipe(imagemin())
+        .pipe(gulp.dest(config.DEST.IMG))
+        .pipe(browserSync.stream());
 });
 gulp.task('build:favicon', function () {
-  return gulp
-    .src(config.SRC.ICO)
-    .pipe(imagemin())
-    .pipe(gulp.dest(config.DEST.ICO))
-    .pipe(browserSync.stream())
+    return gulp
+        .src(config.SRC.ICO)
+        .pipe(imagemin())
+        .pipe(gulp.dest(config.DEST.ICO))
+        .pipe(browserSync.stream());
 });
 
 // Copy the SVG favicon as-is. It is already optimized with SVGO, and running it
 // through imagemin's bundled SVGO 1.x risks mangling the class-based fills.
 gulp.task('build:favicon_svg', function () {
-  return gulp
-    .src(config.SRC.FAVICON_SVG)
-    .pipe(gulp.dest(config.DEST.ICO))
-    .pipe(browserSync.stream())
+    return gulp
+        .src(config.SRC.FAVICON_SVG)
+        .pipe(gulp.dest(config.DEST.ICO))
+        .pipe(browserSync.stream());
 });
 
 // Copy fonts
 gulp.task('build:fonts', function () {
-  return gulp
-    .src(config.SRC.FONTS)
-    .pipe(gulp.dest(config.DEST.FONTS))
+    return gulp.src(config.SRC.FONTS).pipe(gulp.dest(config.DEST.FONTS));
 });
 
 // Sass to CSS
-gulp.task('build:css', function() {
-  return gulp
-    .src(config.SRC.SASS)
-    .pipe(sourcemaps.init())
-    .pipe(sass({outputStyle: 'compressed'}))
-    .pipe(autoprefixer())
-    .pipe(concat('main.css'))
-    .pipe(gulp.dest(config.DEST.CSS))
-    .pipe(browserSync.stream())
+gulp.task('build:css', function () {
+    return gulp
+        .src(config.SRC.SASS)
+        .pipe(sourcemaps.init())
+        .pipe(sass({ outputStyle: 'compressed' }))
+        .pipe(autoprefixer())
+        .pipe(concat('main.css'))
+        .pipe(gulp.dest(config.DEST.CSS))
+        .pipe(browserSync.stream());
 });
 
 // Build js
-gulp.task('build:js_main', function(cb) {
-  pump([
-    gulp.src([config.SRC.JS_GENERAL, config.SRC.JS_MAIN, config.SRC.JS_MODAL]),
-    uglify(),
-    concat('main.js'),
-    gulp.dest(config.DEST.JS),
-    browserSync.stream()
-    ],
-    cb
+gulp.task('build:js_main', function (cb) {
+    pump(
+        [
+            gulp.src([
+                config.SRC.JS_GENERAL,
+                config.SRC.JS_MAIN,
+                config.SRC.JS_MODAL,
+            ]),
+            uglify(),
+            concat('main.js'),
+            gulp.dest(config.DEST.JS),
+            browserSync.stream(),
+        ],
+        cb
     );
 });
-gulp.task('build:js_form', function(cb) {
-  pump([
-    gulp.src(config.SRC.JS_FORM),
-    uglify(),
-    gulp.dest(config.DEST.JS),
-    browserSync.stream()
-    ],
-    cb
+gulp.task('build:js_form', function (cb) {
+    pump(
+        [
+            gulp.src(config.SRC.JS_FORM),
+            uglify(),
+            gulp.dest(config.DEST.JS),
+            browserSync.stream(),
+        ],
+        cb
     );
 });
-gulp.task('build:js_legalperson', function(cb) {
-  pump([
-    gulp.src([config.SRC.JS_GENERAL, config.SRC.JS_LEGALPERSON]),
-    uglify(),
-    concat('legalperson.js'),
-    gulp.dest(config.DEST.JS),
-    browserSync.stream()
-    ],
-    cb
+gulp.task('build:js_legalperson', function (cb) {
+    pump(
+        [
+            gulp.src([config.SRC.JS_GENERAL, config.SRC.JS_LEGALPERSON]),
+            uglify(),
+            concat('legalperson.js'),
+            gulp.dest(config.DEST.JS),
+            browserSync.stream(),
+        ],
+        cb
     );
 });
-gulp.task('build:js_timeconverter', function(cb) {
-  pump([
-    gulp.src(config.SRC.JS_TIMECONVERTER),
-    uglify(),
-    concat('timeconverter.js'),
-    gulp.dest(config.DEST.JS),
-    browserSync.stream()
-    ],
-    cb
+gulp.task('build:js_timeconverter', function (cb) {
+    pump(
+        [
+            gulp.src(config.SRC.JS_TIMECONVERTER),
+            uglify(),
+            concat('timeconverter.js'),
+            gulp.dest(config.DEST.JS),
+            browserSync.stream(),
+        ],
+        cb
     );
 });
-
 
 // Gulp build
-gulp.task('build', gulp.series('build:images', 'build:favicon', 'build:favicon_svg', 'build:fonts', 'build:css', 'build:js_main', 'build:js_form', 'build:js_legalperson', 'build:js_timeconverter'), function(done) {
-});
+gulp.task(
+    'build',
+    gulp.series(
+        'build:images',
+        'build:favicon',
+        'build:favicon_svg',
+        'build:fonts',
+        'build:css',
+        'build:js_main',
+        'build:js_form',
+        'build:js_legalperson',
+        'build:js_timeconverter'
+    ),
+    function (done) {}
+);

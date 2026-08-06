@@ -226,7 +226,7 @@ class AuthRejectControllerTest extends BaseTest {
 
         assertNull(sessionRepository.findById(sessionId));
         assertInfoIsLogged("State: NOT_SET -> AUTHENTICATION_CANCELED");
-        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED", 
+        assertStatisticsIsLoggedOnce(INFO, "Authentication result: AUTHENTICATION_CANCELED",
                 defaultStatisticsMarkerBuilder()
                         .sector("public")
                         .authenticationState(AUTHENTICATION_CANCELED)

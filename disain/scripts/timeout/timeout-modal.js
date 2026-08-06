@@ -10,8 +10,7 @@ jQuery(function ($) {
             return null;
         }
 
-        const secondsToTimeout = parseInt(
-            timeoutElement.getAttribute('data-seconds-to-timeout'), 10);
+        const secondsToTimeout = parseInt(timeoutElement.getAttribute('data-seconds-to-timeout'), 10);
         if (isNaN(secondsToTimeout)) {
             return null;
         }
@@ -20,15 +19,14 @@ jQuery(function ($) {
         timeoutTimestamp = currentTimestamp + secondsToTimeout;
 
         const timeouts = [
-            { threshold: 60 },   //1 minute
-            { threshold: 300 },  //5 minutes
+            { threshold: 60 }, //1 minute
+            { threshold: 300 }, //5 minutes
         ];
 
         timeouts.forEach(({ threshold }) => {
             const timeDifference = secondsToTimeout - threshold;
             if (timeDifference > 0) {
-                setTimeout(() => displayTimeoutModal(threshold),
-                    timeDifference * 1000);
+                setTimeout(() => displayTimeoutModal(threshold), timeDifference * 1000);
             }
         });
 
@@ -46,8 +44,7 @@ jQuery(function ($) {
 
     function displayTimeoutModal(secondsToTimeout) {
         let authFlowTimeout = $('#auth-flow-timeout').get(0);
-        if (authFlowTimeout.classList.contains('show')
-            || !$('#id-card-wait').hasClass('hidden')) {
+        if (authFlowTimeout.classList.contains('show') || !$('#id-card-wait').hasClass('hidden')) {
             return null;
         }
 
@@ -60,8 +57,7 @@ jQuery(function ($) {
         $(document).on('keydown', handleFocusTrap);
 
         let intervalId = setInterval(function () {
-            if (!authFlowTimeout.classList.contains('show') || secondsToTimeout
-                <= 0) {
+            if (!authFlowTimeout.classList.contains('show') || secondsToTimeout <= 0) {
                 clearInterval(intervalId);
             }
             incrementAuthFlowTimeoutTimer(secondsToTimeout);

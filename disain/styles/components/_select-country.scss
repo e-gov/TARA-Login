@@ -59,103 +59,103 @@
   background-repeat: no-repeat;
   background-position: 0 50%;
   background-size: 30px auto;
-  &[data-value="AT"] {
+  &[data-value='AT'] {
     background-image: url('../assets/flags/at.svg');
   }
-  &[data-value="BE"] {
+  &[data-value='BE'] {
     background-image: url('../assets/flags/be.svg');
   }
-  &[data-value="BG"] {
+  &[data-value='BG'] {
     background-image: url('../assets/flags/bg.svg');
   }
-  &[data-value="CY"] {
+  &[data-value='CY'] {
     background-image: url('../assets/flags/cy.svg');
   }
-  &[data-value="CZ"] {
+  &[data-value='CZ'] {
     background-image: url('../assets/flags/cz.svg');
   }
-  &[data-value="DE"] {
+  &[data-value='DE'] {
     background-image: url('../assets/flags/de.svg');
   }
-  &[data-value="DK"] {
+  &[data-value='DK'] {
     background-image: url('../assets/flags/dk.svg');
   }
-  &[data-value="EE"] {
+  &[data-value='EE'] {
     background-image: url('../assets/flags/ee.svg');
   }
-  &[data-value="ES"] {
+  &[data-value='ES'] {
     background-image: url('../assets/flags/es.svg');
   }
-  &[data-value="FI"] {
+  &[data-value='FI'] {
     background-image: url('../assets/flags/fi.svg');
   }
-  &[data-value="FR"] {
+  &[data-value='FR'] {
     background-image: url('../assets/flags/fr.svg');
   }
-  &[data-value="GB"] {
+  &[data-value='GB'] {
     background-image: url('../assets/flags/gb.svg');
   }
-  &[data-value="GR"] {
+  &[data-value='GR'] {
     background-image: url('../assets/flags/gr.svg');
   }
-  &[data-value="HR"] {
+  &[data-value='HR'] {
     background-image: url('../assets/flags/hr.svg');
   }
-  &[data-value="HU"] {
+  &[data-value='HU'] {
     background-image: url('../assets/flags/hu.svg');
   }
-  &[data-value="IE"] {
+  &[data-value='IE'] {
     background-image: url('../assets/flags/ie.svg');
   }
-  &[data-value="IS"] {
+  &[data-value='IS'] {
     background-image: url('../assets/flags/is.svg');
   }
-  &[data-value="IT"] {
+  &[data-value='IT'] {
     background-image: url('../assets/flags/it.svg');
   }
-  &[data-value="LI"] {
+  &[data-value='LI'] {
     background-image: url('../assets/flags/li.svg');
   }
-  &[data-value="LT"] {
+  &[data-value='LT'] {
     background-image: url('../assets/flags/lt.svg');
   }
-  &[data-value="LU"] {
+  &[data-value='LU'] {
     background-image: url('../assets/flags/lu.svg');
   }
-  &[data-value="LV"] {
+  &[data-value='LV'] {
     background-image: url('../assets/flags/lv.svg');
   }
-  &[data-value="MT"] {
+  &[data-value='MT'] {
     background-image: url('../assets/flags/mt.svg');
   }
-  &[data-value="NL"] {
+  &[data-value='NL'] {
     background-image: url('../assets/flags/nl.svg');
   }
-  &[data-value="NO"] {
+  &[data-value='NO'] {
     background-image: url('../assets/flags/no.svg');
   }
-  &[data-value="PL"] {
+  &[data-value='PL'] {
     background-image: url('../assets/flags/pl.svg');
   }
-  &[data-value="PT"] {
+  &[data-value='PT'] {
     background-image: url('../assets/flags/pt.svg');
   }
-  &[data-value="RO"] {
+  &[data-value='RO'] {
     background-image: url('../assets/flags/ro.svg');
   }
-  &[data-value="SE"] {
+  &[data-value='SE'] {
     background-image: url('../assets/flags/se.svg');
   }
-  &[data-value="SI"] {
+  &[data-value='SI'] {
     background-image: url('../assets/flags/si.svg');
   }
-  &[data-value="SK"] {
+  &[data-value='SK'] {
     background-image: url('../assets/flags/sk.svg');
   }
-  &[data-value="CA"] {
+  &[data-value='CA'] {
     background-image: url('../assets/flags/eu.svg');
   }
-  &[data-value="UA"] {
+  &[data-value='UA'] {
     background-image: url('../assets/flags/ua.svg');
   }
 }
@@ -165,5 +165,5 @@
   color: #5d6071;
 }
 #country-select-tomselected {
-    width: 100%;
+  width: 100%;
 }

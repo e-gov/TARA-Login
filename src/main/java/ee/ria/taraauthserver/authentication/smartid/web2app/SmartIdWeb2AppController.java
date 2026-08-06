@@ -146,7 +146,7 @@ public class SmartIdWeb2AppController {
             if (!SmartIdSessionStatus.COMPLETE.equals(sessionStatus.getState())) {
                 throw new IllegalStateException("Unexpected session status: " + sessionStatus.getState());
             }
-            // `authSidWeb2AppService.handleFinalAuthenticationResult` will trigger a state change.         
+            // `authSidWeb2AppService.handleFinalAuthenticationResult` will trigger a state change.
             authSidWeb2AppService.handleFinalAuthenticationResult(
                     taraSession, sessionStatus, userChallengeVerifier, sessionSecretDigest, value);
         }

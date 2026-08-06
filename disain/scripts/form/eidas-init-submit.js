@@ -1,3 +1,3 @@
-(function() {
+(function () {
     document.forms['eidasInitRedirectForm'].submit();
 })();

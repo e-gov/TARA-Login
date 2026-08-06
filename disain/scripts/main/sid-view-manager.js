@@ -26,11 +26,11 @@ jQuery(function ($) {
         setClickHandler(mainEl, 'back', function () {
             setView(mainEl, 'init');
         });
-    }());
+    })();
 
     function setView(mainEl, viewName) {
         var viewEls = getViewElsByName(mainEl);
-        for(const el of Object.values(viewEls)) {
+        for (const el of Object.values(viewEls)) {
             hideEl(el);
         }
         showEl(viewEls[viewName]);
@@ -64,7 +64,7 @@ jQuery(function ($) {
 
     function getEnabledFlows() {
         const enabledAuthMethodsElement = document.getElementById('enabled-auth-methods');
-        if(enabledAuthMethodsElement == null) {
+        if (enabledAuthMethodsElement == null) {
             throw new Error('`#enabled-auth-methods` not present.');
         }
         const enabledAuthMethods = JSON.parse(enabledAuthMethodsElement.textContent);
@@ -76,10 +76,10 @@ jQuery(function ($) {
             enabledFlows.web2app = false;
         }
         return Object.entries(enabledFlows)
-            .filter(function([_, enabled]) {
+            .filter(function ([_, enabled]) {
                 return enabled;
             })
-            .map(function([flowName, _]) {
+            .map(function ([flowName, _]) {
                 return flowName;
             });
     }
@@ -103,5 +103,4 @@ jQuery(function ($) {
         el.removeAttr('aria-hidden');
         el.removeClass('hidden');
     }
-
 });

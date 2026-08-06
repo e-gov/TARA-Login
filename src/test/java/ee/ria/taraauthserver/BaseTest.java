@@ -310,7 +310,7 @@ public abstract class BaseTest {
         assertNull(loggedMessage);
     }
 
-    /** 
+    /**
      * Allows statistics log fields to match regex patterns instead of exact values.
      * Useful for fields that can't use injected test values.
      * Currently not used.
@@ -364,7 +364,7 @@ public abstract class BaseTest {
     protected void assertStatisticsIsLoggedOnce(Level loggingLevel, Predicate<ILoggingEvent> additionalFilter, String exactMessage, SessionStatistics expectedStatistics, Set<DynamicField> dynamicFields) {
         List<ILoggingEvent> loggingEvents = findLogEvents(StatisticsLogger.class, loggingLevel, additionalFilter, exactMessage);
         assertThat(loggingEvents, hasSize(1));
-        
+
         String actualString = extractSessionStatisticsString(loggingEvents.get(0));
         Map<String, String> actualFields = parseStatisticsFields(actualString);
         String expectedString = appendFields(expectedStatistics).toString();

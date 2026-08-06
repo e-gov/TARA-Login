@@ -6,10 +6,10 @@
     padding: 9px 0;
   }
   p {
-	padding: 17px 0;
+    padding: 17px 0;
     @media (max-width: $breakpoint-mobile) {
       font-size: 14px;
-	  padding: 10px 0;
+      padding: 10px 0;
     }
   }
   &__content.d-flex {
@@ -18,4 +18,3 @@
     }
   }
 }
-

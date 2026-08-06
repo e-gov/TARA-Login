@@ -30,10 +30,10 @@ module.exports = {
     rules: {
         'no-undef': 'error',
         'no-unused-vars': ['warn', { args: 'none' }],
-        'eqeqeq': ['warn', 'always', { null: 'ignore' }],
+        eqeqeq: ['warn', 'always', { null: 'ignore' }],
         'no-eval': 'error',
         'no-console': ['warn', { allow: ['error', 'warn'] }],
-        'curly': ['warn', 'all'],
+        curly: ['warn', 'all'],
 
         // --- Stage 2: requires a dedicated fix pass across the codebase ---
         // Replace all var with let/const. ~350 occurrences, run eslint --fix.

@@ -1,11 +1,10 @@
 (function () {
-
     const POLL_INTERVAL_MS = 1000;
     const RETRYABLE_HTTP_STATUS_CODES = new Set([408, 502, 503, 504]);
     const MAX_RETRY_DURATION_MS = 30000;
     const MAX_POLL_DURATION_MS = 300000;
     /* QR codes expire after a certain amount of time, scanning such QR codes with Smart-ID app will fail. The timeout
-    *  is not documented, so we have to use our best guess. */
+     *  is not documented, so we have to use our best guess. */
     const QR_CODE_MAX_AGE_MS = 5000;
 
     const csrfToken = document.querySelector('meta[name="_csrf"]').content;
@@ -20,13 +19,13 @@
         const qrVersion = getRequiredQrVersionEccLow(deviceLink);
         const qrMargin = 1;
         const qrModuleSize = 6;
-        const qrModules = 17 + (4 * qrVersion);
+        const qrModules = 17 + 4 * qrVersion;
         const calculatedMaxWidth = qrModuleSize * (qrModules + 2 * qrMargin);
         let qrCodeElement = QRCode.toString(deviceLink, {
             version: qrVersion,
             errorCorrectionLevel: 'low',
             margin: qrMargin,
-            width: calculatedMaxWidth
+            width: calculatedMaxWidth,
         });
 
         return qrCodeElement;
@@ -34,6 +33,7 @@
 
     // Values from: https://www.qrcode.com/en/about/version.html
     // There does not seem to be a good formula to calculate these.
+    // prettier-ignore
     const QR_BYTE_CAPACITY_ECC_LOW = [
         0,17,32,53,78,106,134,154,192,230,271,
         321,367,425,458,520,586,644,718,792,858,
@@ -55,13 +55,10 @@
     function pollStatus() {
         return fetch('/auth/sid/qr-code/poll', {
             headers: {
-                'Accept': 'application/json;charset=UTF-8'
+                Accept: 'application/json;charset=UTF-8',
             },
-            signal: AbortSignal.any([
-                pollAbortController.signal,
-                AbortSignal.timeout(10_000)
-            ]),
-            credentials: 'include'
+            signal: AbortSignal.any([pollAbortController.signal, AbortSignal.timeout(10_000)]),
+            credentials: 'include',
         });
     }
 
@@ -92,11 +89,11 @@
 
     function setErrorState(error) {
         pollAbortController.abort();
-        hideEl(document.querySelector(".c-tab-login__main"));
-        showEl(document.querySelector("#sid-error"));
+        hideEl(document.querySelector('.c-tab-login__main'));
+        showEl(document.querySelector('#sid-error'));
 
-        const errorMessageEl = document.querySelector("#error-message");
-        const defaultErrorMessageEl = document.querySelector("#default-error-message");
+        const errorMessageEl = document.querySelector('#error-message');
+        const defaultErrorMessageEl = document.querySelector('#default-error-message');
         if (error.message != null) {
             hideEl(defaultErrorMessageEl);
             errorMessageEl.innerHTML = error.message;
@@ -106,22 +103,19 @@
             hideEl(errorMessageEl);
         }
 
-        const incidentNumberWrapperEl = document.querySelector("#error-incident-number-wrapper");
-        const incidentNumberEl = document.querySelector("#error-incident-number");
-        const incidentTimeEl = document.querySelector("#error-incident-time");
-        const reportUrlEl = document.querySelector("#error-report-url");
-        const reportNotificationEl = document.querySelector("#error-report-notification");
+        const incidentNumberWrapperEl = document.querySelector('#error-incident-number-wrapper');
+        const incidentNumberEl = document.querySelector('#error-incident-number');
+        const incidentTimeEl = document.querySelector('#error-incident-time');
+        const reportUrlEl = document.querySelector('#error-report-url');
+        const reportNotificationEl = document.querySelector('#error-report-notification');
         if (error.reportable === true) {
             showEl(incidentNumberWrapperEl);
             showEl(reportUrlEl);
             incidentNumberEl.innerHTML = error.incident_nr;
-            const timeFormat = incidentTimeEl.getAttribute("data-time-format");
+            const timeFormat = incidentTimeEl.getAttribute('data-time-format');
             incidentTimeEl.innerHTML = formatDateTimeWithBrowserOffset(error.timestamp, timeFormat);
-            reportUrlEl.href = reportUrlEl.href
-                .replace('{1}', error.message)
-                .replace('{2}', error.incident_nr);
-            reportNotificationEl.innerHTML = reportNotificationEl.innerHTML
-                .replace('{1}', error.incident_nr);
+            reportUrlEl.href = reportUrlEl.href.replace('{1}', error.message).replace('{2}', error.incident_nr);
+            reportNotificationEl.innerHTML = reportNotificationEl.innerHTML.replace('{1}', error.incident_nr);
         } else {
             hideEl(incidentNumberWrapperEl);
             hideEl(reportUrlEl);
@@ -129,17 +123,17 @@
     }
 
     function acceptAuthentication() {
-        const formEl = document.createElement("form");
-        formEl.method = "POST";
-        formEl.action = "/auth/accept";
+        const formEl = document.createElement('form');
+        formEl.method = 'POST';
+        formEl.action = '/auth/accept';
 
-        const csrfInputEl = document.createElement("input");
-        csrfInputEl.setAttribute("type", "hidden");
-        csrfInputEl.setAttribute("name", "_csrf");
-        csrfInputEl.setAttribute("value", csrfToken);
+        const csrfInputEl = document.createElement('input');
+        csrfInputEl.setAttribute('type', 'hidden');
+        csrfInputEl.setAttribute('name', '_csrf');
+        csrfInputEl.setAttribute('value', csrfToken);
 
         formEl.appendChild(csrfInputEl);
-        formEl.style.display = "none"
+        formEl.style.display = 'none';
         document.body.appendChild(formEl);
         formEl.submit();
     }
@@ -173,7 +167,7 @@
             if (RETRYABLE_HTTP_STATUS_CODES.has(response.status)) {
                 scheduleRetry(pollStartMs);
             } else {
-                const errorBody = await response.json().catch(_ => ({}));
+                const errorBody = await response.json().catch((_) => ({}));
                 setErrorState(errorBody);
             }
             return;
@@ -221,5 +215,4 @@
     });
 
     doPoll();
-
 })();

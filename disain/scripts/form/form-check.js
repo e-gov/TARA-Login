@@ -3,14 +3,13 @@
     var isPolling = true;
 
     try {
-        var value = document.body.getAttribute("data-check-form-refresh-rate");
+        var value = document.body.getAttribute('data-check-form-refresh-rate');
         var number = new Number(value);
 
         if (number >= 100) {
             timeout = number;
         }
-    } catch (e) {
-    }
+    } catch (e) {}
 
     setTimeout(stopPolling, 120000);
 
@@ -18,14 +17,14 @@
         isPolling = false;
     }
 
-    const csrfToken = document.querySelector("input[name='_csrf']").getAttribute("value");
+    const csrfToken = document.querySelector("input[name='_csrf']").getAttribute('value');
 
     function checkAuthenticationStatus() {
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
             if (this.readyState !== 4) {
                 return;
-            } else if (this.responseText === "" && isPolling) {
+            } else if (this.responseText === '' && isPolling) {
                 setTimeout(checkAuthenticationStatus, timeout);
                 return;
             }
@@ -38,53 +37,55 @@
                     setTimeout(checkAuthenticationStatus, timeout);
                     return;
                 } else {
-                    document.querySelector(".c-tab-login__main").classList.add('hidden');
-                    document.querySelector("#mid-error").classList.remove('hidden');
-                    document.querySelector("#error-incident-number-wrapper").classList.add('hidden');
-                    document.querySelector("#error-report-url").classList.add('hidden');
-                    document.querySelector("#default-error-message").classList.remove('hidden');
+                    document.querySelector('.c-tab-login__main').classList.add('hidden');
+                    document.querySelector('#mid-error').classList.remove('hidden');
+                    document.querySelector('#error-incident-number-wrapper').classList.add('hidden');
+                    document.querySelector('#error-report-url').classList.add('hidden');
+                    document.querySelector('#default-error-message').classList.remove('hidden');
                     return;
                 }
             }
 
-            if (this.status === 200 && pollResponse["status"] === 'COMPLETED') {
-                var form = document.createElement("form");
-                form.method = "POST";
-                form.action = "/auth/accept";
+            if (this.status === 200 && pollResponse['status'] === 'COMPLETED') {
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/auth/accept';
 
-                var input = document.createElement("input");
-                input.setAttribute("type", "hidden");
-                input.setAttribute("name", "_csrf");
-                input.setAttribute("value", csrfToken);
+                var input = document.createElement('input');
+                input.setAttribute('type', 'hidden');
+                input.setAttribute('name', '_csrf');
+                input.setAttribute('value', csrfToken);
                 form.appendChild(input);
                 document.body.appendChild(form);
                 form.submit();
-            } else if (this.status === 200 && pollResponse["status"] === 'PENDING' && isPolling) {
+            } else if (this.status === 200 && pollResponse['status'] === 'PENDING' && isPolling) {
                 setTimeout(checkAuthenticationStatus, timeout);
             } else {
-                document.querySelector(".c-tab-login__main").classList.add('hidden');
-                document.querySelector("#mid-error").classList.remove('hidden');
-                document.querySelector("#error-message").innerHTML = pollResponse["message"];
+                document.querySelector('.c-tab-login__main').classList.add('hidden');
+                document.querySelector('#mid-error').classList.remove('hidden');
+                document.querySelector('#error-message').innerHTML = pollResponse['message'];
 
-                if (pollResponse["reportable"]) {
-                    var timeFormat = document.querySelector("#error-incident-time").getAttribute("data-time-format");
+                if (pollResponse['reportable']) {
+                    var timeFormat = document.querySelector('#error-incident-time').getAttribute('data-time-format');
                     var formattedDateTimeWithOffset = formatDateTimeWithBrowserOffset(
-                        pollResponse["timestamp"], timeFormat);
+                        pollResponse['timestamp'],
+                        timeFormat
+                    );
 
-                    document.querySelector("#error-incident-number").innerHTML = pollResponse["incident_nr"];
-                    document.querySelector("#error-incident-time").innerHTML = formattedDateTimeWithOffset;
+                    document.querySelector('#error-incident-number').innerHTML = pollResponse['incident_nr'];
+                    document.querySelector('#error-incident-time').innerHTML = formattedDateTimeWithOffset;
 
-                    var errorReportUrl = document.querySelector("#error-report-url").href;
-                    errorReportUrl = errorReportUrl.replace("{1}", pollResponse["message"]);
-                    errorReportUrl = errorReportUrl.replace("{2}", pollResponse["incident_nr"]);
-                    document.querySelector("#error-report-url").href = errorReportUrl;
+                    var errorReportUrl = document.querySelector('#error-report-url').href;
+                    errorReportUrl = errorReportUrl.replace('{1}', pollResponse['message']);
+                    errorReportUrl = errorReportUrl.replace('{2}', pollResponse['incident_nr']);
+                    document.querySelector('#error-report-url').href = errorReportUrl;
 
-                    var errorReportNotification = document.querySelector("#error-report-notification").innerHTML;
-                    errorReportNotification = errorReportNotification.replace("{1}", pollResponse["incident_nr"]);
-                    document.querySelector("#error-report-notification").innerHTML = errorReportNotification;
+                    var errorReportNotification = document.querySelector('#error-report-notification').innerHTML;
+                    errorReportNotification = errorReportNotification.replace('{1}', pollResponse['incident_nr']);
+                    document.querySelector('#error-report-notification').innerHTML = errorReportNotification;
                 } else {
-                    document.querySelector("#error-incident-number-wrapper").classList.add('hidden');
-                    document.querySelector("#error-report-url").classList.add('hidden');
+                    document.querySelector('#error-incident-number-wrapper').classList.add('hidden');
+                    document.querySelector('#error-report-url').classList.add('hidden');
                 }
             }
         };

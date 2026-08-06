@@ -150,7 +150,8 @@
     color: #34394c;
   }
   table {
-    th, td {
+    th,
+    td {
       padding: 5px;
     }
     th {
@@ -204,7 +205,7 @@
 .personal-info-label {
   font-size: 14px;
   line-height: 16px;
-  color: #5D6071;
+  color: #5d6071;
 }
 @media (min-width: $breakpoint-mobile + 1) {
   hr.card-divider {
@@ -218,7 +219,7 @@
     height: 16px;
     width: 100%;
     background-color: white;
-    content: " ";
+    content: ' ';
     border-radius: 0 0 8px 8px;
   }
   hr.card-divider::after {
@@ -226,7 +227,7 @@
     height: 16px;
     width: 100%;
     background-color: white;
-    content: " ";
+    content: ' ';
     border-radius: 8px 8px 0 0;
     margin-top: 16px;
   }

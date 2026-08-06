@@ -9,7 +9,7 @@
   width: 100%; /* Full width */
   height: 100%; /* Full height */
   overflow: auto; /* Enable scroll if needed */
-  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+  background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
 
   /* Add animation */
   -webkit-animation-name: fadeIn; /* Fade in the background */
@@ -60,7 +60,7 @@
     margin-bottom: 10px;
     font-size: 24px;
     color: #003168;
-    font-weight: 400
+    font-weight: 400;
   }
 
   #auth-flow-timeout-timer {
@@ -70,26 +70,45 @@
     font-size: 2em;
     font-weight: bold;
   }
-
 }
 
 /* Animations */
 @-webkit-keyframes slideIn {
-  from {bottom: -300px; opacity: 0;}
-  to {bottom: 0; opacity: 1;}
+  from {
+    bottom: -300px;
+    opacity: 0;
+  }
+  to {
+    bottom: 0;
+    opacity: 1;
+  }
 }
 
 @keyframes slideIn {
-  from {bottom: -300px; opacity: 0;}
-  to {bottom: 0; opacity: 1;}
+  from {
+    bottom: -300px;
+    opacity: 0;
+  }
+  to {
+    bottom: 0;
+    opacity: 1;
+  }
 }
 
 @-webkit-keyframes fadeIn {
-  from {opacity: 0;}
-  to {opacity: 1;}
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes fadeIn {
-  from {opacity: 0;}
-  to {opacity: 1;}
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

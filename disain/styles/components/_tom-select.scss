@@ -38,7 +38,7 @@
 
 .plugin-clear_button {
   .items {
-    padding-right: calc( 1em + (3 * 6px)) !important;
+    padding-right: calc(1em + (3 * 6px)) !important;
   }
 
   .clear-button {
@@ -53,10 +53,11 @@
   }
 
   &.single .clear-button {
-    right: calc(8px - 6px +  2rem);
+    right: calc(8px - 6px + 2rem);
   }
 
-  .has-items.focus .clear-button, &:hover .has-items .clear-button {
+  .has-items.focus .clear-button,
+  &:hover .has-items .clear-button {
     opacity: 1;
   }
 }
@@ -233,7 +234,7 @@
 }
 
 .ts-control.multi .ts-input.has-items {
-  padding: calc( 8px - 2px - 0) 8px calc( 8px - 2px - 3px - 0);
+  padding: calc(8px - 2px - 0) 8px calc(8px - 2px - 3px - 0);
 }
 
 .ts-input {
@@ -391,7 +392,10 @@
     }
   }
 
-  .option, .optgroup-header, .no-results, .create {
+  .option,
+  .optgroup-header,
+  .no-results,
+  .create {
     padding: 5px 8px;
   }
 
@@ -425,12 +429,16 @@
     cursor: default;
   }
 
-  .create:hover, .option:hover, .active {
+  .create:hover,
+  .option:hover,
+  .active {
     background-color: #f5fafd;
     color: #495c68;
   }
 
-  .create:hover.create, .option:hover.create, .active.create {
+  .create:hover.create,
+  .option:hover.create,
+  .active.create {
     color: #495c68;
   }
 
@@ -445,7 +453,7 @@
     margin: 5px 8px;
 
     &:after {
-      content: " ";
+      content: ' ';
       display: block;
       width: 24px;
       height: 24px;

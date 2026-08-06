@@ -2,21 +2,33 @@
 $breakpoint-mobile: 800px !default;
 
 // Reset
-p,ul,li,h1,h2,h3,form,fieldset,input,button {
+p,
+ul,
+li,
+h1,
+h2,
+h3,
+form,
+fieldset,
+input,
+button {
   margin: 0;
   padding: 0;
 }
-h2,h3 {
+h2,
+h3 {
   line-height: 1.2;
 }
 h4 {
   color: #003168;
 }
-ul,li {
+ul,
+li {
   list-style: none;
 }
-a, button {
-  transition: color .25s, background-color .25s;
+a,
+button {
+  transition: color 0.25s, background-color 0.25s;
 }
 a {
   color: #005f87;
@@ -26,7 +38,8 @@ a {
     text-decoration: none;
   }
 }
-input,button {
+input,
+button {
   font-size: inherit;
 }
 fieldset {
@@ -47,7 +60,8 @@ fieldset {
 }
 
 // General
-html,body {
+html,
+body {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -62,12 +76,12 @@ body {
   }
 }
 .text {
-    margin: 0;
-    display: block;
-    margin-block-start: 1em;
-    margin-block-end: 1em;
-    margin-inline-start: 0px;
-    margin-inline-end: 0px;
+  margin: 0;
+  display: block;
+  margin-block-start: 1em;
+  margin-block-end: 1em;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
 }
 
 // Layout
@@ -81,7 +95,7 @@ body {
 .c-layout {
   height: 100%;
   min-height: 100%;
-	display: flex;
+  display: flex;
   flex-direction: column;
   @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
     display: block;
@@ -99,7 +113,7 @@ body {
   }
   &.arrow-back {
     &::before {
-      content: "<";
+      content: '<';
       padding-right: 8px;
       display: inline-block;
       transform: scaleY(1.5);
@@ -125,10 +139,10 @@ body {
   display: inline-block;
   margin-right: 20px;
   @media (max-width: $breakpoint-mobile) {
-      display: block;
-      width: 100%;
-      padding: 12px 0px;
-    }
+    display: block;
+    width: 100%;
+    padding: 12px 0px;
+  }
 }
 .consent-table {
   padding-bottom: 20px;
@@ -155,24 +169,24 @@ body.is-mobile-subview {
     }
   }
   .c-tab-login__warning.is-active {
-      @media (max-width: $breakpoint-mobile) {
-        display: block;
-      }
-    }
-  .c-tab-login__static-warning {
-      @media (max-width: $breakpoint-mobile) {
-        display: none;
-      }
-    }
-}
-.logo-separator-mobile {
-    background-color: #dbdfe2;
-    height: 20px;
-    margin: 0px -15px 0 -15px;
-    display: none;
     @media (max-width: $breakpoint-mobile) {
       display: block;
     }
+  }
+  .c-tab-login__static-warning {
+    @media (max-width: $breakpoint-mobile) {
+      display: none;
+    }
+  }
+}
+.logo-separator-mobile {
+  background-color: #dbdfe2;
+  height: 20px;
+  margin: 0px -15px 0 -15px;
+  display: none;
+  @media (max-width: $breakpoint-mobile) {
+    display: block;
+  }
 }
 
 // Helpers
@@ -194,7 +208,7 @@ body.is-mobile-subview {
   height: 1px;
   padding: 0;
   overflow: hidden;
-  clip: rect(0,0,0,0);
+  clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
 }
@@ -214,7 +228,7 @@ body.is-mobile-subview {
   .detailed-instruction-block {
     margin-left: -15px;
     margin-right: -15px;
-    border-radius: 0
+    border-radius: 0;
   }
 }
 

@@ -19,11 +19,12 @@
     background-color: #008936;
     border: 2px solid #008936;
     &:hover {
-      background-color: darken( #008936, 5% );
-      border-color: darken( #008936, 5% );
+      background-color: darken(#008936, 5%);
+      border-color: darken(#008936, 5%);
     }
   }
-  &--primary:disabled, &--primary[disabled] {
+  &--primary:disabled,
+  &--primary[disabled] {
     cursor: default;
     background-color: #cccccc;
     color: #666666;
@@ -39,15 +40,16 @@
       background-color: #344255;
     }
   }
-  &--cancel:disabled, &--cancel[disabled] {
+  &--cancel:disabled,
+  &--cancel[disabled] {
     cursor: default;
     color: #aaaaaa;
     background-color: #ffffff;
     border: 3px solid #aaaaaa;
   }
   &--from-link {
-	text-decoration: none;
-	text-align: center;
+    text-decoration: none;
+    text-align: center;
   }
   &:focus {
     outline: 2px solid #337bb5;
@@ -66,7 +68,7 @@
   display: inline;
   text-decoration: underline;
   &__next::after {
-    content: ">";
+    content: '>';
     margin-left: 8px;
     display: inline-block;
     transform: scaleY(1.5);
@@ -76,7 +78,7 @@
     margin-bottom: -4px;
   }
   &__back::before {
-    content: "<";
+    content: '<';
     margin-right: 8px;
     display: inline-block;
     transform: scaleY(1.5);
