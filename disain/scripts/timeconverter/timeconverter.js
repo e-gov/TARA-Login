@@ -1,9 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
     const incidentTimeElement = document.getElementById('incident-time');
-    if (!incidentTimeElement) return;
+    if (!incidentTimeElement) {
+        return;
+    }
 
     const serverTimeString = incidentTimeElement.dataset.serverTime;
-    if (!serverTimeString) return;
+    if (!serverTimeString) {
+        return;
+    }
 
     const timeFormat = incidentTimeElement.dataset.timeFormat;
     const formattedDateTimeWithBrowserOffset = formatDateTimeWithBrowserOffset(serverTimeString, timeFormat);

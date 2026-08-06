@@ -29,7 +29,7 @@ jQuery(function ($) {
     })();
 
     function setView(mainEl, viewName) {
-        var viewEls = getViewElsByName(mainEl);
+        const viewEls = getViewElsByName(mainEl);
         for (const el of Object.values(viewEls)) {
             hideEl(el);
         }
@@ -49,7 +49,7 @@ jQuery(function ($) {
         const viewEl = getViewElsByName(mainEl)[viewName];
         const els = viewEl.find('[data-sid-login-form-component]');
         els.each(function () {
-            let currentComponentName = $(this).attr('data-sid-login-form-component');
+            const currentComponentName = $(this).attr('data-sid-login-form-component');
             if (componentNames.includes(currentComponentName)) {
                 showEl($(this));
             } else {

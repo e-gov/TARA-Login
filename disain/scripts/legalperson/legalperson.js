@@ -28,20 +28,13 @@ jQuery(function ($) {
         $('#results-summary').removeClass('hidden');
         $('#results-legal-person-list').empty();
 
-        var length = json.legalPersons.length;
+        const length = json.legalPersons.length;
         $.each(json.legalPersons, function (idx, legalperson) {
-            var legalPersonItem = $(
-                '<li><input type="radio" name="legalperson" value="' +
-                    legalperson.legalPersonIdentifier +
-                    '" id="' +
-                    legalperson.legalPersonIdentifier +
-                    '" /> <label for="' +
-                    legalperson.legalPersonIdentifier +
-                    '">' +
-                    legalperson.legalName +
-                    ', ' +
-                    legalperson.legalPersonIdentifier +
-                    '</label></li>'
+            const id = legalperson.legalPersonIdentifier;
+            const name = legalperson.legalName;
+            const legalPersonItem = $(
+                `<li><input type="radio" name="legalperson" value="${id}" id="${id}" /> ` +
+                    `<label for="${id}">${name}, ${id}</label></li>`
             );
 
             $('#results-legal-person-list').append(legalPersonItem);
@@ -52,7 +45,7 @@ jQuery(function ($) {
         });
 
         if (length == 1) {
-            $('#' + json.legalPersons[0].legalPersonIdentifier).prop('checked', true);
+            $(`#${json.legalPersons[0].legalPersonIdentifier}`).prop('checked', true);
             $('input[name="legal_person_identifier"]').val(json.legalPersons[0].legalPersonIdentifier);
             $('#legalperson-count').text(length);
             $('#btn-select-legal-person').removeAttr('disabled');

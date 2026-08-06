@@ -13,7 +13,7 @@
     const pollSessionStartMs = Date.now();
     let firstRetryMs = null;
     let qrCodeExpirationTimeout = null;
-    let pollAbortController = new AbortController();
+    const pollAbortController = new AbortController();
 
     function createQrCodePromise(deviceLink) {
         const qrVersion = getRequiredQrVersionEccLow(deviceLink);
@@ -21,7 +21,7 @@
         const qrModuleSize = 6;
         const qrModules = 17 + 4 * qrVersion;
         const calculatedMaxWidth = qrModuleSize * (qrModules + 2 * qrMargin);
-        let qrCodeElement = QRCode.toString(deviceLink, {
+        const qrCodeElement = QRCode.toString(deviceLink, {
             version: qrVersion,
             errorCorrectionLevel: 'low',
             margin: qrMargin,

@@ -1,12 +1,12 @@
 (function () {
-    var pollInterval = 1000;
-    var isPolling = true;
+    let pollInterval = 1000;
+    let isPolling = true;
     const LONGER_THAN_EXPECTED_DELAY_MS = 5000;
     const TIMEOUT = 20000;
 
     try {
-        var value = document.body.getAttribute('data-sid-web2app-poll-interval');
-        var number = new Number(value);
+        const value = document.body.getAttribute('data-sid-web2app-poll-interval');
+        const number = new Number(value);
 
         if (number >= 100) {
             pollInterval = number;
@@ -29,7 +29,7 @@
 
     // TODO: This should be refactored to use smaller self-documenting functions and let variables like in sid-web2app-poll.js
     function checkAuthenticationStatus() {
-        var xhttp = new XMLHttpRequest();
+        const xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
             if (this.readyState !== 4) {
                 return;
@@ -38,7 +38,7 @@
                 return;
             }
 
-            var pollResponse;
+            let pollResponse;
             try {
                 pollResponse = JSON.parse(this.responseText);
             } catch (e) {
@@ -57,11 +57,11 @@
             }
 
             if (this.status === 200 && pollResponse['status'] === 'COMPLETED') {
-                var form = document.createElement('form');
+                const form = document.createElement('form');
                 form.method = 'POST';
                 form.action = '/auth/accept';
 
-                var input = document.createElement('input');
+                const input = document.createElement('input');
                 input.setAttribute('type', 'hidden');
                 input.setAttribute('name', '_csrf');
                 input.setAttribute('value', csrfToken);
@@ -83,8 +83,8 @@
                 }
 
                 if (pollResponse['reportable']) {
-                    var timeFormat = document.querySelector('#error-incident-time').getAttribute('data-time-format');
-                    var formattedDateTimeWithOffset = formatDateTimeWithBrowserOffset(
+                    const timeFormat = document.querySelector('#error-incident-time').getAttribute('data-time-format');
+                    const formattedDateTimeWithOffset = formatDateTimeWithBrowserOffset(
                         pollResponse['timestamp'],
                         timeFormat
                     );
@@ -92,12 +92,12 @@
                     document.querySelector('#error-incident-number').innerHTML = pollResponse['incident_nr'];
                     document.querySelector('#error-incident-time').innerHTML = formattedDateTimeWithOffset;
 
-                    var errorReportUrl = document.querySelector('#error-report-url').href;
+                    let errorReportUrl = document.querySelector('#error-report-url').href;
                     errorReportUrl = errorReportUrl.replace('{1}', pollResponse['message']);
                     errorReportUrl = errorReportUrl.replace('{2}', pollResponse['incident_nr']);
                     document.querySelector('#error-report-url').href = errorReportUrl;
 
-                    var errorReportNotification = document.querySelector('#error-report-notification').innerHTML;
+                    let errorReportNotification = document.querySelector('#error-report-notification').innerHTML;
                     errorReportNotification = errorReportNotification.replace('{1}', pollResponse['incident_nr']);
                     document.querySelector('#error-report-notification').innerHTML = errorReportNotification;
                 } else {
@@ -106,7 +106,7 @@
                 }
             }
         };
-        xhttp.open('GET', '/auth/sid/web2app/callback/poll?' + callbackParams.toString(), true);
+        xhttp.open('GET', `/auth/sid/web2app/callback/poll?${callbackParams.toString()}`, true);
         xhttp.setRequestHeader('Accept', 'application/json;charset=UTF-8');
         xhttp.send();
     }

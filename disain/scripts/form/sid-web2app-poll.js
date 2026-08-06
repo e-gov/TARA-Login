@@ -96,7 +96,7 @@
     }
 
     function checkAuthenticationStatus() {
-        let xhttp = new XMLHttpRequest();
+        const xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
             if (this.readyState !== 4 || cancelled) {
                 return;
@@ -169,8 +169,8 @@
         }
 
         if (pollResponse['reportable']) {
-            let timeFormat = document.querySelector('#error-incident-time').getAttribute('data-time-format');
-            let formattedDateTimeWithOffset = formatDateTimeWithBrowserOffset(pollResponse['timestamp'], timeFormat);
+            const timeFormat = document.querySelector('#error-incident-time').getAttribute('data-time-format');
+            const formattedDateTimeWithOffset = formatDateTimeWithBrowserOffset(pollResponse['timestamp'], timeFormat);
 
             document.querySelector('#error-incident-number').innerHTML = pollResponse['incident_nr'];
             document.querySelector('#error-incident-time').innerHTML = formattedDateTimeWithOffset;

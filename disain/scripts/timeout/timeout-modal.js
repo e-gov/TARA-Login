@@ -15,7 +15,7 @@ jQuery(function ($) {
             return null;
         }
 
-        let currentTimestamp = getCurrentTimeStampInSeconds();
+        const currentTimestamp = getCurrentTimeStampInSeconds();
         timeoutTimestamp = currentTimestamp + secondsToTimeout;
 
         const timeouts = [
@@ -43,7 +43,7 @@ jQuery(function ($) {
     }
 
     function displayTimeoutModal(secondsToTimeout) {
-        let authFlowTimeout = $('#auth-flow-timeout').get(0);
+        const authFlowTimeout = $('#auth-flow-timeout').get(0);
         if (authFlowTimeout.classList.contains('show') || !$('#id-card-wait').hasClass('hidden')) {
             return null;
         }
@@ -56,7 +56,7 @@ jQuery(function ($) {
         $(document).on('keydown', handleEscapeKey);
         $(document).on('keydown', handleFocusTrap);
 
-        let intervalId = setInterval(function () {
+        const intervalId = setInterval(function () {
             if (!authFlowTimeout.classList.contains('show') || secondsToTimeout <= 0) {
                 clearInterval(intervalId);
             }
@@ -66,8 +66,8 @@ jQuery(function ($) {
     }
 
     function incrementAuthFlowTimeoutTimer(secondsToTimeout) {
-        let minutes = String(Math.floor(secondsToTimeout / 60));
-        let seconds = String(secondsToTimeout % 60).padStart(2, '0');
+        const minutes = String(Math.floor(secondsToTimeout / 60));
+        const seconds = String(secondsToTimeout % 60).padStart(2, '0');
 
         $('#auth-flow-timeout-timer').text(`${minutes}:${seconds}`);
     }

@@ -29,20 +29,13 @@ module.exports = {
     ],
     rules: {
         'no-undef': 'error',
-        'no-unused-vars': ['warn', { args: 'none' }],
+        'no-unused-vars': ['warn', { args: 'all', argsIgnorePattern: '^_' }],
         eqeqeq: ['warn', 'always', { null: 'ignore' }],
         'no-eval': 'error',
         'no-console': ['warn', { allow: ['error', 'warn'] }],
         curly: ['warn', 'all'],
-
-        // --- Stage 2: requires a dedicated fix pass across the codebase ---
-        // Replace all var with let/const. ~350 occurrences, run eslint --fix.
-        // 'no-var': 'error',
-        //
-        // Prefer const when variable is never reassigned. Enable after no-var.
-        // 'prefer-const': 'warn',
-        //
-        // Prefer template literals over string concatenation. ~10 occurrences, run eslint --fix.
-        // 'prefer-template': 'warn',
+        'no-var': 'error',
+        'prefer-const': 'warn',
+        'prefer-template': 'warn',
     },
 };

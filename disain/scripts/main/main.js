@@ -1,7 +1,7 @@
 jQuery(function ($) {
     'use strict';
 
-    var clientLogoSrc = $('#client-logo').attr('src');
+    const clientLogoSrc = $('#client-logo').attr('src');
     if (clientLogoSrc) {
         $('#client-logo-wait').attr('src', clientLogoSrc);
     }
@@ -62,16 +62,20 @@ jQuery(function ($) {
     // Activate previously selected or first auth method
     try {
         // In some cases exception could be thrown while accessing localStorage, see https://github.com/Modernizr/Modernizr/blob/v3.11.6/feature-detects/storage/localstorage.js
-        var active = localStorage.getItem('active-tab', active);
+        const active = localStorage.getItem('active-tab');
 
-        if (!active || !/^[a-z]{2,10}-[a-z]{2,10}$/.test(active)) throw 2;
+        if (!active || !/^[a-z]{2,10}-[a-z]{2,10}$/.test(active)) {
+            throw 2;
+        }
 
-        if ($('.c-tab-login__nav-link[data-tab="' + active + '"]').length !== 1) throw 3;
+        if ($(`.c-tab-login__nav-link[data-tab="${active}"]`).length !== 1) {
+            throw 3;
+        }
 
         activateTab(
-            $('.c-tab-login__nav-link[data-tab="' + active + '"]'),
-            $('.c-tab-login__content[data-tab="' + active + '"]'),
-            $('.c-tab-login__warning[data-tab="' + active + '"]')
+            $(`.c-tab-login__nav-link[data-tab="${active}"]`),
+            $(`.c-tab-login__content[data-tab="${active}"]`),
+            $(`.c-tab-login__warning[data-tab="${active}"]`)
         );
     } catch (e) {
         activateTab(
@@ -85,23 +89,23 @@ jQuery(function ($) {
     $(document).on('click', '.c-tab-login__nav-link', function (event) {
         event.preventDefault();
 
-        var docwidth = $(document).width();
-        var active = $(this).data('tab');
+        const docwidth = $(document).width();
+        const active = $(this).data('tab');
 
         // Clear alert and feedback messages
-        hideAlert($('.c-tab-login__content[data-tab="' + active + '"] [role="alert"]'));
-        hideFeedback($('.c-tab-login__content[data-tab="' + active + '"] .invalid-feedback'));
-        hideFeedback($('.c-tab-login__content[data-tab="' + active + '"] .invalid-feedback-warning'));
-        $('.c-tab-login__content[data-tab="' + active + '"] .input-group').removeClass('is-invalid');
-        $('.c-tab-login__content[data-tab="' + active + '"] .ts-input').removeClass('is-invalid');
+        hideAlert($(`.c-tab-login__content[data-tab="${active}"] [role="alert"]`));
+        hideFeedback($(`.c-tab-login__content[data-tab="${active}"] .invalid-feedback`));
+        hideFeedback($(`.c-tab-login__content[data-tab="${active}"] .invalid-feedback-warning`));
+        $(`.c-tab-login__content[data-tab="${active}"] .input-group`).removeClass('is-invalid');
+        $(`.c-tab-login__content[data-tab="${active}"] .ts-input`).removeClass('is-invalid');
 
         $('.c-tab-login__nav-item').removeClass('is-active');
         deActivateTab($('.c-tab-login__nav-link'), $('.c-tab-login__content'), $('.c-tab-login__warning'));
 
         activateTab(
             $(this),
-            $('.c-tab-login__content[data-tab="' + active + '"]'),
-            $('.c-tab-login__warning[data-tab="' + active + '"]')
+            $(`.c-tab-login__content[data-tab="${active}"]`),
+            $(`.c-tab-login__warning[data-tab="${active}"]`)
         );
         try {
             // In some cases exception could be thrown while accessing localStorage, see https://github.com/Modernizr/Modernizr/blob/v3.11.6/feature-detects/storage/localstorage.js
@@ -114,7 +118,7 @@ jQuery(function ($) {
             $(this).parent().addClass('is-active');
         }
 
-        $('.c-tab-login__content[data-tab="' + active + '"]')
+        $(`.c-tab-login__content[data-tab="${active}"]`)
             .find('.c-tab-login__content-wrap')
             .first()
             .attr('tabindex', -1)
@@ -122,10 +126,10 @@ jQuery(function ($) {
     });
 
     $(document).on('click', '#error-report-url', function (event) {
-        var errorReportUrl = $('#error-report-url');
-        var errorReportNotification = $('#error-report-notification');
-        var processedErrorReportUrl = errorReportUrl.attr('href');
-        var processedErrorReportNotification = errorReportNotification.text();
+        const errorReportUrl = $('#error-report-url');
+        const errorReportNotification = $('#error-report-notification');
+        let processedErrorReportUrl = errorReportUrl.attr('href');
+        let processedErrorReportNotification = errorReportNotification.text();
 
         processedErrorReportUrl = processedErrorReportUrl.replace('(3)', getCurrentOperatingSystem());
         processedErrorReportUrl = processedErrorReportUrl.replace('(4)', getCurrentBrowser());
@@ -172,7 +176,7 @@ jQuery(function ($) {
     }
 
     function validateEstonianIdCode(field) {
-        let value = field.val();
+        const value = field.val();
         if (value.length < 11) {
             displayFormFieldError(field, 'personal-code-short');
             return false;
@@ -185,7 +189,7 @@ jQuery(function ($) {
     }
 
     function validateMidPhoneNumber(field) {
-        let value = field.val().replace(/\s+/g, '');
+        const value = field.val().replace(/\s+/g, '');
         if (value.length < 5) {
             displayFormFieldError(field, 'phone-number-short');
             return false;
@@ -207,7 +211,7 @@ jQuery(function ($) {
     }
 
     function displayFormFieldError(field, errorElementClass) {
-        const errorId = errorElementClass + '-error';
+        const errorId = `${errorElementClass}-error`;
         field.addClass('is-invalid').attr({
             'aria-invalid': 'true',
             'aria-describedby': errorId,
@@ -236,7 +240,7 @@ jQuery(function ($) {
             return true;
         } else {
             selection.parent('td').find('.ts-input').addClass('is-invalid');
-            var feedbackDiv = selection.parent('td').children('div.invalid-feedback');
+            const feedbackDiv = selection.parent('td').children('div.invalid-feedback');
             showFeedback(feedbackDiv);
             // Refresh text for screen reader to read out message
             feedbackDiv.html(feedbackDiv.html());
@@ -365,14 +369,14 @@ jQuery(function ($) {
         $('#error-message').html(responseJson.message);
 
         if (responseJson.reportable === true) {
-            var timeFormat = document.querySelector('#error-incident-time').getAttribute('data-time-format');
-            var formattedDateTimeWithOffset = formatDateTimeWithBrowserOffset(responseJson.timestamp, timeFormat);
+            const timeFormat = document.querySelector('#error-incident-time').getAttribute('data-time-format');
+            const formattedDateTimeWithOffset = formatDateTimeWithBrowserOffset(responseJson.timestamp, timeFormat);
 
             $('#error-incident-number').text(responseJson.incident_nr);
             $('#error-incident-time').text(formattedDateTimeWithOffset);
             const plainTextMessage = $('#error-message').text();
             const os = navigator.platform;
-            const browserInfo = navigator.appCodeName + '/' + navigator.appVersion;
+            const browserInfo = `${navigator.appCodeName}/${navigator.appVersion}`;
             const hostName = location.hostname;
             const errorReportUrl = $('#error-report-url')
                 .attr('href')
@@ -443,7 +447,9 @@ jQuery(function ($) {
 
     // Smart-ID form submit
     $('#smartIdForm button.c-btn--primary').on('click', function (event) {
-        if ($(this).prop('disabled')) return;
+        if ($(this).prop('disabled')) {
+            return;
+        }
         $(this).prop('disabled', true);
 
         if (validateEstonianIdCode($('#sid-personal-code'))) {
@@ -464,7 +470,9 @@ jQuery(function ($) {
 
     // EU citizen form submit
     $('#eidasForm button.c-btn--primary').on('click', function (event) {
-        if ($(this).prop('disabled')) return;
+        if ($(this).prop('disabled')) {
+            return;
+        }
         $(this).prop('disabled', true);
 
         if (
@@ -508,7 +516,7 @@ jQuery(function ($) {
     }
 
     async function detectWebEid() {
-        let webEidInfo = {
+        const webEidInfo = {
             code: '',
             extensionVersion: '',
             nativeAppVersion: '',
@@ -561,7 +569,7 @@ jQuery(function ($) {
         };
 
         if (!(viewName in visibleElementsInViews)) {
-            console.error('Invalid name for view: ' + viewName);
+            console.error(`Invalid name for view: ${viewName}`);
             return;
         }
 
@@ -637,7 +645,7 @@ jQuery(function ($) {
     });
 
     $(document).ready(function () {
-        let focusableElement = $('#focus-wrapper');
+        const focusableElement = $('#focus-wrapper');
         if (focusableElement.length) {
             // Forcing focus on SID/MID confirmation code view for screen readers so important information is not missed
             // Needed for consistent functioning of different screen reader and browser combinations
