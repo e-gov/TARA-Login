@@ -1,6 +1,8 @@
 package ee.ria.taraauthserver.config;
 
 import ee.ria.taraauthserver.config.properties.AlertsConfigurationProperties.Alert;
+import ee.ria.taraauthserver.config.properties.IgniteCacheProperties;
+import ee.ria.taraauthserver.config.properties.IgniteCacheProperties.CacheProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.Ignition;
@@ -25,7 +27,6 @@ import java.util.function.Consumer;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static javax.cache.expiry.CreatedExpiryPolicy.factoryOf;
 import static org.apache.ignite.cache.CacheAtomicityMode.ATOMIC;
-import static org.apache.ignite.cache.CacheMode.PARTITIONED;
 
 /**
  * @see <a href="https://ignite.apache.org/releases/latest/javadoc/org/apache/ignite/IgniteBinary.html">Dynamically change structure of the classes without having to restart the cluster.</a>
@@ -63,34 +64,43 @@ public class IgniteCacheConfiguration {
     }
 
     @Bean
-    public Cache<String, BinaryObject> sessionCache(Ignite igniteInstance, @Value("${spring.session.timeout}") Duration sessionTimeout) {
+    public Cache<String, BinaryObject> sessionCache(Ignite igniteInstance, IgniteCacheProperties igniteCacheProperties, @Value("${spring.session.timeout}") Duration sessionTimeout) {
+        CacheProperties cacheProperties = igniteCacheProperties.getSessionCache();
         return igniteInstance.getOrCreateCache(new CacheConfiguration<String, Session>()
                         .setName(SESSION_CACHE_NAME)
-                        .setCacheMode(PARTITIONED)
+                        .setCacheMode(cacheProperties.getCacheMode())
                         .setAtomicityMode(ATOMIC)
-                        .setBackups(0)
+                        .setBackups(cacheProperties.getBackups())
+                        .setWriteSynchronizationMode(cacheProperties.getWriteSynchronizationMode())
+                        .setReadFromBackup(cacheProperties.isReadFromBackup())
                         .setExpiryPolicyFactory(factoryOf(new javax.cache.expiry.Duration(SECONDS, sessionTimeout.toSeconds()))))
                 .withKeepBinary();
     }
 
     @Bean
-    public Cache<String, String> eidasRelayStateCache(Ignite igniteInstance, @Value("${tara.auth-methods.eidas.relay_state_cache_duration_in_seconds:300}") Integer relayStateTimeout) {
+    public Cache<String, String> eidasRelayStateCache(Ignite igniteInstance, IgniteCacheProperties igniteCacheProperties, @Value("${tara.auth-methods.eidas.relay_state_cache_duration_in_seconds:300}") Integer relayStateTimeout) {
+        CacheProperties cacheProperties = igniteCacheProperties.getEidasRelayStateCache();
         return igniteInstance.getOrCreateCache(new CacheConfiguration<String, String>()
                 .setName(EIDAS_RELAY_STATE_CACHE_NAME)
-                .setCacheMode(PARTITIONED)
+                .setCacheMode(cacheProperties.getCacheMode())
                 .setAtomicityMode(ATOMIC)
                 .setExpiryPolicyFactory(factoryOf(new javax.cache.expiry.Duration(SECONDS, relayStateTimeout)))
-                .setBackups(0));
+                .setWriteSynchronizationMode(cacheProperties.getWriteSynchronizationMode())
+                .setReadFromBackup(cacheProperties.isReadFromBackup())
+                .setBackups(cacheProperties.getBackups()));
     }
 
     @Bean
-    public Cache<String, BinaryObject> alertsCache(Ignite igniteInstance, @Value("${tara.alerts.alerts_cache_duration_in_seconds:86400}") Integer alertsCacheTimeout) {
+    public Cache<String, BinaryObject> alertsCache(Ignite igniteInstance, IgniteCacheProperties igniteCacheProperties, @Value("${tara.alerts.alerts_cache_duration_in_seconds:86400}") Integer alertsCacheTimeout) {
+        CacheProperties cacheProperties = igniteCacheProperties.getAlertsCache();
         return igniteInstance.getOrCreateCache(new CacheConfiguration<String, List<Alert>>()
                         .setName(ALERTS_CACHE_NAME)
-                        .setCacheMode(PARTITIONED)
+                        .setCacheMode(cacheProperties.getCacheMode())
                         .setAtomicityMode(ATOMIC)
                         .setExpiryPolicyFactory(factoryOf(new javax.cache.expiry.Duration(SECONDS, alertsCacheTimeout)))
-                        .setBackups(0))
+                        .setWriteSynchronizationMode(cacheProperties.getWriteSynchronizationMode())
+                        .setReadFromBackup(cacheProperties.isReadFromBackup())
+                        .setBackups(cacheProperties.getBackups()))
                 .withKeepBinary();
     }
 }

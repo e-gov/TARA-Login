@@ -451,6 +451,24 @@ Ignite is used for storing user’s session information.
 
 \* For Ignite 2.10.0 and older, [TLSv1.3 is not supported](https://ignite.apache.org/docs/2.10.0/quick-start/java#running-ignite-with-java-11).
 
+Cache durability can be configured per cache, where `<cache>` is `session-cache`,
+`eidas-relay-state-cache` or `alerts-cache`.
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.ignite.<cache>.cache-mode` | No | `PARTITIONED` splits entries between nodes, `REPLICATED` keeps a copy of every entry on every node. Default `PARTITIONED` |
+| `tara.ignite.<cache>.backups` | No | Number of copies of each partition kept on other nodes. Ignored when cache mode is `REPLICATED`. Default `0` |
+| `tara.ignite.<cache>.write-synchronization-mode` | No | `FULL_SYNC` returns from a write only after all backups have it, `PRIMARY_SYNC` returns earlier. Default `PRIMARY_SYNC` |
+| `tara.ignite.<cache>.read-from-backup` | No | Whether a read may be served from a backup copy on the local node. With `PRIMARY_SYNC` backups are updated asynchronously, so `false` avoids reading stale data at the cost of a network hop to the primary node. Default `true` |
+
+The defaults mean an entry exists on one node only, so losing that node loses the entry. Deployments
+with more than one replica should set at least `tara.ignite.session-cache.backups` to `1`. Note that:
+
+* a backup is a copy on another Ignite node, i.e. another pod, so the pods must run on separate hosts;
+* Ignite fixes a cache's configuration when the cache is first created in the cluster, so all nodes
+  have to be stopped and started for a change to apply;
+* `backups: 1` roughly doubles the memory needed for the cache.
+
 <a name="sec_conf"></a>
 ## 1.10 Security and Session management
 
