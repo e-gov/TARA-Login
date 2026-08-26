@@ -12,6 +12,7 @@ public enum TaraScope {
     SMARTID("smartid"),
     EIDAS("eidas"),
     EIDASONLY("eidasonly"),
+    EUDI("eudi"),
     PHONE("phone"),
     EMAIL("email"),
     LEGALPERSON("legalperson");

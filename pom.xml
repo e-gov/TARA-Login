@@ -34,6 +34,7 @@
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
         <logstash-logback-encoder.version>9.0</logstash-logback-encoder.version><!-- TODO Upgrade to logstash-logback-encoder 9.x with Spring Boot 4.x, both upgrade to Jackson 3 -->
         <mid-rest.version>1.7</mid-rest.version>
+        <openapi-generator.version>7.26.0</openapi-generator.version>
         <resilience4j.version>2.4.0</resilience4j.version>
         <smart-id.version>3.2</smart-id.version>
         <webeid.version>4.0.0-202604021720</webeid.version>
@@ -268,6 +269,112 @@
                                     </includes>
                                 </bannedDependencies>
                             </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>${openapi-generator.version}</version>
+                <executions>
+                    <execution>
+                        <!-- Spring HTTP interface client and models for the eudiplo management API operations that
+                             EudiploClient calls -->
+                        <id>eudiplo-management-api</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/openapi/eudiplo-management-api.json</inputSpec>
+                            <output>${project.build.directory}/generated-sources/eudiplo-management-api</output>
+                            <generatorName>spring</generatorName>
+                            <library>spring-http-interface</library>
+                            <apiPackage>ee.ria.taraauthserver.authentication.eudi.eudiplo.api</apiPackage>
+                            <modelPackage>ee.ria.taraauthserver.authentication.eudi.eudiplo.model</modelPackage>
+                            <cleanupOutput>true</cleanupOutput>
+                            <generateSupportingFiles>false</generateSupportingFiles>
+                            <openapiNormalizer>
+                                <rule>FILTER=operationId:AuthController_getOAuth2Token|VerifierOfferController_getOffer|SessionController_getSession</rule>
+                            </openapiNormalizer>
+                            <modelsToGenerate>TokenResponse,OAuthTokenErrorResponseDto,PresentationRequest,OfferResponse,Session</modelsToGenerate>
+                            <modelNameMappings>
+                                <!-- Avoids a clash with org.springframework.session.Session -->
+                                <modelNameMapping>Session=EudiploSession</modelNameMapping>
+                            </modelNameMappings>
+                            <!-- Parts of the models that TARA never reads or sends are kept as plain JSON, so that
+                                 they need no generated classes of their own and their content cannot fail
+                                 deserialization. -->
+                            <schemaMappings>
+                                <schemaMapping>TenantEntity=tools.jackson.databind.JsonNode</schemaMapping>
+                                <schemaMapping>AuthorizeQueries=tools.jackson.databind.JsonNode</schemaMapping>
+                                <schemaMapping>OfferRequestDto=tools.jackson.databind.JsonNode</schemaMapping>
+                                <schemaMapping>SessionOutcomeDto=tools.jackson.databind.JsonNode</schemaMapping>
+                                <schemaMapping>TransactionData=tools.jackson.databind.JsonNode</schemaMapping>
+                                <schemaMapping>WebhookConfig=tools.jackson.databind.JsonNode</schemaMapping>
+                            </schemaMappings>
+                            <typeMappings>
+                                <typeMapping>object=JsonNode</typeMapping>
+                                <!-- The offer response is OfferResponse or, for response_type iso-18013-7 that TARA
+                                     never requests, Iso18013OfferResponse -->
+                                <typeMapping>VerifierOfferControllerGetOffer201Response=OfferResponse</typeMapping>
+                                <typeMapping>PresentationRequestWebhook=JsonNode</typeMapping>
+                                <typeMapping>PresentationConfigCreateDtoTransactionDataInner=JsonNode</typeMapping>
+                            </typeMappings>
+                            <importMappings>
+                                <importMapping>JsonNode=tools.jackson.databind.JsonNode</importMapping>
+                                <importMapping>VerifierOfferControllerGetOffer201Response=ee.ria.taraauthserver.authentication.eudi.eudiplo.model.OfferResponse</importMapping>
+                                <importMapping>PresentationRequestWebhook=tools.jackson.databind.JsonNode</importMapping>
+                                <importMapping>PresentationConfigCreateDtoTransactionDataInner=tools.jackson.databind.JsonNode</importMapping>
+                            </importMappings>
+                            <configOptions>
+                                <useSpringBoot4>true</useSpringBoot4>
+                                <useJackson3>true</useJackson3>
+                                <useJspecify>true</useJspecify>
+                                <useTags>true</useTags>
+                                <openApiNullable>false</openApiNullable>
+                                <useBeanValidation>false</useBeanValidation>
+                                <!-- eudiplo validates request bodies with strict schemas, and an empty list
+                                     (transaction_data) would override the presentation configuration -->
+                                <containerDefaultToNull>true</containerDefaultToNull>
+                                <additionalModelTypeAnnotations>@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true);@com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)</additionalModelTypeAnnotations>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>eudiplo-protocol-api</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/openapi/eudiplo-protocol-api.json</inputSpec>
+                            <output>${project.build.directory}/generated-sources/eudiplo-protocol-api</output>
+                            <generatorName>spring</generatorName>
+                            <library>spring-http-interface</library>
+                            <apiPackage>ee.ria.taraauthserver.authentication.eudi.eudiplo.api</apiPackage>
+                            <modelPackage>ee.ria.taraauthserver.authentication.eudi.eudiplo.model</modelPackage>
+                            <cleanupOutput>true</cleanupOutput>
+                            <generateSupportingFiles>false</generateSupportingFiles>
+                            <openapiNormalizer>
+                                <rule>FILTER=operationId:Oid4vpController_getResponse</rule>
+                            </openapiNormalizer>
+                            <modelsToGenerate>AuthorizationResponse</modelsToGenerate>
+                            <typeMappings>
+                                <typeMapping>object=JsonNode</typeMapping>
+                            </typeMappings>
+                            <importMappings>
+                                <importMapping>JsonNode=tools.jackson.databind.JsonNode</importMapping>
+                            </importMappings>
+                            <configOptions>
+                                <useSpringBoot4>true</useSpringBoot4>
+                                <useJackson3>true</useJackson3>
+                                <useJspecify>true</useJspecify>
+                                <useTags>true</useTags>
+                                <openApiNullable>false</openApiNullable>
+                                <useBeanValidation>false</useBeanValidation>
+                                <containerDefaultToNull>true</containerDefaultToNull>
+                                <additionalModelTypeAnnotations>@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true);@com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)</additionalModelTypeAnnotations>
+                            </configOptions>
                         </configuration>
                     </execution>
                 </executions>

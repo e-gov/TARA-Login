@@ -30,6 +30,7 @@ public class ClientRequestLogger {
         TARA_HYDRA,
         GOVSSO_HYDRA,
         OCSP,
+        EUDIPLO,
         X_ROAD
     }
 

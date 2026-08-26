@@ -27,7 +27,8 @@
                   idCardAlerts=${@thymeleafSupport.getAlertsFor('ID_CARD')},
                   mobileIdAlerts=${@thymeleafSupport.getAlertsFor('MOBILE_ID')},
                   smartIdAlerts=${@thymeleafSupport.getAlertsFor('SMART_ID')},
-                  eidasAlerts=${@thymeleafSupport.getAlertsFor('EIDAS')}">
+                  eidasAlerts=${@thymeleafSupport.getAlertsFor('EIDAS')},
+                  eudiWalletAlerts=${@thymeleafSupport.getAlertsFor('EUDI_WALLET')}">
         <div class="c-tab-login__static-warning">
             <th:block th:remove="tag" aria-hidden="true">
                 <div th:if="${@thymeleafSupport.hasStaticAlert()}" class="alert alert-warning">
@@ -65,6 +66,12 @@
                 layout:insert="~{fragments/logintabs :: warning('eu-citizen', ${eidasAlerts})}"
                 aria-hidden="true" aria-labelledby="eu-citizen">
         </th:block>
+        <th:block
+                th:if="${enabledAuthMethods.eudiWallet}"
+                th:remove="tag"
+                layout:insert="~{fragments/logintabs :: warning('eudi-wallet', ${eudiWalletAlerts})}"
+                aria-hidden="true" aria-labelledby="eudi-wallet">
+        </th:block>
     </div>
 
     <div id="main-content" class="c-tab-login">
@@ -86,6 +93,10 @@
                 <th:block
                         th:if="${enabledAuthMethods.eidas}">
                     <li th:replace="~{fragments/logintabs :: nav_default('eu-citizen')}"></li>
+                </th:block>
+                <th:block
+                        th:if="${enabledAuthMethods.eudiWallet}">
+                    <li th:replace="~{fragments/logintabs :: nav_default('eudi-wallet')}"></li>
                 </th:block>
             </ul>
         </nav>
@@ -221,6 +232,39 @@
                             </tbody>
                         </table>
                     </form>
+                </th:block>
+            </div>
+
+            <div th:if="${enabledAuthMethods.eudiWallet}"
+                 layout:insert="~{fragments/logintabs :: content('eudi-wallet')}" th:remove="tag"
+                 aria-hidden="true" aria-labelledby="eudi-wallet">
+                <th:block layout:fragment="login-form-content">
+                    <div class="c-form eudi-web2app hidden">
+                        <p th:utext="${#messages.msg('label.eudi-wallet.' + (#strings.isEmpty(serviceName) ? 'instruction-mobile' : 'instruction-mobile-with-short-name'), serviceName)}"></p>
+                        <div>
+                            <button type="submit" form="eudiWalletWeb2AppForm" class="c-btn c-btn--primary"
+                                    th:text="#{label.eudi-wallet.web2app}">Open wallet on this device</button>
+                        </div>
+                        <div class="eudi-dc-api-supported hidden">
+                            <hr class="card-divider">
+                            <button type="submit" form="eudiWalletDcApiForm" class="btn-link">
+                                <span th:text="#{label.eudi-wallet.dc-api}"></span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="c-form eudi-other-device">
+                        <div class="eudi-dc-api-supported hidden">
+                            <p th:utext="${#messages.msg('label.eudi-wallet.' + (#strings.isEmpty(serviceName) ? 'instruction-dc-api' : 'instruction-dc-api-with-short-name'), serviceName)}"></p>
+                            <div>
+                                <button type="submit" form="eudiWalletDcApiForm" class="c-btn c-btn--primary"
+                                        th:text="#{label.common.login}">Login</button>
+                            </div>
+                        </div>
+                        <p class="eudi-dc-api-unsupported"
+                           th:utext="${#messages.msg('label.eudi-wallet.' + (#strings.isEmpty(serviceName) ? 'instruction-other-device' : 'instruction-other-device-with-short-name'), serviceName)}"></p>
+                    </div>
+                    <form method="post" id="eudiWalletWeb2AppForm" th:action="@{/auth/eudi/web2app/init}"></form>
+                    <form method="post" id="eudiWalletDcApiForm" th:action="@{/auth/eudi/dc-api/init}"></form>
                 </th:block>
             </div>
         </main>

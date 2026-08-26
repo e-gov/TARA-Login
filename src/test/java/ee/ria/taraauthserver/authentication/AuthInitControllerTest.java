@@ -720,6 +720,83 @@ class AuthInitControllerTest extends BaseTest {
 
     @Test
     @Tag(value = "AUTH_INIT_ENABLED_AUTHMETHODS_SCOPES")
+    void authInit_legalpersonScopeRequested_eudiWalletNotAllowed() {
+        wireMockServer.stubFor(get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_eudi-legalperson-scope.json")));
+
+        String sessionId = given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body(containsString("idCardForm"))
+                .body(not(containsString("eudiWalletWeb2AppForm")))
+                .extract().cookie(TARA_SESSION_COOKIE_NAME);
+
+        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        assertEquals(List.of(AuthenticationType.ID_CARD), taraSession.getAllowedAuthMethods());
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_ENABLED_AUTHMETHODS_SCOPES")
+    void authInit_eudiScopeRequestedByClientWithEudiSettings_eudiWalletAllowed() {
+        wireMockServer.stubFor(get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_eudi-scope.json")));
+
+        String sessionId = given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body(containsString("eudiWalletWeb2AppForm"))
+                .extract().cookie(TARA_SESSION_COOKIE_NAME);
+
+        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        assertEquals(List.of(AuthenticationType.ID_CARD, AuthenticationType.EUDI_WALLET), taraSession.getAllowedAuthMethods());
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_ENABLED_AUTHMETHODS_SCOPES")
+    @Tag(value = "AUTH_INIT_GOVSSO_GET_OIDC_REQUEST")
+    void authInit_eudiScopeRequestedByGovSsoClient_eudiWalletNotAllowed() {
+        wireMockServer.stubFor(get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/mock_response-ok_with_govsso_hydra_parameters_eudi-scope.json")));
+        govSsoWireMockServer.stubFor(get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_GOVSSO_LOGIN_CHALLENGE))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/oidc/govsso_mock_response.json")));
+
+        String sessionId = given()
+                .param("login_challenge", TEST_LOGIN_CHALLENGE)
+                .when()
+                .get("/auth/init")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body(containsString("idCardForm"))
+                .body(not(containsString("eudiWalletWeb2AppForm")))
+                .extract().cookie(TARA_SESSION_COOKIE_NAME);
+
+        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        assertEquals(List.of(AuthenticationType.ID_CARD), taraSession.getAllowedAuthMethods());
+    }
+
+    @Test
+    @Tag(value = "AUTH_INIT_ENABLED_AUTHMETHODS_SCOPES")
     void authInit_OIDCRequestsScopeThatIsNotAllowedAndScopeThatIsNotsupported() {
         wireMockServer.stubFor(get(urlEqualTo("/admin/oauth2/auth/requests/login?login_challenge=" + TEST_LOGIN_CHALLENGE))
                 .willReturn(aResponse()

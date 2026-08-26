@@ -317,6 +317,20 @@ public abstract class BaseTest {
     }
 
     /**
+     * Asserts that a secret value appears in no log message, marker or exception message of the current test.
+     */
+    protected void assertNothingIsLoggedContaining(String value) {
+        List<String> offendingMessages = mockAppender.list.stream()
+                .filter(e -> e.getFormattedMessage().contains(value)
+                        || (e.getMarker() != null && e.getMarker().toString().contains(value))
+                        || (e.getThrowableProxy() != null && e.getThrowableProxy().getMessage() != null
+                        && e.getThrowableProxy().getMessage().contains(value)))
+                .map(ILoggingEvent::getFormattedMessage)
+                .toList();
+        assertThat("Value must not be logged", offendingMessages, hasSize(0));
+    }
+
+    /**
      * Allows statistics log fields to match regex patterns instead of exact values.
      * Useful for fields that can't use injected test values.
      * Currently not used.
@@ -477,8 +491,13 @@ public abstract class BaseTest {
     }
 
     protected void assertStatisticsIsNotLogged() {
+        assertStatisticsIsNotLogged(e -> true);
+    }
+
+    protected void assertStatisticsIsNotLogged(Predicate<ILoggingEvent> additionalFilter) {
         List<ILoggingEvent> loggingEvents = mockAppender.list.stream()
                 .filter(e -> e.getLoggerName().equals(StatisticsLogger.class.getCanonicalName()))
+                .filter(additionalFilter)
                 .collect(toList());
         assertThat("No statistics should be logged", loggingEvents, hasSize(0));
     }

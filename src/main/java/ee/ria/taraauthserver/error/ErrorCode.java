@@ -62,7 +62,15 @@ public enum ErrorCode {
     INVALID_OIDC_REQUEST("message.error.invalid-oidc-request"),
     LEGAL_PERSON_X_ROAD_SERVICE_NOT_AVAILABLE("label.legal-person.error.service-not-available"),
     MISSING_SCOPE("message.error.missing-scope"),
-    INVALID_ACR_VALUE("message.error.invalid-acr-value");
+    INVALID_ACR_VALUE("message.error.invalid-acr-value"),
+    EUDI_INTERNAL_ERROR("message.eudi.error.internal-error"),
+    EUDI_CLIENT_NOT_REGISTERED("message.eudi.error.client-not-registered"),
+    EUDI_USER_CANCEL("message.eudi.error.user-cancel"),
+    EUDI_TIMEOUT("message.eudi.error.timeout"),
+    EUDI_PRESENTATION_REJECTED("message.eudi.error.presentation-rejected"),
+    EUDI_CALLBACK_SESSION_NOT_FOUND("message.eudi.error.callback-session-not-found"),
+    EUDI_CALLBACK_INVALID("message.eudi.error.callback-invalid"),
+    EUDI_DC_API_ERROR("message.eudi.error.dc-api-error");
 
     private final String message;
 }

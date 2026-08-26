@@ -493,6 +493,32 @@ jQuery(function ($) {
         });
     });
 
+    // EUDI wallet form submit: guard against a double submit while the eudiplo presentation request is created
+    $('#eudiWalletWeb2AppForm, #eudiWalletDcApiForm').on('submit', function(){
+        $('button[form="eudiWalletWeb2AppForm"], button[form="eudiWalletDcApiForm"]').prop('disabled', true);
+    });
+
+    // EUDI wallet Digital Credentials API is offered only where the browser supports the signed OpenID4VP protocol
+    function isEudiDcApiSupported() {
+        if (typeof window.DigitalCredential === 'undefined' || !navigator.credentials) {
+            return false;
+        }
+        if (typeof window.DigitalCredential.userAgentAllowsProtocol === 'function') {
+            return window.DigitalCredential.userAgentAllowsProtocol('openid4vp-v1-signed');
+        }
+        return true;
+    }
+    if (isEudiDcApiSupported()) {
+        $('.eudi-dc-api-supported').removeClass('hidden');
+        $('.eudi-dc-api-unsupported').addClass('hidden');
+    }
+
+    // EUDI wallet Web2App login is offered only on mobile devices, where the wallet app runs
+    if (isProbablyMobileDevice()) {
+        $('.eudi-web2app').removeClass('hidden');
+        $('.eudi-other-device').addClass('hidden');
+    }
+
     function hideAlert(alert) {
         alert.attr('aria-hidden', 'true');
         alert.removeClass('show');

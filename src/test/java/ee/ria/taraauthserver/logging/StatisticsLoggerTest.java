@@ -348,7 +348,8 @@ class StatisticsLoggerTest extends BaseTest {
                         "sector=public, registryCode=10001234, legalPerson=false, country=EE, " +
                         "idCode=38001085718, ocspUrl=null, authenticationType=MOBILE_ID, " +
                         "authenticationState=AUTHENTICATION_SUCCESS, errorCode=null, " +
-                        "smartIdFlowType=null, eventDuration=null, certificatePolicyOids=[1.3.6.1.4.1.51361.1.1.1])",
+                        "smartIdFlowType=null, eudiFlow=null, eventDuration=null, " +
+                        "certificatePolicyOids=[1.3.6.1.4.1.51361.1.1.1])",
                 statistics.toString());
     }
 

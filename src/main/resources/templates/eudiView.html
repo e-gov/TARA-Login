@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.w3.org/1999/xhtml" th:lang="${#locale.language}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}" th:with="hideHeaderLanguageSelection=true, ariaHideLogoHeader=true">
+<head th:replace="~{fragments/head}"></head>
+<body class="is-mobile-subview">
+<th:block layout:fragment="content" th:with="hideHeaderLanguageSelection=true, dcApi=${eudiDcApiRequest != null}, serviceName=${@thymeleafSupport.getServiceName()}">
+    <div class="container">
+        <div class="c-tab-login">
+            <div class="c-tab-login__header hide-in-desktop">
+                <ul class="c-tab-login__nav" role="tablist">
+                    <li th:replace="~{fragments/logintabs :: nav_default(tab_id = 'eudi-wallet', static = true)}"></li>
+                </ul>
+            </div>
+            <div class="c-tab-login__main">
+                <th:block layout:insert="~{fragments/logintabs :: content(tab_id = 'eudi-wallet', static = true)}">
+                    <th:block layout:fragment="login-form-content">
+                        <div th:unless="${dcApi}" class="c-tab-login__eudi-card">
+                            <div id="eudiWeb2AppWait">
+                                <div id="eudiWeb2AppOpenWallet">
+                                    <p>
+                                        <th:block th:if="${#strings.isEmpty(serviceName)}"
+                                                  th:utext="#{message.eudi-wallet.web2app-instructions}"></th:block>
+                                        <th:block th:if="${!#strings.isEmpty(serviceName)}"
+                                                  th:utext="${#messages.msg('message.eudi-wallet.web2app-instructions-with-service-name', serviceName)}"></th:block>
+                                    </p>
+                                    <p>
+                                        <a id="eudiWeb2AppLink" class="c-btn c-btn--primary" rel="noopener noreferrer"
+                                           th:href="${eudiWeb2AppLink}" th:text="#{label.eudi-wallet.open-wallet}">Open wallet</a>
+                                    </p>
+                                    <p th:utext="#{message.eudi-wallet.web2app-troubleshooting}"></p>
+                                </div>
+                                <button type="submit" class="c-btn c-btn--cancel" form="cancelForm"
+                                        th:text="#{label.common.cancel}"></button>
+                            </div>
+                            <p id="eudiWeb2AppCompleted" class="hidden"
+                               th:utext="#{label.eudi-wallet.success-close-window}"></p>
+                            <p id="eudiWeb2AppEnded" class="hidden"
+                               th:utext="#{label.eudi-wallet.ended-close-window}"></p>
+                        </div>
+                        <div th:if="${dcApi}" id="eudiDcApi" class="c-tab-login__eudi-card"
+                             th:data-request="${eudiDcApiRequest}">
+                            <p>
+                                <th:block th:if="${#strings.isEmpty(serviceName)}"
+                                          th:utext="#{message.eudi-wallet.dc-api-instructions}"></th:block>
+                                <th:block th:if="${!#strings.isEmpty(serviceName)}"
+                                          th:utext="${#messages.msg('message.eudi-wallet.dc-api-instructions-with-service-name', serviceName)}"></th:block>
+                            </p>
+                            <p>
+                                <button type="button" id="eudiDcApiButton" class="c-btn c-btn--primary"
+                                        th:text="#{label.eudi-wallet.open-wallet}">Open wallet</button>
+                            </p>
+                            <p th:utext="#{message.eudi-wallet.dc-api-troubleshooting}"></p>
+                            <button type="submit" class="c-btn c-btn--cancel" form="cancelForm"
+                                    th:text="#{label.common.cancel}"></button>
+                        </div>
+                    </th:block>
+                </th:block>
+            </div>
+        </div>
+    </div>
+
+    <form id="cancelForm" method="post" th:action="${dcApi} ? @{/auth/eudi/dc-api/cancel} : @{/auth/eudi/web2app/cancel}"></form>
+    <div id="eudi-error" th:insert="~{fragments/error}" th:class="hidden"/>
+    <p class="link-back-mobile" xmlns:th="http://www.w3.org/1999/xhtml" th:with="homeUrl=${@thymeleafSupport.getHomeUrl()}">
+        <a rel="noopener" th:href="${homeUrl}" th:text="#{label.common.home}">Home</a>
+    </p>
+    <script th:src="@{/scripts/main.js}" defer></script>
+    <script th:src="@{/scripts/eudi-error.js}" defer></script>
+    <script th:if="${dcApi}" th:src="@{/scripts/eudi-dc-api.js}" defer></script>
+    <script th:unless="${dcApi}" th:src="@{/scripts/eudi-web2app-poll.js}" defer></script>
+</th:block>
+</body>
+</html>

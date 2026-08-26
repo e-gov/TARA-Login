@@ -58,8 +58,9 @@ public class MockSessionFilter implements Filter {
                                                          CsrfMode csrfMode,
                                                          ChallengeNonce nonce,
                                                          TaraSession.AuthenticationResult authenticationResult,
-                                                         String chosenLanguage) {
-        Session session = createTaraSession(sessionRepository, authenticationState, authenticationTypes, clientAllowedScopes, requestedScopes, requestedAcr, clientSettingsAcr, legalPersonList, spType, shortNameTranslations, nonce, authenticationResult, chosenLanguage);
+                                                         String chosenLanguage,
+                                                         String eudiPresentationConfigId) {
+        Session session = createTaraSession(sessionRepository, authenticationState, authenticationTypes, clientAllowedScopes, requestedScopes, requestedAcr, clientSettingsAcr, legalPersonList, spType, shortNameTranslations, nonce, authenticationResult, chosenLanguage, eudiPresentationConfigId);
         sessionRepository.save(session);
         return new MockSessionFilter(session, csrfMode);
     }
@@ -103,7 +104,8 @@ public class MockSessionFilter implements Filter {
                                              Map<String, String> shortNameTranslations,
                                              ChallengeNonce webEidChallengeNonce,
                                              TaraSession.AuthenticationResult authenticationResult,
-                                             String chosenLanguage) {
+                                             String chosenLanguage,
+                                             String eudiPresentationConfigId) {
         Session session = createSession(sessionRepository);
         TaraSession taraSession = MockTaraSessionBuilder.builder()
                 .sessionId(session.getId())
@@ -119,6 +121,7 @@ public class MockSessionFilter implements Filter {
                 .authenticationResult(authenticationResult)
                 .webEidChallengeNonce(webEidChallengeNonce)
                 .chosenLanguage(chosenLanguage)
+                .eudiPresentationConfigId(eudiPresentationConfigId)
                 .build();
         session.setAttribute(TARA_SESSION, taraSession);
         return session;

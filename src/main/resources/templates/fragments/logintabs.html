@@ -16,6 +16,8 @@
         </th:block>
         <th:block th:case="eu-citizen"><a th:replace="~{fragments/logintabs :: nav_default_link(${tab_id}, 'en')}"/>
         </th:block>
+        <th:block th:case="eudi-wallet"><a th:replace="~{fragments/logintabs :: nav_default_link(${tab_id}, 'en')}"/>
+        </th:block>
     </th:block>
 </li>
 

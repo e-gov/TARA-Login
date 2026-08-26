@@ -1,0 +1,6 @@
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.c2hvcnQtbGl2ZWQtdG9rZW4.c2lnbmF0dXJl",
+  "token_type": "Bearer",
+  "expires_in": 60,
+  "state": null
+}

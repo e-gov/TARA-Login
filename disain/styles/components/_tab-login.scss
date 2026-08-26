@@ -203,6 +203,15 @@
       }
     }
   }
+  &__eudi-card {
+    @media (min-width: $breakpoint-mobile + 1) {
+      margin-right: 150px;
+      padding: 24px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      text-align: center;
+    }
+  }
   &__qr-code-card {
     @media (min-width: $breakpoint-mobile + 1) {
       margin-right: 150px;

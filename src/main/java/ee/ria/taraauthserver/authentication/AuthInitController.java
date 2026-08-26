@@ -100,6 +100,9 @@ public class AuthInitController {
         }
 
         List<AuthenticationType> allowedAuthMethods = loginRequestInfo.getAllowedAuthenticationMethodsList(taraProperties);
+        if (govSsoLoginRequestInfo != null) {
+            allowedAuthMethods = removeEudiAuthMethod(allowedAuthMethods);
+        }
         newTaraSession.accept(new InitAuthSessionUpdate(
                 loginRequestInfo,
                 govSsoLoginRequestInfo,
@@ -166,6 +169,12 @@ public class AuthInitController {
                 .map(String::toLowerCase)
                 .filter(RequestUtils.SUPPORTED_LANGUAGES))
             .orElse(DEFAULT_LOCALE);
+    }
+
+    private static List<AuthenticationType> removeEudiAuthMethod(List<AuthenticationType> allowedAuthMethods) {
+        return allowedAuthMethods.stream()
+                .filter(authMethod -> authMethod != AuthenticationType.EUDI_WALLET)
+                .collect(Collectors.toList());
     }
 
     private TaraSession.LoginRequestInfo fetchLoginRequestInfo(String loginChallenge) {

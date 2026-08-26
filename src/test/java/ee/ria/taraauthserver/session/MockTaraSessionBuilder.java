@@ -60,7 +60,8 @@ public class MockTaraSessionBuilder {
                                                Map<String, String> shortNameTranslations,
                                                ChallengeNonce webEidChallengeNonce,
                                                TaraSession.AuthenticationResult authenticationResult,
-                                               String chosenLanguage) {
+                                               String chosenLanguage,
+                                               String eudiPresentationConfigId) {
         TaraSession taraSession = new TaraSession(sessionId);
         TaraSession.LoginRequestInfo lri = new TaraSession.LoginRequestInfo();
         TaraSession.Client client = new TaraSession.Client();
@@ -86,6 +87,11 @@ public class MockTaraSessionBuilder {
         oidcClient.setEidasRequesterId(new URI(MOCK_REQUESTER_ID));
         if (shortNameTranslations != null) {
             oidcClient.setShortNameTranslations(shortNameTranslations);
+        }
+        if (eudiPresentationConfigId != null) {
+            TaraSession.EudiSettings eudiSettings = new TaraSession.EudiSettings();
+            eudiSettings.setPresentationConfigId(eudiPresentationConfigId);
+            oidcClient.setEudiSettings(eudiSettings);
         }
         metaData.setOidcClient(oidcClient);
         metaData.setMinimumAcrValue(clientSettingsAcr);

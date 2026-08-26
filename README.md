@@ -14,6 +14,7 @@
     * [Smart-ID auth method](#sid_conf)
     * [ID-card auth method](#esteid_conf)
     * [Eidas auth method](#eidas_conf)
+    * [EUDI wallet auth method](#eudi_conf)
     * [Monitoring](#monitoring_conf)
     * [Legal person attributes](#legalperson_conf)
     * [Security and session management](#session_and_sec_conf)
@@ -63,6 +64,12 @@ MSYS_NO_PATHCONV=1 docker run --rm -v "${PWD}:/data" -w /data/disain node:14 sh 
 
 You can find the compiled JAR file with embedded Tomcat in the target/ directory.
 
+The `gulp build` step is **mandatory, not cosmetic**: it is what produces `src/main/resources/static/`, and that tree
+is git-ignored, so nothing under it is committed. Running only `./mvnw clean package` yields a JAR whose
+`/scripts/*.js` requests all 404 - for the EUDI wallet tab that means `form-redirect.js` never loads and a
+Web2App login stops on the "Redirecting" page after the wallet returns to TARA, and `eudi-dc-api.js` never loads
+and the Digital Credentials API "Open wallet" button does nothing.
+
 ### Building Docker image
 
 Follow the instructions above to build the webapp. After that, execute the following command to build a Docker image:
@@ -94,10 +101,10 @@ Example: to deploy the webapp using embedded Tomcat
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.default-locale` | No | Locale that is used by default. Default `et` |
-| `tara.default-authentication-methods` | No | default authentication methods. Example `ID_CARD, MOBILE_ID, SMART_ID, EIDAS` |
+| `tara.default-authentication-methods` | No | default authentication methods. Example `ID_CARD, MOBILE_ID, SMART_ID, EIDAS, EUDI_WALLET` |
 | `tara.error-report-email` | Yes | E-mail address where users can send error reports. Example `help@example.com` |
 | `tara.auth-flow-timeout` | Yes | Duration till authentication flow timeout. Example `1800s` (30min) |
-| `tara.site-origin` | Yes | Web page's [origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) (scheme (protocol), hostname (domain), and port) where user's browser accesses TARA service from. Used by Web eID and Smart ID Web2App authenticaton flows. Example: https://example.com |
+| `tara.site-origin` | Yes | Web page's [origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) (scheme (protocol), hostname (domain), and port) where user's browser accesses TARA service from. Used by Web eID, Smart ID Web2App and EUDI wallet authenticaton flows. Example: https://example.com |
 | `tara.govsso.self-service-url` | No | URL of the GovSSO end-user self-service page; shown as a link in the login UI. Example `https://enduserselfservice.example.com/` |
 
 
@@ -383,17 +390,78 @@ Table 1.6.2 - Assigning the Level of assurance to authentication method
 | `tara.auth-methods.eidas.relay-state-cache-duration-in-seconds` | No | How long eIDAS SAML relay state entries are kept in the cache. Default `300` |
 | `tara.auth-methods.eidas.script-hash` | No | hash to allow inline javascript for eidas redirect. Default. `sha256-8lDeP0UDwCO6/RhblgeH/ctdBzjVpJxrXizsnIk3cEQ=` |
 
-<a name="legalperson_conf"></a>
-## 1.7 Legal person attributes
+<a name="eudi_conf"></a>
+### 1.7 EUDI wallet auth method
 
-Table 1.7.1 - Enabling legal-person attribute support 
+EUDI wallet authentication is implemented as an OpenID4VP verification driven by an [eudiplo](https://github.com/EUDIPLO/eudiplo) 9.1.0 instance (image `ghcr.io/eudiplo/eudiplo:9.1.0`). TARA acts as an intermediary: eudiplo holds the per-relying-party access certificate (WRPAC) private keys and emits the relying party's registration certificate (WRPRC) in `verifier_info`, while TARA only creates a presentation request against the eudiplo presentation configuration of the downstream client and learns its outcome in one of two flows, each completed only through the browser that started the login:
+
+* **Web2App** (`POST /auth/eudi/web2app/init`, the button on a mobile device) - the presentation request carries a redirect URI to TARA's `GET /auth/eudi/callback`, and TARA shows the `openid4vp://` link as a link the user taps. After presenting, the wallet returns the browser to the callback with eudiplo's one-time `response_code`. The callback completes the login only when the browser holds the TARA session cookie of that login, eudiplo reports the session `completed` and the `response_code` equals the one eudiplo generated for it; any other callback fails the login. Only the callback completes the login, so a relayed wallet link cannot log in anyone but the browser that started it. The wallet usually opens the callback in a new tab, where the login continues; the page that showed the link never completes it. That page polls `GET /auth/eudi/web2app/poll` about once a second while it is visible, and once the login has completed or ended it replaces the link and the cancel button with a text saying that the window may be closed. The poll answers `PENDING` while the login waits for the callback, `COMPLETED` while the shared session is in a state that follows a successful callback (natural or legal person authentication, consent), and `ENDED` when there is no session, because both a failed and a finished login invalidate it; any other session state fails the request. While the login waits, each poll reads the eudiplo session. The poll fails the login when eudiplo reports the session failed, cancelled or expired, or when the `expiresAt` of a session that still waits has passed, and answers with that error, which the page shows; this matters when the wallet does not return this browser to the callback. It never completes a login, which only the callback does, and only for a `completed` session, so the two never both end a login. A poll that cannot read eudiplo leaves the login waiting. Nothing reads eudiplo when the page does not poll, so a login whose page was closed or stays in the background is not failed and its failure is not logged; it ends when the TARA session (`spring.session.timeout`) expires. A login that the wallet never answers ends with `EUDI_TIMEOUT` at the first poll after the presentation request expires, or, if the TARA session expires first, without an error: the page then shows the text saying that the window may be closed.
+* **Digital Credentials API** (`POST /auth/eudi/dc-api/init`, offered only where the browser supports the API) - the presentation request is created with `response_type: dc-api` and `expected_origin` set to `tara.site-origin`, and TARA hands out its signed request object. The page passes it to `navigator.credentials.get` (protocol `openid4vp-v1-signed`); the browser tells the wallet which origin is asking and reaches a wallet on the same device or, through its own proximity-checked cross-device transport, on a phone. The page posts the wallet's encrypted answer to `POST /auth/eudi/dc-api/response` (session cookie and CSRF token), TARA forwards it to eudiplo (`POST /presentations/{walletNonce}/oid4vp`), and the login completes only when eudiplo accepted that answer and reports the session `completed`. A session completed by an answer that did not come through this browser is refused. When the browser gets no answer to post, the page lets the user try again if the wallet dialog was closed (`NotAllowedError`, `AbortError`) and shows the general error otherwise; the login waits until the user cancels it or it times out.
+
+There is deliberately no cross-device QR code flow of TARA's own: its presentation request has no redirect URI, so nothing binds the wallet's answer to the browser, and a login completed by polling eudiplo can be relayed to somebody else's wallet. On a mobile device the EUDI wallet tab offers the Web2App flow, with the Digital Credentials API as a secondary option where the browser supports it. On a desktop it offers the Digital Credentials API where the browser supports it, and otherwise tells the user to open the page on the device where the wallet is installed or to use a browser that supports digital credentials. Only `openid4vp-v1-signed` is supported (not ISO/IEC 18013-7 Annex C, which Safari uses), so in practice the Digital Credentials API flow needs a Chromium-based browser.
+
+TARA does not cancel eudiplo presentation sessions. One that a TARA login no longer waits for cannot complete any login, and expires after the `lifeTime` of its presentation configuration.
+
+eudiplo has no per-request verifier identity - the access certificate that signs the request object, and therefore the `x509_hash` `client_id` the wallet sees, is selected by the presentation configuration's access key chain. One presentation configuration per TARA client is what keeps one relying-party identity per client true.
+
+Table 1.7.1 - Enabling EUDI wallet authentication
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.auth-methods.eudi-wallet.enabled` | No | Enable or disable EUDI wallet authentication method. Default `false` |
+
+Table 1.7.2 - Assigning the Level of assurance to authentication method
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.auth-methods.eudi-wallet.level-of-assurance` | Yes | Level of assurance of this auth method. Allowed values: `HIGH`, `SUBSTANTIAL`, `LOW`. Mandatory even when the method is disabled for a given client: EUDI wallet is not exempted from the level-of-assurance check, so a missing value fails every login request. Example `HIGH` |
+
+Table 1.7.3 - Integration with eudiplo
+
+| Parameter        | Mandatory | Description, example |
+| :---------------- | :---------- | :----------------|
+| `tara.auth-methods.eudi-wallet.eudiplo-url` | Yes | Base URL of the eudiplo instance acting as the OpenID4VP verifier. The OAuth2 token endpoint is derived from it as `${eudiplo-url}/api/oauth2/token`. Example `http://eudi-eudiplo:3000` |
+| `tara.auth-methods.eudi-wallet.client-id` | Yes | OAuth2 client id of the login service in the eudiplo tenant. Needs the `presentation:request` role, which covers creating presentation requests and reading presentation sessions. Example `tara-login` |
+| `tara.auth-methods.eudi-wallet.client-secret` | Yes | OAuth2 client secret used to obtain eudiplo access tokens. Never logged. |
+| `tara.auth-methods.eudi-wallet.connection-timeout-milliseconds` | No | Connection timeout of eudiplo requests. Default `5000` |
+| `tara.auth-methods.eudi-wallet.read-timeout-milliseconds` | No | Read timeout of eudiplo requests. Default `10000` |
+| `tara.auth-methods.eudi-wallet.max-connections-total` | No | Max connection pool size for eudiplo requests. Default `50` |
+
+Access tokens are obtained with the OAuth2 client-credentials grant and cached: eudiplo issues them with a 24 hour lifetime, so a token is reused until five minutes before it expires, and a `401` on an authenticated call triggers exactly one re-acquisition and retry.
+
+The eudiplo presentation configuration of a client is set in its Hydra client metadata, next to `smartid_settings` and `mid_settings`:
+
+````
+{
+  "oidc_client": {
+    "eudi_settings": {
+      "presentation_config_id": "pid-tara-client"
+    }
+  }
+}
+````
+
+Every client that is allowed the `eudi` scope must have `presentation_config_id` set: EUDI wallet authentication is offered by scope alone, and starting it for a client without `presentation_config_id` fails with `EUDI_CLIENT_NOT_REGISTERED`.
+
+EUDI wallet authentication is not offered in the GovSSO flow, even if the TARA client of GovSSO is allowed the `eudi` scope.
+
+`presentation_config_id` is the id of that client's eudiplo presentation configuration. Each configuration must request exactly one credential, the PID: the login service reads the presented claims from the single entry of the eudiplo session's `credentials`, whatever its DCQL credential id, and fails a session that carries any other number of credential sets with `EUDI_INTERNAL_ERROR`.
+
+The `lifeTime` of each configuration (eudiplo's default is `300` seconds) is the EUDI wallet timeout: eudiplo sets the `expiresAt` of a presentation session to its creation time plus `lifeTime`, and rejects the wallet once that time has passed. eudiplo records the `expired` status only in its periodic maintenance job (`SESSION_TIDY_UP_INTERVAL`, hourly by default), so TARA does not wait for that status and compares `expiresAt` with its own clock, which must therefore be synchronised with eudiplo's. A session that is past its `expiresAt` while eudiplo still reports it as waiting fails the login with `EUDI_TIMEOUT`: a Web2App login when TARA next reads the session in the background, a Digital Credentials API login when the page posts the wallet's answer.
+
+Set `lifeTime` shorter than `spring.session.timeout` (for example `180` seconds with the default session timeout of `300` seconds). The TARA session starts at `/auth/init`, before the presentation request is created, so with a `lifeTime` as long as the session timeout or longer the TARA session always expires first, and the login ends without the timeout error and without a failure record in the statistics log.
+
+<a name="legalperson_conf"></a>
+## 1.8 Legal person attributes
+
+Table 1.8.1 - Enabling legal-person attribute support 
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.legal-person-authentication.enabled` | No | Enables or disables the legalperson attribute support and endpoints. Defaults to `true` if not specified.  |
 
 
-Table 1.7.2 - Integration with the Estonian business registry
+Table 1.8.2 - Integration with the Estonian business registry
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
@@ -411,22 +479,22 @@ Table 1.7.2 - Integration with the Estonian business registry
 | `tara.legal-person-authentication.esindus-v2-allowed-types` | No | List of legal person types in arireg.esindus_v2 service response that are considered valid for authentication. Defaults to `TÜ,UÜ, OÜ,AS,TÜH,SA,MTÜ` if not specified.  |
 
 <a name="monitoring_conf"></a>
-## 1.8 Monitoring
+## 1.9 Monitoring
 
 The webapp uses `Spring Boot Actuator` to enable endpoints for monitoring support. To customize Monitoring, Metrics, Auditing and more, see [Spring Boot Actuator documentation](https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-features.html#production-ready).
 For configuring readiness and liveness probes, see [Kubernetes Probes](https://docs.spring.io/spring-boot/reference/actuator/endpoints.html#actuator.endpoints.kubernetes-probes).
 
-Table 1.8.1 - Health endpoint configuration
+Table 1.9.1 - Health endpoint configuration
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.health-endpoint.expiration-warning-period-in-days` | No | Number of days before a truststore certificate's expiry at which the truststore health indicator starts reporting a warning. Default `30` |
 
 <a name="session_and_sec_conf"></a>
-## 1.9 Security and session management
+## 1.10 Security and session management
 
 <a name="ignite_conf"></a>
-### 1.9.1 Ignite configuration
+### 1.10.1 Ignite configuration
 
 Ignite is used for storing user’s session information.
 
@@ -470,7 +538,7 @@ with more than one replica should set at least `tara.ignite.session-cache.backup
 * `backups: 1` roughly doubles the memory needed for the cache.
 
 <a name="sec_conf"></a>
-## 1.10 Security and Session management
+## 1.11 Security and Session management
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
@@ -478,7 +546,7 @@ with more than one replica should set at least `tara.ignite.session-cache.backup
 | `tara.content-security-policy` | No | Content security policy. Default value `connect-src 'self'; default-src 'none'; font-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; block-all-mixed-content` |
 
 <a name="logging_conf"></a>
-## 1.11 Logging configuration
+## 1.12 Logging configuration
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
 | `tara.masked_field_names` | No | Comma separated field names to mask when structurally logging objects. Default value `session_id` |
@@ -506,9 +574,9 @@ ${LOG_HOME}/TaraLoginServiceStatistics.%d{yyyy-MM-dd,GMT}.log
 Statistic logs contain authentication end results with states AUTHENTICATION_SUCCESS, AUTHENTICATION_FAILED or AUTHENTICATION_CANCELED. 
 
 <a name="alerts_conf"></a>
-## 1.12 Alerts config
+## 1.13 Alerts config
 
-Table 1.12.1 - Alerts service configuration parameters 
+Table 1.13.1 - Alerts service configuration parameters 
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|
@@ -520,7 +588,7 @@ Table 1.12.1 - Alerts service configuration parameters
 | `tara.alerts.alerts-cache-duration-in-seconds` | No | How long alerts request results are kept in cache, in case next refresh fails. Default. `86400` |
 | `tara.alerts.smart-id-info-alert-enabled` | No | Show a built-in informational alert in the UI specifically for Smart-ID. Default `false` |
 
-Table 1.12.2 - Static alert configuration parameters
+Table 1.13.2 - Static alert configuration parameters
 
 | Parameter        | Mandatory | Description, example |
 | :---------------- | :---------- | :----------------|

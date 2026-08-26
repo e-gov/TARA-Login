@@ -181,6 +181,7 @@ public class ThymeleafSupport {
                 isAuthMethodAllowed(AuthenticationType.MOBILE_ID),
                 isAuthMethodAllowed(AuthenticationType.SMART_ID),
                 isAuthMethodAllowed(AuthenticationType.EIDAS),
+                isAuthMethodAllowed(AuthenticationType.EUDI_WALLET),
                 new EnabledAuthMethods.SmartIdFlows(
                         isSidWeb2AppEnabled(),
                         isSidQrCodeEnabled()
@@ -193,6 +194,7 @@ public class ThymeleafSupport {
         boolean mobileId,
         boolean smartId,
         boolean eidas,
+        boolean eudiWallet,
         SmartIdFlows smartIdFlows
     ) {
         public record SmartIdFlows (

@@ -198,6 +198,14 @@ tara:
       request-timeout-in-seconds: 1
       read-timeout-in-seconds: 1
       relay-state-cache-duration-in-seconds: 30
+    eudi-wallet:
+      enabled: true
+      level-of-assurance: HIGH
+      eudiplo-url: https://localhost:9877
+      client-id: tara-login
+      client-secret: test-eudiplo-client-secret
+      connection-timeout-milliseconds: 1000
+      read-timeout-milliseconds: 3000
 
   legal-person-authentication:
     x-road-server-url: https://localhost:7877/cgi-bin/consumer_proxy

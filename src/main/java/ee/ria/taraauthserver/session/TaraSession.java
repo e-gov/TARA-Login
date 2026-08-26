@@ -30,6 +30,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -93,6 +94,8 @@ public class TaraSession implements Serializable {
     @Setter(AccessLevel.NONE)
     private SmartIdQrCodeSession smartIdQrCodeSession;
     private FlowType smartIdFlowType;
+    private EudiFlow eudiFlowType;
+    private EudiSession eudiSession;
     private Instant authFlowStartTime;
     @Setter(AccessLevel.NONE)
     private Instant authFlowEndTime;
@@ -194,6 +197,29 @@ public class TaraSession implements Serializable {
     @RequiredArgsConstructor
     public static class EidasAuthenticationResult extends AuthenticationResult {
         private String relayState;
+    }
+
+    public static class EudiAuthenticationResult extends AuthenticationResult {
+    }
+
+    /**
+     * Plain JDK values only: the whole {@link TaraSession} is binary-marshalled by Ignite.
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class EudiSession implements Serializable {
+
+        private String presentationSessionId;
+        private String walletNonce;
+    }
+
+    /**
+     * How the wallet is reached.
+     */
+    public enum EudiFlow {
+        WEB2APP,
+        DC_API
     }
 
     @Data
@@ -319,6 +345,14 @@ public class TaraSession implements Serializable {
         }
 
         @JsonIgnore
+        public Optional<String> getEudiPresentationConfigId() {
+            return getOidcClient()
+                    .map(OidcClient::getEudiSettings)
+                    .map(EudiSettings::getPresentationConfigId)
+                    .filter(presentationConfigId -> !presentationConfigId.isBlank());
+        }
+
+        @JsonIgnore
         public Optional<Institution> getInstitution() {
             return getOidcClient()
                     .map(TaraSession.OidcClient::getInstitution);
@@ -336,6 +370,7 @@ public class TaraSession implements Serializable {
             List<AuthenticationType> allowedAuthenticationMethodsList = requestedAuthMethods.stream()
                     .filter(method -> isAuthenticationMethodEnabled(method, taraProperties))
                     .filter(authMethod -> isAuthenticationMethodAllowedByLoa(authMethod, taraProperties, requestAcr))
+                    .filter(this::isAuthenticationMethodAllowedByLegalPersonScope)
                     .collect(toList());
 
             log.debug("List of authentication methods to display on login page: {}",
@@ -459,6 +494,12 @@ public class TaraSession implements Serializable {
             return allowedRequestedScopes;
         }
 
+        // Legal person attributes are not supported with EUDI wallet authentication yet
+        private boolean isAuthenticationMethodAllowedByLegalPersonScope(AuthenticationType authMethod) {
+            return authMethod != AuthenticationType.EUDI_WALLET
+                    || !requestedScopes.contains(TaraScope.LEGALPERSON.getFormalName());
+        }
+
         // `LoginRequestInfo` should probably not have to deal with validating authentication methods
         private boolean isAuthenticationMethodAllowedByLoa(AuthenticationType authMethod, AuthConfigurationProperties taraProperties, LevelOfAssurance requestAcr) {
 
@@ -576,6 +617,8 @@ public class TaraSession implements Serializable {
         private SmartIdSettings smartIdSettings;
         @JsonProperty("mid_settings")
         private MidSettings midSettings;
+        @JsonProperty("eudi_settings")
+        private EudiSettings eudiSettings;
         @JsonProperty("logo")
         private String logo;
 
@@ -615,6 +658,17 @@ public class TaraSession implements Serializable {
         public Optional<RelyingParty> getRelyingParty() {
             return RelyingParty.of(relyingPartyName, relyingPartyUuid);
         }
+    }
+
+    /**
+     * eudiplo selects the access certificate the wallet sees by presentation configuration, so each relying party has
+     * its own. Every client allowed the eudi scope must have one, otherwise EUDI wallet authentication fails with
+     * EUDI_CLIENT_NOT_REGISTERED.
+     */
+    @Data
+    public static class EudiSettings implements Serializable {
+        @JsonProperty("presentation_config_id")
+        private String presentationConfigId;
     }
 
     @Data
@@ -688,6 +742,15 @@ public class TaraSession implements Serializable {
             return loginRequestInfo.getClient();
         }
         return null;
+    }
+
+    /**
+     * Read from the TARA client only: EUDI wallet authentication is not offered in the GovSSO flow.
+     */
+    @JsonIgnore
+    public Optional<String> getEudiPresentationConfigId() {
+        return Optional.ofNullable(getLoginRequestInfo())
+                .flatMap(LoginRequestInfo::getEudiPresentationConfigId);
     }
 
     @JsonIgnore

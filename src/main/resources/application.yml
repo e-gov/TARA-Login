@@ -30,7 +30,7 @@ tara:
       - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
       - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
       - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-  default-authentication-methods: ID_CARD, MOBILE_ID, SMART_ID, EIDAS
+  default-authentication-methods: ID_CARD, MOBILE_ID, SMART_ID, EIDAS, EUDI_WALLET
   govsso:
     self-service-url: https://enduserselfservice.localhost:25443/
   auth-flow-timeout: 1800s
@@ -104,6 +104,15 @@ tara:
       enabled: true
       refresh-countries-interval-in-milliseconds: 86400000
       relay-state-cache-duration-in-seconds: 600
+    eudi-wallet:
+      enabled: false
+      # Mandatory: EUDI_WALLET is not in the eIDAS bypass of TaraSession.isAuthenticationMethodAllowedByLoa, so a
+      # missing level-of-assurance would fail every login request, not just EUDI ones.
+      level-of-assurance: HIGH
+      eudiplo-url: http://eudi-eudiplo:3000
+      client-id: tara-login
+      # Mandatory when enabled, supplied by the deployment.
+      # client-secret:
   legal-person-authentication:
     x-road-server-read-timeout-in-milliseconds: 5000
     x-road-server-connect-timeout-in-milliseconds: 5000

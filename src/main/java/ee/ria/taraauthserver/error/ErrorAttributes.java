@@ -35,6 +35,11 @@ import java.util.stream.Collectors;
 import static ee.ria.taraauthserver.error.ErrorCode.AUTH_FLOW_TIMEOUT;
 import static ee.ria.taraauthserver.error.ErrorCode.EIDAS_INCORRECT_LOA;
 import static ee.ria.taraauthserver.error.ErrorCode.EIDAS_USER_CONSENT_NOT_GIVEN;
+import static ee.ria.taraauthserver.error.ErrorCode.EUDI_CALLBACK_INVALID;
+import static ee.ria.taraauthserver.error.ErrorCode.EUDI_CALLBACK_SESSION_NOT_FOUND;
+import static ee.ria.taraauthserver.error.ErrorCode.EUDI_PRESENTATION_REJECTED;
+import static ee.ria.taraauthserver.error.ErrorCode.EUDI_TIMEOUT;
+import static ee.ria.taraauthserver.error.ErrorCode.EUDI_USER_CANCEL;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_EXPIRED;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_CERT_FORBIDDEN;
 import static ee.ria.taraauthserver.error.ErrorCode.IDC_REVOKED;
@@ -117,7 +122,12 @@ public class ErrorAttributes extends DefaultErrorAttributes {
             INVALID_LOGIN_CHALLENGE,
             INVALID_GOVSSO_LOGIN_CHALLENGE,
             NO_VALID_AUTHMETHODS_AVAILABLE,
-            EIDAS_INCORRECT_LOA
+            EIDAS_INCORRECT_LOA,
+            EUDI_USER_CANCEL,
+            EUDI_TIMEOUT,
+            EUDI_PRESENTATION_REJECTED,
+            EUDI_CALLBACK_SESSION_NOT_FOUND,
+            EUDI_CALLBACK_INVALID
     );
 
     @Override

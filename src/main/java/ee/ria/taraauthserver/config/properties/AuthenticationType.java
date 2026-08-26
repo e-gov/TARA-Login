@@ -14,7 +14,8 @@ public enum AuthenticationType {
     ID_CARD("idcard", "id-card", TaraScope.IDCARD),
     MOBILE_ID("mID", "mobile-id", TaraScope.MID),
     SMART_ID("smartid", "smart-id", TaraScope.SMARTID),
-    EIDAS("eidas", "eidas", TaraScope.EIDAS);
+    EIDAS("eidas", "eidas", TaraScope.EIDAS),
+    EUDI_WALLET("eudi", "eudi-wallet", TaraScope.EUDI);
 
     private final String amrName;
     private final String propertyName;

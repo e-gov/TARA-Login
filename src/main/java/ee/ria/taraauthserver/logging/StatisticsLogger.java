@@ -13,6 +13,7 @@ import ee.ria.taraauthserver.logging.StatisticsLogger.SessionStatistics.SessionS
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.TaraSession.AuthenticationResult;
+import ee.ria.taraauthserver.session.TaraSession.EudiFlow;
 import ee.ria.taraauthserver.session.TaraSession.LegalPerson;
 import ee.ria.taraauthserver.session.TaraSession.LoginRequestInfo;
 import ee.sk.smartid.FlowType;
@@ -90,6 +91,7 @@ public class StatisticsLogger {
         processAuthenticationRequest(taraSession, state, statisticsBuilder);
         processAuthenticationResult(taraSession, ex, statisticsBuilder);
         processSmartIdFlowType(taraSession, statisticsBuilder);
+        processEudiFlow(taraSession, statisticsBuilder);
         if (state == EXTERNAL_TRANSACTION) {
             processEventDuration(taraSession, statisticsBuilder);
         }
@@ -187,6 +189,10 @@ public class StatisticsLogger {
         statisticsBuilder.smartIdFlowType(taraSession.getSmartIdFlowType());
     }
 
+    private void processEudiFlow(TaraSession taraSession, SessionStatisticsBuilder statisticsBuilder) {
+        statisticsBuilder.eudiFlow(taraSession.getEudiFlowType());
+    }
+
     private void processEventDuration(TaraSession taraSession, SessionStatisticsBuilder statisticsBuilder) {
         Instant startTime = taraSession.getAuthFlowStartTime();
         if (startTime == null) {
@@ -272,6 +278,9 @@ public class StatisticsLogger {
 
         @JsonProperty("authentication.smart_id.flow_type")
         private FlowType smartIdFlowType;
+
+        @JsonProperty("authentication.eudi_wallet.flow_type")
+        private EudiFlow eudiFlow;
 
         @JsonProperty("event.duration")
         private Long eventDuration;

@@ -1,0 +1,13 @@
+{
+  "id": "2e4b6d8f-0a1c-4e3d-8f5a-6b7c8d9e0f1a",
+  "createdAt": "2026-10-22T11:59:00.000Z",
+  "updatedAt": "2026-10-22T12:00:00.000Z",
+  "expiresAt": "2026-10-22T12:04:00.000Z",
+  "tenantId": "tara",
+  "requestId": "pid-openIdDemo",
+  "clientId": "x509_hash:aGFzaC1vZi13cnBhYy1sZWFm",
+  "walletNonce": "c4d5e6f7-1111-4abc-9def-0123456789ab",
+  "useDcApi": true,
+  "status": "active",
+  "consumed": false
+}
