@@ -6,11 +6,13 @@ import ee.ria.taraauthserver.authentication.smartid.SmartIdExceptionTranslator;
 import ee.ria.taraauthserver.config.properties.SmartIdConfigurationProperties;
 import ee.ria.taraauthserver.error.ErrorCode;
 import ee.ria.taraauthserver.logging.StatisticsLogger;
+import ee.ria.taraauthserver.session.IgniteClusterNodes;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.ria.taraauthserver.session.update.AuthenticationFailedSessionUpdate;
 import ee.ria.taraauthserver.session.update.CancelSmartIdQrCodeAuthenticationSessionUpdate;
 import ee.ria.taraauthserver.session.update.InitSmartIdQrCodeAuthenticationSessionUpdate;
 import ee.ria.taraauthserver.session.update.PollSmartIdQrCodeAuthenticationSessionUpdate;
+import ee.ria.taraauthserver.session.update.ResumeSmartIdQrCodePollingSessionUpdate;
 import ee.ria.taraauthserver.session.update.SmartIdAuthenticationSuccessfulSessionUpdate;
 import ee.ria.taraauthserver.session.update.TaraSessionUpdate;
 import ee.sk.smartid.AuthenticationIdentity;
@@ -56,10 +58,11 @@ public class AuthSidQrCodeService {
     private final SmartIdConfigurationProperties smartIdConfigurationProperties;
     private final StatisticsLogger statisticsLogger;
     private final Clock clock;
+    private final IgniteClusterNodes igniteClusterNodes;
 
     public void startAuthentication(@NonNull TaraSession session) {
         assertSessionInState(session, INIT_AUTH_PROCESS);
-        updateSession(session, new InitSmartIdQrCodeAuthenticationSessionUpdate());
+        updateSession(session, new InitSmartIdQrCodeAuthenticationSessionUpdate(igniteClusterNodes.localNodeId()));
         CompletableFuture.runAsync(withMdcAndLocale(() -> doAuthenticate(session)), applicationTaskExecutor)
                 .exceptionally(withMdcAndLocale((e) -> {
                     log.error("Smart-ID QR code flow background task failed", e);
@@ -88,34 +91,76 @@ public class AuthSidQrCodeService {
                     session.getSmartIdRelyingParty().orElse(null));
             updateSession(session, new PollSmartIdQrCodeAuthenticationSessionUpdate(smartIdDeviceLinkSession, Instant.now(clock)));
 
-            AuthenticationIdentity authenticationIdentity = smartIdClientFacade.fetchSmartIdAuthenticationResult(
-                    smartIdDeviceLinkSession);
-            session.setAuthFlowEndTime(Instant.now(clock));
-            updateSession(session, new SmartIdAuthenticationSuccessfulSessionUpdate(
-                    authenticationIdentity, smartIdConfigurationProperties.getLevelOfAssurance()
-            ));
-            logSuccessToStatisticsLog(session);
+            pollAuthenticationResult(session, smartIdDeviceLinkSession);
         } catch (Exception e) {
-            if (session.getAuthFlowEndTime() == null) {
-                session.setAuthFlowEndTime(Instant.now(clock));
-            }
-            ErrorCode errorCode = SmartIdExceptionTranslator.getErrorCode(e);
-            if (SmartIdExceptionTranslator.isTechnicalError(errorCode)) {
-                log.atError()
-                        .addMarker(append("error.code", errorCode.name()))
-                        .setCause(e)
-                        .log("Smart-ID authentication exception: {}",
-                                value("error.message", e.getMessage()));
-            } else {
-                log.atWarn()
-                        .log("Smart-ID authentication failed: {}, Error code: {}",
-                                value("error.message", e.getMessage()),
-                                value("error.code", errorCode.name()));
-            }
-            session.accept(new AuthenticationFailedSessionUpdate(errorCode));
-            logErrorToStatisticsLog(session, errorCode, e);
-            saveSession(session);
+            handleAuthenticationFailure(session, e);
         }
+    }
+
+    private void pollAuthenticationResult(@NonNull TaraSession session, @NonNull SmartIdDeviceLinkSession smartIdDeviceLinkSession) {
+        AuthenticationIdentity authenticationIdentity = smartIdClientFacade.fetchSmartIdAuthenticationResult(
+                smartIdDeviceLinkSession);
+        session.setAuthFlowEndTime(Instant.now(clock));
+        updateSession(session, new SmartIdAuthenticationSuccessfulSessionUpdate(
+                authenticationIdentity, smartIdConfigurationProperties.getLevelOfAssurance()
+        ));
+        logSuccessToStatisticsLog(session);
+    }
+
+    private void handleAuthenticationFailure(@NonNull TaraSession session, Exception e) {
+        if (session.getAuthFlowEndTime() == null) {
+            session.setAuthFlowEndTime(Instant.now(clock));
+        }
+        ErrorCode errorCode = SmartIdExceptionTranslator.getErrorCode(e);
+        if (SmartIdExceptionTranslator.isTechnicalError(errorCode)) {
+            log.atError()
+                    .addMarker(append("error.code", errorCode.name()))
+                    .setCause(e)
+                    .log("Smart-ID authentication exception: {}",
+                            value("error.message", e.getMessage()));
+        } else {
+            log.atWarn()
+                    .log("Smart-ID authentication failed: {}, Error code: {}",
+                            value("error.message", e.getMessage()),
+                            value("error.code", errorCode.name()));
+        }
+        session.accept(new AuthenticationFailedSessionUpdate(errorCode));
+        logErrorToStatisticsLog(session, errorCode, e);
+        saveSession(session);
+    }
+
+    public void resumePollingIfPollingNodeHasLeftCluster(@NonNull TaraSession session) {
+        if (session.getState() != INIT_SID_QR_CODE && session.getState() != POLL_SID_QR_CODE) {
+            return;
+        }
+        String pollingNodeId = session.getPollingNodeId();
+        if (pollingNodeId == null || !igniteClusterNodes.hasLeftCluster(pollingNodeId)) {
+            return;
+        }
+        SmartIdDeviceLinkSession smartIdDeviceLinkSession = session.getSmartIdQrCodeSession();
+        if (smartIdDeviceLinkSession == null) {
+            log.warn("Cannot resume Smart-ID session status polling, the Smart-ID session was not created before the polling node left the cluster: node={}",
+                    pollingNodeId);
+            return;
+        }
+        log.warn("Resuming Smart-ID session status polling on this node, previous polling node left the cluster: session={}, node={}",
+                value("tara.session.sid_authentication_result.sid_session_id", smartIdDeviceLinkSession.sessionId()), pollingNodeId);
+        updateSession(session, new ResumeSmartIdQrCodePollingSessionUpdate(igniteClusterNodes.localNodeId()));
+        resumePollingInBackground(session, smartIdDeviceLinkSession);
+    }
+
+    private void resumePollingInBackground(@NonNull TaraSession session, @NonNull SmartIdDeviceLinkSession smartIdDeviceLinkSession) {
+        CompletableFuture.runAsync(withMdcAndLocale(() -> {
+            try {
+                pollAuthenticationResult(session, smartIdDeviceLinkSession);
+            } catch (Exception e) {
+                handleAuthenticationFailure(session, e);
+            }
+        }), applicationTaskExecutor)
+                .exceptionally(withMdcAndLocale((e) -> {
+                    log.error("Smart-ID QR code resumed polling task failed", e);
+                    return null;
+                }));
     }
 
     private void updateSession(@NonNull TaraSession taraSession, TaraSessionUpdate update) {

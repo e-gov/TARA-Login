@@ -17,7 +17,10 @@ import ee.ria.taraauthserver.session.TaraSession.SidAuthenticationResult;
 import ee.ria.taraauthserver.session.update.CreateNewSmartIdAuthenticationResultSessionUpdate;
 import ee.ria.taraauthserver.session.update.FailSmartIdWeb2AppAuthenticationSessionUpdate;
 import ee.ria.taraauthserver.session.update.InitSmartIdWeb2AppAuthenticationSessionUpdate;
+import ee.ria.taraauthserver.session.IgniteClusterNodes;
+import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.update.PollSmartIdWeb2AppAuthenticationSessionUpdate;
+import ee.ria.taraauthserver.session.update.ResumeSmartIdWeb2AppPollingSessionUpdate;
 import ee.ria.taraauthserver.session.update.SaveSmartIdWeb2AppSessionStatusSessionUpdate;
 import ee.ria.taraauthserver.session.update.SmartIdAuthenticationSuccessfulSessionUpdate;
 import ee.ria.taraauthserver.session.update.TaraSessionUpdate;
@@ -107,9 +110,12 @@ public class AuthSidWeb2AppService {
     @Autowired
     private Clock clock;
 
+    @Autowired
+    private IgniteClusterNodes igniteClusterNodes;
+
     public URI startSidAuthSession(@NonNull TaraSession taraSession) throws URISyntaxException {
         RpChallenge rpChallenge = rpChallengeService.getRpChallenge();
-        updateSession(taraSession, new InitSmartIdWeb2AppAuthenticationSessionUpdate());
+        updateSession(taraSession, new InitSmartIdWeb2AppAuthenticationSessionUpdate(igniteClusterNodes.localNodeId()));
 
         RelyingParty relyingParty = taraSession.getSmartIdRelyingParty()
                 .orElse(smartIdConfigurationProperties.getRelyingParty());
@@ -265,6 +271,27 @@ public class AuthSidWeb2AppService {
         } else {
             log.error("Session correlated with this Smart-ID polling process was not found: {}", taraSession.getSessionId());
         }
+    }
+
+    public void resumePollingIfPollingNodeHasLeftCluster(@NonNull TaraSession taraSession) {
+        if (taraSession.getState() != TaraAuthenticationState.INIT_SID_WEB2APP
+                && taraSession.getState() != TaraAuthenticationState.POLL_SID_WEB2APP_STATUS) {
+            return;
+        }
+        String pollingNodeId = taraSession.getPollingNodeId();
+        if (pollingNodeId == null || !igniteClusterNodes.hasLeftCluster(pollingNodeId)) {
+            return;
+        }
+        if (taraSession.getSmartIdWeb2AppSession() == null) {
+            log.warn("Cannot resume Smart-ID session status polling, the Smart-ID session was not created before the polling node left the cluster: node={}",
+                    pollingNodeId);
+            return;
+        }
+        log.warn("Resuming Smart-ID session status polling on this node, previous polling node left the cluster: session={}, node={}",
+                value("tara.session.sid_authentication_result.sid_session_id", taraSession.getSmartIdWeb2AppSession().getSessionId()),
+                pollingNodeId);
+        updateSession(taraSession, new ResumeSmartIdWeb2AppPollingSessionUpdate(igniteClusterNodes.localNodeId()));
+        startPollingAuthenticationResult(taraSession);
     }
 
     private void startPollingAuthenticationResult(TaraSession taraSession) {

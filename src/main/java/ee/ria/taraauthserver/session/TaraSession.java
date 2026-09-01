@@ -16,6 +16,7 @@ import ee.ria.taraauthserver.error.exceptions.InvalidLoginRequestException;
 import ee.ria.taraauthserver.session.sid.devicelink.DeviceLinkAuthenticationSessionMapper;
 import ee.ria.taraauthserver.session.sid.devicelink.DeviceLinkAuthenticationSessionRequestSurrogate;
 import ee.ria.taraauthserver.session.update.TaraSessionUpdate;
+import ee.sk.mid.MidAuthenticationHashToSign;
 import ee.sk.smartid.FlowType;
 import ee.sk.smartid.RpChallenge;
 import ee.sk.smartid.rest.dao.DeviceLinkAuthenticationSessionRequest;
@@ -93,6 +94,7 @@ public class TaraSession implements Serializable {
     @Setter(AccessLevel.NONE)
     private SmartIdQrCodeSession smartIdQrCodeSession;
     private FlowType smartIdFlowType;
+    private String pollingNodeId;
     private Instant authFlowStartTime;
     @Setter(AccessLevel.NONE)
     private Instant authFlowEndTime;
@@ -180,6 +182,9 @@ public class TaraSession implements Serializable {
     @RequiredArgsConstructor
     public static class MidAuthenticationResult extends AuthenticationResult {
         private final String midSessionId;
+
+        @JsonIgnore
+        private MidAuthenticationHashToSign authenticationHash;
     }
 
     @Data

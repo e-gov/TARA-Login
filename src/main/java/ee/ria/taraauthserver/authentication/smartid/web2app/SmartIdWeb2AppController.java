@@ -80,6 +80,7 @@ public class SmartIdWeb2AppController {
     public Map<String, String> authSidPoll(TaraSession taraSession, @RequestParam String sessionToken) {
         log.info("Validating Smart-ID Web2App poll endpoint");
         validateSessionNotReset(taraSession, sessionToken);
+        authSidWeb2AppService.resumePollingIfPollingNodeHasLeftCluster(taraSession);
         validateSession(taraSession,
                 INIT_SID_WEB2APP,
                 POLL_SID_WEB2APP_STATUS,

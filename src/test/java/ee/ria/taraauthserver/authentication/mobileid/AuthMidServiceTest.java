@@ -4,6 +4,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import ee.ria.taraauthserver.BaseTest;
 import ee.ria.taraauthserver.config.properties.LevelOfAssurance;
 import ee.ria.taraauthserver.session.MockTaraSessionBuilder;
+import ee.ria.taraauthserver.session.IgniteClusterNodes;
 import ee.ria.taraauthserver.session.TaraSession;
 import ee.sk.mid.MidAuthenticationError;
 import ee.sk.mid.MidAuthenticationHashToSign;
@@ -27,6 +28,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
+
+import java.util.UUID;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import static ch.qos.logback.classic.Level.ERROR;
@@ -53,6 +56,7 @@ import static ee.ria.taraauthserver.error.ErrorCode.NOT_MID_CLIENT;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_AUTH_PROCESS;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.NATURAL_PERSON_AUTHENTICATION_COMPLETED;
+import static ee.ria.taraauthserver.session.TaraAuthenticationState.POLL_MID_STATUS;
 import static ee.ria.taraauthserver.session.TaraSession.TARA_SESSION;
 import static java.lang.String.format;
 import static java.util.List.of;
@@ -83,6 +87,9 @@ class AuthMidServiceTest extends BaseTest {
 
     @Autowired
     private SessionRepository<Session> sessionRepository;
+
+    @Autowired
+    private IgniteClusterNodes igniteClusterNodes;
 
     @MockitoSpyBean
     private MidAuthenticationResponseValidator midAuthenticationResponseValidator;
@@ -853,6 +860,55 @@ class AuthMidServiceTest extends BaseTest {
 
     private String startMidAuthSessionWithPollResponse(String pollResponse, int pollHttpStatus) {
         return startMidAuthSessionWithPollResponseWithDelay(pollResponse, pollHttpStatus, 0, 0);
+    }
+
+    @Test
+    void correctAuthenticationSessionStateWhen_pollingNodeLeftCluster_pollingIsResumedOnThisNode() {
+        createMidApiPollStub("mock_responses/mid/mid_poll_response.json", 200);
+        String sessionId = createSessionPolledByNodeOutsideCluster();
+
+        TaraSession taraSession = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        authMidService.resumePollingIfPollingNodeHasLeftCluster(taraSession);
+
+        TaraSession completedSession = await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionId).getAttribute(TARA_SESSION),
+                        hasProperty("state", equalTo(NATURAL_PERSON_AUTHENTICATION_COMPLETED)));
+        assertEquals("60001019906", completedSession.getAuthenticationResult().getIdCode());
+        assertEquals("+37200000766", completedSession.getAuthenticationResult().getPhoneNumber());
+        assertWarningIsLogged("Resuming Mobile-ID session status polling on this node");
+    }
+
+    @Test
+    void correctAuthenticationSessionStateWhen_pollingNodeStillInCluster_pollingIsNotResumed() {
+        createMidApiPollStub("mock_responses/mid/mid_poll_response.json", 200);
+        String sessionId = createSessionPolledByNodeOutsideCluster();
+        Session session = sessionRepository.findById(sessionId);
+        TaraSession taraSession = session.getAttribute(TARA_SESSION);
+        taraSession.setPollingNodeId(igniteClusterNodes.localNodeId());
+        session.setAttribute(TARA_SESSION, taraSession);
+        sessionRepository.save(session);
+
+        authMidService.resumePollingIfPollingNodeHasLeftCluster(taraSession);
+
+        TaraSession sessionAfterPoll = sessionRepository.findById(sessionId).getAttribute(TARA_SESSION);
+        assertEquals(POLL_MID_STATUS, sessionAfterPoll.getState());
+        wireMockServer.verify(0, getRequestedFor(urlPathMatching("/mid-api/authentication/session/.*")));
+    }
+
+    private String createSessionPolledByNodeOutsideCluster() {
+        Session session = createNewAuthenticationSession();
+        TaraSession taraSession = session.getAttribute(TARA_SESSION);
+        TaraSession.MidAuthenticationResult authenticationResult =
+                new TaraSession.MidAuthenticationResult("de305d54-75b4-431b-adb2-eb6b9e546014");
+        authenticationResult.setAmr(MOBILE_ID);
+        authenticationResult.setAuthenticationHash(MOCK_HASH_TO_SIGN);
+        authenticationResult.setPhoneNumber("+37200000766");
+        taraSession.setAuthenticationResult(authenticationResult);
+        taraSession.setState(POLL_MID_STATUS);
+        taraSession.setPollingNodeId(UUID.randomUUID().toString());
+        session.setAttribute(TARA_SESSION, taraSession);
+        sessionRepository.save(session);
+        return session.getId();
     }
 
     private String startMidAuthSessionWithPollResponseWithDelay(String pollResponse, int pollHttpStatus, int midInitResponseDelayInMilliseconds, int midPollResponseDelayInMilliseconds) {

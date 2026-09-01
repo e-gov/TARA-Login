@@ -7,11 +7,13 @@ import ee.ria.taraauthserver.session.SessionUtils;
 import ee.ria.taraauthserver.session.TaraAuthenticationState;
 import ee.ria.taraauthserver.session.TaraSession;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Optional;
 
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.AUTHENTICATION_FAILED;
 import static ee.ria.taraauthserver.session.TaraAuthenticationState.INIT_MID;
@@ -25,9 +27,16 @@ import static net.logstash.logback.marker.Markers.append;
 public class AuthMidPollController {
     private static final EnumSet<TaraAuthenticationState> ALLOWED_STATES = EnumSet.of(INIT_MID, POLL_MID_STATUS, AUTHENTICATION_FAILED, NATURAL_PERSON_AUTHENTICATION_COMPLETED);
 
+    // Absent when Mobile-ID authentication is disabled, in which case no session can be in a Mobile-ID state.
+    @Autowired
+    private Optional<AuthMidService> authMidService;
+
     @GetMapping(value = "/auth/mid/poll")
     public Map<String, String> authMidPoll(TaraSession taraSession) {
         SessionUtils.assertSessionInState(taraSession, ALLOWED_STATES);
+        if (authMidService.isPresent()) {
+            authMidService.get().resumePollingIfPollingNodeHasLeftCluster(taraSession);
+        }
 
         log.info(append("tara.session.state", taraSession.getState()),
                 "Polling Mobile-ID authentication process");

@@ -17,12 +17,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
+import java.util.UUID;
+
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static ch.qos.logback.classic.Level.ERROR;
 import static ch.qos.logback.classic.Level.INFO;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
@@ -359,6 +362,70 @@ class SmartIdWeb2AppControllerTest extends BaseTest {
                 .body("reportable", equalTo(false));
 
         assertErrorIsLogged("Session was reset before accessing resource: Session was reset while polling");
+    }
+
+    @Test
+    void sidWeb2AppPoll_pollingNodeLeftCluster_pollingIsResumedOnThisNode() {
+        createSidApiPollStubForAnySession("mock_responses/sid/sid_poll_response_ok.json");
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(SMART_ID))
+                .authenticationState(POLL_SID_WEB2APP_STATUS).build();
+        addWeb2AppSession(sessionFilter, TEST_SESSION_TOKEN);
+        replacePollingNodeIdWithNodeOutsideCluster(sessionFilter);
+
+        given()
+                .filter(sessionFilter)
+                .queryParam("sessionToken", TEST_SESSION_TOKEN)
+                .when()
+                .get("/auth/sid/web2app/poll")
+                .then()
+                .assertThat()
+                .statusCode(200);
+
+        await().atMost(FIVE_SECONDS)
+                .until(() -> sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION),
+                        hasProperty("state", equalTo(POLL_SID_WEB2APP_STATUS_AFTER_FINAL_STATUS_RECEIVED)));
+        assertWarningIsLogged("Resuming Smart-ID session status polling on this node");
+    }
+
+    @Test
+    void sidWeb2AppPoll_pollingNodeStillInCluster_pollingIsNotResumed() {
+        createSidApiPollStubForAnySession("mock_responses/sid/sid_poll_response_ok.json");
+        MockSessionFilter sessionFilter = MockSessionFilter.withTaraSession()
+                .sessionRepository(sessionRepository)
+                .authenticationTypes(of(SMART_ID))
+                .authenticationState(POLL_SID_WEB2APP_STATUS).build();
+        addWeb2AppSession(sessionFilter, TEST_SESSION_TOKEN);
+
+        given()
+                .filter(sessionFilter)
+                .queryParam("sessionToken", TEST_SESSION_TOKEN)
+                .when()
+                .get("/auth/sid/web2app/poll")
+                .then()
+                .assertThat()
+                .statusCode(200);
+
+        TaraSession taraSession = sessionRepository.findById(sessionFilter.getSession().getId()).getAttribute(TARA_SESSION);
+        assertEquals(POLL_SID_WEB2APP_STATUS, taraSession.getState());
+        wireMockServer.verify(0, getRequestedFor(urlPathMatching("/smart-id-rp/v3/session/.*")));
+    }
+
+    private void replacePollingNodeIdWithNodeOutsideCluster(MockSessionFilter sessionFilter) {
+        Session session = sessionRepository.findById(sessionFilter.getSession().getId());
+        TaraSession taraSession = session.getAttribute(TARA_SESSION);
+        taraSession.setPollingNodeId(UUID.randomUUID().toString());
+        session.setAttribute(TARA_SESSION, taraSession);
+        sessionRepository.save(session);
+    }
+
+    private void createSidApiPollStubForAnySession(String response) {
+        wireMockServer.stubFor(any(urlPathMatching("/smart-id-rp/v3/session/.*"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withStatus(200)
+                        .withBodyFile(response)));
     }
 
     private void addWeb2AppSession(MockSessionFilter sessionFilter, String sessionToken) {

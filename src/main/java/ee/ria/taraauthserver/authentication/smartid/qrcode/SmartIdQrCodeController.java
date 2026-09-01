@@ -63,6 +63,7 @@ public class SmartIdQrCodeController {
     @GetMapping(value = "/auth/sid/qr-code/poll", produces = MediaType.APPLICATION_JSON_VALUE)
     public PollResponse pollStatus(TaraSession taraSession) {
         log.info("Polling Smart-ID QR code authentication status");
+        authSidQrCodeService.resumePollingIfPollingNodeHasLeftCluster(taraSession);
         TaraAuthenticationState state = taraSession.getState();
         switch (state) {
             case NATURAL_PERSON_AUTHENTICATION_COMPLETED:
