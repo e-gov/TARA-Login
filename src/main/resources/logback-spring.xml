@@ -11,7 +11,10 @@
     <property name="log.files.dir" value="${LOG_HOME:-${java.io.tmpdir:-/tmp}}"/>
     <property name="log.files.max.count" value="${LOG_FILES_MAX_COUNT:-31}"/>
     <property name="log.level.console" value="${LOG_CONSOLE_LEVEL:-INFO}"/>
+    <property name="log.level.console.json" value="${LOG_CONSOLE_JSON_LEVEL:-OFF}"/>
+    <property name="log.level.console.json.statistics" value="${LOG_CONSOLE_JSON_STATISTICS_LEVEL:-OFF}"/>
     <property name="log.level.file" value="${LOG_FILE_LEVEL:-OFF}"/>
+    <property name="log.level.file.statistics" value="${LOG_FILE_STATISTICS_LEVEL:-ALL}"/>
 
     <property name="log.console.pattern"
               value="${LOG_CONSOLE_PATTERN:-%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z',GMT} [${springAppName}] [%15.15t] %highlight(%-5level) %-40.40logger{39} [%X{trace.id},%X{labels.tara_trace_id}] -%msg %green(%marker){}%n}"/>
@@ -22,6 +25,107 @@
         </filter>
         <encoder>
             <pattern>${log.console.pattern}</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="STDOUT_JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${log.level.console.json}</level>
+        </filter>
+        <filter class="ee.ria.taraauthserver.logging.LogbackStatisticsLogFilter">
+            <mode>NOT_STATISTICS</mode>
+        </filter>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <decorator class="ee.ria.taraauthserver.logging.LogbackMapperBuilderDecorator"/>
+            <decorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
+                <valueMasker class="ee.ria.taraauthserver.logging.LogbackFieldValueMasker"/>
+            </decorator>
+            <providers>
+                <timestamp>
+                    <fieldName>@timestamp</fieldName>
+                    <pattern>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</pattern>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+                <message/>
+                <pattern>
+                    <omitEmptyFields>true</omitEmptyFields>
+                    <pattern>
+                        {
+                        "log.level": "%level",
+                        "log.logger": "%logger",
+                        "process.pid": "#asLong{${PID}}",
+                        "process.thread.name": "%thread",
+                        "service.name": "${springAppName}",
+                        "service.type": "tara"
+                        }
+                    </pattern>
+                </pattern>
+                <stackTrace>
+                    <fieldName>error.stack_trace</fieldName>
+                    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                        <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                        <maxLength>2048</maxLength>
+                        <shortenedClassNameLength>20</shortenedClassNameLength>
+                        <exclude>^sun\.reflect\..*\.invoke</exclude>
+                        <exclude>^net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
+                        <rootCauseFirst>true</rootCauseFirst>
+                        <inlineHash>true</inlineHash>
+                    </throwableConverter>
+                </stackTrace>
+                <stackHash/>
+                <rootStackTraceElement/>
+                <throwableRootCauseClassName>
+                    <fieldName>error.type</fieldName>
+                </throwableRootCauseClassName>
+                <logstashMarkers/>
+                <mdc/>
+                <arguments/>
+            </providers>
+        </encoder>
+    </appender>
+
+    <appender name="STDOUT_JSON_STATISTICS" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${log.level.console.json.statistics}</level>
+        </filter>
+        <filter class="ee.ria.taraauthserver.logging.LogbackStatisticsLogFilter">
+            <mode>STATISTICS_ONLY</mode>
+        </filter>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <decorator class="ee.ria.taraauthserver.logging.LogbackMapperBuilderDecorator"/>
+            <providers>
+                <timestamp>
+                    <fieldName>@timestamp</fieldName>
+                    <pattern>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</pattern>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+                <message/>
+                <stackTrace>
+                    <fieldName>error.stack_trace</fieldName>
+                    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                        <maxDepthPerThrowable>1</maxDepthPerThrowable>
+                        <maxLength>512</maxLength>
+                        <shortenedClassNameLength>20</shortenedClassNameLength>
+                        <exclude>^sun\.reflect\..*\.invoke</exclude>
+                        <exclude>^net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
+                        <rootCauseFirst>true</rootCauseFirst>
+                        <inlineHash>true</inlineHash>
+                    </throwableConverter>
+                </stackTrace>
+                <stackHash/>
+                <rootStackTraceElement/>
+                <throwableRootCauseClassName>
+                    <fieldName>error.type</fieldName>
+                </throwableRootCauseClassName>
+                <logstashMarkers/>
+                <mdc>
+                    <includeMdcKeyName>client.ip</includeMdcKeyName>
+                    <includeMdcKeyName>labels.tara_trace_id</includeMdcKeyName>
+                    <includeMdcKeyName>labels.govsso_trace_id</includeMdcKeyName>
+                    <includeMdcKeyName>service.version</includeMdcKeyName>
+                </mdc>
+                <arguments/>
+            </providers>
         </encoder>
     </appender>
 
@@ -92,6 +196,9 @@
             <fileNamePattern>${log.files.dir}/TaraLoginStatistics.%d{yyyy-MM-dd,GMT}.log</fileNamePattern>
             <maxHistory>${log.files.max.count}</maxHistory>
         </rollingPolicy>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${log.level.file.statistics}</level>
+        </filter>
         <filter class="ee.ria.taraauthserver.logging.LogbackStatisticsLogFilter">
             <mode>STATISTICS_ONLY</mode>
         </filter>
@@ -141,5 +248,7 @@
         <appender-ref ref="FILE"/>
         <appender-ref ref="FILE_STATISTICS"/>
         <appender-ref ref="STDOUT"/>
+        <appender-ref ref="STDOUT_JSON"/>
+        <appender-ref ref="STDOUT_JSON_STATISTICS"/>
     </root>
 </configuration>
