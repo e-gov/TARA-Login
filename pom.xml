@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.6</version>
+        <version>4.1.1</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>ee.ria.tara</groupId>
@@ -22,23 +22,21 @@
     </licenses>
 
     <properties>
-        <maven.compiler.release>17</maven.compiler.release>
+        <maven.compiler.release>21</maven.compiler.release>
         <imageName>${project.artifactId}:latest</imageName>
         <githubMirror>https://github.com</githubMirror>
 
-        <bouncycastle.version>1.85</bouncycastle.version>
-        <elastic-apm.version>1.56.0</elastic-apm.version>
-        <ignite.version>2.13.0</ignite.version><!-- TODO AUT-1086 Upgrade to >=2.14.0 when the following issue is
-                                                     resolved:
-                                                     https://www.mail-archive.com/user@ignite.apache.org/msg33644.html -->
+        <bouncycastle.version>1.86</bouncycastle.version>
+        <elastic-apm.version>1.57.0</elastic-apm.version>
+        <ignite.version>2.18.0</ignite.version>
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
-        <logstash-logback-encoder.version>9.0</logstash-logback-encoder.version><!-- TODO Upgrade to logstash-logback-encoder 9.x with Spring Boot 4.x, both upgrade to Jackson 3 -->
+        <logstash-logback-encoder.version>9.0</logstash-logback-encoder.version>
         <mid-rest.version>1.7</mid-rest.version>
         <resilience4j.version>2.4.0</resilience4j.version>
         <smart-id.version>3.2</smart-id.version>
         <webeid.version>4.0.0-202604021720</webeid.version>
         <wiremock.version>3.13.2</wiremock.version>
-        <rest-assured.version>6.0.0</rest-assured.version>
+        <rest-assured.version>6.0.1</rest-assured.version>
     </properties>
 
     <dependencies>
@@ -285,10 +283,9 @@
                         -DIGNITE_NO_ASCII=true
                         -DIGNITE_UPDATE_NOTIFIER=false
                         <!--
-                          Make necessary JDK APIs available to Ignite according to
-                          https://ignite.apache.org/docs/2.15.0/setup#running-ignite-with-java-11-or-later
-                          "Java 17" configuration. Additionally, `java.net` and `java.time` are added to support
-                          TaraSession fields.
+                          Make necessary JDK APIs available to Ignite. Subset of Ignite default JVM options for Java 15+:
+                          https://github.com/apache/ignite/blob/2.18.0/bin/include/jvmdefaults.sh
+                          `java.net` and `java.time` are also required by TaraSession fields.
                         -->
                         --add-opens=jdk.management/com.sun.management.internal=ALL-UNNAMED
                         --add-opens=java.base/jdk.internal.misc=ALL-UNNAMED
@@ -350,10 +347,9 @@
                         -DIGNITE_NO_ASCII=true
                         -DIGNITE_UPDATE_NOTIFIER=false
                         <!--
-                          Make necessary JDK APIs available to Ignite according to
-                          https://ignite.apache.org/docs/2.15.0/setup#running-ignite-with-java-11-or-later
-                          "Java 17" configuration. Additionally, `java.net` and `java.time` are added to support
-                          TaraSession fields.
+                          Make necessary JDK APIs available to Ignite. Subset of Ignite default JVM options for Java 15+:
+                          https://github.com/apache/ignite/blob/2.18.0/bin/include/jvmdefaults.sh
+                          `java.net` and `java.time` are also required by TaraSession fields.
                         -->
                         --add-opens=jdk.management/com.sun.management.internal=ALL-UNNAMED
                         --add-opens=java.base/jdk.internal.misc=ALL-UNNAMED
@@ -383,10 +379,9 @@
                                 -DIGNITE_NO_ASCII=true
                                 -DIGNITE_UPDATE_NOTIFIER=false
                                 <!--
-                                  Make necessary JDK APIs available to Ignite according to
-                                  https://ignite.apache.org/docs/2.15.0/setup#running-ignite-with-java-11-or-later
-                                  "Java 17" configuration. Additionally, `java.net` and `java.time` are added to support
-                                  TaraSession fields.
+                                  Make necessary JDK APIs available to Ignite. Subset of Ignite default JVM options for Java 15+:
+                                  https://github.com/apache/ignite/blob/2.18.0/bin/include/jvmdefaults.sh
+                                  `java.net` and `java.time` are also required by TaraSession fields.
                                 -->
                                 --add-opens=jdk.management/com.sun.management.internal=ALL-UNNAMED
                                 --add-opens=java.base/jdk.internal.misc=ALL-UNNAMED

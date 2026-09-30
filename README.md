@@ -41,7 +41,7 @@ The webapp provides implementation for following authentication methods:
 <a name="build_requirements"></a>
 ### Requirements:
 
-- Java (JDK 17+) runtime is required to build and run the webapp.
+- Java (JDK 21+) runtime is required to build and run the webapp.
 - [Docker](https://www.docker.com/) is required to package images, fonts, CSS and JavaScript using `npm` and `gulp`.
 - [Maven](https://maven.apache.org/) is required to build and test the software.
 
@@ -130,9 +130,9 @@ Example: to deploy the webapp using embedded Tomcat
 | `tara.tls.x-road-key-store-location` | Yes | Location of the X-road keystore. In case the key files are to be loaded from classpath, this path should be prefixed with `classpath:` (example: `classpath:tls-keystore.p12`). In case the key files are to be loaded from disk, this path should be prefixed with `file:` (exaple ``file:/etc/tara/tls-keystore.p12``).  |
 | `tara.tls.x-road-key-store-password` | Yes | Keystore password |
 | `tara.tls.x-road-store-type` | No | Truststore type (jks, pkcs12). Defaults to PKCS12 if not specified |
-| `tara.tls.default-protocol` | No | Default protocol (see the list of supported [values](https://docs.oracle.com/en/java/javase/17/docs/specs/security/standard-names.html#sslcontext-algorithms)). Defaults to `TLS` if not specified |
-| `tara.tls.enabled-protocols` | No | List of enabled protocols (see the list of [standard names for protocols](https://docs.oracle.com/en/java/javase/17/docs/specs/security/standard-names.html#additional-jsse-standard-names)). Defaults to JVM specific configuration if not specified |
-| `tara.tls.enabled-cipher-suites` | No | List of enabled cipher suites (see the list of [standard names for cipher suites](https://docs.oracle.com/en/java/javase/11/docs/specs/security/standard-names.html#jsse-cipher-suite-names)). Defaults to JVM specific configuration if not specified |
+| `tara.tls.default-protocol` | No | Default protocol (see the list of supported [values](https://docs.oracle.com/en/java/javase/21/docs/specs/security/standard-names.html#sslcontext-algorithms)). Defaults to `TLS` if not specified |
+| `tara.tls.enabled-protocols` | No | List of enabled protocols (see the list of [standard names for protocols](https://docs.oracle.com/en/java/javase/21/docs/specs/security/standard-names.html#additional-jsse-standard-names)). Defaults to JVM specific configuration if not specified |
+| `tara.tls.enabled-cipher-suites` | No | List of enabled cipher suites (see the list of [standard names for cipher suites](https://docs.oracle.com/en/java/javase/21/docs/specs/security/standard-names.html#jsse-cipher-suite-names)). Defaults to JVM specific configuration if not specified |
 
 <a name="mid_conf"></a>
 ### 1.3 Mobile-ID auth method
@@ -445,9 +445,9 @@ Ignite is used for storing user’s session information.
 | `ignite.ssl-context-factory.trust-store-type` | Yes | Ignite trust store type. Example value `PKCS12` |
 | `ignite.ssl-context-factory.trust-store-file-path` | Yes | Ignite trust store path. Example value `/test/resources/tls-truststore.p12` |
 | `ignite.ssl-context-factory.trust-store-password` | Yes | Ignite trust store password. |
-| `ignite.ssl-context-factory.protocol` | No | Default protocol* (see the list of supported [values](https://docs.oracle.com/en/java/javase/17/docs/specs/security/standard-names.html#sslcontext-algorithms)). Defaults to `TLS` if not specified |
-| `ignite.ssl-context-factory.protocols` | No | List of enabled protocols* (see the list of [standard names for protocols](https://docs.oracle.com/en/java/javase/17/docs/specs/security/standard-names.html#additional-jsse-standard-names)). Defaults to JVM specific configuration if not specified |
-| `ignite.ssl-context-factory.cipher-suites` | No | List of enabled cipher suites (see the list of [standard names for cipher suites](https://docs.oracle.com/en/java/javase/17/docs/specs/security/standard-names.html#jsse-cipher-suite-names)). Defaults to JVM specific configuration if not specified |
+| `ignite.ssl-context-factory.protocol` | No | Default protocol* (see the list of supported [values](https://docs.oracle.com/en/java/javase/21/docs/specs/security/standard-names.html#sslcontext-algorithms)). Defaults to `TLS` if not specified |
+| `ignite.ssl-context-factory.protocols` | No | List of enabled protocols* (see the list of [standard names for protocols](https://docs.oracle.com/en/java/javase/21/docs/specs/security/standard-names.html#additional-jsse-standard-names)). Defaults to JVM specific configuration if not specified |
+| `ignite.ssl-context-factory.cipher-suites` | No | List of enabled cipher suites (see the list of [standard names for cipher suites](https://docs.oracle.com/en/java/javase/21/docs/specs/security/standard-names.html#jsse-cipher-suite-names)). Defaults to JVM specific configuration if not specified |
 
 \* For Ignite 2.10.0 and older, [TLSv1.3 is not supported](https://ignite.apache.org/docs/2.10.0/quick-start/java#running-ignite-with-java-11).
 
