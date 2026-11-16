@@ -42,6 +42,8 @@ import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static net.logstash.logback.marker.Markers.appendFields;
 
+// The ELK pipelines (tara-elk-deployment, tara2-login-service and tara2-login-service-statistics) pick the statistics
+// lines by this class's full name in log.logger. If you rename or move this class, change the pipelines too.
 @Slf4j
 @Component
 @RequiredArgsConstructor
