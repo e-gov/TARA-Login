@@ -47,6 +47,7 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -1263,6 +1264,8 @@ class IdCardLoginControllerTest extends BaseTest {
                 .body("status", equalTo("COMPLETED"));
     }
 
+    @Disabled("message.idc.cert-forbidden is overridden in non-local environments, " +
+        "which causes this test to fail there.")
     @Test
     @Tag(value = "ESTEID_LOGIN_ENDPOINT")
     void handleRequest_eidasProxyClientAndDisallowedCertificatePolicyOid_Fails() {
